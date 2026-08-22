@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <rect x="6" y="6" width="36" height="36" rx="5" fill="#A6192E"/>
+  <rect x="9" y="9" width="30" height="30" rx="3" fill="none" stroke="#FAF6EF" stroke-width="1.5"/>
+  <text x="24" y="30" text-anchor="middle" fill="#FAF6EF" font-family="Georgia, serif" font-weight="700" font-size="14">TRC</text>
+</svg>
