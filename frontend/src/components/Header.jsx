@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Icons } from './Icons'
@@ -8,8 +8,16 @@ import { AuthModal } from './AuthModal'
 // Header component
 export const Header = () => {
   const location = useLocation()
-  const { user, signOut } = useAuth()
+  const { user, signOut, loading } = useAuth()
   const [authModalOpen, setAuthModalOpen] = useState(false)
+
+  // Show the sign-in modal on the first load of the site (once per browser session)
+  useEffect(() => {
+    if (loading || user) return
+    if (sessionStorage.getItem('trc:auth-nudge-shown')) return
+    sessionStorage.setItem('trc:auth-nudge-shown', '1')
+    setAuthModalOpen(true)
+  }, [loading, user])
 
   const isActive = (path) => location.pathname === path
 

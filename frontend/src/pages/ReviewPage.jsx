@@ -6,6 +6,7 @@ import { Icons } from '../components/Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { RegistrationNudge } from '../components/RegistrationNudge'
+import { ProgramAutocomplete } from '../components/ProgramAutocomplete'
 
 // ReviewPage component
 export const ReviewPage = () => {
@@ -49,6 +50,11 @@ export const ReviewPage = () => {
 
     if (!rating) {
       showToast('Please select a star rating', 'error')
+      return
+    }
+
+    if (!selectedUni) {
+      showToast('Please select a university', 'error')
       return
     }
 
@@ -143,6 +149,62 @@ export const ReviewPage = () => {
             <StarInput value={rating} onChange={setRating} />
           </div>
 
+          {/* University */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="uni-select">
+              University
+            </label>
+            <select
+              id="uni-select"
+              className="form-select"
+              value={selectedUni}
+              onChange={(e) => {
+                setSelectedUni(e.target.value)
+                setShowNotListed(e.target.value === '__not_listed')
+              }}
+            >
+              <option value="">Select a university...</option>
+              {universities.map((u) => (
+                <option key={u.id} value={u.slug}>
+                  {u.name} — {u.city}
+                </option>
+              ))}
+              <option value="__not_listed">My university isn't listed</option>
+            </select>
+          </div>
+
+          {/* Inline fields for unlisted university */}
+          {showNotListed && (
+            <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+                <label className="form-label" htmlFor="new-uni-name">
+                  University name
+                </label>
+                <input
+                  type="text"
+                  id="new-uni-name"
+                  className="form-input"
+                  placeholder="e.g. East China Normal University"
+                  value={newUniName}
+                  onChange={(e) => setNewUniName(e.target.value)}
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1, minWidth: '140px' }}>
+                <label className="form-label" htmlFor="new-uni-city">
+                  City
+                </label>
+                <input
+                  type="text"
+                  id="new-uni-city"
+                  className="form-input"
+                  placeholder="e.g. Shanghai"
+                  value={newUniCity}
+                  onChange={(e) => setNewUniCity(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Review Text */}
           <div className="form-group">
             <label className="form-label" htmlFor="review-text">
@@ -169,73 +231,16 @@ export const ReviewPage = () => {
             </button>
             <div className={`collapse-content ${detailsOpen ? 'open' : ''}`}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="uni-select">
-                    University
-                  </label>
-                  <select
-                    id="uni-select"
-                    className="form-select"
-                    value={selectedUni}
-                    onChange={(e) => {
-                      setSelectedUni(e.target.value)
-                      setShowNotListed(e.target.value === '__not_listed')
-                    }}
-                  >
-                    <option value="">Select a university...</option>
-                    {universities.map((u) => (
-                      <option key={u.id} value={u.slug}>
-                        {u.name} — {u.city}
-                      </option>
-                    ))}
-                    <option value="__not_listed">My university isn't listed</option>
-                  </select>
-                </div>
-
-                {/* Inline fields for unlisted university */}
-                {showNotListed && (
-                  <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
-                    <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
-                      <label className="form-label" htmlFor="new-uni-name">
-                        University name
-                      </label>
-                      <input
-                        type="text"
-                        id="new-uni-name"
-                        className="form-input"
-                        placeholder="e.g. East China Normal University"
-                        value={newUniName}
-                        onChange={(e) => setNewUniName(e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group" style={{ flex: 1, minWidth: '140px' }}>
-                      <label className="form-label" htmlFor="new-uni-city">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        id="new-uni-city"
-                        className="form-input"
-                        placeholder="e.g. Shanghai"
-                        value={newUniCity}
-                        onChange={(e) => setNewUniCity(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
                 <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
                   <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
                     <label className="form-label" htmlFor="program">
                       Program
                     </label>
-                    <input
-                      type="text"
+                    <ProgramAutocomplete
                       id="program"
-                      className="form-input"
                       placeholder="e.g. Computer Science"
                       value={program}
-                      onChange={(e) => setProgram(e.target.value)}
+                      onChange={setProgram}
                     />
                   </div>
                   <div className="form-group" style={{ flex: 1, minWidth: '140px' }}>
@@ -254,6 +259,7 @@ export const ReviewPage = () => {
                       <option value="PhD">PhD</option>
                       <option value="Certificate">Certificate</option>
                       <option value="Exchange">Exchange</option>
+                      <option value="Language Course">Language Course</option>
                       <option value="Other">Other</option>
                     </select>
                   </div>
