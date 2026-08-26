@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   text TEXT NOT NULL,
   program TEXT,
   degree_level TEXT,
+  media JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

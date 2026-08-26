@@ -2,16 +2,19 @@ import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { UpvoteButton } from './UpvoteButton'
 import { CommentSection } from './CommentSection'
+import { MediaGallery } from './MediaGallery'
 
 // ReviewCard component
 export const ReviewCard = ({ review }) => {
-  const { id, rating, text, program, degree_level, created_at, user_id } = review
+  const { id, rating, text, program, degree_level, media, created_at, user_id } = review
 
   const tags = [program, degree_level].filter(Boolean)
   const tagsHTML = tags.length > 0 && (
     <div className="review-tags">
       {tags.map((tag, i) => (
-        <span key={i} className="review-tag">{tag}</span>
+        <span key={i} className="review-tag">
+          {tag}
+        </span>
       ))}
     </div>
   )
@@ -32,6 +35,7 @@ export const ReviewCard = ({ review }) => {
         </div>
       </div>
       <p className="review-text">{text}</p>
+      {media && media.length > 0 && <MediaGallery media={media} />}
       {tagsHTML}
       <UpvoteButton reviewId={id} />
       <CommentSection reviewId={id} />

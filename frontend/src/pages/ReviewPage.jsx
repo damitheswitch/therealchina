@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { ProgramAutocomplete } from '../components/ProgramAutocomplete'
+import { MediaUploader } from '../components/MediaUploader'
 
 // ReviewPage component
 export const ReviewPage = () => {
@@ -25,6 +26,8 @@ export const ReviewPage = () => {
   const [program, setProgram] = useState('')
   const [degreeLevel, setDegreeLevel] = useState('')
   const [detailsOpen, setDetailsOpen] = useState(false)
+  // Media uploads start the moment files are picked; this mirrors their state
+  const [mediaState, setMediaState] = useState({ media: [], uploading: false, errorCount: 0 })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -63,7 +66,18 @@ export const ReviewPage = () => {
       return
     }
 
+    if (mediaState.uploading) {
+      showToast('Please wait for your media to finish uploading', 'error')
+      return
+    }
+
+    if (mediaState.errorCount > 0) {
+      showToast('Please retry or remove failed media attachments', 'error')
+      return
+    }
+
     setLoading(true)
+
     try {
       let universityId = null
 
@@ -99,7 +113,7 @@ export const ReviewPage = () => {
         universityId = uni?.id
       }
 
-      // Insert review
+      // Media has already been uploaded while the user filled out the form.
       const { error: reviewError } = await supabase.from('reviews').insert({
         university_id: universityId,
         user_id: user?.id || null,
@@ -107,6 +121,7 @@ export const ReviewPage = () => {
         text: reviewText.trim(),
         program: program.trim() || null,
         degree_level: degreeLevel || null,
+        media: mediaState.media,
       })
 
       if (reviewError) throw reviewError
@@ -136,7 +151,7 @@ export const ReviewPage = () => {
           <Icons.ArrowLeft /> Back
         </Link>
         <h1 className="section-title">Leave a Review</h1>
-        <p className="muted mb-3">Share your authentic experience. No account needed.</p>
+        <p className="muted mb-3">Share your authentic experience. Photos & videos welcome!</p>
 
         <form
           id="review-form"
@@ -213,7 +228,7 @@ export const ReviewPage = () => {
             <textarea
               id="review-text"
               className="form-textarea"
-              placeholder="Tell other students about your experience — academics, campus life, the city, anything that matters..."
+              placeholder="Tell other students about your experience — academics, campus life, dormitories, the city, anything that matters..."
               value={reviewText}
               onChange={(e) => setReviewText(e.target.value)}
             />
@@ -264,14 +279,15 @@ export const ReviewPage = () => {
                     </select>
                   </div>
                 </div>
+                <MediaUploader onStateChange={setMediaState} disabled={loading} />
               </div>
             </div>
           </div>
 
           {/* Submit */}
           <div style={{ display: 'flex', gap: 'var(--sp-1)', alignItems: 'center' }}>
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Review'}
+            <button type="submit" className="btn btn-primary btn-lg" disabled={loading || mediaState.uploading}>
+              {loading ? 'Submitting...' : mediaState.uploading ? 'Processing media...' : 'Submit Review'}
             </button>
             <span className="form-hint">By submitting, you agree to share honest content.</span>
           </div>

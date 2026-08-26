@@ -1,0 +1,170 @@
+Prompt for vscode:
+
+i sent this prompt to a coding agent:
+"In this session, I want to address the issues with the image and video upload functionality. After testing it, I've identified several key problems that need to be fixed:
+
+UI Placement: Move the image/video upload section inside the optional dropdown on the review page. Remove the separate '(optional)' label we currently have, and place it entirely within that dropdown.
+
+Cursor & Interactivity: Change the mouse cursor to a pointer and add hover effects (e.g., color change, shadow) to the upload area. Currently, the cursor stays normal, which gives users no visual feedback on where to click.
+
+Visual Design: Redesign the media upload feature so it fits seamlessly with the overall website style and specifically blends into the review page. It needs to be intuitive and visually enticing—since we want to encourage users to post pictures, the interface should actively invite them to do so.
+
+Attachment Counter: Remove the current "0/5 attached" text. Replace it with something cleaner, such as "Max 5 attachments," or any alternative you think looks better.
+
+Mobile Responsiveness: Ensure the upload functionality works flawlessly on mobile phones. Our app must be fully responsive.
+
+Thumbnails & Media Display: Uploaded images should be rendered as small thumbnails, not full-size. They should be clickable to expand/enlarge them on demand. Currently, they take up far too much space. Videos look even more distorted—please fix their layout and sizing.
+
+Upload Timing & Loading States: Add a loading indicator specifically for videos so users know they are being processed. More importantly, the media should start uploading/processing as soon as it is selected (before the user hits submit). Right now, it only uploads after submission, which causes frustrating delays. We need to save the user's time by having the media ready beforehand.
+
+Ultimately, the layout should be clean, modern, and fully consistent with the TRC brand style."
+
+ He then started thinking and reading files trying to fix the issue until i reached my daily quota and i got stopped, here is what he was doing up until the last call:
+"Thought
+·
+a few seconds
+I'll start by reading the current media upload implementation and the review page to understand what we're working with.
+
+Explore
+·
+3 files
+
+Thought
+·
+a few seconds
+Now let me read the ReviewPage to understand the form structure and the optional dropdown:
+
+Explore
+·
+1 file
+
+Thought
+·
+a few seconds
+Now let me look at the CSS to understand the current styling and design system:
+
+Explore
+·
+2 searches
+
+Thought
+·
+a few seconds
+Explore
+·
+2 files
+
+Thought
+·
+a few seconds
+Let me check the ReviewCard, Icons, and the collapse styles:
+
+Explore
+·
+2 files
+
+Thought
+·
+a few seconds
+Terminal
+·
+1 command
+
+Thought
+·
+a few seconds
+Explore
+·
+1 file
+
+Thought
+·
+a few seconds
+Explore
+·
+1 search, 1 list
+
+Thought
+·
+a few seconds
+There are two near-duplicate CSS files. Let me check which one is actually imported:
+
+Explore
+·
+1 search, 1 file
+
+Thought
+·
+a few seconds
+Key discovery: main.jsx only imports styles/global.css, but all the media uploader/gallery CSS lives in style.css, which is never imported — so the components are currently completely unstyled. That explains the cursor, hover, and sizing problems. Let me view global.css fully to confirm its structure:
+
+Explore
+·
+1 file
+
+Thought
+·
+a few seconds
+I now have the full picture — and I found the root cause of most complaints: all the media CSS lives in style.css, but only styles/global.css is ever imported in main.jsx, so the uploader/gallery currently render completely unstyled (no pointer cursor, no hover, full-size images, distorted videos). Let me check a few remaining setup details:
+
+Explore
+·
+1 search, 1 list
+
+Thought
+·
+a few seconds
+All confirmed. Here's my plan, then I'll implement it:
+
+Root cause found: the entire media CSS block sits in src/style.css, but main.jsx only imports src/styles/global.css — so the uploader and gallery are rendering completely unstyled. That's why there's no pointer cursor, no hover feedback, and why images/videos render full-size and distorted.
+
+The work: (1) rewrite MediaUploader to upload eagerly on selection with per-item status (spinner, "Processing video…", retry on failure), (2) move it inside the optional-details dropdown on the review page and gate submit on pending uploads, (3) redesign the CSS into global.css using the TRC tokens (seal red / gold / rice), (4) make gallery thumbnails compact with a working video poster frame and a "+N" overflow tile, (5) verify on desktop and mobile via the dev server.
+
+
+Thought
+·
+a few seconds
+Let me quickly check ToastContext (allowed toast types) and the stray main.js/vite.config.js before writing code:
+
+Explore
+·
+1 search
+
+Thought
+·
+a few seconds
+Setup is clear — main.js is legacy vanilla code, style.css belongs to that dead version. Now I'll write the new MediaUploader with eager upload on selection:
+
+Edited
+
+MediaUploader.jsx
+frontend/src/components/
++
+2
+1
+1
+-
+7
+6
+
+Thought
+·
+a few seconds
+Now the ReviewPage edits — first the imports and state:
+
+Edited
+
+ReviewPage.jsx
+frontend/src/pages/
+-
+1
+Edited
+
+ReviewPage.jsx
+frontend/src/pages/
++
+2
+-
+2
+"
+i need you to continue from where he left off, his thinking process that i shared with you has valuable insight and guiding direction for you to continue off of.
