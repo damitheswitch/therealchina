@@ -6,6 +6,7 @@ import { UniversityPage } from './pages/UniversityPage'
 import { ReviewPage } from './pages/ReviewPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { UserDirectoryPage } from './pages/UserDirectoryPage'
+import { FlightListingsPage } from './pages/FlightListingsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/:userId" element={<ProfilePage />} />
           <Route path="/users" element={<UserDirectoryPage />} />
+          <Route path="/flights" element={<FlightListingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

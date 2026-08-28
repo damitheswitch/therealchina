@@ -39,6 +39,13 @@ export const Header = () => {
           >
             Universities
           </Link>
+          <Link
+            to="/flights"
+            className="nav-text-link"
+            style={{ color: isActive('/flights') ? 'var(--seal-red)' : '' }}
+          >
+            <Icons.Plane /> Flights
+          </Link>
           {user && (
             <Link
               to="/users"

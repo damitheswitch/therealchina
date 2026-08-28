@@ -65,6 +65,15 @@ export const UserDropdown = () => {
 
           <div className="user-dropdown-actions">
             <Link
+              to="/flights?post=1"
+              className="user-dropdown-item user-dropdown-cta"
+              onClick={() => setIsOpen(false)}
+            >
+              <Icons.Plane />
+              <span>Post Your Flight</span>
+            </Link>
+
+            <Link
               to="/profile"
               className="user-dropdown-item"
               onClick={() => setIsOpen(false)}

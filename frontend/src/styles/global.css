@@ -1472,3 +1472,364 @@ h3 { font-weight: 600; font-size: 1.125rem; }
 .text-center { text-align: center; }
 .w-full { width: 100%; }
 .hidden { display: none !important; }
+
+/* ===== Flight Listings ===== */
+/* Inline filter toolbar + Post CTA */
+.flight-toolbar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  background: #fff;
+  padding: var(--sp-2);
+  border-radius: var(--r-md);
+  border: 1px solid var(--ink-line);
+  box-shadow: var(--shadow-card);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+
+.flight-toolbar-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 0 1 200px;
+  min-width: 170px;
+}
+
+.flight-toolbar-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+}
+
+.flight-toolbar-spacer {
+  flex: 1;
+}
+
+.flight-clear-btn {
+  margin-bottom: 2px;
+}
+
+.flight-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.listings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-2);
+}
+
+.listings-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.listings-header .count {
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+/* Compact single-line listing row */
+.flight-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  padding: 0.65rem 0.9rem;
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-card);
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  transition: all var(--t-mid);
+}
+
+.flight-row:hover {
+  box-shadow: var(--shadow-hover);
+  border-color: var(--gold);
+}
+
+.flight-row-route {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.flight-row-route .country {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.flight-row .plane-icon {
+  color: var(--seal-red);
+  flex-shrink: 0;
+}
+
+.flight-row .arrow-icon {
+  color: var(--ink-line);
+  flex-shrink: 0;
+}
+
+.you-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--seal-red);
+  background: var(--seal-red-tint);
+  border-radius: 999px;
+  padding: 0.12rem 0.5rem;
+  white-space: nowrap;
+}
+
+.flight-row-dates,
+.flight-row-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.flight-row-dates strong,
+.flight-row-detail strong {
+  color: var(--ink);
+}
+
+.flight-row-notes {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 120px;
+  flex: 1 1 160px;
+  overflow: hidden;
+  padding: 0.15rem 0.4rem;
+  margin: -0.15rem -0.4rem;
+  border-radius: var(--r-sm);
+}
+
+.flight-row-notes span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flight-row-notes svg {
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+
+/* Long notes are clickable to expand: pointer cursor + hover tint so the
+   affordance is noticeable */
+.flight-row-notes.expandable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.flight-row-notes.expandable:hover,
+.flight-row-notes.expandable:focus-visible {
+  background: var(--rice-warm);
+}
+
+.flight-row-notes.expandable:hover svg,
+.flight-row-notes.expandable:focus-visible svg {
+  color: var(--seal-red);
+}
+
+.flight-row-notes.expandable:hover span,
+.flight-row-notes.expandable:focus-visible span {
+  color: var(--ink);
+}
+
+/* Expanded note drops to its own full-width line below the row */
+.flight-row-notes.expanded {
+  order: 10;
+  flex-basis: 100%;
+  align-items: flex-start;
+  cursor: pointer;
+  user-select: none;
+}
+
+.flight-row-notes.expanded span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.5;
+}
+
+.flight-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+}
+
+.delete-btn {
+  padding: 0.4rem;
+  border: 1px solid var(--ink-line);
+  background: #fff;
+  color: var(--error);
+}
+
+.delete-btn:hover {
+  background: var(--error);
+  color: #fff;
+  border-color: var(--error);
+}
+
+.flight-row .listing-author {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.flight-row .author-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--rice-deep);
+  flex-shrink: 0;
+}
+
+.author-avatar-initial {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.flight-row .author-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.contact-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.contact-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.75rem;
+  background: var(--rice-warm);
+  border: 1px solid var(--ink-line);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast);
+}
+
+.contact-chip:hover {
+  background: var(--seal-red-tint);
+}
+
+.contact-chip .contact-label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.contact-chip .contact-value {
+  color: var(--seal-red);
+  font-weight: 500;
+}
+
+/* Post form */
+.flight-listing-form-container {
+  background: #fff;
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--ink-line);
+  box-shadow: var(--shadow-card);
+  max-width: 700px;
+  margin: 0 auto var(--sp-2);
+}
+
+.flight-listing-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.flight-listing-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-2);
+}
+
+@media (min-width: 600px) {
+  .flight-listing-form .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.flight-listing-form .price-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.flight-listing-form .price-input-group .form-input {
+  flex: 1;
+}
+
+.flight-listing-form .price-input-group .form-select {
+  width: 110px;
+}
+
+.flight-listing-form .form-actions {
+  display: flex;
+  gap: var(--sp-1);
+  justify-content: flex-end;
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--ink-line);
+}
+
+/* "Post Your Flight" CTA in the header profile dropdown */
+.user-dropdown-item.user-dropdown-cta {
+  color: var(--seal-red);
+  font-weight: 600;
+}
+
+.user-dropdown-item.user-dropdown-cta:hover {
+  background: var(--seal-red-tint);
+}
+
+.user-dropdown-item.user-dropdown-cta svg {
+  color: var(--seal-red);
+}
+
+/* ===== Flight page heading ===== */
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--sp-2);
+}
+
+.page-subtitle {
+  color: var(--ink-faint);
+  font-size: 0.95rem;
+  margin: 0;
+}
