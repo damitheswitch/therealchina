@@ -65,30 +65,6 @@ export const ProfileView = ({ userId }) => {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (user) {
-      fetchProfileData()
-    } else {
-      setLoading(false)
-    }
-  }, [userId, user])
-
-  if (loading) {
-    return <div className="loading">Loading profile...</div>
-  }
-
-  if (!user) {
-    return (
-      <div className="empty-state">
-        <h3>Authentication Required</h3>
-        <p>Please sign in to view user profiles.</p>
-        <Link to="/" className="btn btn-primary mt-2">
-          <Icons.ArrowLeft /> Back to universities
-        </Link>
-      </div>
-    )
-  }
-
   const fetchProfileData = async () => {
     setLoading(true)
     try {
@@ -116,6 +92,30 @@ export const ProfileView = ({ userId }) => {
     } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    if (user) {
+      fetchProfileData()
+    } else {
+      setLoading(false)
+    }
+  }, [userId, user])
+
+  if (loading) {
+    return <div className="loading">Loading profile...</div>
+  }
+
+  if (!user) {
+    return (
+      <div className="empty-state">
+        <h3>Authentication Required</h3>
+        <p>Please sign in to view user profiles.</p>
+        <Link to="/" className="btn btn-primary mt-2">
+          <Icons.ArrowLeft /> Back to universities
+        </Link>
+      </div>
+    )
   }
 
   if (loading) {
