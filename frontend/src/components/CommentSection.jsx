@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { SealAvatar } from './SealAvatar'
 
 // CommentSection component
 export const CommentSection = ({ reviewId }) => {
@@ -89,7 +91,15 @@ export const CommentSection = ({ reviewId }) => {
         {topLevelComments.map((comment) => (
           <div key={comment.id} style={{ paddingLeft: 0 }}>
             <div style={{ padding: 'var(--sp-2)', background: 'var(--rice-warm)', borderRadius: 'var(--r-md)' }}>
-              <strong>{comment.profiles?.display_name || 'Anonymous'}</strong>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginBottom: 'var(--sp-1)' }}>
+                {comment.profiles?.display_name && (
+                  <Link to={`/profile/${comment.user_id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>
+                    <SealAvatar displayName={comment.profiles.display_name} size={20} />
+                    <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{comment.profiles.display_name}</strong>
+                  </Link>
+                )}
+                {!comment.profiles?.display_name && <strong>Anonymous</strong>}
+              </div>
               <p style={{ marginTop: 'var(--sp-1)' }}>{comment.text}</p>
               {user && !replyTo && (
                 <button
@@ -107,7 +117,15 @@ export const CommentSection = ({ reviewId }) => {
               <div style={{ paddingLeft: 'var(--sp-3)', marginTop: 'var(--sp-1)' }}>
                 {repliesByParent[comment.id].map((reply) => (
                   <div key={reply.id} style={{ padding: 'var(--sp-2)', background: '#fff', borderRadius: 'var(--r-md)', marginBottom: 'var(--sp-1)' }}>
-                    <strong>{reply.profiles?.display_name || 'Anonymous'}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginBottom: 'var(--sp-1)' }}>
+                      {reply.profiles?.display_name && (
+                        <Link to={`/profile/${reply.user_id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>
+                          <SealAvatar displayName={reply.profiles.display_name} size={20} />
+                          <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{reply.profiles.display_name}</strong>
+                        </Link>
+                      )}
+                      {!reply.profiles?.display_name && <strong>Anonymous</strong>}
+                    </div>
                     <p style={{ marginTop: 'var(--sp-1)' }}>{reply.text}</p>
                   </div>
                 ))}

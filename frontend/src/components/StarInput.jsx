@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import React from 'react'
 
 // StarInput component - interactive star rating input
 export const StarInput = ({ value, onChange }) => {
@@ -29,7 +30,7 @@ export const StarInput = ({ value, onChange }) => {
     <div className="star-input-wrap">
       <div className="star-input">
         {[5, 4, 3, 2, 1].map((rating) => (
-          <>
+          <React.Fragment key={rating}>
             <input
               key={`input-${rating}`}
               type="radio"
@@ -47,7 +48,7 @@ export const StarInput = ({ value, onChange }) => {
             >
               &#9733;
             </label>
-          </>
+          </React.Fragment>
         ))}
       </div>
       <div className="star-input-labels">{hoverLabel}</div>

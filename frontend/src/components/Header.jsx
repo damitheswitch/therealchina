@@ -4,11 +4,12 @@ import { Logo } from './Logo'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { AuthModal } from './AuthModal'
+import { UserDropdown } from './UserDropdown'
 
 // Header component
 export const Header = () => {
   const location = useLocation()
-  const { user, signOut, loading } = useAuth()
+  const { user, loading } = useAuth()
   const [authModalOpen, setAuthModalOpen] = useState(false)
 
   // Show the sign-in modal on the first load of the site (once per browser session)
@@ -38,6 +39,15 @@ export const Header = () => {
           >
             Universities
           </Link>
+          {user && (
+            <Link
+              to="/users"
+              className="nav-text-link"
+              style={{ color: isActive('/users') ? 'var(--seal-red)' : '' }}
+            >
+              <Icons.Users /> Users
+            </Link>
+          )}
           {user ? (
             <div className="nav-cta">
               <Link
@@ -47,9 +57,7 @@ export const Header = () => {
               >
                 <Icons.Pen /> Leave a Review
               </Link>
-              <button onClick={signOut} className="btn btn-outline">
-                Sign out
-              </button>
+              <UserDropdown />
             </div>
           ) : (
             <>

@@ -29,7 +29,7 @@ export const UpvoteButton = ({ reviewId }) => {
           .select('id')
           .eq('review_id', reviewId)
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         setUpvoted(!!data)
       }
