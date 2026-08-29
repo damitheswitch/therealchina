@@ -6,78 +6,116 @@ import { Icons } from '../components/Icons'
 
 // LandingPage component
 export const LandingPage = () => {
+  const pageSize = 20
   const [universities, setUniversities] = useState([])
-  const [stats, setStats] = useState([])
+  const [cities, setCities] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [cityFilter, setCityFilter] = useState('')
-  const [sortBy, setSortBy] = useState('name')
+  const [sortBy, setSortBy] = useState('reviews')
+  const [page, setPage] = useState(1)
+  const [pageCount, setPageCount] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchData()
+    fetchCities()
   }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [page, searchQuery, cityFilter, sortBy])
+
+  const fetchCities = async () => {
+    try {
+      const { data, error } = await supabase.from('universities').select('city')
+      if (error) throw error
+
+      const uniqueCities = [...new Set((data || []).map((u) => u.city))].sort()
+      setCities(uniqueCities)
+    } catch (error) {
+      console.error('Error fetching cities:', error)
+    }
+  }
 
   const fetchData = async () => {
     setLoading(true)
     try {
-      // Fetch universities
-      const { data: universitiesData, error: universitiesError } = await supabase
+      // Embed university_stats so sorting by rating/reviews happens in the DB,
+      // not in the browser on a single page of results.
+      let query = supabase
         .from('universities')
-        .select('*')
-        .order('name')
+        .select(
+          '*, university_stats(avg_rating, review_count, has_verified_review)',
+          { count: 'exact' }
+        )
+
+      if (searchQuery.trim()) {
+        const trimmed = searchQuery.trim()
+        query = query.or(
+          `name.ilike.%${trimmed}%,name_zh.ilike.%${trimmed}%,city.ilike.%${trimmed}%`
+        )
+      }
+
+      if (cityFilter) {
+        query = query.eq('city', cityFilter)
+      }
+
+      const start = (page - 1) * pageSize
+      const end = start + pageSize - 1
+
+      const sortConfig = {
+        name: { column: 'name', ascending: true },
+        rating: { column: 'university_stats(avg_rating)', ascending: false },
+        reviews: { column: 'university_stats(review_count)', ascending: false },
+      }
+      const { column, ascending } = sortConfig[sortBy] || sortConfig.reviews
+
+      const { data: universitiesData, error: universitiesError, count } = await query
+        .order(column, { ascending, nullsFirst: false })
+        .range(start, end)
 
       if (universitiesError) throw universitiesError
 
-      // Fetch stats
-      const { data: statsData, error: statsError } = await supabase
-        .from('university_stats')
-        .select('*')
+      const mappedUniversities = (universitiesData || []).map((u) => {
+        // university_stats may be null for universities with no reviews,
+        // or an object/array depending on how PostgREST returns the one-to-one join.
+        const rawStat = u.university_stats
+        const stat = Array.isArray(rawStat) ? rawStat[0] : rawStat
+        return {
+          ...u,
+          avg_rating: stat?.avg_rating || 0,
+          review_count: stat?.review_count || 0,
+          is_verified: stat?.has_verified_review || false,
+        }
+      })
 
-      if (statsError) throw statsError
-
-      setUniversities(universitiesData || [])
-      setStats(statsData || [])
+      setUniversities(mappedUniversities)
+      setTotalCount(count || 0)
+      setPageCount(Math.max(1, Math.ceil((count || 0) / pageSize)))
     } catch (error) {
       console.error('Error fetching data:', error)
+      setUniversities([])
+      setTotalCount(0)
+      setPageCount(1)
     } finally {
       setLoading(false)
     }
   }
 
-  // Get unique cities for filter
-  const cities = [...new Set(universities.map((u) => u.city))].sort()
+  const handleSearchChange = (value) => {
+    setPage(1)
+    setSearchQuery(value)
+  }
 
-  // Filter and sort universities
-  const filteredUniversities = universities
-    .filter((u) => {
-      const matchesSearch =
-        !searchQuery ||
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.name_zh?.includes(searchQuery) ||
-        u.city.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleCityChange = (value) => {
+    setPage(1)
+    setCityFilter(value)
+  }
 
-      const matchesCity = !cityFilter || u.city === cityFilter
-
-      return matchesSearch && matchesCity
-    })
-    .map((u) => {
-      const stat = stats.find((s) => s.university_id === u.id)
-      return {
-        ...u,
-        avg_rating: stat?.avg_rating || 0,
-        review_count: stat?.review_count || 0,
-        is_verified: stat?.has_verified_review || false,
-      }
-    })
-    .sort((a, b) => {
-      if (sortBy === 'rating') {
-        return b.avg_rating - a.avg_rating
-      } else if (sortBy === 'reviews') {
-        return b.review_count - a.review_count
-      } else {
-        return a.name.localeCompare(b.name)
-      }
-    })
+  const handleSortChange = (value) => {
+    setPage(1)
+    setSortBy(value)
+  }
 
   return (
     <>
@@ -107,13 +145,13 @@ export const LandingPage = () => {
               className="search-input"
               placeholder="Search by university name or city..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
             <select
               id="uni-city-filter"
               className="filter-select"
               value={cityFilter}
-              onChange={(e) => setCityFilter(e.target.value)}
+              onChange={(e) => handleCityChange(e.target.value)}
             >
               <option value="">All cities</option>
               {cities.map((city) => (
@@ -126,7 +164,7 @@ export const LandingPage = () => {
               id="uni-sort"
               className="filter-select"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => handleSortChange(e.target.value)}
             >
               <option value="name">Sort: Name (A-Z)</option>
               <option value="rating">Sort: Highest rated</option>
@@ -138,17 +176,41 @@ export const LandingPage = () => {
             <div className="empty-state">
               <p>Loading universities...</p>
             </div>
-          ) : filteredUniversities.length === 0 ? (
+          ) : universities.length === 0 ? (
             <div className="empty-state">
               <h3>No universities found</h3>
               <p>Try a different search term or filter.</p>
             </div>
           ) : (
-            <div className="uni-grid">
-              {filteredUniversities.map((university) => (
-                <UniversityCard key={university.id} university={university} />
-              ))}
-            </div>
+            <>
+              <div className="uni-grid">
+                {universities.map((university) => (
+                  <UniversityCard key={university.id} university={university} />
+                ))}
+              </div>
+
+              <div className="pagination-row" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--sp-2)', marginTop: 'var(--sp-4)' }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={page <= 1 || loading}
+                >
+                  Previous
+                </button>
+                <span className="muted">
+                  Page {page} of {pageCount} · {totalCount} results
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+                  disabled={page >= pageCount || loading}
+                >
+                  Next
+                </button>
+              </div>
+            </>
           )}
         </div>
       </section>

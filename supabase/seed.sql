@@ -79,12 +79,14 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- ============================================
--- 3. REFRESH MATERIALIZED VIEW
+-- 3. NOTES
 -- ============================================
+-- university_stats is maintained by database triggers on reviews.
+-- No refresh step is required after seeding.
+--
 -- Upvotes are not seeded because they require real auth.users records
 -- (user_id FK is NOT NULL). Upvotes will be created during testing by
 -- authenticated users via the toggle_upvote RPC.
-REFRESH MATERIALIZED VIEW university_stats;
 
 -- ============================================
 -- COMPLETED

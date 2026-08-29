@@ -7,11 +7,19 @@ const matchesQuery = (university, query) => {
     .split(/\s+/)
     .filter(Boolean)
   if (!queryWords.length) return false
-  const nameWords = university.toLowerCase().split(/\s+/)
-  return queryWords.every((qw) => nameWords.some((nw) => nw.startsWith(qw)))
+  const words = `${university.name} ${university.city}`.toLowerCase().split(/\s+/)
+  return queryWords.every((qw) => words.some((w) => w.startsWith(qw)))
 }
 
-export const UniversityAutocomplete = ({ id, value, onChange, placeholder }) => {
+export const UniversityAutocomplete = ({
+  id,
+  value,
+  onChange,
+  onSelect,
+  onNotListed,
+  allowNotListed = false,
+  placeholder,
+}) => {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [listStyle, setListStyle] = useState(null)
@@ -19,33 +27,56 @@ export const UniversityAutocomplete = ({ id, value, onChange, placeholder }) => 
   const [loading, setLoading] = useState(false)
   const inputRef = useRef(null)
   const blurTimer = useRef(null)
+  const searchTimer = useRef(null)
 
-  const suggestions = value.trim() 
-    ? universities.filter(u => matchesQuery(u.name, value)).slice(0, 6)
+  const suggestions = value.trim()
+    ? universities.filter((u) => matchesQuery(u.name, value)).slice(0, 6)
     : []
-  const exactMatch = value.trim() && universities.some(u => u.name.toLowerCase() === value.trim().toLowerCase())
-  const showList = focused && suggestions.length > 0 && !exactMatch
+  const exactMatch = value.trim()
+    ? universities.some((u) => u.name.toLowerCase() === value.trim().toLowerCase())
+    : false
+  const showNotListed = allowNotListed && value.trim() && !exactMatch
+  const showList = focused && (suggestions.length > 0 || showNotListed) && !exactMatch
 
+  // Fetch matching universities as the user types, not on mount.
   useEffect(() => {
-    fetchUniversities()
-  }, [])
+    if (searchTimer.current) clearTimeout(searchTimer.current)
 
-  const fetchUniversities = async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('universities')
-        .select('name, city, slug')
-        .order('name')
-
-      if (error) throw error
-      setUniversities(data || [])
-    } catch (error) {
-      console.error('Error fetching universities:', error)
-    } finally {
-      setLoading(false)
+    const trimmed = value.trim()
+    if (!trimmed) {
+      setUniversities([])
+      return
     }
-  }
+
+    searchTimer.current = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const words = trimmed.split(/\s+/).filter(Boolean)
+        // Match any word against name or city, then refine client-side.
+        const conditions = words
+          .map((w) => `name.ilike.%${w}%,city.ilike.%${w}%`)
+          .join(',')
+
+        const { data, error } = await supabase
+          .from('universities')
+          .select('name, city, slug')
+          .or(conditions)
+          .order('name')
+          .limit(50)
+
+        if (error) throw error
+        setUniversities(data || [])
+      } catch (error) {
+        console.error('Error fetching universities:', error)
+      } finally {
+        setLoading(false)
+      }
+    }, 150)
+
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    }
+  }, [value])
 
   useEffect(() => {
     if (!showList) {
@@ -74,21 +105,56 @@ export const UniversityAutocomplete = ({ id, value, onChange, placeholder }) => 
 
   const select = (university) => {
     onChange(university.name)
+    if (onSelect) onSelect(university)
     setFocused(false)
     setHighlightedIndex(-1)
   }
 
+  const handleNotListed = () => {
+    if (onNotListed) {
+      onNotListed()
+    } else {
+      onChange('__not_listed')
+    }
+    setFocused(false)
+    setHighlightedIndex(-1)
+  }
+
+  const selectExactMatchIfAny = () => {
+    const match = universities.find(
+      (u) => u.name.toLowerCase() === value.trim().toLowerCase()
+    )
+    if (match && onSelect) {
+      onSelect(match)
+    }
+  }
+
   const handleKeyDown = (e) => {
-    if (!showList) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlightedIndex((i) => (i + 1) % suggestions.length)
+      if (!showList) {
+        setFocused(true)
+        setHighlightedIndex(0)
+      } else {
+        const total = suggestions.length + (showNotListed ? 1 : 0)
+        setHighlightedIndex((i) => (i + 1) % total)
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setHighlightedIndex((i) => i <= 0 ? suggestions.length - 1 : i - 1)
-    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+      if (!showList) return
+      const total = suggestions.length + (showNotListed ? 1 : 0)
+      setHighlightedIndex((i) => (i <= 0 ? total - 1 : i - 1))
+    } else if (e.key === 'Enter') {
       e.preventDefault()
-      select(suggestions[highlightedIndex])
+      if (showList && highlightedIndex >= 0) {
+        if (highlightedIndex < suggestions.length) {
+          select(suggestions[highlightedIndex])
+        } else {
+          handleNotListed()
+        }
+      } else {
+        selectExactMatchIfAny()
+      }
     } else if (e.key === 'Escape') {
       setFocused(false)
       setHighlightedIndex(-1)
@@ -96,7 +162,10 @@ export const UniversityAutocomplete = ({ id, value, onChange, placeholder }) => 
   }
 
   const handleBlur = () => {
-    blurTimer.current = setTimeout(() => setFocused(false), 120)
+    blurTimer.current = setTimeout(() => {
+      setFocused(false)
+      selectExactMatchIfAny()
+    }, 120)
   }
 
   const handleFocus = () => {
@@ -145,18 +214,24 @@ export const UniversityAutocomplete = ({ id, value, onChange, placeholder }) => 
               {uni.name} — {uni.city}
             </li>
           ))}
-          <li
-            role="option"
-            className="autocomplete-option not-listed-option"
-            onMouseDown={(e) => {
-              e.preventDefault()
-              onChange('__not_listed')
-              setFocused(false)
-            }}
-            onMouseEnter={() => setHighlightedIndex(-1)}
-          >
-            I can't find my university...
-          </li>
+          {showNotListed && (
+            <li
+              role="option"
+              className={`autocomplete-option not-listed-option ${
+                highlightedIndex === suggestions.length ? 'highlighted' : ''
+              }`}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                handleNotListed()
+              }}
+              onMouseEnter={() => setHighlightedIndex(suggestions.length)}
+            >
+              I can't find my university...
+            </li>
+          )}
+          {loading && suggestions.length === 0 && (
+            <li className="autocomplete-option muted">Loading...</li>
+          )}
         </ul>
       )}
     </div>

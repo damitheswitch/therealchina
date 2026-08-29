@@ -84,7 +84,7 @@ The app will open at **http://localhost:5173**
 ✅ **One-level comment nesting** — replies allowed, replies-to-replies blocked by DB trigger  
 ✅ **University search & filter** — search by name/city, filter by city, sort by rating/reviews  
 ✅ **User accounts** — email/password registration & login via Supabase Auth  
-✅ **Materialized stats view** — fast landing page loads (no live AVG() queries)  
+✅ **Precomputed stats table** — landing page reads fast without expensive live aggregates  
 ✅ **Row Level Security** — all permissions enforced at the database level
 
 ---
@@ -106,7 +106,7 @@ The app will open at **http://localhost:5173**
 
 **Special Features:**
 - `toggle_upvote(review_id)` RPC — atomic upvote toggle (no race conditions)
-- `university_stats` materialized view — pre-computed avg_rating, review_count
+- `university_stats` table — pre-computed avg_rating, review_count maintained by triggers
 - `enforce_comment_nesting` trigger — blocks replies to replies
 - `handle_new_user` trigger — auto-creates profile row on signup
 
@@ -154,7 +154,7 @@ After setup, verify these work:
 
 **Landing page shows no universities:**
 - Run the seed.sql file in Supabase SQL Editor
-- Refresh the materialized view: `REFRESH MATERIALIZED VIEW university_stats;`
+- No materialized view refresh is needed; `university_stats` is updated by database triggers
 
 **Can't comment/upvote:**
 - Check that you're logged in (sign up/login via the header)

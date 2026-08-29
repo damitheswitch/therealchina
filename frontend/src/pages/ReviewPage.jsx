@@ -7,6 +7,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { ProgramAutocomplete } from '../components/ProgramAutocomplete'
+import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { MediaUploader } from '../components/MediaUploader'
 
 // ReviewPage component
@@ -16,10 +17,10 @@ export const ReviewPage = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
 
-  const [universities, setUniversities] = useState([])
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
   const [selectedUni, setSelectedUni] = useState(searchParams.get('uni') || '')
+  const [selectedUniName, setSelectedUniName] = useState('')
   const [showNotListed, setShowNotListed] = useState(false)
   const [newUniName, setNewUniName] = useState('')
   const [newUniCity, setNewUniCity] = useState('')
@@ -30,22 +31,48 @@ export const ReviewPage = () => {
   const [mediaState, setMediaState] = useState({ media: [], uploading: false, errorCount: 0 })
   const [loading, setLoading] = useState(false)
 
+  // Pre-fill the university name when arriving with ?uni=<slug>
   useEffect(() => {
-    fetchUniversities()
-  }, [])
+    const slug = searchParams.get('uni')
+    if (!slug) return
 
-  const fetchUniversities = async () => {
-    const { data, error } = await supabase
-      .from('universities')
-      .select('*')
-      .order('name')
+    const loadUniversity = async () => {
+      const { data, error } = await supabase
+        .from('universities')
+        .select('name, slug')
+        .eq('slug', slug)
+        .single()
 
-    if (error) {
-      console.error('Error fetching universities:', error)
-      return
+      if (error) {
+        console.error('Error loading university:', error)
+        return
+      }
+
+      if (data) {
+        setSelectedUni(data.slug)
+        setSelectedUniName(data.name)
+      }
     }
 
-    setUniversities(data || [])
+    loadUniversity()
+  }, [searchParams])
+
+  const handleUniversityChange = (value) => {
+    setSelectedUniName(value)
+    setSelectedUni('')
+    setShowNotListed(false)
+  }
+
+  const handleUniversitySelect = (university) => {
+    setSelectedUniName(university.name)
+    setSelectedUni(university.slug)
+    setShowNotListed(false)
+  }
+
+  const handleNotListed = () => {
+    setSelectedUniName("My university isn't listed")
+    setSelectedUni('__not_listed')
+    setShowNotListed(true)
   }
 
   const handleSubmit = async (e) => {
@@ -80,6 +107,7 @@ export const ReviewPage = () => {
 
     try {
       let universityId = null
+      let redirectSlug = selectedUni
 
       // Handle "not listed" university creation
       if (selectedUni === '__not_listed') {
@@ -108,9 +136,39 @@ export const ReviewPage = () => {
 
         if (uniError) throw uniError
         universityId = newUni.id
+        redirectSlug = null // Original behavior: new universities redirect home
       } else if (selectedUni) {
-        const uni = universities.find((u) => u.slug === selectedUni)
-        universityId = uni?.id
+        const { data: uni, error: uniError } = await supabase
+          .from('universities')
+          .select('id, slug')
+          .eq('slug', selectedUni)
+          .single()
+
+        if (uniError) throw uniError
+        universityId = uni.id
+      } else if (selectedUniName.trim()) {
+        // User typed a name without selecting from the list; try to resolve it.
+        const { data: uni, error: uniError } = await supabase
+          .from('universities')
+          .select('id, slug')
+          .ilike('name', selectedUniName.trim())
+          .single()
+
+        if (uniError) {
+          if (uniError.code !== 'PGRST116') throw uniError
+          showToast('Please select a university from the list', 'error')
+          setLoading(false)
+          return
+        }
+
+        universityId = uni.id
+        redirectSlug = uni.slug
+      }
+
+      if (!universityId) {
+        showToast('Please select a university', 'error')
+        setLoading(false)
+        return
       }
 
       // Media has already been uploaded while the user filled out the form.
@@ -130,8 +188,8 @@ export const ReviewPage = () => {
 
       // Redirect to university page or home
       setTimeout(() => {
-        if (universityId && selectedUni !== '__not_listed') {
-          navigate(`/university/${selectedUni}`)
+        if (universityId && redirectSlug) {
+          navigate(`/university/${redirectSlug}`)
         } else {
           navigate('/')
         }
@@ -169,23 +227,15 @@ export const ReviewPage = () => {
             <label className="form-label" htmlFor="uni-select">
               University
             </label>
-            <select
+            <UniversityAutocomplete
               id="uni-select"
-              className="form-select"
-              value={selectedUni}
-              onChange={(e) => {
-                setSelectedUni(e.target.value)
-                setShowNotListed(e.target.value === '__not_listed')
-              }}
-            >
-              <option value="">Select a university...</option>
-              {universities.map((u) => (
-                <option key={u.id} value={u.slug}>
-                  {u.name} — {u.city}
-                </option>
-              ))}
-              <option value="__not_listed">My university isn't listed</option>
-            </select>
+              value={selectedUniName}
+              placeholder="Start typing a university..."
+              onChange={handleUniversityChange}
+              onSelect={handleUniversitySelect}
+              onNotListed={handleNotListed}
+              allowNotListed={true}
+            />
           </div>
 
           {/* Inline fields for unlisted university */}
