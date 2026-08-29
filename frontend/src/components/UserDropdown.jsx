@@ -8,7 +8,21 @@ import { useAuth } from '../contexts/AuthContext'
 export const UserDropdown = () => {
   const { user, signOut, loading } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState(null)
   const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault()
+      setInstallPrompt(event)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -34,6 +48,15 @@ export const UserDropdown = () => {
     } catch (error) {
       console.error('Sign out error:', error)
     }
+  }
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+
+    setIsOpen(false)
+    installPrompt.prompt()
+    await installPrompt.userChoice
+    setInstallPrompt(null)
   }
 
   if (loading || !user) return null
@@ -99,6 +122,13 @@ export const UserDropdown = () => {
               <Icons.Users />
               <span>User Directory</span>
             </Link>
+
+            {installPrompt && (
+              <button className="user-dropdown-item" onClick={handleInstall}>
+                <Icons.Download />
+                <span>Install app</span>
+              </button>
+            )}
 
             <div className="user-dropdown-divider" />
 

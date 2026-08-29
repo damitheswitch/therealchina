@@ -37,7 +37,7 @@ export const Header = () => {
             className="nav-text-link"
             style={{ color: isActive('/') ? 'var(--seal-red)' : '' }}
           >
-            Universities
+            <Icons.Book /> Universities
           </Link>
           <Link
             to="/flights"

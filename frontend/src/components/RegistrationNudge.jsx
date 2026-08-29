@@ -7,6 +7,20 @@ export const RegistrationNudge = () => {
   const { user, loading } = useAuth()
   const [visible, setVisible] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState(null)
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault()
+      setInstallPrompt(event)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
+  }, [])
 
   useEffect(() => {
     // Wait for the session to load and never nudge signed-in users
@@ -34,10 +48,18 @@ export const RegistrationNudge = () => {
   }
 
   const handleSignUp = () => {
-    // Dismiss the nudge and open the auth modal on the Register tab
     setVisible(false)
     sessionStorage.setItem('trc_nudge_shown', 'true')
     setAuthModalOpen(true)
+  }
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    setVisible(false)
+    sessionStorage.setItem('trc_nudge_shown', 'true')
+    installPrompt.prompt()
+    await installPrompt.userChoice
+    setInstallPrompt(null)
   }
 
   return (
@@ -59,7 +81,7 @@ export const RegistrationNudge = () => {
         >
           <button
             onClick={handleDismiss}
-            aria-label="Dismiss sign up reminder"
+            aria-label="Dismiss reminder"
             style={{
               position: 'absolute',
               top: 'var(--sp-1)',
@@ -74,16 +96,20 @@ export const RegistrationNudge = () => {
           >
             ×
           </button>
-          <h4 style={{ marginBottom: 'var(--sp-1)' }}>Create a free account</h4>
+          <h4 style={{ marginBottom: 'var(--sp-1)' }}>
+            {installPrompt ? 'Add The Real China to your home screen' : 'Create a free account'}
+          </h4>
           <p style={{ marginBottom: 'var(--sp-2)', fontSize: '0.9rem' }}>
-            Sign up to upvote reviews, leave comments, and connect with other students
+            {installPrompt
+              ? 'Get a faster, app-like experience and keep access to reviews on the go.'
+              : 'Sign up to upvote reviews, leave comments, and connect with other students'}
           </p>
           <button
-            onClick={handleSignUp}
+            onClick={installPrompt ? handleInstall : handleSignUp}
             className="btn btn-outline"
             style={{ color: '#fff', borderColor: '#fff' }}
           >
-            Sign Up
+            {installPrompt ? 'Install App' : 'Sign Up'}
           </button>
         </div>
       )}

@@ -67,7 +67,7 @@ export function renderHeader(currentPath) {
         <span class="logo-text">The Real <span class="accent">China</span></span>
       </a>
       <nav class="nav-links">
-        <a href="#/" class="nav-text-link" style="${isActive('/')}">Universities</a>
+        <a href="#/" class="nav-text-link" style="${isActive('/')}">${icons.book} Universities</a>
         <a href="#/review" class="btn btn-primary" style="${isActive('/review') ? 'background: var(--seal-red-dark);' : ''}">
           ${icons.pen} Leave a Review
         </a>

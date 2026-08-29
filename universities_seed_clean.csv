@@ -1,0 +1,583 @@
+name,name_zh,city,slug,logo_url,is_verified
+Tsinghua University,清华大学,Beijing,tsinghua,https://www.shanghairanking.cn/_uni/logo/27532357.png,false
+Peking University,北京大学,Beijing,peking,https://www.shanghairanking.cn/_uni/logo/86350223.png,false
+Zhejiang University,浙江大学,Hangzhou,zhejiang,https://www.shanghairanking.cn/_uni/logo/88311656.png,false
+Shanghai Jiao Tong University,上海交通大学,Shanghai,sjtu,https://www.shanghairanking.cn/_uni/logo/27403919.png,false
+Nanjing University,南京大学,Nanjing,nju,https://www.shanghairanking.cn/_uni/logo/44696062.png,false
+Fudan University,复旦大学,Shanghai,fudan,https://www.shanghairanking.cn/_uni/logo/28312850.png,false
+University of Science and Technology of China,中国科学技术大学,Hefei,ustc,https://www.shanghairanking.cn/_uni/logo/50132214.png,false
+Huazhong University of Science and Technology,华中科技大学,Wuhan,hust,https://www.shanghairanking.cn/_uni/logo/69664504.png,false
+Wuhan University,武汉大学,Wuhan,wuhan,https://www.shanghairanking.cn/_uni/logo/46182017.png,false
+Xi'an Jiaotong University,西安交通大学,Xi'an,xjtu,https://www.shanghairanking.cn/_uni/logo/77584005.png,false
+Harbin Institute of Technology,哈尔滨工业大学,Harbin,hit,https://www.shanghairanking.cn/_uni/logo/88331082.png,false
+Sun Yat-Sen University,中山大学,Guangzhou,sysu,https://www.shanghairanking.cn/_uni/logo/46293852.png,false
+Beijing Normal University,北京师范大学,Beijing,bnu,https://www.shanghairanking.cn/_uni/logo/38816505.png,false
+Sichuan University,四川大学,Chengdu,scu,https://www.shanghairanking.cn/_uni/logo/75651370.png,false
+Beihang University,北京航空航天大学,Beijing,buaa,https://www.shanghairanking.cn/_uni/logo/22403670.png,false
+Tongji University,同济大学,Shanghai,tongji,https://www.shanghairanking.cn/_uni/logo/39174907.png,false
+Southeast University,东南大学,Nanjing,seu,https://www.shanghairanking.cn/_uni/logo/82819451.png,false
+Renmin University of China,中国人民大学,Beijing,ruc,https://www.shanghairanking.cn/_uni/logo/88617939.png,false
+Beijing Institute of Technology,北京理工大学,Beijing,bit,https://www.shanghairanking.cn/_uni/logo/85386135.png,false
+Nankai University,南开大学,Tianjin,nankai,https://www.shanghairanking.cn/_uni/logo/44629152.png,false
+Shandong University,山东大学,Jinan,shandong,https://www.shanghairanking.cn/_uni/logo/97189370.png,false
+Tianjin University,天津大学,Tianjin,tju,https://www.shanghairanking.cn/_uni/logo/74813674.png,false
+Central South University,中南大学,Changsha,csu,https://www.shanghairanking.cn/_uni/logo/65984093.png,false
+Jilin University,吉林大学,Changchun,jlu,https://www.shanghairanking.cn/_uni/logo/76557044.png,false
+Northwestern Polytechnical University,西北工业大学,Xi'an,nwpu,https://www.shanghairanking.cn/_uni/logo/20384817.png,false
+Xiamen University,厦门大学,Xiamen,xmu,https://www.shanghairanking.cn/_uni/logo/14008229.png,false
+South China University of Technology,华南理工大学,Guangzhou,scut,https://www.shanghairanking.cn/_uni/logo/69348939.png,false
+Dalian University of Technology,大连理工大学,Dalian,dlut,https://www.shanghairanking.cn/_uni/logo/54289554.png,false
+East China Normal University,华东师范大学,Shanghai,ecnu,https://www.shanghairanking.cn/_uni/logo/47430452.png,false
+China Agricultural University,中国农业大学,Beijing,cau,https://www.shanghairanking.cn/_uni/logo/48410070.png,false
+University of Electronic Science and Technology of China,电子科技大学,Chengdu,uestc,https://www.shanghairanking.cn/_uni/logo/55538407.png,false
+Hunan University,湖南大学,Changsha,hnu,https://www.shanghairanking.cn/_uni/logo/79015808.png,false
+University of Science and Technology Beijing,北京科技大学,Beijing,ustb,https://www.shanghairanking.cn/_uni/logo/96310183.png,false
+Chongqing University,重庆大学,Chongqing,cqu,https://www.shanghairanking.cn/_uni/logo/79822387.png,false
+Nanjing University of Aeronautics and Astronautics,南京航空航天大学,Nanjing,nuaa,https://www.shanghairanking.cn/_uni/logo-jpg/4506696400.jpg,false
+Northeastern University,东北大学,Shenyang,neu,https://www.shanghairanking.cn/_uni/logo/79513869.png,false
+Nanjing University of Science and Technology,南京理工大学,Nanjing,njust,https://www.shanghairanking.cn/_uni/logo/38974419.png,false
+Xidian University,西安电子科技大学,Xi'an,xidian,https://www.shanghairanking.cn/_uni/logo/88267454.png,false
+Lanzhou University,兰州大学,Lanzhou,lzu,https://www.shanghairanking.cn/_uni/logo/84317715.png,false
+Beijing jiaotong University,北京交通大学,Beijing,beijing-jiaotong,https://www.shanghairanking.cn/_uni/logo/60987143.png,false
+Southern University of Science and Technology,南方科技大学,Shenzhen,sustech,https://www.shanghairanking.cn/_uni/logo/22950445.png,false
+Huazhong Agricultural University,华中农业大学,Wuhan,hzau,https://www.shanghairanking.cn/_uni/logo/20950268.png,false
+Shanghai University,上海大学,Shanghai,shu,https://www.shanghairanking.cn/_uni/logo/94139385.png,false
+Soochow University (China),苏州大学,Jiangsu,soochow,https://www.shanghairanking.cn/_uni/logo/44374737.png,false
+East China University of Science and Technology,华东理工大学,Shanghai,ecust,https://www.shanghairanking.cn/_uni/logo/93042584.png,false
+Central China Normal University,华中师范大学,Wuhan,ccnu,https://www.shanghairanking.cn/_uni/logo/58510682.png,false
+Nanjing Normal University,南京师范大学,Jiangsu,nanjing,https://www.shanghairanking.cn/_uni/logo/27072054.png,false
+China University of Geosciences (Wuhan),中国地质大学（武汉）,Hubei,geosciences-wuhan,https://www.shanghairanking.cn/_uni/logo/25952542.png,false
+Northeast Normal University,东北师范大学,Jilin,northeast,https://www.shanghairanking.cn/_uni/logo/12611652.png,false
+Harbin Engineering University,哈尔滨工程大学,Harbin,heu,https://www.shanghairanking.cn/_uni/logo/86980791.png,false
+Southwest Jiaotong University,西南交通大学,Chengdu,swjtu,https://www.shanghairanking.cn/_uni/logo/29218271.png,false
+Nanjing Agricultural University,南京农业大学,Jiangsu,nanjing-2,https://www.shanghairanking.cn/_uni/logo/43891811.png,false
+Zhengzhou University,郑州大学,Henan,zhengzhou,https://www.shanghairanking.cn/_uni/logo/68963418.png,false
+Beijing University of Posts and Telecommunications,北京邮电大学,Beijing,beijing,https://www.shanghairanking.cn/_uni/logo/15344334.png,false
+Wuhan University of Technology,武汉理工大学,Hubei,wuhan-2,https://www.shanghairanking.cn/_uni/logo/16563358.png,false
+Ocean University of China,中国海洋大学,Shandong,ocean,https://www.shanghairanking.cn/_uni/logo/53553512.png,false
+Jinan University,暨南大学,Guangdong,jinan,https://www.shanghairanking.cn/_uni/logo/78175531.png,false
+China University of Petroleum - Beijing,中国石油大学（北京）,Beijing,beijing-2,https://www.shanghairanking.cn/_uni/logo-jpg/6662428200.jpg,false
+Beijing University of Technology,北京工业大学,Beijing,beijing-3,https://www.shanghairanking.cn/_uni/logo/10211810.png,false
+Hohai University,河海大学,Jiangsu,hohai,https://www.shanghairanking.cn/_uni/logo/76817036.png,false
+China University of Mining and Technology - Xuzhou,中国矿业大学,Jiangsu,mining-xuzhou,https://www.shanghairanking.cn/_uni/logo/15914272.png,false
+Beijing University of Chemical Technology,北京化工大学,Beijing,beijing-chemical,https://www.shanghairanking.cn/_uni/logo/46052210.png,false
+China University of Geosciences (Beijing),中国地质大学（北京）,Beijing,geosciences-beijing,https://www.shanghairanking.cn/_uni/logo/21004246.png,false
+Northwest University,西北大学,Shaanxi,northwest,https://www.shanghairanking.cn/_uni/logo/15797720.png,false
+Jiangnan University,江南大学,Jiangsu,jiangnan,https://www.shanghairanking.cn/_uni/logo/92884896.png,false
+ShanghaiTech University,上海科技大学,Shanghai,shanghaitech,https://www.shanghairanking.cn/_uni/logo/46886554.png,false
+China University of Petroleum (Huadong),中国石油大学（华东）,Shandong,huadong,https://www.shanghairanking.cn/_uni/logo/92620812.png,false
+Southwest University,西南大学,Chongqing,southwest,https://www.shanghairanking.cn/_uni/logo/68012227.png,false
+China University of Mining and Technology - Beijing,中国矿业大学（北京）,Beijing,mining-beijing,https://www.shanghairanking.cn/_uni/logo/61910568.png,false
+Shenzhen University,深圳大学,Shenzhen,shenzhen,https://www.shanghairanking.cn/_uni/logo/88823168.png,false
+Shaanxi Normal University,陕西师范大学,Xi'an,snnu,https://www.shanghairanking.cn/_uni/logo/22611416.png,false
+Jiangsu University,江苏大学,Zhenjiang,jiangsu,https://www.shanghairanking.cn/_uni/logo/28154997.png,false
+Zhejiang University of Technology,浙江工业大学,Hangzhou,zjut,https://www.shanghairanking.cn/_uni/logo/19897860.png,false
+Beijing Forestry University,北京林业大学,Beijing,bjfu,https://www.shanghairanking.cn/_uni/logo/43861010.png,false
+South China Normal University,华南师范大学,Guangzhou,scnu,https://www.shanghairanking.cn/_uni/logo/47317168.png,false
+Northwest A&amp;F University,西北农林科技大学,Shaanxi,northwest-f,https://www.shanghairanking.cn/_uni/logo/25536937.png,false
+Yangzhou University,扬州大学,Jiangsu,yangzhou,https://www.shanghairanking.cn/_uni/logo/61656418.png,false
+Nanchang University,南昌大学,Jiangxi,nanchang,https://www.shanghairanking.cn/_uni/logo/25119833.png,false
+Fuzhou University,福州大学,Fujian,fuzhou,https://www.shanghairanking.cn/_uni/logo/77372849.png,false
+North China Electric Power University,华北电力大学,Beijing,electric-power,https://www.shanghairanking.cn/_uni/logo/13312897.png,false
+Donghua University,东华大学,Shanghai,donghua,https://www.shanghairanking.cn/_uni/logo/41255312.png,false
+Hefei University of Technology,合肥工业大学,Anhui,hefei,https://www.shanghairanking.cn/_uni/logo/55155531.png,false
+Yunnan University,云南大学,Yunnan,yunnan,https://www.shanghairanking.cn/_uni/logo/31586909.png,false
+Ningbo University,宁波大学,Zhejiang,ningbo,https://www.shanghairanking.cn/_uni/logo/83052172.png,false
+Capital Normal University,首都师范大学,Beijing,capital,https://www.shanghairanking.cn/_uni/logo/66860048.png,false
+Hunan Normal University,湖南师范大学,Hunan,hunan,https://www.shanghairanking.cn/_uni/logo/60718001.png,false
+Nanjing Tech University,南京工业大学,Jiangsu,nanjing-tech,https://www.shanghairanking.cn/_uni/logo/18208126.png,false
+Chang'an University,长安大学,Shaanxi,chang,https://www.shanghairanking.cn/_uni/logo/22876250.png,false
+Fujian Normal University,福建师范大学,Fujian,fujian,https://www.shanghairanking.cn/_uni/logo/63841113.png,false
+Anhui University,安徽大学,Anhui,anhui,https://www.shanghairanking.cn/_uni/logo/13378567.png,false
+Nanjing University of Information Science &amp; Technology,南京信息工程大学,Jiangsu,nanjing-3,https://www.shanghairanking.cn/_uni/logo/59759082.png,false
+University of Shanghai for Science and Technology,上海理工大学,Shanghai,shanghai,https://www.shanghairanking.cn/_uni/logo/13304999.png,false
+South China Agricultural University,华南农业大学,Guangdong,south-china-agricultural-university,https://www.shanghairanking.cn/_uni/logo/90236014.png,false
+Guangxi University,广西大学,Guangxi,guangxi,https://www.shanghairanking.cn/_uni/logo/22864185.png,false
+Nanjing University of Posts and Telecommunications,南京邮电大学,Jiangsu,nanjing-4,https://www.shanghairanking.cn/_uni/logo/19754745.png,false
+Yanshan University,燕山大学,Hebei,yanshan,https://www.shanghairanking.cn/_uni/logo/79375733.png,false
+Henan University,河南大学,Henan,henan,https://www.shanghairanking.cn/_uni/logo/80055117.png,false
+Hubei University,湖北大学,Hubei,hubei,https://www.shanghairanking.cn/_uni/logo/88139185.png,false
+Guangzhou University,广州大学,Guangdong,guangzhou,https://www.shanghairanking.cn/_uni/logo/65301006.png,false
+Qingdao University,青岛大学,Shandong,qingdao,https://www.shanghairanking.cn/_uni/logo/17947921.png,false
+Xiangtan University,湘潭大学,Hunan,xiangtan,https://www.shanghairanking.cn/_uni/logo/94973363.png,false
+Guangdong University of Technology,广东工业大学,Guangdong,guangdong,https://www.shanghairanking.cn/_uni/logo/47705257.png,false
+Zhejiang Normal University,浙江师范大学,Zhejiang,zhejiang-2,https://www.shanghairanking.cn/_uni/logo/34648327.png,false
+Dalian Maritime University,大连海事大学,Liaoning,dalian-maritime,https://www.shanghairanking.cn/_uni/logo/30113036.png,false
+Shanghai Normal University,上海师范大学,Shanghai,shanghai-2,https://www.shanghairanking.cn/_uni/logo/69056215.png,false
+Hangzhou Dianzi University,杭州电子科技大学,Zhejiang,hangzhou-dianzi,https://www.shanghairanking.cn/_uni/logo/47982726.png,false
+Wuhan University of Science and Technology,武汉科技大学,Hubei,wuhan-3,https://www.shanghairanking.cn/_uni/logo/80614446.png,false
+Nanjing Forestry University,南京林业大学,Jiangsu,nanjing-forestry,https://www.shanghairanking.cn/_uni/logo/34561912.png,false
+Hebei University of Technology,河北工业大学,Tianjin,hebei,https://www.shanghairanking.cn/_uni/logo/23684464.png,false
+Shandong Normal University,山东师范大学,Shandong,shandong-2,https://www.shanghairanking.cn/_uni/logo/91702072.png,false
+Zhejiang Sci-Tech University,浙江理工大学,Zhejiang,zhejiang-sci-tech,https://www.shanghairanking.cn/_uni/logo/16934191.png,false
+Shanxi University,山西大学,Shanxi,shanxi,https://www.shanghairanking.cn/_uni/logo/45548865.png,false
+Taiyuan University of Technology,太原理工大学,Shanxi,taiyuan,https://www.shanghairanking.cn/_uni/logo/32584796.png,false
+Northeast Forestry University - China,东北林业大学,Heilongjiang,northeast-forestry,https://www.shanghairanking.cn/_uni/logo/23921267.png,false
+Hebei University,河北大学,Hebei,hebei-2,https://www.shanghairanking.cn/_uni/logo/93335325.png,false
+Northeast Agricultural University - China,东北农业大学,Heilongjiang,northeast-2,https://www.shanghairanking.cn/_uni/logo/52533406.png,false
+Jiangxi Normal University,江西师范大学,Jiangxi,jiangxi,https://www.shanghairanking.cn/_uni/logo/81455706.png,false
+Xi'an University of Architecture and Technology,西安建筑科技大学,Shaanxi,xi-architecture,https://www.shanghairanking.cn/_uni/logo/16154228.png,false
+Hangzhou Normal University,杭州师范大学,Zhejiang,hangzhou,https://www.shanghairanking.cn/_uni/logo/19604361.png,false
+Inner Mongolia University,内蒙古大学,Inner Mongolia,inner-mongolia,https://www.shanghairanking.cn/_uni/logo/53570063.png,false
+Fujian Agriculture and Forestry University,福建农林大学,Fuzhou,fafu,https://www.shanghairanking.cn/_uni/logo/45877801.png,false
+Jiangsu Normal University,江苏师范大学,Jiangsu,jiangsu-2,https://www.shanghairanking.cn/_uni/logo/43285571.png,false
+Xi'an University of Technology,西安理工大学,Shaanxi,xi,https://www.shanghairanking.cn/_uni/logo/41922592.png,false
+Liaoning University,辽宁大学,Liaoning,liaoning,https://www.shanghairanking.cn/_uni/logo/38214321.png,false
+Beijing University of Civil Engineering and Architecture,北京建筑大学,Beijing,beijing-architecture,https://www.shanghairanking.cn/_uni/logo/88552972.png,false
+Anhui Normal University,安徽师范大学,Anhui,anhui-2,https://www.shanghairanking.cn/_uni/logo/34817561.png,false
+Henan Normal University,河南师范大学,Henan,henan-2,https://www.shanghairanking.cn/_uni/logo/83132958.png,false
+Changsha University of Science and Technology,长沙理工大学,Hunan,changsha,https://www.shanghairanking.cn/_uni/logo/12224674.png,false
+Kunming University of Science and Technology,昆明理工大学,Yunnan,kunming,https://www.shanghairanking.cn/_uni/logo/50829319.png,false
+Xinjiang University,新疆大学,Xinjiang,xinjiang,https://www.shanghairanking.cn/_uni/logo/17029370.png,false
+Shantou University,汕头大学,Guangdong,shantou,https://www.shanghairanking.cn/_uni/logo/34125242.png,false
+Southwest Petroleum University,西南石油大学,Sichuan,southwest-2,https://www.shanghairanking.cn/_uni/logo/43387859.png,false
+Shandong University of Science and Technology,山东科技大学,Shandong,shandong-3,https://www.shanghairanking.cn/_uni/logo/69243726.png,false
+Henan Agricultural University,河南农业大学,Henan,henan-3,https://www.shanghairanking.cn/_uni/logo/20942432.png,false
+Guizhou University,贵州大学,Guizhou,guizhou,https://www.shanghairanking.cn/_uni/logo/47002167.png,false
+Huaqiao University,华侨大学,Fujian,huaqiao,https://www.shanghairanking.cn/_uni/logo/22700357.png,false
+Hebei Normal University,河北师范大学,Hebei,hebei-3,https://www.shanghairanking.cn/_uni/logo/91541508.png,false
+Heilongjiang University,黑龙江大学,Heilongjiang,heilongjiang,https://www.shanghairanking.cn/_uni/logo/73169357.png,false
+China Jiliang University,中国计量大学,Zhejiang,jiliang,https://www.shanghairanking.cn/_uni/logo/30667767.png,false
+Shaanxi University of Science and Technology,陕西科技大学,Shaanxi,shaanxi,https://www.shanghairanking.cn/_uni/logo/10933822.png,false
+Shenyang Agricultural University,沈阳农业大学,Liaoning,shenyang,https://www.shanghairanking.cn/_uni/logo/71980553.png,false
+Tianjin Normal University,天津师范大学,Tianjin,tianjin,https://www.shanghairanking.cn/_uni/logo/97894665.png,false
+Hubei University of Technology,湖北工业大学,Hubei,hubei-2,https://www.shanghairanking.cn/_uni/logo/28021393.png,false
+Hainan University,海南大学,Hainan,hainan,https://www.shanghairanking.cn/_uni/logo/32937649.png,false
+University of Jinan,济南大学,Shandong,jinan-2,https://www.shanghairanking.cn/_uni/logo/68479674.png,false
+Shandong Agricultural University,山东农业大学,Shandong,shandong-4,https://www.shanghairanking.cn/_uni/logo/29659511.png,false
+Changzhou University,常州大学,Jiangsu,changzhou,https://www.shanghairanking.cn/_uni/logo/80008528.png,false
+Wenzhou University,温州大学,Zhejiang,wenzhou,https://www.shanghairanking.cn/_uni/logo/87896146.png,false
+Chongqing University of Posts and Telecommunications,重庆邮电大学,Chongqing,chongqing,https://www.shanghairanking.cn/_uni/logo/60895367.png,false
+Qilu University of Technology,齐鲁工业大学,Shandong,qilu,https://www.shanghairanking.cn/_uni/logo/90803100.png,false
+Qufu Normal University,曲阜师范大学,Shandong,qufu,https://www.shanghairanking.cn/_uni/logo/69697043.png,false
+Wuhan Institute of Technology,武汉工程大学,Hubei,wuhan-4,https://www.shanghairanking.cn/_uni/logo/44707995.png,false
+Hunan Agricultural University,湖南农业大学,Hunan,hunan-2,https://www.shanghairanking.cn/_uni/logo/66911347.png,false
+Tiangong University,天津工业大学,Tianjin,tiangong,https://www.shanghairanking.cn/_uni/logo/66317793.png,false
+Anhui Agricultural University,安徽农业大学,Anhui,anhui-3,https://www.shanghairanking.cn/_uni/logo/63075474.png,false
+Jiangsu University of Science and Technology,江苏科技大学,Jiangsu,jiangsu-3,https://www.shanghairanking.cn/_uni/logo/20300251.png,false
+Zhejiang A&amp;F University,浙江农林大学,Zhejiang,zhejiang-f,https://www.shanghairanking.cn/_uni/logo/72636185.png,false
+North China University of Technology,北方工业大学,Tangshan,ncut,https://www.shanghairanking.cn/_uni/logo/83653605.png,false
+Guangxi Normal University,广西师范大学,Guangxi,guangxi-2,https://www.shanghairanking.cn/_uni/logo/54671948.png,false
+Jilin Agricultural University,吉林农业大学,Jilin,jilin,https://www.shanghairanking.cn/_uni/logo/12157432.png,false
+Qingdao University of Science and Technology,青岛科技大学,Shandong,qingdao-2,https://www.shanghairanking.cn/_uni/logo/56581722.png,false
+Sichuan Agricultural University,四川农业大学,Sichuan,sichuan,https://www.shanghairanking.cn/_uni/logo/22750663.png,false
+Northwest Normal University China,西北师范大学,Gansu,northwest-2,https://www.shanghairanking.cn/_uni/logo/37657107.png,false
+Nantong University,南通大学,Jiangsu,nantong,https://www.shanghairanking.cn/_uni/logo/39196558.png,false
+Shihezi University,石河子大学,Xinjiang,shihezi,https://www.shanghairanking.cn/_uni/logo/87170098.png,false
+Shanghai Ocean University,上海海洋大学,Shanghai,shanghai-ocean,https://www.shanghairanking.cn/_uni/logo/47534017.png,false
+China Three Gorges University,三峡大学,Hubei,three-gorges,https://www.shanghairanking.cn/_uni/logo/50293135.png,false
+Anhui University of Technology,安徽工业大学,Anhui,anhui-4,https://www.shanghairanking.cn/_uni/logo/48772206.png,false
+Henan Polytechnic University,河南理工大学,Henan,henan-4,https://www.shanghairanking.cn/_uni/logo/73183299.png,false
+Ningxia University,宁夏大学,Ningxia,ningxia,https://www.shanghairanking.cn/_uni/logo/26171919.png,false
+Xi'an University of Science and Technology,西安科技大学,Shaanxi,xi-2,https://www.shanghairanking.cn/_uni/logo/98750379.png,false
+Shanghai Maritime University,上海海事大学,Shanghai,shanghai-maritime,https://www.shanghairanking.cn/_uni/logo/27308396.png,false
+Chengdu University of Technology,成都理工大学,Sichuan,chengdu,https://www.shanghairanking.cn/_uni/logo/46566063.png,false
+Nanchang Hangkong University,南昌航空大学,Jiangxi,nanchang-hangkong,https://www.shanghairanking.cn/_uni/logo/58177572.png,false
+Changchun University of Science and Technology,长春理工大学,Jilin,changchun,https://www.shanghairanking.cn/_uni/logo/89241049.png,false
+Liaoning Normal University,辽宁师范大学,Liaoning,liaoning-2,https://www.shanghairanking.cn/_uni/logo/95713009.png,false
+Southwest University of Science and Technology,西南科技大学,Sichuan,southwest-3,https://www.shanghairanking.cn/_uni/logo/36892794.png,false
+Hebei Agricultural University,河北农业大学,Hebei,hebei-4,https://www.shanghairanking.cn/_uni/logo/80338654.png,false
+North University of China,中北大学,Taiyuan,nuc,https://www.shanghairanking.cn/_uni/logo/11211551.png,false
+Qinghai University,青海大学,Qinghai,qinghai,https://www.shanghairanking.cn/_uni/logo/68094541.png,false
+Jimei University,集美大学,Fujian,jimei,https://www.shanghairanking.cn/_uni/logo/50079480.png,false
+Wuhan Textile University,武汉纺织大学,Hubei,wuhan-textile,https://www.shanghairanking.cn/_uni/logo/90958165.png,false
+Tianjin University of Technology,天津理工大学,Tianjin,tianjin-2,https://www.shanghairanking.cn/_uni/logo/41797414.png,false
+Sichuan Normal University,四川师范大学,Sichuan,sichuan-2,https://www.shanghairanking.cn/_uni/logo/20160347.png,false
+Yunnan Normal University,云南师范大学,Yunnan,yunnan-2,https://www.shanghairanking.cn/_uni/logo/33806915.png,false
+Zhejiang Ocean University,浙江海洋大学,Zhejiang,zhejiang-ocean,https://www.shanghairanking.cn/_uni/logo/75085847.png,false
+Tianjin University of Science and Technology,天津科技大学,Tianjin,tianjin-3,https://www.shanghairanking.cn/_uni/logo/19351758.png,false
+Hunan University of Science and Technology,湖南科技大学,Hunan,hunan-3,https://www.shanghairanking.cn/_uni/logo/66401420.png,false
+Chongqing Jiaotong University,重庆交通大学,Chongqing,chongqing-jiaotong,https://www.shanghairanking.cn/_uni/logo/71040976.png,false
+Yangtze University,长江大学,Hubei,yangtze,https://www.shanghairanking.cn/_uni/logo/50201974.png,false
+Lanzhou University of Technology,兰州理工大学,Gansu,lanzhou,https://www.shanghairanking.cn/_uni/logo/67319577.png,false
+Shandong University of Technology,山东理工大学,Shandong,shandong-5,https://www.shanghairanking.cn/_uni/logo/36456722.png,false
+Anhui University of Science and Technology,安徽理工大学,Anhui,anhui-5,https://www.shanghairanking.cn/_uni/logo/42528928.png,false
+Yantai University,烟台大学,Shandong,yantai,https://www.shanghairanking.cn/_uni/logo/78347320.png,false
+Dalian Polytechnic University,大连工业大学,Liaoning,dalian,https://www.shanghairanking.cn/_uni/logo/56717207.png,false
+Harbin University of Science and Technology,哈尔滨理工大学,Heilongjiang,harbin,https://www.shanghairanking.cn/_uni/logo/37722595.png,false
+Shenyang Normal University,沈阳师范大学,Liaoning,shenyang-2,https://www.shanghairanking.cn/_uni/logo/35037401.png,false
+Yanbian University,延边大学,Jilin,yanbian,https://www.shanghairanking.cn/_uni/logo/80498016.png,false
+Inner Mongolia Agricultural University,内蒙古农业大学,Inner Mongolia,inner-mongolia-2,https://www.shanghairanking.cn/_uni/logo/21981730.png,false
+Henan University of Science and Technology,河南科技大学,Henan,henan-5,https://www.shanghairanking.cn/_uni/logo/15231544.png,false
+University of South China,南华大学,Hengyang,usc,https://www.shanghairanking.cn/_uni/logo/37506435.png,false
+Harbin Normal University,哈尔滨师范大学,Heilongjiang,harbin-2,https://www.shanghairanking.cn/_uni/logo/21560941.png,false
+Shijiazhuang Tiedao University,石家庄铁道大学,Hebei,shijiazhuang-tiedao,https://www.shanghairanking.cn/_uni/logo/56126922.png,false
+Beijing Information Science &amp; Technology University,北京信息科技大学,Beijing,beijing-4,https://www.shanghairanking.cn/_uni/logo/34773687.png,false
+Shenyang Jianzhu University,沈阳建筑大学,Liaoning,shenyang-jianzhu,https://www.shanghairanking.cn/_uni/logo/83840131.png,false
+Qingdao Agricultural University,青岛农业大学,Shandong,qingdao-3,https://www.shanghairanking.cn/_uni/logo/23730927.png,false
+Shanghai University of Engineering Science,上海工程技术大学,Shanghai,shanghai-3,https://www.shanghairanking.cn/_uni/logo/45746621.png,false
+Henan University of Technology,河南工业大学,Henan,henan-6,https://www.shanghairanking.cn/_uni/logo/30747881.png,false
+Jiangxi University of Science and Technology,江西理工大学,Jiangxi,jiangxi-2,https://www.shanghairanking.cn/_uni/logo/17877939.png,false
+Central South University of Forestry &amp; Technology,中南林业科技大学,Hunan,forestry,https://www.shanghairanking.cn/_uni/logo/51346265.png,false
+Beijing University of Agriculture,北京农学院,Beijing,beijing-agriculture,https://www.shanghairanking.cn/_uni/logo/37951247.png,false
+Chongqing Normal University,重庆师范大学,Chongqing,chongqing-2,https://www.shanghairanking.cn/_uni/logo/84729350.png,false
+Jiangxi Agricultural University,江西农业大学,Jiangxi,jiangxi-3,https://www.shanghairanking.cn/_uni/logo/90588785.png,false
+Lanzhou Jiaotong University,兰州交通大学,Gansu,lanzhou-jiaotong,https://www.shanghairanking.cn/_uni/logo/43772124.png,false
+Tibet University,西藏大学,Tibet,tibet,https://www.shanghairanking.cn/_uni/logo/71112798.png,false
+Shenyang University of Technology,沈阳工业大学,Liaoning,shenyang-3,https://www.shanghairanking.cn/_uni/logo/88323331.png,false
+East China Jiaotong University,华东交通大学,Jiangxi,jiaotong,https://www.shanghairanking.cn/_uni/logo/87418361.png,false
+Shenyang Aerospace University,沈阳航空航天大学,Liaoning,shenyang-aerospace,https://www.shanghairanking.cn/_uni/logo/95837223.png,false
+Xi'an University of Posts and Telecommunications,西安邮电大学,Shaanxi,xi-3,https://www.shanghairanking.cn/_uni/logo/14415798.png,false
+East China University of Technology,东华理工大学,Jiangxi,east-china-university-of-technology,https://www.shanghairanking.cn/_uni/logo/80888604.png,false
+Northeast Electric Power University,东北电力大学,Jilin,northeast-electric-power,https://www.shanghairanking.cn/_uni/logo/67384709.png,false
+Shanghai University of Electric Power,上海电力大学,Shanghai,shanghai-electric-power,https://www.shanghairanking.cn/_uni/logo/10117000.png,false
+Ludong University,鲁东大学,Shandong,ludong,https://www.shanghairanking.cn/_uni/logo/27442378.png,false
+University of International Relations,国际关系学院,Beijing,relations,https://www.shanghairanking.cn/_uni/logo-jpg/3679975000.jpg,false
+Dalian University,大连大学,Liaoning,dalian-2,https://www.shanghairanking.cn/_uni/logo/60934075.png,false
+Suzhou University of Science and Technology,苏州科技大学,Jiangsu,suzhou,https://www.shanghairanking.cn/_uni/logo/14409136.png,false
+Hebei University of Science and Technology,河北科技大学,Hebei,hebei-5,https://www.shanghairanking.cn/_uni/logo/87539958.png,false
+Bohai University,渤海大学,Liaoning,bohai,https://www.shanghairanking.cn/_uni/logo/41274490.png,false
+North China University of Science and Technology,华北理工大学,Tangshan,ncust,https://www.shanghairanking.cn/_uni/logo/60206933.png,false
+Gansu Agricultural University,甘肃农业大学,Gansu,gansu,https://www.shanghairanking.cn/_uni/logo/73822591.png,false
+Beijing Institute of Graphic Communication,北京印刷学院,Beijing,beijing-graphic-communication,https://www.shanghairanking.cn/_uni/logo/19759004.png,false
+Chongqing University of Technology,重庆理工大学,Chongqing,chongqing-3,https://www.shanghairanking.cn/_uni/logo/14275328.png,false
+Xi'an Shiyou University,西安石油大学,Shaanxi,xi-shiyou,https://www.shanghairanking.cn/_uni/logo/37520130.png,false
+Hainan Normal University,海南师范大学,Hainan,hainan-2,https://www.shanghairanking.cn/_uni/logo/94936624.png,false
+Shanghai Institute of Technology,上海应用技术大学,Shanghai,shanghai-4,https://www.shanghairanking.cn/_uni/logo/11765823.png,false
+Guilin University of Electronic Technology,桂林电子科技大学,Guangxi,guilin,https://www.shanghairanking.cn/_uni/logo/13097274.png,false
+Liaocheng University,聊城大学,Shandong,liaocheng,https://www.shanghairanking.cn/_uni/logo/34048509.png,false
+Zhengzhou University of Light Industry,郑州轻工业大学,Henan,zhengzhou-light-industry,https://www.shanghairanking.cn/_uni/logo-jpg/3492800000.jpg,false
+Wuhan Polytechnic University,武汉轻工大学,Hubei,wuhan-5,https://www.shanghairanking.cn/_uni/logo/45183909.png,false
+Anhui jianzhu University,安徽建筑大学,Anhui,anhui-jianzhu,https://www.shanghairanking.cn/_uni/logo/40890032.png,false
+Northeast Petroleum University,东北石油大学,Heilongjiang,northeast-3,https://www.shanghairanking.cn/_uni/logo/74529408.png,false
+Chengdu University of Information Technology,成都信息工程大学,Sichuan,chengdu-2,https://www.shanghairanking.cn/_uni/logo/51862705.png,false
+Dongguan University of Technology,东莞理工学院,Guangdong,dongguan,https://www.shanghairanking.cn/_uni/logo/69487690.png,false
+Dalian Jiaotong University,大连交通大学,Liaoning,dalian-jiaotong,https://www.shanghairanking.cn/_uni/logo/50496475.png,false
+Shandong Jianzhu University,山东建筑大学,Shandong,shandong-jianzhu,https://www.shanghairanking.cn/_uni/logo/30745802.png,false
+China West Normal University,西华师范大学,Nanchong,cwnu,https://www.shanghairanking.cn/_uni/logo/26457756.png,false
+Xi'an Polytechnic University,西安工程大学,Shaanxi,xi-4,https://www.shanghairanking.cn/_uni/logo/23494932.png,false
+Guizhou Normal University,贵州师范大学,Guizhou,guizhou-2,https://www.shanghairanking.cn/_uni/logo/82418408.png,false
+Chengdu University,成都大学,Sichuan,chengdu-3,https://www.shanghairanking.cn/_uni/logo/69265723.png,false
+Xi'an Technological University,西安工业大学,Shaanxi,xi-technological,https://www.shanghairanking.cn/_uni/logo/88779109.png,false
+NingboTech University,浙大宁波理工学院,Zhejiang,ningbotech,https://www.shanghairanking.cn/_uni/logo/68131907.png,false
+Foshan University,佛山科学技术学院,Guangdong,foshan,https://www.shanghairanking.cn/_uni/logo/52972913.png,false
+Shanxi Agricultural University,山西农业大学,Shanxi,shanxi-2,https://www.shanghairanking.cn/_uni/logo/79434268.png,false
+Qingdao University of Technology,青岛理工大学,Shandong,qingdao-4,https://www.shanghairanking.cn/_uni/logo/11244718.png,false
+North China University of Water Resources and Electric Power,华北水利水电大学,Henan,water-resources-electric-power,https://www.shanghairanking.cn/_uni/logo/87920384.png,false
+Xiamen University of Technology,厦门理工学院,Fujian,xiamen,https://www.shanghairanking.cn/_uni/logo/19033285.png,false
+Beijing Electronic Science and Technology Institute,北京电子科技学院,Beijing,beijing-5,https://www.shanghairanking.cn/_uni/logo-jpg/9246225400.jpg,false
+Nanjing Institute of Technology,南京工程学院,Jiangsu,nanjing-5,https://www.shanghairanking.cn/_uni/logo/53286556.png,false
+Beijing Union University,北京联合大学,Beijing,beijing-union,https://www.shanghairanking.cn/_uni/logo/38515710.png,false
+Changchun University of Technology,长春工业大学,Jilin,changchun-2,https://www.shanghairanking.cn/_uni/logo/73521245.png,false
+Liaoning Technical University,辽宁工程技术大学,Liaoning,liaoning-technical,https://www.shanghairanking.cn/_uni/logo/44745654.png,false
+Huzhou University,湖州师范学院,Zhejiang,huzhou,https://www.shanghairanking.cn/_uni/logo/61175754.png,false
+Jianghan University,江汉大学,Hubei,jianghan,https://www.shanghairanking.cn/_uni/logo/43420140.png,false
+Liaoning shihua University,辽宁石油化工大学,Liaoning,liaoning-shihua,https://www.shanghairanking.cn/_uni/logo/96685089.png,false
+Qinghai Normal University,青海师范大学,Qinghai,qinghai-2,https://www.shanghairanking.cn/_uni/logo/39086444.png,false
+Jilin Normal University,吉林师范大学,Jilin,jilin-2,https://www.shanghairanking.cn/_uni/logo/23887678.png,false
+Beijing Institute of Petrochemical Technology,北京石油化工学院,Beijing,beijing-petrochemical,https://www.shanghairanking.cn/_uni/logo/47539221.png,false
+Inner Mongolia Normal University,内蒙古师范大学,Inner Mongolia,inner-mongolia-3,https://www.shanghairanking.cn/_uni/logo/65057276.png,false
+Civil Aviation University of China,中国民航大学,Tianjin,aviation,https://www.shanghairanking.cn/_uni/logo/32878207.png,false
+Liaoning University of Technology,辽宁工业大学,Liaoning,liaoning-3,https://www.shanghairanking.cn/_uni/logo/98866857.png,false
+Hunan University of Technology,湖南工业大学,Hunan,hunan-4,https://www.shanghairanking.cn/_uni/logo/21950632.png,false
+Yan'an University,延安大学,Shaanxi,yan,https://www.shanghairanking.cn/_uni/logo/39856591.png,false
+Xihua University,西华大学,Sichuan,xihua,https://www.shanghairanking.cn/_uni/logo/93995661.png,false
+Guilin University of Technology,桂林理工大学,Guangxi,guilin-2,https://www.shanghairanking.cn/_uni/logo/10181164.png,false
+Hebei University of Engineering,河北工程大学,Hebei,hebei-6,https://www.shanghairanking.cn/_uni/logo/89281811.png,false
+Shenyang University of Chemical Technology,沈阳化工大学,Liaoning,shenyang-chemical,https://www.shanghairanking.cn/_uni/logo/57609876.png,false
+Shaoxing University,绍兴文理学院,Zhejiang,shaoxing,https://www.shanghairanking.cn/_uni/logo/52850359.png,false
+Anhui Polytechnic University,安徽工程大学,Anhui,anhui-6,https://www.shanghairanking.cn/_uni/logo/58244413.png,false
+Zhejiang University of Science and Technology,浙江科技学院,Zhejiang,zhejiang-3,https://www.shanghairanking.cn/_uni/logo/91133655.png,false
+Yancheng Institute of Technology,盐城工学院,Jiangsu,yancheng,https://www.shanghairanking.cn/_uni/logo/98593672.png,false
+Yancheng Teachers University,盐城师范学院,Jiangsu,yancheng-teachers,https://www.shanghairanking.cn/_uni/logo/87686237.png,false
+Shanxi Normal University,山西师范大学,Shanxi,shanxi-3,https://www.shanghairanking.cn/_uni/logo/27091361.png,false
+GanNan Normal University,赣南师范大学,Jiangxi,gannan,https://www.shanghairanking.cn/_uni/logo/10016344.png,false
+Dalian Ocean University,大连海洋大学,Liaoning,dalian-ocean,https://www.shanghairanking.cn/_uni/logo/31946724.png,false
+Inner Mongolia University of Technology,内蒙古工业大学,Inner Mongolia,inner-mongolia-4,https://www.shanghairanking.cn/_uni/logo/41582349.png,false
+Huaiyin Normal University,淮阴师范学院,Jiangsu,huaiyin,https://www.shanghairanking.cn/_uni/logo/72353527.png,false
+Xinyang Normal University,信阳师范学院,Henan,xinyang,https://www.shanghairanking.cn/_uni/logo/20481613.png,false
+Anqing Normal University,安庆师范大学,Anhui,anqing,https://www.shanghairanking.cn/_uni/logo/66650184.png,false
+Hefei University,合肥学院,Anhui,hefei-2,https://www.shanghairanking.cn/_uni/logo/61834081.png,false
+Yunnan Agricultural University,云南农业大学,Yunnan,yunnan-3,https://www.shanghairanking.cn/_uni/logo/17581582.png,false
+University of Science and Technology Liaoning,辽宁科技大学,Liaoning,liaoning-4,https://www.shanghairanking.cn/_uni/logo/62832363.png,false
+Guangxi Teachers Education University,南宁师范大学,Guangxi,guangxi-teachers-education,https://www.shanghairanking.cn/_uni/logo/93746377.png,false
+Shenyang Ligong University,沈阳理工大学,Liaoning,shenyang-ligong,https://www.shanghairanking.cn/_uni/logo/61862540.png,false
+Inner Mongolia University for Nationalities,内蒙古民族大学,Inner Mongolia,inner-mongolia-nationalities,https://www.shanghairanking.cn/_uni/logo/87679328.png,false
+Xinjiang Normal University,新疆师范大学,Xinjiang,xinjiang-2,https://www.shanghairanking.cn/_uni/logo/91394778.png,false
+Hubei Normal University,湖北师范大学,Hubei,hubei-3,https://www.shanghairanking.cn/_uni/logo/40458904.png,false
+Chongqing University of Science and Technology,重庆科技学院,Chongqing,chongqing-4,https://www.shanghairanking.cn/_uni/logo/92174588.png,false
+Huaiyin Institute of Technology,淮阴工学院,Jiangsu,huaiyin-2,https://www.shanghairanking.cn/_uni/logo/43135857.png,false
+Jilin Jianzhu University,吉林建筑大学,Jilin,jilin-jianzhu,https://www.shanghairanking.cn/_uni/logo/67832474.png,false
+Zhongyuan University of Technology,中原工学院,Henan,zhongyuan,https://www.shanghairanking.cn/_uni/logo/84789296.png,false
+Beihua University,北华大学,Jilin,beihua,https://www.shanghairanking.cn/_uni/logo/70718646.png,false
+Jiaxing University,嘉兴学院,Zhejiang,jiaxing,https://www.shanghairanking.cn/_uni/logo/41788600.png,false
+Linyi University,临沂大学,Shandong,linyi,https://www.shanghairanking.cn/_uni/logo/85449690.png,false
+Jishou University,吉首大学,Hunan,jishou,https://www.shanghairanking.cn/_uni/logo/24710054.png,false
+Jingdezhen Ceramic Institute,景德镇陶瓷大学,Jiangxi,jingdezhen-ceramic,https://www.shanghairanking.cn/_uni/logo/97993379.png,false
+Guangdong Polytechnic Normal University,广东技术师范大学,Guangdong,guangdong-2,https://www.shanghairanking.cn/_uni/logo/76957155.png,false
+Huaibei Normal University,淮北师范大学,Anhui,huaibei,https://www.shanghairanking.cn/_uni/logo/42492973.png,false
+Guangdong Ocean University,广东海洋大学,Guangdong,guangdong-ocean,https://www.shanghairanking.cn/_uni/logo/71593833.png,false
+Yangtze Normal University,长江师范学院,Chongqing,yangtze-2,https://www.shanghairanking.cn/_uni/logo/86035678.png,false
+Ningbo University of Technology,宁波工程学院,Zhejiang,ningbo-2,https://www.shanghairanking.cn/_uni/logo/40131695.png,false
+Shanghai Customs College,上海海关学院,Shanghai,shanghai-customs,https://www.shanghairanking.cn/_uni/logo-jpg/3678336400.jpg,false
+Heilongjiang Bayi Agricultural University,黑龙江八一农垦大学,Heilongjiang,heilongjiang-bayi,https://www.shanghairanking.cn/_uni/logo/10913514.png,false
+Jiangxi Science and Technology Normal University,江西科技师范大学,Jiangxi,jiangxi-4,https://www.shanghairanking.cn/_uni/logo/63137261.png,false
+Anyang Normal University,安阳师范学院,Henan,anyang,https://www.shanghairanking.cn/_uni/logo/54267189.png,false
+Southwest Forestry University,西南林业大学,Yunnan,southwest-forestry,https://www.shanghairanking.cn/_uni/logo/53403086.png,false
+Xinjiang Agricultural University,新疆农业大学,Xinjiang,xinjiang-3,https://www.shanghairanking.cn/_uni/logo/86159068.png,false
+Changshu Institute of Technology,常熟理工学院,Jiangsu,changshu,https://www.shanghairanking.cn/_uni/logo/44425885.png,false
+Minnan Normal University,闽南师范大学,Fujian,minnan,https://www.shanghairanking.cn/_uni/logo/54713686.png,false
+Tianjin Chengjian University,天津城建大学,Tianjin,tianjin-chengjian,https://www.shanghairanking.cn/_uni/logo/46314554.png,false
+Fujian University of Technology,福建工程学院,Fujian,fujian-2,https://www.shanghairanking.cn/_uni/logo/77255531.png,false
+Shenyang University,沈阳大学,Liaoning,shenyang-4,https://www.shanghairanking.cn/_uni/logo/64518610.png,false
+Wuyi University,五邑大学,Guangdong,wuyi,https://www.shanghairanking.cn/_uni/logo/80058564.png,false
+Inner Mongolia University of Science &amp; Technology,内蒙古科技大学,Inner Mongolia,inner-mongolia-5,https://www.shanghairanking.cn/_uni/logo/98701978.png,false
+Jiangsu University of Technology,江苏理工学院,Jiangsu,jiangsu-4,https://www.shanghairanking.cn/_uni/logo/18087642.png,false
+Shanghai Second Polytechnic University,上海第二工业大学,Shanghai,shanghai-second,https://www.shanghairanking.cn/_uni/logo/70585176.png,false
+Zhejiang University City College,浙大城市学院,Zhejiang,zhejiang-city,https://www.shanghairanking.cn/_uni/logo/46612256.png,false
+Taiyuan University of Science and Technology,太原科技大学,Shanxi,taiyuan-2,https://www.shanghairanking.cn/_uni/logo/22418234.png,false
+LingNan Normal University,岭南师范学院,Guangdong,lingnan,https://www.shanghairanking.cn/_uni/logo/81393131.png,false
+Tianjin Agricultural University,天津农学院,Tianjin,tianjin-4,https://www.shanghairanking.cn/_uni/logo/45293117.png,false
+Tarim University,塔里木大学,Xinjiang,tarim,https://www.shanghairanking.cn/_uni/logo/99603674.png,false
+Nanjing XiaoZhuang University,南京晓庄学院,Jiangsu,nanjing-xiaozhuang,https://www.shanghairanking.cn/_uni/logo/17661336.png,false
+Dali University,大理大学,Yunnan,dali,https://www.shanghairanking.cn/_uni/logo/75994663.png,false
+Jinggangshan University,井冈山大学,Jiangxi,jinggangshan,https://www.shanghairanking.cn/_uni/logo/50371015.png,false
+Hunan Institute of Science and Technology,湖南理工学院,Hunan,hunan-5,https://www.shanghairanking.cn/_uni/logo/43186940.png,false
+Huaihai Institute of Technology,江苏海洋大学,Jiangsu,huaihai,https://www.shanghairanking.cn/_uni/logo/24296488.png,false
+Taizhou University,台州学院,Zhejiang,taizhou,https://www.shanghairanking.cn/_uni/logo-jpg/8551212700.jpg,false
+Minjiang University,闽江学院,Fujian,minjiang,https://www.shanghairanking.cn/_uni/logo/95059485.png,false
+Huanggang Normal University,黄冈师范学院,Hubei,huanggang,https://www.shanghairanking.cn/_uni/logo/63694810.png,false
+Chongqing University of Arts and Science,重庆文理学院,Chongqing,chongqing-arts,https://www.shanghairanking.cn/_uni/logo/30413024.png,false
+Zhejiang Wanli University,浙江万里学院,Zhejiang,zhejiang-wanli,https://www.shanghairanking.cn/_uni/logo/32947352.png,false
+Qiqihar University,齐齐哈尔大学,Heilongjiang,qiqihar,https://www.shanghairanking.cn/_uni/logo/19030311.png,false
+Sichuan University of Science and Engineering,四川轻化工大学,Sichuan,sichuan-3,https://www.shanghairanking.cn/_uni/logo/68372773.png,false
+Nanchang Institute of Technology,南昌工程学院,Jiangxi,nanchang-2,https://www.shanghairanking.cn/_uni/logo/88433724.png,false
+TianJin University of Technology and Education,天津职业技术师范大学,Tianjin,tianjin-education,https://www.shanghairanking.cn/_uni/logo/38391685.png,false
+Shanghai Dianji University,上海电机学院,Shanghai,shanghai-dianji,https://www.shanghairanking.cn/_uni/logo/14374343.png,false
+Hubei University of Science and Technology,湖北科技学院,Hubei,hubei-4,https://www.shanghairanking.cn/_uni/logo/48475987.png,false
+Shaanxi University of Technology,陕西理工大学,Shaanxi,shaanxi-2,https://www.shanghairanking.cn/_uni/logo/18739697.png,false
+Neijiang Normal University,内江师范学院,Sichuan,neijiang,https://www.shanghairanking.cn/_uni/logo/39821454.png,false
+Hefei Normal University,合肥师范学院,Anhui,hefei-3,https://www.shanghairanking.cn/_uni/logo/15187571.png,false
+Fuyang Normal University,阜阳师范大学,Anhui,fuyang,https://www.shanghairanking.cn/_uni/logo/54911354.png,false
+Nanyang Normal University,南阳师范学院,Henan,nanyang,https://www.shanghairanking.cn/_uni/logo/81579397.png,false
+Guizhou Normal College,贵州师范学院,Guizhou,guizhou-3,https://www.shanghairanking.cn/_uni/logo/12076666.png,false
+Xuzhou Institute of Technology,徐州工程学院,Jiangsu,xuzhou,https://www.shanghairanking.cn/_uni/logo/15209078.png,false
+Luoyang Normal University,洛阳师范学院,Henan,luoyang,https://www.shanghairanking.cn/_uni/logo/60927754.png,false
+Zhongkai University of Agriculture and Engineering,仲恺农业工程学院,Guangdong,zhongkai-agriculture,https://www.shanghairanking.cn/_uni/logo/27048883.png,false
+Changchun Normal University,长春师范大学,Jilin,changchun-3,https://www.shanghairanking.cn/_uni/logo/82800037.png,false
+Hubei University of Arts and Science,湖北文理学院,Hubei,hubei-arts,https://www.shanghairanking.cn/_uni/logo/54746261.png,false
+Baoji University of Arts and Sciences,宝鸡文理学院,Shaanxi,baoji-arts-sciences,https://www.shanghairanking.cn/_uni/logo/99370840.png,false
+Anhui Science and Technology University,安徽科技学院,Anhui,anhui-7,https://www.shanghairanking.cn/_uni/logo/87128194.png,false
+Changsha University,长沙学院,Hunan,changsha-2,https://www.shanghairanking.cn/_uni/logo/54067016.png,false
+Hengyang Normal University,衡阳师范学院,Hunan,hengyang,https://www.shanghairanking.cn/_uni/logo/34272930.png,false
+"Nanjing University of Information Science and Technology, Binjiang College",无锡学院,Jiangsu,nanjing-binjiang,https://www.shanghairanking.cn/_uni/logo-jpg/7955219400.jpg,false
+Binzhou University,滨州学院,Shandong,binzhou,https://www.shanghairanking.cn/_uni/logo/52267041.png,false
+Changchun University,长春大学,Jilin,changchun-4,https://www.shanghairanking.cn/_uni/logo/29057599.png,false
+Heilongjiang University of Science and Technology,黑龙江科技大学,Heilongjiang,heilongjiang-2,https://www.shanghairanking.cn/_uni/logo/65166425.png,false
+Quanzhou Normal University,泉州师范学院,Fujian,quanzhou,https://www.shanghairanking.cn/_uni/logo/43122253.png,false
+Hebei Normal University of Science and Technology,河北科技师范学院,Hebei,hebei-7,https://www.shanghairanking.cn/_uni/logo/54034662.png,false
+Guangxi University of Science and Technology,广西科技大学,Guangxi,guangxi-3,https://www.shanghairanking.cn/_uni/logo/70589857.png,false
+Jiangsu Second Normal University,江苏第二师范学院,Jiangsu,jiangsu-second,https://www.shanghairanking.cn/_uni/logo/46841239.png,false
+Tibet Agriculture and Animal Husbandry University,西藏农牧学院,Tibet,tibet-agriculture-animal-husbandry,https://www.shanghairanking.cn/_uni/logo-jpg/1519048000.jpg,false
+Guizhou Institute of Technology,贵州理工学院,Guizhou,guizhou-4,https://www.shanghairanking.cn/_uni/logo/98035266.png,false
+Xianyang Normal University,咸阳师范学院,Shaanxi,xianyang,https://www.shanghairanking.cn/_uni/logo/21589045.png,false
+Jiujiang University,九江学院,Jiangxi,jiujiang,https://www.shanghairanking.cn/_uni/logo/46532631.png,false
+Mianyang Teachers' College,绵阳师范学院,Sichuan,mianyang-teachers,https://www.shanghairanking.cn/_uni/logo/85507824.png,false
+Hubei University of Automotive Technology,湖北汽车工业学院,Hubei,hubei-automotive,https://www.shanghairanking.cn/_uni/logo/90773167.png,false
+Changzhou Institute of Technology,常州工学院,Jiangsu,changzhou-2,https://www.shanghairanking.cn/_uni/logo/21237870.png,false
+Jinling Institute of Technology,金陵科技学院,Jiangsu,jinling,https://www.shanghairanking.cn/_uni/logo/85525495.png,false
+Heilongjiang Institute of Technology,黑龙江工程学院,Heilongjiang,heilongjiang-3,https://www.shanghairanking.cn/_uni/logo/12526638.png,false
+Leshan Normal University,乐山师范学院,Sichuan,leshan,https://www.shanghairanking.cn/_uni/logo/88627950.png,false
+Weifang University,潍坊学院,Shandong,weifang,https://www.shanghairanking.cn/_uni/logo/88223218.png,false
+Jiamusi University,佳木斯大学,Heilongjiang,jiamusi,https://www.shanghairanking.cn/_uni/logo/39384948.png,false
+Tangshan Normal University,唐山师范学院,Hebei,tangshan,https://www.shanghairanking.cn/_uni/logo/65458418.png,false
+Shandong Jiaotong University,山东交通学院,Shandong,shandong-jiaotong,https://www.shanghairanking.cn/_uni/logo/72327141.png,false
+Guangdong University of Petrochemical Technology,广东石油化工学院,Guangdong,guangdong-petrochemical,https://www.shanghairanking.cn/_uni/logo/35196660.png,false
+Hebei University of Architecture,河北建筑工程学院,Hebei,hebei-architecture,https://www.shanghairanking.cn/_uni/logo-jpg/6786819600.jpg,false
+Hubei Engineering University,湖北工程学院,Hubei,hubei-5,https://www.shanghairanking.cn/_uni/logo/93515588.png,false
+Huizhou University,惠州学院,Guangdong,huizhou,https://www.shanghairanking.cn/_uni/logo/84940619.png,false
+Chengdu Technological University,成都工业学院,Sichuan,chengdu-technological,https://www.shanghairanking.cn/_uni/logo/83350978.png,false
+Lishui University,丽水学院,Zhejiang,lishui,https://www.shanghairanking.cn/_uni/logo/40081109.png,false
+Huanghuai University,黄淮学院,Henan,huanghuai,https://www.shanghairanking.cn/_uni/logo/99125868.png,false
+Xuchang University,许昌学院,Henan,xuchang,https://www.shanghairanking.cn/_uni/logo/12049720.png,false
+North China Institute of Aerospace Engineering,北华航天工业学院,Hebei,aerospace,https://www.shanghairanking.cn/_uni/logo/92801885.png,false
+Hubei University of Education,湖北第二师范学院,Hubei,hubei-education,https://www.shanghairanking.cn/_uni/logo/71638925.png,false
+Hunan First Normal University,湖南第一师范学院,Hunan,hunan-first,https://www.shanghairanking.cn/_uni/logo/20498995.png,false
+Hunan University of Arts and Science,湖南文理学院,Hunan,hunan-arts,https://www.shanghairanking.cn/_uni/logo/18418928.png,false
+Zhoukou Normal University,周口师范学院,Henan,zhoukou,https://www.shanghairanking.cn/_uni/logo/59515613.png,false
+Chengdu Normal University,成都师范学院,Sichuan,chengdu-4,https://www.shanghairanking.cn/_uni/logo-jpg/4681771000.jpg,false
+Chongqing Three Gorges University,重庆三峡学院,Chongqing,chongqing-three-gorges,https://www.shanghairanking.cn/_uni/logo/16478778.png,false
+Tongren University,铜仁学院,Guizhou,tongren,https://www.shanghairanking.cn/_uni/logo/70662162.png,false
+Zunyi Normal University,遵义师范学院,Guizhou,zunyi,https://www.shanghairanking.cn/_uni/logo-jpg/7195928000.jpg,false
+Shangrao Normal University,上饶师范学院,Jiangxi,shangrao,https://www.shanghairanking.cn/_uni/logo-jpg/7197432700.jpg,false
+Shangqiu Normal University,商丘师范学院,Henan,shangqiu,https://www.shanghairanking.cn/_uni/logo/54757149.png,false
+Yichun University,宜春学院,Jiangxi,yichun,https://www.shanghairanking.cn/_uni/logo/60393380.png,false
+Zhejiang University of Water Resources and Electric Power,浙江水利水电学院,Zhejiang,zhejiang-water-resources-electric-power,https://www.shanghairanking.cn/_uni/logo/56985389.png,false
+Chuzhou University,滁州学院,Anhui,chuzhou,https://www.shanghairanking.cn/_uni/logo/85371855.png,false
+Jilin Institute of Chemical Technology,吉林化工学院,Jilin,jilin-chemical,https://www.shanghairanking.cn/_uni/logo/38741664.png,false
+Dezhou University,德州学院,Shandong,dezhou,https://www.shanghairanking.cn/_uni/logo/14072746.png,false
+Zhaoqing University,肇庆学院,Guangdong,zhaoqing,https://www.shanghairanking.cn/_uni/logo/75909981.png,false
+Taishan University,泰山学院,Shandong,taishan,https://www.shanghairanking.cn/_uni/logo/71264540.png,false
+Guangdong University of Education,广东第二师范学院,Guangdong,guangdong-education,https://www.shanghairanking.cn/_uni/logo/26260939.png,false
+Shenyang Institute of Engineering,沈阳工程学院,Liaoning,shenyang-5,https://www.shanghairanking.cn/_uni/logo/54369362.png,false
+Yulin University,榆林学院,Shaanxi,yulin,https://www.shanghairanking.cn/_uni/logo/85924739.png,false
+Changchun Institute of Technology,长春工程学院,Jilin,changchun-5,https://www.shanghairanking.cn/_uni/logo/68422924.png,false
+Luoyang Institute of Science and Technology,洛阳理工学院,Henan,luoyang-2,https://www.shanghairanking.cn/_uni/logo/48021129.png,false
+Hanshan Normal University,韩山师范学院,Guangdong,hanshan,https://www.shanghairanking.cn/_uni/logo/57927770.png,false
+North China Electric Power University Science and Technology College,河北科技工程职业技术大学,Hebei,electric-power-2,https://www.shanghairanking.cn/_uni/logo-jpg/8057595500.jpg,false
+Tianshui Normal University,天水师范学院,Gansu,tianshui,https://www.shanghairanking.cn/_uni/logo/35438108.png,false
+Beibu Gulf University,北部湾大学,Guangxi,beibu-gulf,https://www.shanghairanking.cn/_uni/logo/99524990.png,false
+Xi'an University,西安文理学院,Shaanxi,xi-5,https://www.shanghairanking.cn/_uni/logo/14139441.png,false
+Qilu Normal University,齐鲁师范学院,Shandong,qilu-2,https://www.shanghairanking.cn/_uni/logo/42027987.png,false
+West AnHui University,皖西学院,Anhui,anhui-8,https://www.shanghairanking.cn/_uni/logo/64462476.png,false
+Harbin University,哈尔滨学院,Heilongjiang,harbin-3,https://www.shanghairanking.cn/_uni/logo/71111811.png,false
+Hunan City University,湖南城市学院,Hunan,hunan-city,https://www.shanghairanking.cn/_uni/logo/93210906.png,false
+Tonghua Normal University,通化师范学院,Jilin,tonghua,https://www.shanghairanking.cn/_uni/logo/59725851.png,false
+Institute of Disaster Prevention,防灾科技学院,Hebei,disaster-prevention,https://www.shanghairanking.cn/_uni/logo/20951986.png,false
+Yibin University,宜宾学院,Sichuan,yibin,https://www.shanghairanking.cn/_uni/logo/40775796.png,false
+Polytechnic College of Hebei University of Science and Technology,河北工业职业技术大学,Hebei,hebei-8,https://www.shanghairanking.cn/_uni/logo-jpg/4909441300.jpg,false
+Lanzhou City University,兰州城市学院,Gansu,lanzhou-city,https://www.shanghairanking.cn/_uni/logo/61174686.png,false
+Henan Institute of Science and Technology,河南科技学院,Henan,henan-7,https://www.shanghairanking.cn/_uni/logo/45836143.png,false
+Ningxia Normal University,宁夏师范学院,Ningxia,ningxia-2,https://www.shanghairanking.cn/_uni/logo-jpg/3211405500.jpg,false
+Qujing Normal University,曲靖师范学院,Yunnan,qujing,https://www.shanghairanking.cn/_uni/logo/38293178.png,false
+Weinan Normal University,渭南师范学院,Shaanxi,weinan,https://www.shanghairanking.cn/_uni/logo/58053407.png,false
+Yulin Normal University,玉林师范学院,Guangxi,yulin-2,https://www.shanghairanking.cn/_uni/logo/23382976.png,false
+Nanjing Normal University of Special Education,南京特殊教育师范学院,Jiangsu,nanjing-special-education,https://www.shanghairanking.cn/_uni/logo-jpg/4784677600.jpg,false
+North China Institute of Science and Technology,华北科技学院,Langfang,ncist,https://www.shanghairanking.cn/_uni/logo/94510632.png,false
+Tangshan College,唐山学院,Hebei,tangshan-2,https://www.shanghairanking.cn/_uni/logo/60481068.png,false
+Shaoguan University,韶关学院,Guangdong,shaoguan,https://www.shanghairanking.cn/_uni/logo/14887282.png,false
+HeXi University,河西学院,Gansu,hexi,https://www.shanghairanking.cn/_uni/logo/84218792.png,false
+Huangshan University,黄山学院,Anhui,huangshan,https://www.shanghairanking.cn/_uni/logo/56600197.png,false
+Civil Aviation Flight University of China,中国民用航空飞行学院,Sichuan,aviation-flight,https://www.shanghairanking.cn/_uni/logo/49642757.png,false
+Hunan Institute of Engineering,湖南工程学院,Hunan,hunan-6,https://www.shanghairanking.cn/_uni/logo/87270858.png,false
+Sanming University,三明学院,Fujian,sanming,https://www.shanghairanking.cn/_uni/logo-jpg/8062462800.jpg,false
+Taizhou University,泰州学院,Jiangsu,taizhou-2,https://www.shanghairanking.cn/_uni/logo-jpg/4682020700.jpg,false
+Hubei Polytechnic University,湖北理工学院,Hubei,hubei-6,https://www.shanghairanking.cn/_uni/logo/43373392.png,false
+Shijiazhuang University,石家庄学院,Hebei,shijiazhuang,https://www.shanghairanking.cn/_uni/logo/40469773.png,false
+Putian University,莆田学院,Fujian,putian,https://www.shanghairanking.cn/_uni/logo/70611686.png,false
+Longyan University,龙岩学院,Fujian,longyan,https://www.shanghairanking.cn/_uni/logo/37500595.png,false
+Baotou Teachers' College,内蒙古科技大学包头师范学院,Inner Mongolia,baotou-teachers,https://www.shanghairanking.cn/_uni/logo-jpg/2887180000.jpg,false
+Anshun University,安顺学院,Guizhou,anshun,https://www.shanghairanking.cn/_uni/logo-jpg/1559271700.jpg,false
+Nanchang Normal University,南昌师范学院,Jiangxi,nanchang-3,https://www.shanghairanking.cn/_uni/logo-jpg/9123847400.jpg,false
+Sichuan University of Arts and Science,四川文理学院,Sichuan,sichuan-arts,https://www.shanghairanking.cn/_uni/logo/52936789.png,false
+Langfang Teachers University,廊坊师范学院,Hebei,langfang-teachers,https://www.shanghairanking.cn/_uni/logo/28138817.png,false
+Yuxi Normal University,玉溪师范学院,Yunnan,yuxi,https://www.shanghairanking.cn/_uni/logo/22391217.png,false
+Henan University of Urban Construction,河南城建学院,Henan,henan-urban-construction,https://www.shanghairanking.cn/_uni/logo/98614127.png,false
+Chongqing University of Education,重庆第二师范学院,Chongqing,chongqing-education,https://www.shanghairanking.cn/_uni/logo/78569083.png,false
+Xichang College,西昌学院,Sichuan,xichang,https://www.shanghairanking.cn/_uni/logo-jpg/8838763600.jpg,false
+Kaili University,凯里学院,Guizhou,kaili,https://www.shanghairanking.cn/_uni/logo-jpg/8587602700.jpg,false
+Mudanjiang Normal University,牡丹江师范学院,Heilongjiang,mudanjiang,https://www.shanghairanking.cn/_uni/logo/39075056.png,false
+Sichuan Tourism University,四川旅游学院,Sichuan,sichuan-tourism,https://www.shanghairanking.cn/_uni/logo-jpg/1651148300.jpg,false
+Zhengzhou Normal University,郑州师范学院,Henan,zhengzhou-2,https://www.shanghairanking.cn/_uni/logo/81495500.png,false
+Daqing Normal University,大庆师范学院,Heilongjiang,daqing,https://www.shanghairanking.cn/_uni/logo-jpg/7194980800.jpg,false
+Panzhihua University,攀枝花学院,Sichuan,panzhihua,https://www.shanghairanking.cn/_uni/logo/39118190.png,false
+Kunming University,昆明学院,Yunnan,kunming-2,https://www.shanghairanking.cn/_uni/logo/12954554.png,false
+Quzhou University,衢州学院,Zhejiang,quzhou,https://www.shanghairanking.cn/_uni/logo/72411383.png,false
+Baicheng Normal University,白城师范学院,Jilin,baicheng,https://www.shanghairanking.cn/_uni/logo-jpg/4750387800.jpg,false
+Jilin Engineering Normal University,吉林工程技术师范学院,Jilin,jilin-3,https://www.shanghairanking.cn/_uni/logo-jpg/9472304600.jpg,false
+Huainan Normal University,淮南师范学院,Anhui,huainan,https://www.shanghairanking.cn/_uni/logo/56595333.png,false
+Huzhou University Qiuzhen College,湖州学院,Zhejiang,huzhou-qiuzhen,https://www.shanghairanking.cn/_uni/logo/19332185.png,false
+Jiaying University,嘉应学院,Guangdong,jiaying,https://www.shanghairanking.cn/_uni/logo/40007744.png,false
+Nanyang Institute of Technology,南阳理工学院,Henan,nanyang-2,https://www.shanghairanking.cn/_uni/logo/83749369.png,false
+YingKou Institute of Technology,营口理工学院,Liaoning,yingkou,https://www.shanghairanking.cn/_uni/logo-jpg/1906674600.jpg,false
+Shangluo University,商洛学院,Shaanxi,shangluo,https://www.shanghairanking.cn/_uni/logo/56711450.png,false
+Long Dong University,陇东学院,Gansu,long-dong,https://www.shanghairanking.cn/_uni/logo/49553796.png,false
+Baoding University,保定学院,Hebei,baoding,https://www.shanghairanking.cn/_uni/logo-jpg/8911327100.jpg,false
+Wenzheng College of Soochow University,苏州城市学院,Jiangsu,wenzheng-soochow,https://www.shanghairanking.cn/_uni/logo-jpg/7187173700.jpg,false
+Ankang University,安康学院,Shaanxi,ankang,https://www.shanghairanking.cn/_uni/logo/83476348.png,false
+Hunan University of Science and Engineering,湖南科技学院,Hunan,hunan-7,https://www.shanghairanking.cn/_uni/logo/89586778.png,false
+Shandong Management University,山东管理学院,Shandong,shandong-management,https://www.shanghairanking.cn/_uni/logo-jpg/7097115800.jpg,false
+Guiyang University,贵阳学院,Guizhou,guiyang,https://www.shanghairanking.cn/_uni/logo/66279213.png,false
+Liaoning Institute of Science and Technology,辽宁科技学院,Liaoning,liaoning-5,https://www.shanghairanking.cn/_uni/logo-jpg/2349550300.jpg,false
+Wuyi University,武夷学院,Fujian,wuyi-2,https://www.shanghairanking.cn/_uni/logo-jpg/6657725600.jpg,false
+Anshan Normal University Liaoning China,鞍山师范学院,Liaoning,anshan-liaoning,https://www.shanghairanking.cn/_uni/logo/82317225.png,false
+Xiangnan University,湘南学院,Hunan,xiangnan,https://www.shanghairanking.cn/_uni/logo/21632133.png,false
+Liupanshui Normal University,六盘水师范学院,Guizhou,liupanshui,https://www.shanghairanking.cn/_uni/logo-jpg/1719257800.jpg,false
+Henan University of Animal Husbandry and Economy,河南牧业经济学院,Henan,henan-animal-husbandry-economy,https://www.shanghairanking.cn/_uni/logo/55458057.png,false
+Pingdingshan University,平顶山学院,Henan,pingdingshan,https://www.shanghairanking.cn/_uni/logo/95443426.png,false
+Hezhou University,贺州学院,Guangxi,hezhou,https://www.shanghairanking.cn/_uni/logo/68638535.png,false
+Lanzhou Institute of Technology,兰州工业学院,Gansu,lanzhou-2,https://www.shanghairanking.cn/_uni/logo-jpg/9986906100.jpg,false
+Ningde Normal University,宁德师范学院,Fujian,ningde,https://www.shanghairanking.cn/_uni/logo-jpg/6036772300.jpg,false
+Chizhou University,池州学院,Anhui,chizhou,https://www.shanghairanking.cn/_uni/logo/31711737.png,false
+Qiannan Normal College for Nationalities,黔南民族师范学院,Guizhou,qiannan-nationalities,https://www.shanghairanking.cn/_uni/logo-jpg/2274361400.jpg,false
+Taiyuan Normal University,太原师范学院,Shanxi,taiyuan-3,https://www.shanghairanking.cn/_uni/logo/95911693.png,false
+Suzhou University,宿州学院,Anhui,suzhou-2,https://www.shanghairanking.cn/_uni/logo-jpg/5126663700.jpg,false
+"Shengli College, China University of Petroleum",山东石油化工学院,Shandong,shengli,https://www.shanghairanking.cn/_uni/logo-jpg/1462012500.jpg,false
+Hainan Tropical Ocean University,海南热带海洋学院,Hainan,hainan-tropical-ocean,https://www.shanghairanking.cn/_uni/logo/40219438.png,false
+Heihe University,黑河学院,Heilongjiang,heihe,https://www.shanghairanking.cn/_uni/logo-jpg/6108486600.jpg,false
+Jilin Agricultural Science and Technology University,吉林农业科技学院,Jilin,jilin-4,https://www.shanghairanking.cn/_uni/logo-jpg/3050964900.jpg,false
+Eastern Liaoning University,辽东学院,Liaoning,eastern-liaoning,https://www.shanghairanking.cn/_uni/logo/32502477.png,false
+Shanxi Datong University,山西大同大学,Shanxi,shanxi-datong,https://www.shanghairanking.cn/_uni/logo/84783964.png,false
+Xi'an Aeronautical University,西安航空学院,Shaanxi,xi-aeronautical,https://www.shanghairanking.cn/_uni/logo/48156282.png,false
+Shaanxi Xueqian Normal University,陕西学前师范学院,Shaanxi,shaanxi-xueqian,https://www.shanghairanking.cn/_uni/logo-jpg/1691016600.jpg,false
+Sichuan University for Nationalities,四川民族学院,Sichuan,sichuan-nationalities,https://www.shanghairanking.cn/_uni/logo-jpg/6044899600.jpg,false
+Shandong Agriculture and Engineering University,山东农业工程学院,Shandong,shandong-agriculture,https://www.shanghairanking.cn/_uni/logo-jpg/7258167900.jpg,false
+Bengbu University,蚌埠学院,Anhui,bengbu,https://www.shanghairanking.cn/_uni/logo/64894541.png,false
+Huaihua University,怀化学院,Hunan,huaihua,https://www.shanghairanking.cn/_uni/logo/97532390.png,false
+Xinyu University,新余学院,Jiangxi,xinyu,https://www.shanghairanking.cn/_uni/logo-jpg/6113099900.jpg,false
+Shaoyang University,邵阳学院,Hunan,shaoyang,https://www.shanghairanking.cn/_uni/logo/89823044.png,false
+Chuxiong Normal University,楚雄师范学院,Yunnan,chuxiong,https://www.shanghairanking.cn/_uni/logo/62283799.png,false
+Henan University of Engineering,河南工程学院,Henan,henan-8,https://www.shanghairanking.cn/_uni/logo/27407185.png,false
+Jining University,济宁学院,Shandong,jining,https://www.shanghairanking.cn/_uni/logo/45162710.png,false
+Kashi University,喀什大学,Xinjiang,kashi,https://www.shanghairanking.cn/_uni/logo-jpg/3795453200.jpg,false
+Lanzhou University of Arts and Science,兰州文理学院,Gansu,lanzhou-arts,https://www.shanghairanking.cn/_uni/logo-jpg/3454415300.jpg,false
+Chifeng University,赤峰学院,Inner Mongolia,chifeng,https://www.shanghairanking.cn/_uni/logo/71637705.png,false
+Hanjiang Normal University,汉江师范学院,Hubei,hanjiang,https://www.shanghairanking.cn/_uni/logo-jpg/8409386600.jpg,false
+Yili Normal University,伊犁师范大学,Xinjiang,yili,https://www.shanghairanking.cn/_uni/logo/88921235.png,false
+Guizhou University of Engineering Science,贵州工程应用技术学院,Guizhou,guizhou-5,https://www.shanghairanking.cn/_uni/logo-jpg/3605984000.jpg,false
+Xingtai University,邢台学院,Hebei,xingtai,https://www.shanghairanking.cn/_uni/logo/16573557.png,false
+Handan College,邯郸学院,Hebei,handan,https://www.shanghairanking.cn/_uni/logo/22418873.png,false
+Hengshui University,衡水学院,Hebei,hengshui,https://www.shanghairanking.cn/_uni/logo-jpg/1780203800.jpg,false
+Jinzhong University,晋中学院,Shanxi,jinzhong,https://www.shanghairanking.cn/_uni/logo-jpg/9083433800.jpg,false
+Wuzhou University,梧州学院,Guangxi,wuzhou,https://www.shanghairanking.cn/_uni/logo-jpg/3573615200.jpg,false
+Heze University,菏泽学院,Shandong,heze,https://www.shanghairanking.cn/_uni/logo-jpg/6859622100.jpg,false
+Honghe University,红河学院,Yunnan,honghe,https://www.shanghairanking.cn/_uni/logo/87705412.png,false
+Gansu Normal University for Nationalities,甘肃民族师范学院,Gansu,gansu-nationalities,https://www.shanghairanking.cn/_uni/logo-jpg/6463626300.jpg,false
+Hulunbuir University,呼伦贝尔学院,Inner Mongolia,hulunbuir,https://www.shanghairanking.cn/_uni/logo-jpg/3798407700.jpg,false
+Shandong Women's University,山东女子学院,Shandong,shandong-women-s,https://www.shanghairanking.cn/_uni/logo-jpg/6756319700.jpg,false
+"Hunan University of Humanities, Science and Technology",湖南人文科技学院,Hunan,hunan-humanities,https://www.shanghairanking.cn/_uni/logo-jpg/4726142300.jpg,false
+Guangzhou Maritime University,广州航海学院,Guangdong,guangzhou-maritime,https://www.shanghairanking.cn/_uni/logo-jpg/8091211800.jpg,false
+Xinxiang University,新乡学院,Henan,xinxiang,https://www.shanghairanking.cn/_uni/logo/36805815.png,false
+Baise University,百色学院,Guangxi,baise,https://www.shanghairanking.cn/_uni/logo-jpg/5133582400.jpg,false
+Cangzhou Normal University,沧州师范学院,Hebei,cangzhou,https://www.shanghairanking.cn/_uni/logo-jpg/7545744400.jpg,false
+Jingdezhen University,景德镇学院,Jiangxi,jingdezhen,https://www.shanghairanking.cn/_uni/logo-jpg/8700667100.jpg,false
+Fujian Polytechnic Normal University,福建技术师范学院,Fujian,fujian-3,https://www.shanghairanking.cn/_uni/logo-jpg/2006306400.jpg,false
+"College of Applied Science, Jiangxi University of Science and Technology",赣南科技学院,Jiangxi,applied-jiangxi,,false
+Guangxi Normal University for Nationalities,广西民族师范学院,Guangxi,guangxi-nationalities,https://www.shanghairanking.cn/_uni/logo-jpg/8391212800.jpg,false
+Jingchu University of Technology,荆楚理工学院,Hubei,jingchu,https://www.shanghairanking.cn/_uni/logo/77437503.png,false
+Anyang Institute of Technology,安阳工学院,Henan,anyang-2,https://www.shanghairanking.cn/_uni/logo/16651461.png,false
+Aba Teachers University,阿坝师范学院,Sichuan,aba-teachers,https://www.shanghairanking.cn/_uni/logo-jpg/7867310100.jpg,false
+Xinyang Agriculture and Forestry University,信阳农林学院,Henan,xinyang-agriculture-forestry,https://www.shanghairanking.cn/_uni/logo-jpg/8561928200.jpg,false
+Chaohu University,巢湖学院,Anhui,chaohu,https://www.shanghairanking.cn/_uni/logo/67944058.png,false
+Hebei Normal University for Nationalities,河北民族师范学院,Hebei,hebei-nationalities,https://www.shanghairanking.cn/_uni/logo-jpg/4961844000.jpg,false
+Guilin University of Aerospace Technology,桂林航天工业学院,Guangxi,guilin-aerospace,https://www.shanghairanking.cn/_uni/logo/78821750.png,false
+Changzhi University,长治学院,Shanxi,changzhi,https://www.shanghairanking.cn/_uni/logo-jpg/6834033600.jpg,false
+Hechi University,河池学院,Guangxi,hechi,https://www.shanghairanking.cn/_uni/logo-jpg/8043470000.jpg,false
+Hebei University of Environmental Engineering,河北环境工程学院,Hebei,hebei-environmental,https://www.shanghairanking.cn/_uni/logo-jpg/5184991800.jpg,false
+Zhangjiakou University,张家口学院,Hebei,zhangjiakou,https://www.shanghairanking.cn/_uni/logo-jpg/7082706800.jpg,false
+Hunan Institute of Technology,湖南工学院,Hunan,hunan-8,https://www.shanghairanking.cn/_uni/logo/65480177.png,false
+Henan Institute of Technology,河南工学院,Henan,henan-9,https://www.shanghairanking.cn/_uni/logo-jpg/2200013300.jpg,false
+Xingyi Normal University for Nationalities,兴义民族师范学院,Guizhou,xingyi-nationalities,https://www.shanghairanking.cn/_uni/logo-jpg/4357856000.jpg,false
+Suihua University,绥化学院,Heilongjiang,suihua,https://www.shanghairanking.cn/_uni/logo-jpg/3200894300.jpg,false
+Wenzhou University Oujiang College,温州理工学院,Zhejiang,wenzhou-oujiang,https://www.shanghairanking.cn/_uni/logo-jpg/3429316100.jpg,false
+Baoshan University,保山学院,Yunnan,baoshan,https://www.shanghairanking.cn/_uni/logo-jpg/3305498700.jpg,false
+Shandong Youth University of Political Science,山东青年政治学院,Shandong,shandong-youth-political,https://www.shanghairanking.cn/_uni/logo-jpg/8794886600.jpg,false
+Changsha Normal University,长沙师范学院,Hunan,changsha-3,https://www.shanghairanking.cn/_uni/logo-jpg/3063398500.jpg,false
+Zaozhuang University,枣庄学院,Shandong,zaozhuang,https://www.shanghairanking.cn/_uni/logo/84643594.png,false
+Zhengzhou Institute of Technology,郑州工程技术学院,Henan,zhengzhou-3,https://www.shanghairanking.cn/_uni/logo-jpg/8369306300.jpg,false
+Yuncheng University,运城学院,Shanxi,yuncheng,https://www.shanghairanking.cn/_uni/logo/26090569.png,false
+Wenshan University,文山学院,Yunnan,wenshan,https://www.shanghairanking.cn/_uni/logo-jpg/9311830300.jpg,false
+Luliang University,吕梁学院,Shanxi,luliang,,false
+Xinjiang Institute of Engineering,新疆工程学院,Xinjiang,xinjiang-4,https://www.shanghairanking.cn/_uni/logo-jpg/9851006000.jpg,false
+Puer University,普洱学院,Yunnan,puer,https://www.shanghairanking.cn/_uni/logo-jpg/1659450100.jpg,false
+Pingxiang University,萍乡学院,Jiangxi,pingxiang,https://www.shanghairanking.cn/_uni/logo-jpg/2474541200.jpg,false
+Jining Normal University,集宁师范学院,Inner Mongolia,jining-2,https://www.shanghairanking.cn/_uni/logo-jpg/1592444300.jpg,false
+West Yunnan University,滇西科技师范学院,Yunnan,yunnan-4,https://www.shanghairanking.cn/_uni/logo-jpg/4442061900.jpg,false
+Taiyuan Institute of Technology,太原工业学院,Shanxi,taiyuan-4,https://www.shanghairanking.cn/_uni/logo/18568381.png,false
+Xinjiang Institute of Technology,新疆理工学院,Xinjiang,xinjiang-5,https://www.shanghairanking.cn/_uni/logo-jpg/8039186500.jpg,false
+Guangxi Science and Technology Normal University,广西科技师范学院,Guangxi,guangxi-4,https://www.shanghairanking.cn/_uni/logo-jpg/8668105300.jpg,false
+Zhaotong University,昭通学院,Yunnan,zhaotong,https://www.shanghairanking.cn/_uni/logo-jpg/6432819300.jpg,false
+Xinzhou Teachers University,忻州师范学院,Shanxi,xinzhou-teachers,https://www.shanghairanking.cn/_uni/logo/87333253.png,false
+Hebei University of Technology City College,河北石油职业技术大学,Hebei,hebei-city,https://www.shanghairanking.cn/_uni/logo-jpg/4513491700.jpg,false
+Changji University,昌吉学院,Xinjiang,changji,https://www.shanghairanking.cn/_uni/logo-jpg/1738244300.jpg,false
+Qiongtai Normal University,琼台师范学院,Hainan,qiongtai,https://www.shanghairanking.cn/_uni/logo-jpg/8817040400.jpg,false
+Ordos Institute of Technology,鄂尔多斯应用技术学院,Inner Mongolia,ordos,https://www.shanghairanking.cn/_uni/logo-jpg/7932247000.jpg,false
+Heilongjiang University of Technology,黑龙江工业学院,Heilongjiang,heilongjiang-4,https://www.shanghairanking.cn/_uni/logo-jpg/4358643700.jpg,false
+College of Science &amp; Technology Shihezi University,新疆政法学院,Xinjiang,shihezi-2,https://www.shanghairanking.cn/_uni/logo-jpg/5488556200.jpg,false
+Shanxi Institute of Energy,山西能源学院,Shanxi,shanxi-energy,https://www.shanghairanking.cn/_uni/logo-jpg/7446893200.jpg,false
+"East China Institute of Technology, Yangtze River College",赣东学院,Jiangxi,yangtze-river,https://www.shanghairanking.cn/_uni/logo-jpg/4406712200.jpg,false
+Hetao University,河套学院,Inner Mongolia,hetao,https://www.shanghairanking.cn/_uni/logo-jpg/6352286800.jpg,false
+Bozhou University,亳州学院,Anhui,bozhou,https://www.shanghairanking.cn/_uni/logo/46908529.png,false
+Yuzhang Normal University,豫章师范学院,Jiangxi,yuzhang,https://www.shanghairanking.cn/_uni/logo-jpg/9530226800.jpg,false
+Shanxi Institute of Technology,山西工程技术学院,Shanxi,shanxi-4,https://www.shanghairanking.cn/_uni/logo-jpg/5595557000.jpg,false
+Taiyuan University,太原学院,Shanxi,taiyuan-5,https://www.shanghairanking.cn/_uni/logo-jpg/6208575900.jpg,false
