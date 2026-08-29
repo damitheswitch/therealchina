@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useDebounce } from '../hooks/useDebounce'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
@@ -22,16 +23,20 @@ export const UserDirectoryPage = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const USERS_PER_PAGE = 12
+  const debouncedCity = useDebounce(cityFilter, 300)
+  const debouncedUniversity = useDebounce(universityFilter, 300)
 
   useEffect(() => {
     if (user) {
-      fetchUsers()
+      const controller = new AbortController()
+      fetchUsers(controller.signal)
+      return () => controller.abort()
     } else if (!authLoading) {
       setLoading(false)
     }
-  }, [user, authLoading, currentPage, cityFilter, universityFilter])
+  }, [user, authLoading, currentPage, debouncedCity, debouncedUniversity])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (signal) => {
     setLoading(true)
     setError(null)
     
@@ -43,19 +48,21 @@ export const UserDirectoryPage = () => {
         .order('created_at', { ascending: false })
 
       // Apply filters if provided
-      if (cityFilter.trim() && cityFilter !== '__not_listed') {
-        query = query.ilike('location', `%${cityFilter.trim()}%`)
+      if (debouncedCity.trim() && debouncedCity !== '__not_listed') {
+        query = query.ilike('location', `%${debouncedCity.trim()}%`)
       }
       
-      if (universityFilter.trim() && universityFilter !== '__not_listed') {
-        query = query.ilike('university', `%${universityFilter.trim()}%`)
+      if (debouncedUniversity.trim() && debouncedUniversity !== '__not_listed') {
+        query = query.ilike('university', `%${debouncedUniversity.trim()}%`)
       }
 
       // Calculate pagination
       const from = (currentPage - 1) * USERS_PER_PAGE
       const to = from + USERS_PER_PAGE - 1
 
-      const { data, error, count } = await query.range(from, to)
+      const { data, error, count } = await query
+        .abortSignal(signal)
+        .range(from, to)
 
       if (error) throw error
 
@@ -63,17 +70,17 @@ export const UserDirectoryPage = () => {
       setTotalCount(count || 0)
       setTotalPages(Math.ceil((count || 0) / USERS_PER_PAGE))
     } catch (err) {
+      if (signal?.aborted) return
       console.error('Error fetching users:', err)
       setError('Failed to load users. Please try again.')
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }
 
   const handleSearch = (e) => {
     e.preventDefault()
     setCurrentPage(1) // Reset to first page on new search
-    fetchUsers()
   }
 
   const clearFilters = () => {

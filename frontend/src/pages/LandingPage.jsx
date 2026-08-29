@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useDebounce } from '../hooks/useDebounce'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { UniversityCard } from '../components/UniversityCard'
@@ -16,14 +17,17 @@ export const LandingPage = () => {
   const [pageCount, setPageCount] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   useEffect(() => {
     fetchCities()
   }, [])
 
   useEffect(() => {
-    fetchData()
-  }, [page, searchQuery, cityFilter, sortBy])
+    const controller = new AbortController()
+    fetchData(controller.signal)
+    return () => controller.abort()
+  }, [page, debouncedSearchQuery, cityFilter, sortBy])
 
   const fetchCities = async () => {
     try {
@@ -37,7 +41,7 @@ export const LandingPage = () => {
     }
   }
 
-  const fetchData = async () => {
+  const fetchData = async (signal) => {
     setLoading(true)
     try {
       // Embed university_stats so sorting by rating/reviews happens in the DB,
@@ -49,8 +53,8 @@ export const LandingPage = () => {
           { count: 'exact' }
         )
 
-      if (searchQuery.trim()) {
-        const trimmed = searchQuery.trim()
+      if (debouncedSearchQuery.trim()) {
+        const trimmed = debouncedSearchQuery.trim()
         query = query.or(
           `name.ilike.%${trimmed}%,name_zh.ilike.%${trimmed}%,city.ilike.%${trimmed}%`
         )
@@ -72,6 +76,7 @@ export const LandingPage = () => {
 
       const { data: universitiesData, error: universitiesError, count } = await query
         .order(column, { ascending, nullsFirst: false })
+        .abortSignal(signal)
         .range(start, end)
 
       if (universitiesError) throw universitiesError
@@ -93,12 +98,13 @@ export const LandingPage = () => {
       setTotalCount(count || 0)
       setPageCount(Math.max(1, Math.ceil((count || 0) / pageSize)))
     } catch (error) {
+      if (signal?.aborted) return
       console.error('Error fetching data:', error)
       setUniversities([])
       setTotalCount(0)
       setPageCount(1)
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }
 
