@@ -285,7 +285,7 @@ export const ReviewPage = () => {
           </div>
 
           {/* Submit */}
-          <div style={{ display: 'flex', gap: 'var(--sp-1)', alignItems: 'center' }}>
+          <div className="form-submit-row">
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading || mediaState.uploading}>
               {loading ? 'Submitting...' : mediaState.uploading ? 'Processing media...' : 'Submit Review'}
             </button>
