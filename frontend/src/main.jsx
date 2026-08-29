@@ -5,6 +5,7 @@ import { registerSW } from 'virtual:pwa-register'
 import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { AuthModalProvider } from './contexts/AuthModalContext'
 import './styles/global.css'
 
 registerSW({
@@ -19,7 +20,9 @@ ReactDOM.createRoot(document.getElementById('app')).render(
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <App />
+          <AuthModalProvider>
+            <App />
+          </AuthModalProvider>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

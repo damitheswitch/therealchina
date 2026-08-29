@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { AuthModal } from './AuthModal'
+import { useAuthModal } from '../contexts/AuthModalContext'
 
 // RegistrationNudge component - dismissible banner shown once per session
 export const RegistrationNudge = () => {
   const { user, loading } = useAuth()
+  const { openAuthModal, closeAuthModal } = useAuthModal()
   const [visible, setVisible] = useState(false)
-  const [authModalOpen, setAuthModalOpen] = useState(false)
   const [installPrompt, setInstallPrompt] = useState(null)
 
   useEffect(() => {
@@ -38,9 +38,9 @@ export const RegistrationNudge = () => {
   useEffect(() => {
     if (user) {
       setVisible(false)
-      setAuthModalOpen(false)
+      closeAuthModal()
     }
-  }, [user])
+  }, [user, closeAuthModal])
 
   const handleDismiss = () => {
     setVisible(false)
@@ -50,7 +50,7 @@ export const RegistrationNudge = () => {
   const handleSignUp = () => {
     setVisible(false)
     sessionStorage.setItem('trc_nudge_shown', 'true')
-    setAuthModalOpen(true)
+    openAuthModal('register')
   }
 
   const handleInstall = async () => {
@@ -113,7 +113,6 @@ export const RegistrationNudge = () => {
           </button>
         </div>
       )}
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} initialMode="register" />
     </>
   )
 }

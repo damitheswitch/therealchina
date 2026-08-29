@@ -8,8 +8,11 @@ import { ProfilePage } from './pages/ProfilePage'
 import { UserDirectoryPage } from './pages/UserDirectoryPage'
 import { FlightListingsPage } from './pages/FlightListingsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { AuthModal } from './components/AuthModal'
+import { useAuthModal } from './contexts/AuthModalContext'
 
 function App() {
+  const { isOpen, initialMode, closeAuthModal } = useAuthModal()
   return (
     <>
       <Header />
@@ -26,6 +29,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      <AuthModal isOpen={isOpen} onClose={closeAuthModal} initialMode={initialMode} />
     </>
   )
 }

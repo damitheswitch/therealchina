@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useDebounce } from '../hooks/useDebounce'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealAvatar } from '../components/SealAvatar'
 import { Icons } from '../components/Icons'
 import { CityAutocomplete } from '../components/CityAutocomplete'
@@ -9,6 +11,7 @@ import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 
 export const UserDirectoryPage = () => {
   const { user, loading: authLoading } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -22,16 +25,20 @@ export const UserDirectoryPage = () => {
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
   const USERS_PER_PAGE = 12
+  const debouncedCity = useDebounce(cityFilter, 300)
+  const debouncedUniversity = useDebounce(universityFilter, 300)
 
   useEffect(() => {
     if (user) {
-      fetchUsers()
+      const controller = new AbortController()
+      fetchUsers(controller.signal)
+      return () => controller.abort()
     } else if (!authLoading) {
       setLoading(false)
     }
-  }, [user, authLoading, currentPage, cityFilter, universityFilter])
+  }, [user, authLoading, currentPage, debouncedCity, debouncedUniversity])
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (signal) => {
     setLoading(true)
     setError(null)
     
@@ -43,19 +50,21 @@ export const UserDirectoryPage = () => {
         .order('created_at', { ascending: false })
 
       // Apply filters if provided
-      if (cityFilter.trim() && cityFilter !== '__not_listed') {
-        query = query.ilike('location', `%${cityFilter.trim()}%`)
+      if (debouncedCity.trim() && debouncedCity !== '__not_listed') {
+        query = query.ilike('location', `%${debouncedCity.trim()}%`)
       }
       
-      if (universityFilter.trim() && universityFilter !== '__not_listed') {
-        query = query.ilike('university', `%${universityFilter.trim()}%`)
+      if (debouncedUniversity.trim() && debouncedUniversity !== '__not_listed') {
+        query = query.ilike('university', `%${debouncedUniversity.trim()}%`)
       }
 
       // Calculate pagination
       const from = (currentPage - 1) * USERS_PER_PAGE
       const to = from + USERS_PER_PAGE - 1
 
-      const { data, error, count } = await query.range(from, to)
+      const { data, error, count } = await query
+        .abortSignal(signal)
+        .range(from, to)
 
       if (error) throw error
 
@@ -63,17 +72,17 @@ export const UserDirectoryPage = () => {
       setTotalCount(count || 0)
       setTotalPages(Math.ceil((count || 0) / USERS_PER_PAGE))
     } catch (err) {
+      if (signal?.aborted) return
       console.error('Error fetching users:', err)
       setError('Failed to load users. Please try again.')
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }
 
   const handleSearch = (e) => {
     e.preventDefault()
     setCurrentPage(1) // Reset to first page on new search
-    fetchUsers()
   }
 
   const clearFilters = () => {
@@ -89,11 +98,26 @@ export const UserDirectoryPage = () => {
   if (!user) {
     return (
       <div className="container empty-state" style={{ paddingTop: '6rem' }}>
-        <h3>Authentication Required</h3>
-        <p>Please sign in to browse the user directory.</p>
-        <Link to="/" className="btn btn-primary mt-2">
-          <Icons.ArrowLeft /> Back to universities
-        </Link>
+        <Icons.Users size={48} />
+        <h1>Discover the community</h1>
+        <p>
+          Join The Real China to find and connect with people in your target city or university.
+          Sign in or create a free account to start exploring the directory.
+        </p>
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => openAuthModal('register')}
+            className="btn btn-primary"
+          >
+            Create account
+          </button>
+          <button
+            onClick={() => openAuthModal('login')}
+            className="btn btn-outline"
+          >
+            Sign in
+          </button>
+        </div>
       </div>
     )
   }

@@ -4,23 +4,24 @@ import { Link, useLocation } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
-import { AuthModal } from './AuthModal'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { UserDropdown } from './UserDropdown'
 
 // Header component
 export const Header = () => {
   const location = useLocation()
   const { user, loading } = useAuth()
-  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const { openAuthModal } = useAuthModal()
   const [menuOpen, setMenuOpen] = useState(false)
 
   // Show the sign-in modal on the first load of the site (once per browser session)
   useEffect(() => {
     if (loading || user) return
+    if (location.pathname === '/users') return
     if (sessionStorage.getItem('trc:auth-nudge-shown')) return
     sessionStorage.setItem('trc:auth-nudge-shown', '1')
-    setAuthModalOpen(true)
-  }, [loading, user])
+    openAuthModal('login')
+  }, [loading, user, location.pathname, openAuthModal])
 
   useEffect(() => {
     setMenuOpen(false)
@@ -47,7 +48,7 @@ export const Header = () => {
   const navLinks = [
     { to: '/', label: 'Universities', icon: <Icons.Book /> },
     { to: '/flights', label: 'Flights', icon: <Icons.Plane /> },
-    ...(user ? [{ to: '/users', label: 'Users', icon: <Icons.Users /> }] : []),
+    { to: '/users', label: 'Users', icon: <Icons.Users /> },
   ]
 
   return (
@@ -77,14 +78,9 @@ export const Header = () => {
           >
             <Icons.Pen /> Leave a Review
           </Link>
-          {!user && (
-            <button onClick={() => setAuthModalOpen(true)} className="btn btn-outline">
-              Sign in
-            </button>
-          )}
         </nav>
         <div className="header-actions">
-          {user && <UserDropdown />}
+          <UserDropdown />
           <button
             type="button"
             className="nav-toggle"
@@ -136,7 +132,7 @@ export const Header = () => {
             className="btn btn-primary mobile-nav-cta"
             onClick={() => {
               setMenuOpen(false)
-              setAuthModalOpen(true)
+              openAuthModal('login')
             }}
             tabIndex={menuOpen ? undefined : -1}
           >
@@ -144,8 +140,6 @@ export const Header = () => {
           </button>
         )}
       </nav>
-
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </header>
   )
 }

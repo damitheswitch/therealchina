@@ -9,6 +9,11 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const { signIn, signUp, signInWithGoogle, user } = useAuth()
   const { showToast } = useToast()
   const [mode, setMode] = useState(initialMode) // 'login' or 'register'
+
+  // Reset mode to the requested initial mode whenever the modal re-opens
+  useEffect(() => {
+    if (isOpen) setMode(initialMode)
+  }, [isOpen, initialMode])
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
