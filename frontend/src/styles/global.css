@@ -1131,29 +1131,36 @@ h3 { font-weight: 600; font-size: 1.125rem; }
 }
 
 .user-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
-  border-radius: var(--r-md);
-  transition: transform var(--t-fast);
+  border-radius: var(--r-full);
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+  box-shadow: 0 0 0 2px rgba(166, 25, 46, 0.08);
 }
 
 .user-dropdown-trigger:hover {
-  transform: scale(1.05);
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 4px 14px rgba(166, 25, 46, 0.12);
 }
 
 .user-dropdown-menu {
   position: absolute;
   top: calc(100% + var(--sp-2));
   right: 0;
-  background: var(--rice);
+  background: rgba(250, 246, 239, 0.98);
   border: 1px solid var(--ink-line);
-  border-radius: var(--r-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 280px;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(26, 22, 19, 0.14);
+  min-width: 290px;
   z-index: 1000;
   animation: fadeIn 0.2s ease-out;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
 }
 
 .user-dropdown-header {
@@ -1201,21 +1208,25 @@ h3 { font-weight: 600; font-size: 1.125rem; }
   align-items: center;
   gap: var(--sp-2);
   width: 100%;
-  padding: var(--sp-2) var(--sp-3);
+  padding: 0.8rem 0.9rem;
   background: none;
   border: none;
   border-radius: var(--r-sm);
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
-  transition: background var(--t-fast);
+  transition: background var(--t-fast), transform var(--t-fast);
   text-align: left;
 }
 
 .user-dropdown-item:hover {
   background: var(--rice-warm);
+}
+
+.user-dropdown-item:active {
+  transform: scale(0.99);
 }
 
 .user-dropdown-item svg {
@@ -1233,6 +1244,35 @@ h3 { font-weight: 600; font-size: 1.125rem; }
 
 .user-dropdown-logout svg {
   color: var(--error);
+}
+
+@media (max-width: 640px) {
+  .user-dropdown-menu {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    top: auto;
+    min-width: 0;
+    width: auto;
+    border-radius: 22px 22px 18px 18px;
+    box-shadow: 0 20px 40px rgba(26, 22, 19, 0.22);
+    max-height: min(72vh, 560px);
+    overflow-y: auto;
+  }
+
+  .user-dropdown-actions {
+    padding: 0.65rem;
+  }
+
+  .user-dropdown-item {
+    padding: 0.9rem 0.8rem;
+    border-radius: 12px;
+  }
+
+  .user-dropdown-header {
+    padding: 1rem 1rem 0.9rem;
+  }
 }
 
 /* ===== Profile Edit Form ===== */
