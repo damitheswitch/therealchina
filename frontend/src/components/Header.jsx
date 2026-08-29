@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Icons } from './Icons'
@@ -11,6 +12,7 @@ export const Header = () => {
   const location = useLocation()
   const { user, loading } = useAuth()
   const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Show the sign-in modal on the first load of the site (once per browser session)
   useEffect(() => {
@@ -20,7 +22,33 @@ export const Header = () => {
     setAuthModalOpen(true)
   }, [loading, user])
 
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [location.pathname, location.search])
+
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
   const isActive = (path) => location.pathname === path
+
+  const navLinks = [
+    { to: '/', label: 'Universities', icon: <Icons.Book /> },
+    { to: '/flights', label: 'Flights', icon: <Icons.Plane /> },
+    ...(user ? [{ to: '/users', label: 'Users', icon: <Icons.Users /> }] : []),
+  ]
 
   return (
     <header className="site-header">
@@ -31,57 +59,92 @@ export const Header = () => {
             The Real <span className="accent">China</span>
           </span>
         </Link>
-        <nav className="nav-links">
-          <Link
-            to="/"
-            className="nav-text-link"
-            style={{ color: isActive('/') ? 'var(--seal-red)' : '' }}
-          >
-            <Icons.Book /> Universities
-          </Link>
-          <Link
-            to="/flights"
-            className="nav-text-link"
-            style={{ color: isActive('/flights') ? 'var(--seal-red)' : '' }}
-          >
-            <Icons.Plane /> Flights
-          </Link>
-          {user && (
+        <nav className="nav-links" aria-label="Main navigation">
+          {navLinks.map((link) => (
             <Link
-              to="/users"
+              key={link.to}
+              to={link.to}
               className="nav-text-link"
-              style={{ color: isActive('/users') ? 'var(--seal-red)' : '' }}
+              style={{ color: isActive(link.to) ? 'var(--seal-red)' : '' }}
             >
-              <Icons.Users /> Users
+              {link.icon} {link.label}
             </Link>
-          )}
-          {user ? (
-            <div className="nav-cta">
-              <Link
-                to="/review"
-                className="btn btn-primary"
-                style={{ background: isActive('/review') ? 'var(--seal-red-dark)' : '' }}
-              >
-                <Icons.Pen /> Leave a Review
-              </Link>
-              <UserDropdown />
-            </div>
-          ) : (
-            <>
-              <Link
-                to="/review"
-                className="btn btn-primary"
-                style={{ background: isActive('/review') ? 'var(--seal-red-dark)' : '' }}
-              >
-                <Icons.Pen /> Leave a Review
-              </Link>
-              <button onClick={() => setAuthModalOpen(true)} className="btn btn-outline">
-                Sign in
-              </button>
-            </>
+          ))}
+          <Link
+            to="/review"
+            className="btn btn-primary"
+            style={{ background: isActive('/review') ? 'var(--seal-red-dark)' : '' }}
+          >
+            <Icons.Pen /> Leave a Review
+          </Link>
+          {!user && (
+            <button onClick={() => setAuthModalOpen(true)} className="btn btn-outline">
+              Sign in
+            </button>
           )}
         </nav>
+        <div className="header-actions">
+          {user && <UserDropdown />}
+          <button
+            type="button"
+            className="nav-toggle"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+          >
+            {menuOpen ? <Icons.X /> : <Icons.Menu />}
+          </button>
+        </div>
       </div>
+
+      {/* Portaled to body: the header's backdrop-filter would otherwise make it
+          the containing block for a fixed-position child */}
+      {menuOpen && createPortal(
+        <div className="mobile-nav-backdrop" onClick={() => setMenuOpen(false)} />,
+        document.body,
+      )}
+
+      <nav
+        id="mobile-nav"
+        className={`mobile-nav${menuOpen ? ' is-open' : ''}`}
+        aria-label="Mobile navigation"
+        aria-hidden={!menuOpen}
+      >
+        {navLinks.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className={`mobile-nav-item${isActive(link.to) ? ' is-active' : ''}`}
+            onClick={() => setMenuOpen(false)}
+            tabIndex={menuOpen ? undefined : -1}
+          >
+            {link.icon} {link.label}
+          </Link>
+        ))}
+        <Link
+          to="/review"
+          className={`mobile-nav-item${isActive('/review') ? ' is-active' : ''}`}
+          onClick={() => setMenuOpen(false)}
+          tabIndex={menuOpen ? undefined : -1}
+        >
+          <Icons.Pen /> Leave a Review
+        </Link>
+        {!user && (
+          <button
+            type="button"
+            className="btn btn-primary mobile-nav-cta"
+            onClick={() => {
+              setMenuOpen(false)
+              setAuthModalOpen(true)
+            }}
+            tabIndex={menuOpen ? undefined : -1}
+          >
+            Sign in
+          </button>
+        )}
+      </nav>
+
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </header>
   )
