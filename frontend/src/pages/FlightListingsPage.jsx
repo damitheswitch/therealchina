@@ -5,8 +5,10 @@ import { useAuthModal } from '../contexts/AuthModalContext'
 import { useToast } from '../contexts/ToastContext'
 import { FlightListingCard } from '../components/FlightListingCard'
 import { FlightListingForm } from '../components/FlightListingForm'
+import { SocialHandlesSetupModal } from '../components/SocialHandlesSetupModal'
 import { Icons } from '../components/Icons'
 import { CountryAutocomplete, isCountryName } from '../components/CountryAutocomplete'
+import { hasSocialHandles } from '../lib/socialHandles'
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -34,6 +36,8 @@ export const FlightListingsPage = () => {
   const [listings, setListings] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [ownProfile, setOwnProfile] = useState(null)
+  const [showSetupModal, setShowSetupModal] = useState(false)
 
   // Filter states
   const [departureCountry, setDepartureCountry] = useState('')
@@ -59,21 +63,59 @@ export const FlightListingsPage = () => {
     }
   }
 
+  const fetchOwnProfile = async () => {
+    if (!user) return null
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, social_handles, social_handle, social_platform, show_social_handle')
+        .eq('id', user.id)
+        .single()
+
+      if (error) throw error
+      setOwnProfile(data)
+      return data
+    } catch (error) {
+      console.error('Error fetching own profile:', error)
+      return null
+    }
+  }
+
   useEffect(() => {
     if (user) {
       fetchListings()
+      fetchOwnProfile()
     }
   }, [user])
 
-  // Deep link from the profile dropdown (/flights?post=1) opens the form
-  // once the session has been restored
-  useEffect(() => {
-    if (!user) return
-    if (new URLSearchParams(window.location.search).get('post') === '1') {
+  const handleStartPosting = async () => {
+    const currentProfile = ownProfile || (await fetchOwnProfile())
+    if (!hasSocialHandles(currentProfile)) {
+      setShowSetupModal(true)
+    } else {
       setShowForm(true)
+    }
+  }
+
+  const handleSetupSaved = async () => {
+    await fetchOwnProfile()
+    setShowSetupModal(false)
+    setShowForm(true)
+  }
+
+  // Deep link from the profile dropdown (/flights?post=1) opens the form
+  // once the session and profile have been restored
+  useEffect(() => {
+    if (!user || !ownProfile) return
+    if (new URLSearchParams(window.location.search).get('post') === '1') {
+      if (hasSocialHandles(ownProfile)) {
+        setShowForm(true)
+      } else {
+        setShowSetupModal(true)
+      }
       window.history.replaceState({}, '', '/flights')
     }
-  }, [user])
+  }, [user, ownProfile])
 
   // Filtering runs on the latest state on every render, so results always
   // match the filter inputs. Country filters only apply once the typed text
@@ -201,7 +243,7 @@ export const FlightListingsPage = () => {
 
         {user && !showForm && (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={handleStartPosting}
             className="btn btn-primary btn-sm"
           >
             <Icons.Plus /> Post Your Flight
@@ -211,6 +253,7 @@ export const FlightListingsPage = () => {
 
       {showForm ? (
         <FlightListingForm
+          onRequiresSocialHandles={() => setShowSetupModal(true)}
           onSuccess={handleListingCreated}
           onCancel={() => setShowForm(false)}
         />
@@ -236,7 +279,7 @@ export const FlightListingsPage = () => {
               </p>
               {user && !hasActiveFilters && (
                 <button
-                  onClick={() => setShowForm(true)}
+                  onClick={handleStartPosting}
                   className="btn btn-primary"
                 >
                   <Icons.Plus /> Post Your Flight
@@ -257,6 +300,12 @@ export const FlightListingsPage = () => {
           )}
         </>
       )}
+
+      <SocialHandlesSetupModal
+        isOpen={showSetupModal}
+        onClose={() => setShowSetupModal(false)}
+        onSaved={handleSetupSaved}
+      />
     </div>
   )
 }

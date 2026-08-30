@@ -18,3 +18,7 @@ export const getSocialHandles = (profile) => {
 
   return []
 }
+
+export const hasSocialHandles = (profile) => {
+  return getSocialHandles(profile).some((sh) => sh.handle && sh.handle.trim())
+}

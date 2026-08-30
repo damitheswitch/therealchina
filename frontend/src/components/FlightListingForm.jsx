@@ -4,8 +4,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
 import { CountryAutocomplete, isCountryName } from './CountryAutocomplete'
+import { hasSocialHandles } from '../lib/socialHandles'
 
-export const FlightListingForm = ({ onSuccess, onCancel }) => {
+export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
 
@@ -82,6 +83,20 @@ export const FlightListingForm = ({ onSuccess, onCancel }) => {
         return
       }
 
+      // Verify the user has at least one social handle so travelers can contact them
+      const { data: freshProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('social_handles, social_handle, social_platform')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError || !hasSocialHandles(freshProfile)) {
+        showToast('You must have at least one social handle set up to post a flight.', 'error')
+        onRequiresSocialHandles?.()
+        setSaving(false)
+        return
+      }
+
       const { error } = await supabase
         .from('flight_listings')
         .insert({
@@ -103,7 +118,12 @@ export const FlightListingForm = ({ onSuccess, onCancel }) => {
       if (onSuccess) onSuccess()
     } catch (error) {
       console.error('Error creating flight listing:', error)
-      showToast(error.message || 'Failed to create flight listing', 'error')
+      const message = error?.message || ''
+      if (error?.code === '42501' || message.toLowerCase().includes('row-level security')) {
+        showToast('You must have at least one social handle set up to post a flight.', 'error')
+      } else {
+        showToast(message || 'Failed to create flight listing', 'error')
+      }
     } finally {
       setSaving(false)
     }
