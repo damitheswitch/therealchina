@@ -3,20 +3,12 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
+import { socialPlatforms } from '../lib/socialPlatforms'
 
 const MONTHS_SHORT = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ]
-
-// Social platforms data (inline to avoid import issues)
-const socialPlatforms = {
-  wechat: { label: 'WeChat', icon: 'chat' },
-  instagram: { label: 'Instagram', icon: 'camera' },
-  red: { label: 'RED', icon: 'book' },
-  rednote: { label: 'REDNote', icon: 'book' },
-  other: { label: 'Social', icon: 'link' },
-}
 
 // Parse a YYYY-MM-DD string directly so the displayed day is not
 // shifted by timezone conversion

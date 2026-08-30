@@ -1061,6 +1061,62 @@ h3 { font-weight: 600; font-size: 1.125rem; }
   margin-top: var(--sp-1);
 }
 
+/* ===== Verification Notice ===== */
+.auth-modal-content.verification {
+  max-width: 600px;
+  padding: var(--sp-5);
+  text-align: center;
+}
+.auth-modal-verification {
+  padding: var(--sp-3) 0;
+}
+.auth-modal-verification .verification-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-3);
+}
+.auth-modal-verification .logo-mark {
+  filter: drop-shadow(0 4px 12px rgba(166, 25, 46, 0.18));
+}
+.verification-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 0.25rem;
+}
+.verification-subtitle {
+  font-size: 0.9rem;
+  color: var(--seal-red);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.verification-message {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+  margin-bottom: var(--sp-2);
+}
+.verification-message strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+.verification-help {
+  font-size: 0.9rem;
+  color: var(--ink-faint);
+  margin-bottom: var(--sp-3);
+}
+.verification-close-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
 /* Social Auth & Divider */
 .social-auth-section {
   margin-bottom: var(--sp-2);
@@ -2017,4 +2073,48 @@ h3 { font-weight: 600; font-size: 1.125rem; }
     text-align: center;
     order: -1;
   }
+}
+
+.onboarding-page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.onboarding-form .form-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Plain text button (e.g. onboarding skip) */
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  line-height: 1;
+}
+
+.btn-text:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.onboarding-skip-hint {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  margin-top: 0;
+}
+
+.social-handles-editor .social-handles-list {
+  margin-bottom: var(--sp-2);
 }

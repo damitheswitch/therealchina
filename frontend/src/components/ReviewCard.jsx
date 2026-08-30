@@ -61,12 +61,16 @@ export const ReviewCard = ({ review }) => {
         </div>
       </div>
       
-      {authorProfile && (
+      {user_id && (
         <div className="review-author">
-          <Link to={`/profile/${user_id}`} className="review-author-link">
-            <SealAvatar displayName={authorProfile.display_name} size={24} />
-            <span className="review-author-name">{authorProfile.display_name}</span>
-          </Link>
+          {authorProfile ? (
+            <Link to={`/profile/${user_id}`} className="review-author-link">
+              <SealAvatar displayName={authorProfile.display_name} size={24} />
+              <span className="review-author-name">{authorProfile.display_name}</span>
+            </Link>
+          ) : (
+            <span className="review-author-name muted">Former member</span>
+          )}
         </div>
       )}
       

@@ -10,15 +10,8 @@ import { MediaGallery } from './MediaGallery'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
-
-// Social platforms data (inline to avoid import issues)
-const socialPlatforms = {
-  wechat: { label: 'WeChat', icon: 'chat' },
-  instagram: { label: 'Instagram', icon: 'camera' },
-  red: { label: 'RED', icon: 'book' },
-  rednote: { label: 'REDNote', icon: 'book' },
-  other: { label: 'Social', icon: 'link' },
-}
+import { socialPlatforms } from '../lib/socialPlatforms'
+import { getSocialHandles } from '../lib/socialHandles'
 
 // Simple review card for profile view (reused logic)
 const ProfileReviewCard = ({ review }) => {
@@ -151,22 +144,8 @@ export const ProfileView = ({ userId }) => {
     )
   }
 
-  const socialPlatformData = socialPlatforms[profile.social_platform] || socialPlatforms.other
-  const showSocialHandle = profile.show_social_handle !== false && profile.social_handle
-  
-  // Handle multiple social handles with migration from old format
-  let socialHandles = []
-  if (profile.social_handles && Array.isArray(profile.social_handles) && profile.social_handles.length > 0) {
-    socialHandles = profile.social_handles
-  } else if (profile.social_platform || profile.social_handle) {
-    // Migrate old single social handle to new array format for display
-    socialHandles = [{
-      platform: profile.social_platform || 'other',
-      handle: profile.social_handle || ''
-    }]
-  }
-  
-  const hasSocialHandles = socialHandles.some(sh => sh.handle && sh.handle.trim())
+  const socialHandles = getSocialHandles(profile)
+  const hasSocialHandles = socialHandles.some((sh) => sh.handle && sh.handle.trim())
   const displaySocialHandles = profile.show_social_handle !== false && hasSocialHandles
 
   return (

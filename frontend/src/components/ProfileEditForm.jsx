@@ -2,19 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { validateDisplayName } from '../lib/validateDisplayName'
 import { Icons } from './Icons'
 import { CityAutocomplete } from './CityAutocomplete'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
-
-// Social platforms data (inline to avoid import issues)
-const socialPlatforms = {
-  wechat: { label: 'WeChat', icon: 'chat' },
-  instagram: { label: 'Instagram', icon: 'camera' },
-  red: { label: 'RED', icon: 'book' },
-  rednote: { label: 'REDNote', icon: 'book' },
-  other: { label: 'Social', icon: 'link' },
-}
+import { SocialHandlesEditor } from './SocialHandlesEditor'
 
 // ProfileEditForm component - Form for editing profile details
 export const ProfileEditForm = () => {
@@ -27,12 +20,14 @@ export const ProfileEditForm = () => {
   
   // Profile fields
   const [displayName, setDisplayName] = useState('')
+  const [displayNameError, setDisplayNameError] = useState('')
   const [bio, setBio] = useState('')
   const [location, setLocation] = useState('')
   const [university, setUniversity] = useState('')
   const [program, setProgram] = useState('')
   const [socialHandles, setSocialHandles] = useState([])
   const [showSocialHandle, setShowSocialHandle] = useState(true)
+  const [isDiscoverable, setIsDiscoverable] = useState(true)
   
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('')
@@ -77,6 +72,7 @@ export const ProfileEditForm = () => {
         // Ensure we always have at least one social handle field
         setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
         setShowSocialHandle(data.show_social_handle !== false)
+        setIsDiscoverable(data.is_discoverable !== false)
       }
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -89,29 +85,46 @@ export const ProfileEditForm = () => {
   const handleProfileSave = async (e) => {
     e.preventDefault()
     setSaving(true)
+    setDisplayNameError('')
+
+    const { valid, error: validationError, normalized } = validateDisplayName(displayName)
+    if (!valid) {
+      setDisplayNameError(validationError)
+      showToast(validationError, 'error')
+      setSaving(false)
+      return
+    }
 
     try {
       const { error } = await supabase
         .from('profiles')
         .update({
-          display_name: displayName.trim(),
+          display_name: normalized,
           bio: bio.trim(),
           location: location.trim() !== '__not_listed' ? location.trim() : null,
           university: university.trim() !== '__not_listed' ? university.trim() : null,
           program: program.trim(),
-          social_handles: socialHandles.filter(sh => sh.handle && sh.handle.trim()),
-          social_platform: null, // Deprecated, using social_handles array now
-          social_handle: null, // Deprecated, using social_handles array now
+          social_handles: socialHandles.filter((sh) => sh.handle && sh.handle.trim()),
+          social_platform: null,
+          social_handle: null,
           show_social_handle: showSocialHandle,
+          is_discoverable: isDiscoverable,
         })
         .eq('id', user.id)
 
       if (error) throw error
 
+      setDisplayName(normalized)
       showToast('Profile updated successfully!', 'success')
     } catch (error) {
       console.error('Error updating profile:', error)
-      showToast(error.message || 'Failed to update profile', 'error')
+      if (error.code === '23505' || error.message?.toLowerCase().includes('duplicate key')) {
+        const taken = 'That display name is already taken.'
+        setDisplayNameError(taken)
+        showToast(taken, 'error')
+      } else {
+        showToast(error.message || 'Failed to update profile', 'error')
+      }
     } finally {
       setSaving(false)
     }
@@ -182,10 +195,14 @@ export const ProfileEditForm = () => {
             <input
               type="text"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(e) => {
+                setDisplayName(e.target.value)
+                setDisplayNameError(validateDisplayName(e.target.value).error || '')
+              }}
               placeholder="Your display name"
               className="form-input"
             />
+            {displayNameError && <p className="form-hint" style={{ color: 'var(--error)' }}>{displayNameError}</p>}
           </div>
 
           <div className="form-group">
@@ -236,80 +253,31 @@ export const ProfileEditForm = () => {
 
         <div className="form-section">
           <h3 className="form-section-title">Social Profiles</h3>
-          
-          <div className="social-handles-list">
-            {socialHandles.map((social, index) => (
-              <div key={index} className="social-handle-item">
-                <div className="form-group">
-                  <label className="form-label">Platform</label>
-                  <select
-                    value={social.platform}
-                    onChange={(e) => {
-                      const updated = [...socialHandles]
-                      updated[index].platform = e.target.value
-                      setSocialHandles(updated)
-                    }}
-                    className="form-select"
-                  >
-                    {Object.entries(socialPlatforms).map(([key, platform]) => (
-                      <option key={key} value={key}>
-                        {platform.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="form-group">
-                  <label className="form-label">Handle</label>
-                  <input
-                    type="text"
-                    value={social.handle}
-                    onChange={(e) => {
-                      const updated = [...socialHandles]
-                      updated[index].handle = e.target.value
-                      setSocialHandles(updated)
-                    }}
-                    placeholder="@your_handle"
-                    className="form-input"
-                  />
-                </div>
+          <SocialHandlesEditor
+            value={socialHandles}
+            onChange={setSocialHandles}
+            showHandles={showSocialHandle}
+            onShowChange={setShowSocialHandle}
+            disabled={saving}
+          />
+        </div>
 
-                {socialHandles.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = socialHandles.filter((_, i) => i !== index)
-                      setSocialHandles(updated)
-                    }}
-                    className="btn btn-outline btn-sm"
-                  >
-                    <Icons.Trash /> Remove
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+        <div className="form-section">
+          <h3 className="form-section-title">Privacy</h3>
 
-          <button
-            type="button"
-            onClick={() => setSocialHandles([...socialHandles, { platform: 'wechat', handle: '' }])}
-            className="btn btn-outline"
-          >
-            <Icons.Plus /> Add Social Profile
-          </button>
-
-          <div className="form-group" style={{ marginTop: 'var(--sp-2)' }}>
+          <div className="form-group">
             <label className="form-checkbox-label">
               <input
                 type="checkbox"
-                checked={showSocialHandle}
-                onChange={(e) => setShowSocialHandle(e.target.checked)}
+                checked={isDiscoverable}
+                onChange={(e) => setIsDiscoverable(e.target.checked)}
                 className="form-checkbox"
               />
-              <span>Show social handles on my profile</span>
+              <span>Show my profile in the student directory</span>
             </label>
             <p className="form-hint">
-              When enabled, other authenticated users can see your social handles to connect with you.
+              When enabled, other students can find you in the directory. Turn this off to stay unlisted.
             </p>
           </div>
         </div>

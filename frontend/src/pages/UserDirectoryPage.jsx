@@ -8,6 +8,7 @@ import { SealAvatar } from '../components/SealAvatar'
 import { Icons } from '../components/Icons'
 import { CityAutocomplete } from '../components/CityAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
+import { getSocialHandles } from '../lib/socialHandles'
 
 export const UserDirectoryPage = () => {
   const { user, loading: authLoading } = useAuth()
@@ -46,7 +47,9 @@ export const UserDirectoryPage = () => {
       let query = supabase
         .from('profiles')
         .select('id, display_name, avatar_url, location, university, bio, show_social_handle, social_platform, social_handle, social_handles', { count: 'exact' })
-        .neq('id', user.id) // Exclude current user
+        .neq('id', user.id)
+        .eq('onboarding_completed', true)
+        .eq('is_discoverable', true)
         .order('created_at', { ascending: false })
 
       // Apply filters if provided
@@ -216,13 +219,8 @@ export const UserDirectoryPage = () => {
                       <p className="user-card-bio">{profile.bio.substring(0, 100)}{profile.bio.length > 100 ? '...' : ''}</p>
                     )}
                     {(() => {
-                      let socialHandles = []
-                      if (profile.social_handles && Array.isArray(profile.social_handles)) {
-                        socialHandles = profile.social_handles
-                      } else if (profile.social_platform || profile.social_handle) {
-                        socialHandles = [{ platform: profile.social_platform, handle: profile.social_handle }]
-                      }
-                      const hasSocialHandles = socialHandles.some(sh => sh.handle && sh.handle.trim())
+                      const socialHandles = getSocialHandles(profile)
+                      const hasSocialHandles = socialHandles.some((sh) => sh.handle && sh.handle.trim())
                       return profile.show_social_handle && hasSocialHandles && (
                         <div className="user-card-social">
                           <Icons.Link size={14} /> Social handles available

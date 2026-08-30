@@ -1,7 +1,7 @@
 // Shared UI components for The Real China (TRC).
 // Pure functions returning HTML strings.
 
-import { socialPlatforms } from './data.js'
+import { socialPlatforms } from './lib/socialPlatforms.js'
 
 // ===== SVG Icons =====
 export const icons = {

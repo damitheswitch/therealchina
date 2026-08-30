@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { validateDisplayName } from '../lib/validateDisplayName'
 
 const AuthContext = createContext({
   user: null,
@@ -45,17 +46,20 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const signUp = async (email, password, displayName) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { valid, error, normalized } = validateDisplayName(displayName)
+    if (!valid) throw new Error(error)
+
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          display_name: displayName || email,
+          display_name: normalized,
         },
       },
     })
 
-    if (error) throw error
+    if (signUpError) throw signUpError
     return data
   }
 

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { Autocomplete } from './Autocomplete'
 
 // Common programs (geared toward international students in China).
 // Purely suggestions — the user can always type anything else.
@@ -80,133 +80,19 @@ const matchesQuery = (program, query) => {
   return queryWords.every((qw) => nameWords.some((nw) => nw.startsWith(qw)))
 }
 
-const getSuggestions = (query) => {
+const loadPrograms = async (query) => {
+  const q = query.trim().toLowerCase()
   const matches = COMMON_PROGRAMS.filter((p) => matchesQuery(p, query))
-  const lowerQuery = query.trim().toLowerCase()
-  // Programs starting with the full query first, then the rest, each alphabetical
-  return matches.sort((a, b) => {
-    const aStarts = a.toLowerCase().startsWith(lowerQuery) ? 0 : 1
-    const bStarts = b.toLowerCase().startsWith(lowerQuery) ? 0 : 1
-    return aStarts - bStarts || a.localeCompare(b)
-  })
+
+  return matches
+    .sort((a, b) => {
+      const aStarts = a.toLowerCase().startsWith(q) ? 0 : 1
+      const bStarts = b.toLowerCase().startsWith(q) ? 0 : 1
+      return aStarts - bStarts || a.localeCompare(b)
+    })
+    .map((p) => ({ value: p, label: p, key: p }))
 }
 
-// ProgramAutocomplete - free-text input with guiding suggestions.
-// The list is position: fixed so it is not clipped by the collapsible
-// section's overflow: hidden while scrolling into view.
-export const ProgramAutocomplete = ({ id, value, onChange, placeholder }) => {
-  const [focused, setFocused] = useState(false)
-  const [highlightedIndex, setHighlightedIndex] = useState(-1)
-  const [listStyle, setListStyle] = useState(null)
-  const inputRef = useRef(null)
-  const blurTimer = useRef(null)
-
-  const suggestions = value.trim() ? getSuggestions(value).slice(0, 6) : []
-  const exactMatch = value.trim().toLowerCase() === suggestions[0]?.toLowerCase()
-  const showList = focused && suggestions.length > 0 && !exactMatch
-
-  useEffect(() => {
-    if (!showList) {
-      setListStyle(null)
-      return
-    }
-
-    const updatePosition = () => {
-      const rect = inputRef.current?.getBoundingClientRect()
-      if (!rect) return
-      setListStyle({
-        top: `${rect.bottom + 4}px`,
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
-      })
-    }
-
-    updatePosition()
-    window.addEventListener('scroll', updatePosition, true)
-    window.addEventListener('resize', updatePosition)
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true)
-      window.removeEventListener('resize', updatePosition)
-    }
-  }, [showList, value])
-
-  const select = (program) => {
-    onChange(program)
-    setFocused(false)
-    setHighlightedIndex(-1)
-  }
-
-  const handleKeyDown = (e) => {
-    if (!showList) return
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setHighlightedIndex((i) => (i + 1) % suggestions.length)
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHighlightedIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1))
-    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
-      e.preventDefault()
-      select(suggestions[highlightedIndex])
-    } else if (e.key === 'Escape') {
-      setFocused(false)
-      setHighlightedIndex(-1)
-    }
-  }
-
-  const handleBlur = () => {
-    // Delay so clicking a suggestion registers before the list unmounts
-    blurTimer.current = setTimeout(() => setFocused(false), 120)
-  }
-
-  const handleFocus = () => {
-    clearTimeout(blurTimer.current)
-    setFocused(true)
-    setHighlightedIndex(-1)
-  }
-
-  return (
-    <div className="autocomplete">
-      <input
-        type="text"
-        id={id}
-        className="form-input"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value)
-          setHighlightedIndex(-1)
-        }}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        autoComplete="off"
-        ref={inputRef}
-      />
-      {showList && listStyle && (
-        <ul
-          className="autocomplete-list"
-          style={listStyle}
-          role="listbox"
-          aria-label="Program suggestions"
-        >
-          {suggestions.map((program, index) => (
-            <li
-              key={program}
-              role="option"
-              aria-selected={index === highlightedIndex}
-              className={`autocomplete-option ${index === highlightedIndex ? 'highlighted' : ''}`}
-              // onMouseDown fires before the input's blur, so the click isn't lost
-              onMouseDown={(e) => {
-                e.preventDefault()
-                select(program)
-              }}
-              onMouseEnter={() => setHighlightedIndex(index)}
-            >
-              {program}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}
+export const ProgramAutocomplete = (props) => (
+  <Autocomplete {...props} loadOptions={loadPrograms} />
+)

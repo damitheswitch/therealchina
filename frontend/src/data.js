@@ -240,9 +240,4 @@ export function getUniversityById(id) {
   return universities.find((u) => u.id === id)
 }
 
-export const socialPlatforms = {
-  wechat: { label: 'WeChat', icon: 'chat' },
-  instagram: { label: 'Instagram', icon: 'camera' },
-  red: { label: 'RED', icon: 'book' },
-  other: { label: 'Social', icon: 'link' },
-}
+
