@@ -8,7 +8,8 @@ import { Icons } from './Icons'
 import { Logo } from './Logo'
 
 // AuthModal component - Login/Register modal with createPortal mounting
-export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
+export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} }) => {
+  const { title, subtitle, closable = true } = config
   const { signIn, signUp, signInWithGoogle, user } = useAuth()
   const { showToast } = useToast()
   const [mode, setMode] = useState(initialMode) // 'login' or 'register'
@@ -37,16 +38,18 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     }
   }, [isOpen, initialMode])
 
-  // Close on Escape key, but force the user to use the X while the verification notice is showing
+  const canClose = closable
+
+  // Close on Escape key when the modal is closable, but force the user to use the X while the verification notice is showing
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && !verificationSent) onClose()
+      if (e.key === 'Escape' && canClose && !verificationSent) onClose()
     }
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown)
     }
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose, verificationSent])
+  }, [isOpen, onClose, verificationSent, canClose])
 
   // Never leave the password revealed the next time the modal opens
   useEffect(() => {
@@ -66,7 +69,7 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       if (mode === 'login') {
         await signIn(email, password)
         showToast('Signed in successfully!', 'success')
-        onClose()
+        if (canClose) onClose()
         return
       }
 
@@ -79,7 +82,7 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       try {
         const escaped = normalized.replace(/([%_\\])/g, '\\$1')
         const { count, error: preflightError } = await supabase
-          .from('profiles')
+          .from('profile_public')
           .select('id', { count: 'exact', head: true })
           .ilike('display_name', escaped)
 
@@ -125,19 +128,21 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   }
 
   const modalContent = (
-    <div className="auth-modal-overlay" onClick={verificationSent ? undefined : onClose}>
+    <div className="auth-modal-overlay" onClick={canClose && !verificationSent ? onClose : undefined}>
       <div
         className={`auth-modal-content ${verificationSent ? 'verification' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          className="auth-modal-close"
-          onClick={onClose}
-          aria-label="Close modal"
-        >
-          ✕
-        </button>
+        {canClose && (
+          <button
+            type="button"
+            className="auth-modal-close"
+            onClick={onClose}
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+        )}
 
         {verificationSent ? (
           <div className="auth-modal-verification">
@@ -154,18 +159,21 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
               Didn't receive it? Check your spam or junk folder, or make sure the
               address above is correct.
             </p>
-            <p className="verification-close-hint">
-              Click the <span aria-hidden="true">✕</span> in the top-right corner when you're ready.
-            </p>
+            {canClose && (
+              <p className="verification-close-hint">
+                Click the <span aria-hidden="true">✕</span> in the top-right corner when you're ready.
+              </p>
+            )}
           </div>
         ) : (
           <>
             <div className="auth-modal-header">
-              <h2>{mode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
+              <h2>{title || (mode === 'login' ? 'Welcome Back' : 'Create Account')}</h2>
               <p className="auth-modal-subtitle">
-                {mode === 'login'
-                  ? 'Sign in to access your reviews and profile'
-                  : 'Join the community to post authentic reviews'}
+                {subtitle ||
+                  (mode === 'login'
+                    ? 'Sign in to access your reviews and profile'
+                    : 'Join the community to post authentic reviews')}
               </p>
             </div>
 

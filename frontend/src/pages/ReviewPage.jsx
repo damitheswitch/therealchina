@@ -5,6 +5,7 @@ import { StarInput } from '../components/StarInput'
 import { Icons } from '../components/Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { ProgramAutocomplete } from '../components/ProgramAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
@@ -16,6 +17,7 @@ export const ReviewPage = () => {
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const { showToast } = useToast()
+  const { openAuthModal } = useAuthModal()
 
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState('')
@@ -30,6 +32,18 @@ export const ReviewPage = () => {
   // Media uploads start the moment files are picked; this mirrors their state
   const [mediaState, setMediaState] = useState({ media: [], uploading: false, errorCount: 0 })
   const [loading, setLoading] = useState(false)
+
+  // Re-open the anonymous-review thank-you modal if the user is still signing up
+  useEffect(() => {
+    if (user) return
+    const submitted = sessionStorage.getItem('trc_anon_review_submitted')
+    if (!submitted) return
+    openAuthModal('register', {
+      title: 'Thanks for your review!',
+      subtitle: 'Please log in or create a free account to view your review and engage with other students.',
+      closable: false,
+    })
+  }, [user, openAuthModal])
 
   // Pre-fill the university name when arriving with ?uni=<slug>
   useEffect(() => {
@@ -49,8 +63,8 @@ export const ReviewPage = () => {
       }
 
       if (data) {
-        setSelectedUni(data.slug)
-        setSelectedUniName(data.name)
+        setSelectedUni(data.slug || '')
+        setSelectedUniName(data.name || '')
       }
     }
 
@@ -63,9 +77,10 @@ export const ReviewPage = () => {
     setShowNotListed(false)
   }
 
-  const handleUniversitySelect = (university) => {
-    setSelectedUniName(university.name)
-    setSelectedUni(university.slug)
+  const handleUniversitySelect = (option) => {
+    const data = option?.data || option
+    setSelectedUniName(data?.name || option?.value || '')
+    setSelectedUni(data?.slug || option?.key || '')
     setShowNotListed(false)
   }
 
@@ -185,6 +200,18 @@ export const ReviewPage = () => {
       if (reviewError) throw reviewError
 
       showToast('Review submitted! Thank you.', 'success')
+
+      // Anonymous reviewers must sign up before they can view their review
+      if (!user) {
+        sessionStorage.setItem('trc_anon_review_submitted', 'true')
+        sessionStorage.setItem('trc_anon_review_redirect', redirectSlug || '')
+        openAuthModal('register', {
+          title: 'Thanks for your review!',
+          subtitle: 'Please log in or create a free account to view your review and engage with other students.',
+          closable: false,
+        })
+        return
+      }
 
       // Redirect to university page or home
       setTimeout(() => {

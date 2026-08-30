@@ -3,7 +3,7 @@ import { useDebounce } from '../hooks/useDebounce'
 
 export const Autocomplete = ({
   id,
-  value,
+  value = '',
   onChange,
   onSelect,
   onNotListed,
@@ -15,10 +15,10 @@ export const Autocomplete = ({
   debounceMs = 150,
   notListedText = "I can't find my...",
   renderOption = (option) => option.label,
-  getOptionValue = (option) => option.value,
+  getOptionValue = (option) => option.value ?? '',
   getOptionKey = (option) => option.key ?? option.value,
   isExactMatch = (option, value) =>
-    option.value.toLowerCase() === value.trim().toLowerCase(),
+    option.value?.toLowerCase() === value?.trim()?.toLowerCase(),
 }) => {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
@@ -37,7 +37,7 @@ export const Autocomplete = ({
   }, [loadOptions])
 
   useEffect(() => {
-    const query = debouncedValue.trim()
+    const query = (debouncedValue ?? '').trim()
     if (!query || query.length < minQueryLength) {
       setSuggestions([])
       setLoading(false)
@@ -68,7 +68,7 @@ export const Autocomplete = ({
   }, [debouncedValue, minQueryLength, maxSuggestions])
 
   const exactMatch = suggestions.some((option) => isExactMatch(option, value))
-  const showNotListed = allowNotListed && value.trim() && !exactMatch
+  const showNotListed = allowNotListed && value?.trim() && !exactMatch
   const showList = focused && (suggestions.length > 0 || showNotListed) && !exactMatch
 
   useEffect(() => {

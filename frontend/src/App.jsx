@@ -1,4 +1,5 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { LandingPage } from './pages/LandingPage'
@@ -12,11 +13,30 @@ import { OnboardingPage } from './pages/OnboardingPage'
 import { OnboardingGuard } from './components/OnboardingGuard'
 import { AuthModal } from './components/AuthModal'
 import { useAuthModal } from './contexts/AuthModalContext'
+import { useAuth } from './contexts/AuthContext'
 
 function App() {
-  const { isOpen, initialMode, closeAuthModal } = useAuthModal()
+  const { isOpen, initialMode, closeAuthModal, config } = useAuthModal()
+  const { user, loading } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
   const isOnboarding = location.pathname === '/onboarding'
+
+  // Redirect an anonymous reviewer to their review after they sign in/up
+  useEffect(() => {
+    if (loading) return
+    const submitted = sessionStorage.getItem('trc_anon_review_submitted')
+    if (user && submitted) {
+      const slug = sessionStorage.getItem('trc_anon_review_redirect')
+      sessionStorage.removeItem('trc_anon_review_submitted')
+      sessionStorage.removeItem('trc_anon_review_redirect')
+      if (slug) {
+        navigate(`/university/${slug}`)
+      } else {
+        navigate('/')
+      }
+    }
+  }, [user, loading, navigate])
 
   return (
     <>
@@ -38,7 +58,7 @@ function App() {
         </Routes>
       </main>
       {!isOnboarding && <Footer />}
-      <AuthModal isOpen={isOpen} onClose={closeAuthModal} initialMode={initialMode} />
+      <AuthModal isOpen={isOpen} onClose={closeAuthModal} initialMode={initialMode} config={config} />
     </>
   )
 }

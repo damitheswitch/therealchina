@@ -10,6 +10,7 @@ export const CommentSection = ({ reviewId }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
   const [comments, setComments] = useState([])
+  const [authorProfiles, setAuthorProfiles] = useState({})
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -21,10 +22,7 @@ export const CommentSection = ({ reviewId }) => {
   const fetchComments = async () => {
     const { data, error } = await supabase
       .from('comments')
-      .select(`
-        *,
-        profiles:user_id (display_name)
-      `)
+      .select('*')
       .eq('review_id', reviewId)
       .order('created_at', { ascending: true })
 
@@ -33,7 +31,27 @@ export const CommentSection = ({ reviewId }) => {
       return
     }
 
-    setComments(data || [])
+    const fetchedComments = data || []
+    setComments(fetchedComments)
+
+    const userIds = [
+      ...new Set(fetchedComments.map((c) => c.user_id).filter(Boolean)),
+    ]
+
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profile_public')
+        .select('id, display_name')
+        .in('id', userIds)
+
+      const profileMap = (profiles || []).reduce((acc, p) => {
+        acc[p.id] = p
+        return acc
+      }, {})
+      setAuthorProfiles(profileMap)
+    } else {
+      setAuthorProfiles({})
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -92,13 +110,13 @@ export const CommentSection = ({ reviewId }) => {
           <div key={comment.id} style={{ paddingLeft: 0 }}>
             <div style={{ padding: 'var(--sp-2)', background: 'var(--rice-warm)', borderRadius: 'var(--r-md)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginBottom: 'var(--sp-1)' }}>
-                {comment.profiles?.display_name && (
+                {authorProfiles[comment.user_id]?.display_name && (
                   <Link to={`/profile/${comment.user_id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>
-                    <SealAvatar displayName={comment.profiles.display_name} size={20} />
-                    <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{comment.profiles.display_name}</strong>
+                    <SealAvatar displayName={authorProfiles[comment.user_id].display_name} size={20} />
+                    <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{authorProfiles[comment.user_id].display_name}</strong>
                   </Link>
                 )}
-                {!comment.profiles?.display_name && <strong>Anonymous</strong>}
+                {!authorProfiles[comment.user_id]?.display_name && <strong>Anonymous</strong>}
               </div>
               <p style={{ marginTop: 'var(--sp-1)' }}>{comment.text}</p>
               {user && !replyTo && (
@@ -118,13 +136,13 @@ export const CommentSection = ({ reviewId }) => {
                 {repliesByParent[comment.id].map((reply) => (
                   <div key={reply.id} style={{ padding: 'var(--sp-2)', background: '#fff', borderRadius: 'var(--r-md)', marginBottom: 'var(--sp-1)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginBottom: 'var(--sp-1)' }}>
-                      {reply.profiles?.display_name && (
+                      {authorProfiles[reply.user_id]?.display_name && (
                         <Link to={`/profile/${reply.user_id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>
-                          <SealAvatar displayName={reply.profiles.display_name} size={20} />
-                          <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{reply.profiles.display_name}</strong>
+                          <SealAvatar displayName={authorProfiles[reply.user_id].display_name} size={20} />
+                          <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{authorProfiles[reply.user_id].display_name}</strong>
                         </Link>
                       )}
-                      {!reply.profiles?.display_name && <strong>Anonymous</strong>}
+                      {!authorProfiles[reply.user_id]?.display_name && <strong>Anonymous</strong>}
                     </div>
                     <p style={{ marginTop: 'var(--sp-1)' }}>{reply.text}</p>
                   </div>

@@ -11,7 +11,7 @@ const loadCities = async (query) => {
 
   if (error) throw error
 
-  const unique = [...new Set((data || []).map((u) => u.city))].sort()
+  const unique = [...new Set((data || []).map((u) => u.city).filter(Boolean))].sort()
   return unique.map((city) => ({ value: city, label: city, key: city }))
 }
 

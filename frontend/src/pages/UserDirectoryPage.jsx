@@ -45,7 +45,7 @@ export const UserDirectoryPage = () => {
     
     try {
       let query = supabase
-        .from('profiles')
+        .from('member_profiles')
         .select('id, display_name, avatar_url, location, university, bio, show_social_handle, social_platform, social_handle, social_handles', { count: 'exact' })
         .neq('id', user.id)
         .eq('onboarding_completed', true)
