@@ -1,187 +1,162 @@
-# The Real China (TRC) — Full-Stack Platform
+# The Real China (TRC)
 
-Authentic, community-driven university reviews for international students in China.
+> Authentic, community-driven university reviews for international students in China.
 
-**Tech Stack:** React + Vite frontend, Supabase backend (Postgres + Auth + Storage)
+**Status:** Private, for-profit product · Public repo for portfolio / recruiter visibility  
+**License:** Proprietary — All Rights Reserved. Not open source.
 
 ---
 
-## Project Structure
+## What this is
+
+The Real China (TRC) is a full-stack review and community platform built for international students researching universities in China. Existing alternatives have thin coverage and don't live where the target audience actually talks (WeChat groups, Xiaohongshu/RED, Reddit). TRC aggregates honest, structured feedback and makes it searchable — starting with universities, then expanding into student profiles, peer discovery, and student-life services.
+
+This repository is public as a **portfolio reference and technical spec** for recruiters and hiring managers. The source code is proprietary; no license is granted to use, copy, modify, or distribute it.
+
+---
+
+## Product Highlights
+
+- **Anonymous-first review flow** — visitors can submit reviews without an account, lowering friction during the seeding phase.
+- **Authenticated engagement** — upvotes, comments, and user profiles require sign-in.
+- **University profiles** — searchable grid with city filtering, sorting by rating/review count, and autocomplete.
+- **Review cards with media** — star ratings, program/degree context, image/video uploads, and optional social promo banners.
+- **Comment system** — one-level nesting (replies to replies blocked at the DB layer).
+- **Member directory** — discoverable user profiles for networking.
+- **Flight listings board** — student-contributed travel offers, tied to profiles.
+- **Onboarding flow** — required profile setup after sign-up.
+- **PWA-ready** — installable, offline-capable via Vite PWA, with themed splash and icon set.
+- **Brand-anchored UI** — seal-ink red (#A6192E), antique gold (#C9A227), rice-paper background (#FAF6EF), Noto Serif SC + Inter.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18, Vite 5, React Router 6, vanilla CSS design system |
+| Backend / DBaaS | Supabase — Postgres 15, Auth, Storage |
+| Auth | Supabase Auth (JWT-based, session managed by SDK) |
+| File storage | Supabase Storage for review media with RLS policies |
+| Hosting | Netlify (SPA redirects, Node 20 build environment) |
+| PWA | Vite PWA plugin, custom manifest, maskable icons |
+
+### Why this stack
+
+- **Supabase** replaces a separate backend/ORM with Postgres + real-time subscriptions + built-in auth, letting a solo builder ship fast while staying production-grade.
+- **Vite + React** gives a modern DX with fast HMR and a small production bundle.
+- **Netlify** provides zero-config static hosting with SPA fallback routing.
+- **Custom CSS** keeps the bundle dependency-light and the design system fully controlled.
+
+---
+
+## Architecture & Key Technical Decisions
+
+### Row Level Security (RLS)
+
+All data access is enforced at the database level:
+
+- Public read on `universities`, `reviews`, `comments`, and `upvotes`.
+- Anonymous insert on `reviews` and `universities` (for "not listed" submissions).
+- Authenticated users can only modify their own `comments`, `upvotes`, and `profiles`.
+- Media uploads gated by Supabase Storage RLS.
+
+### Database design
+
+**Core tables:**
+
+- `universities` — name, Chinese name, city, slug, logo, verification status.
+- `reviews` — rating (1-5), text, program, degree level, media JSONB, optional `user_id`.
+- `comments` — review_id, user_id, optional parent_id, text.
+- `upvotes` — `(review_id, user_id)` with unique constraint.
+- `profiles` — display name, avatar, bio, location, university, program, social handles, discoverability.
+- `flight_listings` — origin/destination, dates, price, contact info, linked to profiles.
+- `university_stats` — precomputed `avg_rating` and `review_count` for fast landing-page loads.
+
+**Special PostgreSQL features:**
+
+- `toggle_upvote(review_id)` RPC — atomic upvote toggle, no race conditions.
+- `university_stats` maintained by triggers — no expensive live aggregates on the landing page.
+- `enforce_comment_nesting` trigger — blocks replies to replies at the DB layer.
+- `handle_new_user` trigger — auto-creates a profile row on signup.
+- `member_profiles` view — non-sensitive profile exposure for the user directory.
+- `pg_trgm` extension + indexes for fuzzy university/city/program autocomplete.
+
+### Frontend structure
 
 ```
-project/
-├── frontend/               # React + Vite frontend
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── contexts/      # AuthContext, ToastContext
-│   │   ├── lib/           # Supabase client
-│   │   ├── pages/         # Page components
-│   │   └── styles/        # Global CSS
-│   ├── package.json
-│   ├── vite.config.js
-│   └── .env               # Supabase credentials (create from .env.example)
-├── supabase/
-│   ├── migrations/
-│   │   └── 001_initial_schema.sql
-│   └── seed.sql
-└── README.md
+frontend/src/
+├── components/    # UI pieces (ReviewCard, UniversityCard, AuthModal, Onboarding, etc.)
+├── contexts/      # AuthContext, AuthModalContext, ToastContext
+├── hooks/         # useDebounce
+├── lib/           # Supabase client, media upload, social handle helpers
+├── pages/         # LandingPage, UniversityPage, ReviewPage, ProfilePage, UserDirectoryPage, FlightListingsPage, OnboardingPage
+├── styles/        # Global CSS + design tokens
+└── App.jsx        # Route tree with onboarding guard and auth-modal wiring
 ```
 
+### Notable UX patterns
+
+- **Anonymous-to-auth handoff:** an anonymous reviewer who then signs up is redirected back to the university they just reviewed.
+- **One-time registration nudge** — shown once per session, dismissible.
+- **Onboarding guard** — blocks non-onboarded users from core pages until profile setup is complete.
+- **Autocomplete everywhere** — city, country, program, and university inputs use fuzzy matching.
+
 ---
 
-## Setup Instructions
+## Deployment
 
-### 1. Create a Supabase Project
+The frontend builds to `dist/` and deploys on Netlify:
 
-1. Go to [supabase.com](https://supabase.com) and create a free account
-2. Create a new project
-3. Wait for the database to initialize (~2 minutes)
+```toml
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
 
-### 2. Run SQL Migrations
+[build.environment]
+  NODE_VERSION = "20"
 
-1. In your Supabase project dashboard, go to **SQL Editor**
-2. Copy and paste the contents of `supabase/migrations/001_initial_schema.sql`
-3. Click **Run** to execute the migration
-4. Copy and paste the contents of `supabase/seed.sql`
-5. Click **Run** to load seed data (12 universities + 10 reviews)
-
-### 3. Get Supabase Credentials
-
-1. In your Supabase dashboard, go to **Settings > API**
-2. Copy your **Project URL** and **anon/public key**
-
-### 4. Configure Frontend
-
-```bash
-cd frontend
-cp .env.example .env
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 ```
 
-Edit `.env` and add your Supabase credentials:
-
-```
-VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-public-key
-```
-
-### 5. Install Dependencies & Run
-
-```bash
-npm install
-npm run dev
-```
-
-The app will open at **http://localhost:5173**
-
----
-
-## Features (Phase 1)
-
-✅ **Public review browsing** — anyone can browse universities and read reviews  
-✅ **Anonymous review submission** — no account required to submit a review  
-✅ **Authenticated comments** — sign in to leave comments on reviews  
-✅ **Upvote system** — authenticated users can upvote reviews (atomic RPC toggle)  
-✅ **One-level comment nesting** — replies allowed, replies-to-replies blocked by DB trigger  
-✅ **University search & filter** — search by name/city, filter by city, sort by rating/reviews  
-✅ **User accounts** — email/password registration & login via Supabase Auth  
-✅ **Precomputed stats table** — landing page reads fast without expensive live aggregates  
-✅ **Row Level Security** — all permissions enforced at the database level
-
----
-
-## Database Schema
-
-**Tables:**
-- `universities` — name, name_zh, city, slug, logo_url, is_verified
-- `reviews` — university_id, user_id (nullable), rating, text, program, degree_level
-- `comments` — review_id, user_id, parent_id (nullable), text
-- `upvotes` — review_id, user_id (unique constraint)
-- `profiles` — auto-created on signup via trigger
-
-**RLS Policies:**
-- Public read: universities, reviews, comments, upvotes (for counts)
-- Public insert: universities (for "not listed"), reviews (anonymous OK)
-- Authenticated insert/update/delete: comments (own), upvotes (own via RPC)
-- Authenticated update: profiles (own)
-
-**Special Features:**
-- `toggle_upvote(review_id)` RPC — atomic upvote toggle (no race conditions)
-- `university_stats` table — pre-computed avg_rating, review_count maintained by triggers
-- `enforce_comment_nesting` trigger — blocks replies to replies
-- `handle_new_user` trigger — auto-creates profile row on signup
-
----
-
-## Verification Checklist
-
-After setup, verify these work:
-
-1. **Landing page loads** with 12 universities from Supabase
-2. **Search/filter/sort** updates the grid correctly
-3. **University page** shows correct university + reviews + stats
-4. **Anonymous review submission** works (no login required)
-5. **Registration** creates account and auto-creates profile
-6. **Login** persists across page refresh
-7. **Comment on a review** (requires login)
-8. **Upvote a review** (requires login, toggles on/off)
-9. **Reply to a comment** works; **reply to a reply** blocked by DB trigger
-10. **Registration nudge** appears once per session, dismissible
-
----
-
-## Future Phases
-
-**Phase 2:** Image/video uploads via Supabase Storage + Google OAuth  
-**Phase 3:** User profiles, referral system with payouts, Community Discovery page  
-**Phase 4:** Admin panel (moderation, payouts, CSV import) via Edge Functions
-
----
-
-## Tech Details
-
-- **Frontend:** React 18 + Vite + React Router
-- **Backend:** Supabase (Postgres 15 + Row Level Security)
-- **Auth:** Supabase Auth (JWT-based, session managed by SDK)
-- **CSS:** Existing TRC design system (CSS variables, no framework)
-- **Fonts:** Noto Serif SC (headings), Inter (body)
-
----
-
-## Troubleshooting
-
-**"Missing Supabase environment variables" error:**
-- Create `frontend/.env` from `.env.example` and add your credentials
-
-**Landing page shows no universities:**
-- Run the seed.sql file in Supabase SQL Editor
-- No materialized view refresh is needed; `university_stats` is updated by database triggers
-
-**Can't comment/upvote:**
-- Check that you're logged in (sign up/login via the header)
-- Verify RLS policies are enabled in Supabase
-
-**Comments not showing:**
-- The profiles table needs to exist (auto-created via migration)
-- Check browser console for errors
+Supabase project, storage, and migrations are managed separately outside this repo.
 
 ---
 
 ## Development
 
 ```bash
-# Frontend dev server
 cd frontend
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+npm install
+npm run dev      # localhost:5173
+npm run build    # production build
+npm run preview  # preview production build
 ```
+
+> Credentials and environment variables are not included. This repo is a code reference, not a runnable turnkey template.
 
 ---
 
-## License
+## Roadmap
 
-MIT
+**Shipped:** MVP review platform, auth, comments, upvotes, media uploads, user profiles, member directory, flight listings, PWA shell.
+
+**Next:**
+- Referral program with manual payout tracking.
+- Admin moderation panel (approvals, spam gating, CSV import).
+- Community Discovery / Q&A features.
+- Partnership integrations (accommodation, VPN, agencies).
+
+---
+
+## License & Use
+
+This is a **private, for-profit project**. The repository is public for **recruiter and interview demonstration** only.
+
+- No open-source license is granted.
+- The code, design, and product concept are proprietary and may not be copied, modified, distributed, or used commercially without explicit permission.
+- All rights reserved.
