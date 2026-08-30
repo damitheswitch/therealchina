@@ -178,62 +178,8 @@ h3 { font-weight: 600; font-size: 1.125rem; }
 .nav-cta { display: flex; align-items: center; gap: var(--sp-1); }
 .header-actions { display: flex; align-items: center; gap: var(--sp-1); }
 
-/* Hamburger toggle — mobile only */
-.nav-toggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-md);
-  border: 1.5px solid var(--ink-line);
-  background: transparent;
-  color: var(--ink);
-}
-.nav-toggle:hover { color: var(--seal-red); border-color: var(--seal-red); }
-
-/* Mobile drawer */
-.mobile-nav {
-  display: none;
-  position: relative;
-  z-index: 95;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom));
-  background: var(--rice);
-  border-top: 1px solid var(--ink-line);
-  box-shadow: var(--shadow-hover);
-}
-.mobile-nav-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(26, 26, 26, 0.35);
-  z-index: 90;
-}
-.mobile-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-height: 48px;
-  padding: 0 0.75rem;
-  border-radius: var(--r-md);
-  font-weight: 500;
-  color: var(--ink);
-}
-.mobile-nav-item.is-active {
-  color: var(--seal-red);
-  background: rgba(166, 25, 46, 0.07);
-}
-.mobile-nav-cta {
-  justify-content: center;
-  margin-top: var(--sp-1);
-  min-height: 48px;
-}
-
 @media (max-width: 768px) {
   .nav-links { display: none; }
-  .nav-toggle { display: inline-flex; }
-  .mobile-nav.is-open { display: flex; }
   .install-btn {
     display: inline-flex;
     align-items: center;
@@ -961,6 +907,7 @@ h3 { font-weight: 600; font-size: 1.125rem; }
   padding: var(--sp-6) var(--sp-2);
   color: var(--ink-faint);
 }
+.empty-state h1 { margin-bottom: var(--sp-1); color: var(--ink-soft); }
 .empty-state h3 { margin-bottom: var(--sp-1); color: var(--ink-soft); }
 
 /* ===== Toast ===== */
@@ -1256,9 +1203,9 @@ h3 { font-weight: 600; font-size: 1.125rem; }
   background: none;
   border: none;
   border-radius: var(--r-sm);
-  color: var(--ink);
+  color: var(--seal-red);
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   transition: background var(--t-fast), transform var(--t-fast);
@@ -1266,7 +1213,7 @@ h3 { font-weight: 600; font-size: 1.125rem; }
 }
 
 .user-dropdown-item:hover {
-  background: var(--rice-warm);
+  background: var(--seal-red-tint);
 }
 
 .user-dropdown-item:active {
@@ -1275,19 +1222,19 @@ h3 { font-weight: 600; font-size: 1.125rem; }
 
 .user-dropdown-item svg {
   flex-shrink: 0;
-  color: var(--ink-soft);
+  color: var(--seal-red);
+}
+
+.user-dropdown-item.is-active {
+  background: rgba(166, 25, 46, 0.07);
 }
 
 .user-dropdown-logout {
-  color: var(--error);
-}
-
-.user-dropdown-logout:hover {
-  background: var(--seal-red-tint);
+  color: var(--seal-red);
 }
 
 .user-dropdown-logout svg {
-  color: var(--error);
+  color: var(--seal-red);
 }
 
 @media (max-width: 640px) {
@@ -1965,20 +1912,6 @@ h3 { font-weight: 600; font-size: 1.125rem; }
   justify-content: flex-end;
   padding-top: var(--sp-2);
   border-top: 1px solid var(--ink-line);
-}
-
-/* "Post Your Flight" CTA in the header profile dropdown */
-.user-dropdown-item.user-dropdown-cta {
-  color: var(--seal-red);
-  font-weight: 600;
-}
-
-.user-dropdown-item.user-dropdown-cta:hover {
-  background: var(--seal-red-tint);
-}
-
-.user-dropdown-item.user-dropdown-cta svg {
-  color: var(--seal-red);
 }
 
 /* ===== Flight page heading ===== */

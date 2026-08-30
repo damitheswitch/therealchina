@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { useToast } from '../contexts/ToastContext'
 import { FlightListingCard } from '../components/FlightListingCard'
 import { FlightListingForm } from '../components/FlightListingForm'
@@ -26,7 +27,8 @@ const sameCountry = (a, b) =>
   a.trim().toLowerCase() === b.trim().toLowerCase()
 
 export const FlightListingsPage = () => {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const { showToast } = useToast()
 
   const [listings, setListings] = useState([])
@@ -58,8 +60,10 @@ export const FlightListingsPage = () => {
   }
 
   useEffect(() => {
-    fetchListings()
-  }, [])
+    if (user) {
+      fetchListings()
+    }
+  }, [user])
 
   // Deep link from the profile dropdown (/flights?post=1) opens the form
   // once the session has been restored
@@ -109,6 +113,36 @@ export const FlightListingsPage = () => {
   }
 
   const hasActiveFilters = departureCountry || arrivalCountry || month
+
+  if (authLoading) {
+    return <div className="loading">Loading...</div>
+  }
+
+  if (!user) {
+    return (
+      <div className="container empty-state" style={{ paddingTop: '6rem' }}>
+        <Icons.Plane size={48} />
+        <h1>Get paid to fly</h1>
+        <p>
+          List your unused luggage space for cash, or hire a traveler to carry your parcel.
+        </p>
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => openAuthModal('register')}
+            className="btn btn-primary"
+          >
+            Create account
+          </button>
+          <button
+            onClick={() => openAuthModal('login')}
+            className="btn btn-outline"
+          >
+            Sign in
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container" style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}>

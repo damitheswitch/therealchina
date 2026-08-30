@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { ProfileEditForm } from '../components/ProfileEditForm'
 import { ProfileView } from '../components/ProfileView'
 import { Link } from 'react-router-dom'
@@ -8,9 +9,10 @@ import { Icons } from '../components/Icons'
 // ProfilePage component - Main profile page with routing logic
 export const ProfilePage = () => {
   const { userId } = useParams()
-  const { user, loading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const { openAuthModal } = useAuthModal()
 
-  if (loading) {
+  if (authLoading) {
     return <div className="loading">Loading...</div>
   }
 
@@ -19,11 +21,25 @@ export const ProfilePage = () => {
     if (!user) {
       return (
         <div className="container empty-state" style={{ paddingTop: '6rem' }}>
-          <h3>Authentication Required</h3>
-          <p>Please sign in to access your profile.</p>
-          <Link to="/" className="btn btn-primary mt-2">
-            <Icons.ArrowLeft /> Back to universities
-          </Link>
+          <Icons.User size={48} />
+          <h1>Build your profile</h1>
+          <p>
+            Sign in and add a social handle to connect with people inside The Real China. (TRC)
+          </p>
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => openAuthModal('register')}
+              className="btn btn-primary"
+            >
+              Create account
+            </button>
+            <button
+              onClick={() => openAuthModal('login')}
+              className="btn btn-outline"
+            >
+              Sign in
+            </button>
+          </div>
         </div>
       )
     }
