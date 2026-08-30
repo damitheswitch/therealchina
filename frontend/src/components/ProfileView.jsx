@@ -65,7 +65,7 @@ export const ProfileView = ({ userId }) => {
     try {
       // Fetch profile
       const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
+        .from('member_profiles')
         .select('*, social_handles')
         .eq('id', userId)
         .single()

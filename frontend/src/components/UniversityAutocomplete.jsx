@@ -15,12 +15,14 @@ const loadUniversities = async (query) => {
 
   if (error) throw error
 
-  return (data || []).map((u) => ({
-    key: u.slug,
-    value: u.name,
-    label: `${u.name} — ${u.city}`,
-    data: u,
-  }))
+  return (data || [])
+    .filter((u) => u.name && u.slug)
+    .map((u) => ({
+      key: u.slug,
+      value: u.name,
+      label: `${u.name} — ${u.city}`,
+      data: u,
+    }))
 }
 
 export const UniversityAutocomplete = (props) => (
