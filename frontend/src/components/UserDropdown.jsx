@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,6 +9,7 @@ import { useAuthModal } from '../contexts/AuthModalContext'
 export const UserDropdown = () => {
   const { user, signOut, loading } = useAuth()
   const { openAuthModal } = useAuthModal()
+  const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   const [installPrompt, setInstallPrompt] = useState(null)
   const dropdownRef = useRef(null)
@@ -43,6 +44,10 @@ export const UserDropdown = () => {
     }
   }, [isOpen])
 
+  useEffect(() => {
+    setIsOpen(false)
+  }, [location.pathname, location.search])
+
   const handleSignOut = async () => {
     try {
       await signOut()
@@ -63,7 +68,16 @@ export const UserDropdown = () => {
 
   if (loading) return null
 
+  const isActive = (path) => location.pathname === path
+
   const displayName = user?.user_metadata?.display_name || user?.email
+
+  const menuLinks = [
+    { to: '/review', label: 'Leave a Review', icon: <Icons.Pen /> },
+    { to: '/', label: 'Universities', icon: <Icons.Book /> },
+    { to: '/flights?post=1', label: 'Get paid to fly', icon: <Icons.Plane />, active: '/flights' },
+    { to: '/users', label: 'Our Community', icon: <Icons.Users /> },
+  ]
 
   return (
     <div className="user-dropdown" ref={dropdownRef}>
@@ -95,25 +109,25 @@ export const UserDropdown = () => {
               <Icons.User size={48} />
               <div className="user-dropdown-info">
                 <div className="user-dropdown-name">Welcome</div>
-                <div className="user-dropdown-email">Sign in or log in to continue</div>
+                <div className="user-dropdown-email">Sign up or sign in to continue</div>
                 <div className="user-dropdown-guest-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
                   <button
                     className="btn btn-primary"
+                    onClick={() => {
+                      setIsOpen(false)
+                      openAuthModal('register')
+                    }}
+                  >
+                    Sign up
+                  </button>
+                  <button
+                    className="btn btn-outline"
                     onClick={() => {
                       setIsOpen(false)
                       openAuthModal('login')
                     }}
                   >
                     Sign in
-                  </button>
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => {
-                      setIsOpen(false)
-                      openAuthModal('register')
-                    }}
-                  >
-                    Register
                   </button>
                 </div>
               </div>
@@ -123,60 +137,43 @@ export const UserDropdown = () => {
           <div className="user-dropdown-divider" />
 
           <div className="user-dropdown-actions">
-            <Link
-              to="/flights?post=1"
-              className="user-dropdown-item user-dropdown-cta"
-              onClick={() => setIsOpen(false)}
-            >
-              <Icons.Plane />
-              <span>Post Your Flight</span>
-            </Link>
+            {menuLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`user-dropdown-item${isActive(link.active || link.to) ? ' is-active' : ''}`}
+                onClick={() => setIsOpen(false)}
+              >
+                {link.icon} <span>{link.label}</span>
+              </Link>
+            ))}
 
-            <Link
-              to="/profile"
-              className="user-dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <Icons.User />
-              <span>My Profile</span>
-            </Link>
+            {user && (
+              <Link
+                to="/profile"
+                className={`user-dropdown-item${isActive('/profile') ? ' is-active' : ''}`}
+                onClick={() => setIsOpen(false)}
+              >
+                <Icons.User />
+                <span>My Profile</span>
+              </Link>
+            )}
 
-            <Link
-              to="/review"
-              className="user-dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <Icons.Pen />
-              <span>Leave a Review</span>
-            </Link>
-
-            <Link
-              to="/users"
-              className="user-dropdown-item"
-              onClick={() => setIsOpen(false)}
-            >
-              <Icons.Users />
-              <span>User Directory</span>
-            </Link>
+            {user && (
+              <button
+                className="user-dropdown-item user-dropdown-logout"
+                onClick={handleSignOut}
+              >
+                <Icons.ArrowLeft />
+                <span>Sign out</span>
+              </button>
+            )}
 
             {installPrompt && (
               <button className="user-dropdown-item" onClick={handleInstall}>
                 <Icons.Download />
                 <span>Install app</span>
               </button>
-            )}
-
-            {user && (
-              <>
-                <div className="user-dropdown-divider" />
-                <button
-                  className="user-dropdown-item user-dropdown-logout"
-                  onClick={handleSignOut}
-                >
-                  <Icons.ArrowLeft />
-                  <span>Sign out</span>
-                </button>
-              </>
             )}
           </div>
         </div>

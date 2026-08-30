@@ -9,6 +9,7 @@ import { CommentSection } from './CommentSection'
 import { MediaGallery } from './MediaGallery'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 
 // Social platforms data (inline to avoid import issues)
 const socialPlatforms = {
@@ -61,6 +62,7 @@ const ProfileReviewCard = ({ review }) => {
 // ProfileView component - Read-only profile view for other users
 export const ProfileView = ({ userId }) => {
   const { user } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const [profile, setProfile] = useState(null)
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
@@ -109,11 +111,26 @@ export const ProfileView = ({ userId }) => {
   if (!user) {
     return (
       <div className="empty-state">
-        <h3>Authentication Required</h3>
-        <p>Please sign in to view user profiles.</p>
-        <Link to="/" className="btn btn-primary mt-2">
-          <Icons.ArrowLeft /> Back to universities
-        </Link>
+        <Icons.User size={48} />
+        <h1>Meet the community</h1>
+        <p>
+          Join The Real China to view member profiles and connect with students in your city or university.
+          Sign in or create a free account.
+        </p>
+        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => openAuthModal('register')}
+            className="btn btn-primary"
+          >
+            Create account
+          </button>
+          <button
+            onClick={() => openAuthModal('login')}
+            className="btn btn-outline"
+          >
+            Sign in
+          </button>
+        </div>
       </div>
     )
   }
