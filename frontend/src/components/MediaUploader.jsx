@@ -93,8 +93,9 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
     if (!turnstileRef.current) {
       throw new Error('Turnstile widget is not ready')
     }
+    // Reset to force a fresh challenge, then wait for the token.
+    // execution: 'render' means the widget will solve automatically.
     turnstileRef.current.reset()
-    turnstileRef.current.execute()
     const token = await turnstileRef.current.getResponsePromise(60000, 250)
     if (!token) throw new Error('Turnstile verification failed')
     return token
@@ -406,11 +407,29 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
             ref={turnstileRef}
             siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''}
             onWidgetLoad={() => setTurnstileLoaded(true)}
-            onError={() => setTurnstileLoaded(false)}
-            onExpire={() => turnstileRef.current?.reset()}
+            onSuccess={(token) => {
+              console.log('[Turnstile] token ready')
+            }}
+            onError={(error) => {
+              console.error('[Turnstile] error:', error)
+              showToast(`Verification challenge error: ${error}`, 'error')
+            }}
+            onTimeout={() => {
+              console.warn('[Turnstile] timeout')
+              showToast('Verification challenge timed out. Please try again.', 'error')
+            }}
+            onUnsupported={() => {
+              console.error('[Turnstile] unsupported browser')
+              showToast('Your browser does not support the verification challenge.', 'error')
+            }}
+            onExpire={() => {
+              console.log('[Turnstile] token expired')
+              turnstileRef.current?.reset()
+            }}
             options={{
-              execution: 'execute',
+              execution: 'render',
               size: 'normal',
+              appearance: 'interaction-only',
             }}
           />
         </div>
