@@ -70,14 +70,20 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 // ---- CORS ----------------------------------------------------------------------
 
-const CORS_ORIGIN = Deno.env.get('CORS_ORIGIN') || '*'
+const CORS_ORIGIN = (Deno.env.get('CORS_ORIGIN') || '*').replace(/\/$/, '')
 
-const corsHeaders = (origin?: string) => ({
-  'Access-Control-Allow-Origin':
-    CORS_ORIGIN === '*' ? origin || '*' : CORS_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-})
+const corsHeaders = (origin?: string) => {
+  const requestOrigin = (origin || '').replace(/\/$/, '')
+  const allowOrigin =
+    CORS_ORIGIN === '*' || requestOrigin === CORS_ORIGIN
+      ? origin || CORS_ORIGIN
+      : CORS_ORIGIN
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
+}
 
 function jsonResponse(req: Request, body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
