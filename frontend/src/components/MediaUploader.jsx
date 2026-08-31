@@ -93,10 +93,9 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
     if (!turnstileRef.current) {
       throw new Error('Turnstile widget is not ready')
     }
-    // Reset to force a fresh challenge, then wait for the token.
-    // execution: 'render' means the widget will solve automatically.
-    turnstileRef.current.reset()
-    const token = await turnstileRef.current.getResponsePromise(60000, 250)
+    // Wait for the widget to solve. With execution: 'render' it will
+    // auto-solve and getResponsePromise returns the token.
+    const token = await turnstileRef.current.getResponsePromise(30000, 250)
     if (!token) throw new Error('Turnstile verification failed')
     return token
   }, [])
