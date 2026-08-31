@@ -159,6 +159,7 @@ Values are set in Netlify (frontend) and Supabase Edge Function secrets (backend
 | Name | Purpose |
 |------|---------|
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server-side secret |
+| `TURNSTILE_HOSTNAMES` | Optional: comma-separated frontend hostname allowlist validated against the siteverify response (skip in local dev; never include `localhost`) |
 | `CORS_ORIGIN` | Optional: restrict function CORS to a single origin |
 
 ---
