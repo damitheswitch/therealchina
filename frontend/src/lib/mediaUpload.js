@@ -4,6 +4,9 @@ export const MAX_FILES = 5
 export const MAX_IMAGE_SIZE_MB = 10
 export const MAX_VIDEO_SIZE_MB = 50
 
+export const RATE_LIMIT_MESSAGE =
+  "You've reached our upload guard for now. Please wait a little before sharing more photos or videos. We want to keep TRC authentic and spam-free."
+
 const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',
   'image/png',
@@ -16,23 +19,25 @@ const ALLOWED_IMAGE_TYPES = [
 const ALLOWED_VIDEO_TYPES = [
   'video/mp4',
   'video/webm',
-  'video/quicktime', // .mov
-  'video/x-matroska', // .mkv
+  'video/quicktime',
+  'video/x-matroska',
 ]
 
 /**
- * Validates a file before uploading
+ * Client-side pre-check for fast UX. The server performs the real validation.
  * @param {File} file
  * @returns {{ valid: boolean, error: string | null, type: 'image' | 'video' }}
  */
 export const validateMediaFile = (file) => {
-  const isImage = ALLOWED_IMAGE_TYPES.includes(file.type) || file.type.startsWith('image/')
-  const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type) || file.type.startsWith('video/')
+  const isImage =
+    ALLOWED_IMAGE_TYPES.includes(file.type) || file.type.startsWith('image/')
+  const isVideo =
+    ALLOWED_VIDEO_TYPES.includes(file.type) || file.type.startsWith('video/')
 
   if (!isImage && !isVideo) {
     return {
       valid: false,
-      error: `Unsupported file type: ${file.name}. Only images (JPG, PNG, WEBP, GIF) and videos (MP4, WEBM, MOV) are allowed.`,
+      error: `Unsupported file type: ${file.name}. Only images (JPG, PNG, WEBP, GIF, HEIC) and videos (MP4, WEBM, MOV, MKV) are allowed.`,
       type: null,
     }
   }
@@ -52,72 +57,52 @@ export const validateMediaFile = (file) => {
   return { valid: true, error: null, type: mediaType }
 }
 
-/**
- * Uploads a single media file to Supabase Storage ('review-media' bucket)
- * @param {File} file
- * @returns {Promise<{ url: string, type: 'image' | 'video', name: string }>}
- */
-export const uploadSingleMedia = async (file) => {
-  const validation = validateMediaFile(file)
-  if (!validation.valid) {
-    throw new Error(validation.error)
+async function parseFunctionError(error) {
+  if (error?.context && typeof error.context.json === 'function') {
+    try {
+      const body = await error.context.json()
+      return body?.error || error.message
+    } catch {
+      // ignore
+    }
   }
-
-  const fileExt = file.name.split('.').pop() || (validation.type === 'video' ? 'mp4' : 'jpg')
-  const cleanName = file.name
-    .replace(/[^a-zA-Z0-9.-]/g, '_')
-    .substring(0, 30)
-  const filePath = `reviews/${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${cleanName}.${fileExt}`
-
-  const { data, error } = await supabase.storage
-    .from('review-media')
-    .upload(filePath, file, {
-      cacheControl: '3600',
-      upsert: false,
-    })
-
-  if (error) {
-    console.error('Storage upload error:', error)
-    throw new Error(`Failed to upload ${file.name}: ${error.message}`)
-  }
-
-  // Get public URL
-  const { data: publicUrlData } = supabase.storage
-    .from('review-media')
-    .getPublicUrl(data.path)
-
-  return {
-    url: publicUrlData.publicUrl,
-    type: validation.type,
-    name: file.name,
-  }
+  if (error?.message) return error.message
+  return 'Upload failed'
 }
 
 /**
- * Uploads multiple media files sequentially and tracks progress
- * @param {File[]} files
- * @param {(current: number, total: number) => void} [onProgress]
- * @returns {Promise<Array<{ url: string, type: 'image' | 'video', name: string }>>}
+ * Creates a server-side upload session.
+ * For anonymous users this requires a Cloudflare Turnstile token.
+ * @param {{ cfToken?: string }} options
+ * @returns {Promise<{ sessionId: string, expiresAt: string }>}
  */
-export const uploadMultipleMedia = async (files, onProgress) => {
-  if (!files || files.length === 0) return []
-
-  if (files.length > MAX_FILES) {
-    throw new Error(`You can upload a maximum of ${MAX_FILES} photos/videos per review.`)
+export const createUploadSession = async ({ cfToken }) => {
+  const { data, error } = await supabase.functions.invoke('media-upload', {
+    body: { action: 'createSession', cfToken },
+  })
+  if (error) {
+    const msg = await parseFunctionError(error)
+    throw new Error(msg)
   }
+  return data
+}
 
-  // Validate all files first
-  for (const file of files) {
-    const v = validateMediaFile(file)
-    if (!v.valid) throw new Error(v.error)
+/**
+ * Uploads a single file through the media-upload Edge Function.
+ * @param {{ file: File, sessionId: string }} options
+ * @returns {Promise<{ url: string, type: 'image' | 'video', name: string }>}
+ */
+export const uploadFile = async ({ file, sessionId }) => {
+  const formData = new FormData()
+  formData.append('sessionId', sessionId)
+  formData.append('file', file)
+
+  const { data, error } = await supabase.functions.invoke('media-upload', {
+    body: formData,
+  })
+  if (error) {
+    const msg = await parseFunctionError(error)
+    throw new Error(msg)
   }
-
-  const uploadedMedia = []
-  for (let i = 0; i < files.length; i++) {
-    if (onProgress) onProgress(i + 1, files.length)
-    const result = await uploadSingleMedia(files[i])
-    uploadedMedia.push(result)
-  }
-
-  return uploadedMedia
+  return data
 }

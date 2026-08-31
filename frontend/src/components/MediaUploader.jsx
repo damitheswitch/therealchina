@@ -1,13 +1,16 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Icons } from './Icons'
 import {
   validateMediaFile,
-  uploadSingleMedia,
+  createUploadSession,
+  uploadFile,
   MAX_FILES,
   MAX_IMAGE_SIZE_MB,
   MAX_VIDEO_SIZE_MB,
 } from '../lib/mediaUpload'
 import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
+import { Turnstile } from '@marsidev/react-turnstile'
 
 let nextItemId = 0
 
@@ -18,8 +21,8 @@ const formatFileSize = (bytes) => {
 
 /**
  * Media attachment picker with eager upload.
- * Each selected file starts uploading to Supabase immediately (before the
- * review is submitted) and reports its progress on its thumbnail tile.
+ * Each selected file starts uploading through the media-upload Edge Function
+ * as soon as files are picked, using a short-lived session.
  *
  * Reports upward via onStateChange({ media, uploading, errorCount }):
  *  - media: successfully uploaded items ready to attach to the review
@@ -32,19 +35,41 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
   const [items, setItems] = useState([])
   const [isDragging, setIsDragging] = useState(false)
   const { showToast } = useToast()
+  const { user } = useAuth()
+
+  const [session, setSession] = useState(null)
+  const [verifying, setVerifying] = useState(false)
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+  const turnstileLoadedRef = useRef(false)
+  const resolveTurnstileLoaded = useRef(null)
+  const turnstileLoadedPromise = useRef(
+    new Promise((resolve) => {
+      resolveTurnstileLoaded.current = resolve
+    })
+  )
+  const turnstileRef = useRef(null)
 
   useEffect(() => {
     itemsRef.current = items
   }, [items])
 
+  // Sync the Turnstile ready flag and resolve the one-time promise when loaded.
+  useEffect(() => {
+    turnstileLoadedRef.current = turnstileLoaded
+    if (turnstileLoaded && resolveTurnstileLoaded.current) {
+      resolveTurnstileLoaded.current()
+      resolveTurnstileLoaded.current = null
+    }
+  }, [turnstileLoaded])
+
   // Derive the state the parent (review submit) cares about
   useEffect(() => {
     onStateChange?.({
       media: items.filter((it) => it.status === 'done').map((it) => it.media),
-      uploading: items.some((it) => it.status === 'uploading'),
+      uploading: items.some((it) => it.status === 'uploading') || verifying,
       errorCount: items.filter((it) => it.status === 'error').length,
     })
-  }, [items, onStateChange])
+  }, [items, verifying, onStateChange])
 
   // Release preview URLs when the component unmounts
   useEffect(() => {
@@ -53,30 +78,100 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
     }
   }, [])
 
-  const startUpload = (item) => {
-    setItems((prev) =>
-      prev.map((it) => (it.id === item.id ? { ...it, status: 'uploading', error: null } : it))
-    )
+  const getTurnstileToken = useCallback(async () => {
+    if (!turnstileRef.current) {
+      throw new Error('Turnstile widget is not ready')
+    }
+    if (!turnstileLoadedRef.current) {
+      await Promise.race([
+        turnstileLoadedPromise.current,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Turnstile widget took too long to load')), 10000)
+        ),
+      ])
+    }
+    if (!turnstileRef.current) {
+      throw new Error('Turnstile widget is not ready')
+    }
+    turnstileRef.current.reset()
+    turnstileRef.current.execute()
+    const token = await turnstileRef.current.getResponsePromise(60000, 250)
+    if (!token) throw new Error('Turnstile verification failed')
+    return token
+  }, [])
 
-    uploadSingleMedia(item.file)
-      .then((media) => {
+  const ensureSession = useCallback(async () => {
+    if (session && new Date(session.expiresAt) > new Date()) {
+      return session.sessionId
+    }
+    if (verifying) {
+      throw new Error('Upload verification is already in progress')
+    }
+    setVerifying(true)
+    try {
+      let cfToken
+      if (!user) {
+        cfToken = await getTurnstileToken()
+      }
+      const data = await createUploadSession({ cfToken })
+      setSession(data)
+      return data.sessionId
+    } finally {
+      setVerifying(false)
+    }
+  }, [session, user, verifying, getTurnstileToken])
+
+  const handleUploadError = useCallback(
+    (item, err) => {
+      const message = err instanceof Error ? err.message : `Failed to upload ${item.file.name}`
+      setItems((prev) =>
+        prev.some((it) => it.id === item.id)
+          ? prev.map((it) =>
+              it.id === item.id ? { ...it, status: 'error', error: message } : it
+            )
+          : prev
+      )
+      showToast(message, 'error')
+    },
+    [showToast]
+  )
+
+  const uploadItem = useCallback(
+    async (item, sessionId) => {
+      setItems((prev) =>
+        prev.map((it) => (it.id === item.id ? { ...it, status: 'uploading', error: null } : it))
+      )
+
+      try {
+        const media = await uploadFile({ file: item.file, sessionId })
         setItems((prev) =>
           prev.map((it) => (it.id === item.id ? { ...it, status: 'done', media } : it))
         )
-      })
-      .catch((err) => {
-        setItems((prev) =>
-          prev.some((it) => it.id === item.id)
-            ? prev.map((it) =>
-                it.id === item.id ? { ...it, status: 'error', error: err.message } : it
-              )
-            : prev
-        )
-        showToast(err.message || `Failed to upload ${item.file.name}`, 'error')
-      })
-  }
+      } catch (err) {
+        handleUploadError(item, err)
+      }
+    },
+    [handleUploadError]
+  )
 
-  const handleFilesAdded = (newFiles) => {
+  const runUploads = useCallback(
+    async (itemsToUpload) => {
+      if (itemsToUpload.length === 0) return
+
+      try {
+        const sessionId = await ensureSession()
+        await Promise.allSettled(itemsToUpload.map((item) => uploadItem(item, sessionId)))
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Upload could not start'
+        for (const item of itemsToUpload) {
+          handleUploadError(item, new Error(message))
+        }
+      }
+    },
+    [ensureSession, uploadItem, handleUploadError]
+  )
+
+  const handleFilesAdded = async (newFiles) => {
     if (disabled) return
     const incomingList = Array.from(newFiles)
     const room = MAX_FILES - items.length
@@ -109,7 +204,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
 
     if (accepted.length > 0) {
       setItems((prev) => [...prev, ...accepted])
-      accepted.forEach(startUpload)
+      await runUploads(accepted)
     }
   }
 
@@ -128,9 +223,17 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
     setItems((prev) => prev.filter((it) => it.id !== id))
   }
 
-  const handleRetry = (item) => {
+  const handleRetry = async (item) => {
     if (disabled) return
-    startUpload(item)
+    setItems((prev) =>
+      prev.map((it) => (it.id === item.id ? { ...it, status: 'uploading', error: null } : it))
+    )
+    try {
+      const sessionId = await ensureSession()
+      await uploadItem(item, sessionId)
+    } catch (err) {
+      handleUploadError(item, err)
+    }
   }
 
   const handleDragOver = (e) => {
@@ -171,7 +274,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,video/mp4,video/webm,video/quicktime,video/x-matroska"
         multiple
         style={{ display: 'none' }}
         disabled={disabled}
@@ -220,8 +323,8 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
           </p>
           {items.length === 0 && (
             <p className="dropzone-hint">
-              Click or drag &amp; drop · JPG, PNG, WEBP, GIF up to {MAX_IMAGE_SIZE_MB}MB · MP4, WEBM,
-              MOV up to {MAX_VIDEO_SIZE_MB}MB
+              Click or drag &amp; drop · JPG, PNG, WEBP, GIF, HEIC up to {MAX_IMAGE_SIZE_MB}MB · MP4,
+              WEBM, MOV, MKV up to {MAX_VIDEO_SIZE_MB}MB
             </p>
           )}
         </div>
@@ -274,9 +377,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
                   <span className="tile-error-icon">
                     <Icons.AlertCircle />
                   </span>
-                  <span className="tile-status-label">
-                    Failed — click to retry
-                  </span>
+                  <span className="tile-status-label">Failed — click to retry</span>
                 </div>
               )}
 
@@ -295,6 +396,23 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Invisible / managed Turnstile widget (only for anonymous users) */}
+      {!user && (
+        <div style={{ minHeight: '0' }}>
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''}
+            onWidgetLoad={() => setTurnstileLoaded(true)}
+            onError={() => setTurnstileLoaded(false)}
+            onExpire={() => turnstileRef.current?.reset()}
+            options={{
+              execution: 'execute',
+              size: 'normal',
+            }}
+          />
         </div>
       )}
     </div>

@@ -1,0 +1,10 @@
+# Supabase CLI configuration
+# This file is used for local development and Edge Function deployments.
+project_id = "project"
+
+# The media-upload function handles its own authentication (publishable key
+# / user JWT / legacy anon key validation) and does not rely on the API
+# gateway's JWT verification. This is required for the new
+# sb_publishable_... / sb_secret_... API keys, which are not JWTs.
+[functions.media-upload]
+verify_jwt = false
