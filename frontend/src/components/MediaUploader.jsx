@@ -113,9 +113,20 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
       if (!user) {
         cfToken = await getTurnstileToken()
       }
-      const data = await createUploadSession({ cfToken })
-      setSession(data)
-      return data.sessionId
+      try {
+        const data = await createUploadSession({ cfToken })
+        setSession(data)
+        return data.sessionId
+      } catch (err) {
+        // Turnstile tokens are single-use. If session creation failed for any
+        // reason (hostname mismatch, network error, etc.) the token is already
+        // consumed by Cloudflare. Reset the widget so the next attempt gets a
+        // fresh token instead of failing with timeout-or-duplicate.
+        if (!user && turnstileRef.current) {
+          turnstileRef.current.reset()
+        }
+        throw err
+      }
     } finally {
       setVerifying(false)
     }
