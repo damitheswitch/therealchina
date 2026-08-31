@@ -429,6 +429,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
               execution: 'render',
               size: 'normal',
               appearance: 'interaction-only',
+              action: 'media-upload',
             }}
           />
         </div>

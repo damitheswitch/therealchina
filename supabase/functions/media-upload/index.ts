@@ -162,7 +162,9 @@ function getClientIP(req: Request): string {
 
 // ---- Turnstile -----------------------------------------------------------------
 
-async function verifyTurnstile(token: string, ip: string) {
+const TURNSTILE_ACTION = 'media-upload'
+
+async function verifyTurnstile(token: string, ip: string, expectedAction: string) {
   const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
   if (!secret) throw new Error('TURNSTILE_SECRET_KEY not configured')
 
@@ -175,10 +177,42 @@ async function verifyTurnstile(token: string, ip: string) {
     method: 'POST',
     body: form,
   })
-  const data = (await res.json()) as { success: boolean; 'error-codes'?: string[] }
+  const data = (await res.json()) as {
+    success: boolean
+    action?: string
+    hostname?: string
+    'error-codes'?: string[]
+  }
   if (!data.success) {
     console.error('Turnstile verification failed:', data['error-codes'])
     throw new Error('Turnstile verification failed')
+  }
+  // Validate the action to prevent token reuse across surfaces.
+  if (data.action !== expectedAction) {
+    console.error(
+      'Turnstile action mismatch:',
+      data.action,
+      'expected',
+      expectedAction
+    )
+    throw new Error('Turnstile verification failed')
+  }
+  // Optional hostname allowlist. When TURNSTILE_HOSTNAMES is unset, skip so
+  // local dev keeps working. In production, set it to the exact frontend
+  // hostnames (comma-separated, no scheme, no trailing slash) and never
+  // include localhost / 127.0.0.1.
+  const hostnamesRaw = Deno.env.get('TURNSTILE_HOSTNAMES')
+  if (hostnamesRaw) {
+    const allowed = new Set(
+      hostnamesRaw
+        .split(',')
+        .map((h) => h.trim().replace(/\/$/, ''))
+        .filter(Boolean)
+    )
+    if (!data.hostname || !allowed.has(data.hostname)) {
+      console.error('Turnstile hostname not allowed:', data.hostname)
+      throw new Error('Turnstile verification failed')
+    }
   }
 }
 
@@ -361,7 +395,7 @@ async function handleCreateSession(req: Request): Promise<Response> {
     if (!cfToken || typeof cfToken !== 'string') {
       return jsonResponse(req, { error: 'Turnstile token required for anonymous uploads' }, 400)
     }
-    await verifyTurnstile(cfToken, ip)
+    await verifyTurnstile(cfToken, ip, TURNSTILE_ACTION)
   }
 
   const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60 * 1000).toISOString()
