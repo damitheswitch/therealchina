@@ -50,7 +50,7 @@ export const validateMediaFile = (file) => {
   return { valid: true, error: null, type: mediaType }
 }
 
-async function parseFunctionError(error) {
+export async function parseFunctionError(error) {
   if (error?.context && typeof error.context.json === 'function') {
     try {
       const body = await error.context.json()
