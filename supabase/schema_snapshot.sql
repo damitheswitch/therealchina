@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 020_gate_anonymous_submissions.sql.
+-- as of migration 021_signup_survives_taken_display_name.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -211,8 +211,18 @@ BEGIN
       NOW()
     );
   EXCEPTION
-    WHEN unique_violation THEN
-      RAISE EXCEPTION 'Display name is already taken.';
+    WHEN unique_violation OR check_violation OR raise_exception THEN
+      -- Display name taken or rejected by validation: fall back to NULL and
+      -- let onboarding collect a fresh one instead of failing the signup.
+      INSERT INTO public.profiles (id, display_name, avatar_url, is_discoverable, onboarding_completed, created_at)
+      VALUES (
+        NEW.id,
+        NULL,
+        NEW.raw_user_meta_data->>'avatar_url',
+        true,
+        false,
+        NOW()
+      );
     WHEN OTHERS THEN
       RAISE;
   END;
