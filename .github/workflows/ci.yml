@@ -36,5 +36,11 @@ jobs:
         run: |
           for dir in supabase/functions/*/; do
             deno check --config "${dir}deno.json" "${dir}index.ts"
-            deno test --config "${dir}deno.json" "$dir"
+            # Only run tests when the directory actually contains test files
+            # (Deno convention: *_test.ts / *_test.tsx). Avoids "No test
+            # modules found" failures on functions that don't have tests yet.
+            tests=$(find "$dir" -maxdepth 1 -type f \( -name '*_test.ts' -o -name '*_test.tsx' \) -print -quit)
+            if [ -n "$tests" ]; then
+              deno test --config "${dir}deno.json" "$dir"
+            fi
           done
