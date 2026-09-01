@@ -10,6 +10,7 @@ import { RegistrationNudge } from '../components/RegistrationNudge'
 import { ProgramAutocomplete } from '../components/ProgramAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { MediaUploader } from '../components/MediaUploader'
+import { SealStampOverlay } from '../components/SealStampOverlay'
 
 // ReviewPage component
 export const ReviewPage = () => {
@@ -32,6 +33,10 @@ export const ReviewPage = () => {
   // Media uploads start the moment files are picked; this mirrors their state
   const [mediaState, setMediaState] = useState({ media: [], uploading: false, errorCount: 0 })
   const [loading, setLoading] = useState(false)
+  const [showStamp, setShowStamp] = useState(false)
+  // Stash the post-stamp action (navigate or open auth modal) so it fires
+  // after the celebration animation completes.
+  const [pendingSuccess, setPendingSuccess] = useState(null)
 
   // Re-open the anonymous-review thank-you modal if the user is still signing up
   useEffect(() => {
@@ -40,7 +45,8 @@ export const ReviewPage = () => {
     if (!submitted) return
     openAuthModal('register', {
       title: 'Thanks for your review!',
-      subtitle: 'Please log in or create a free account to view your review and engage with other students.',
+      subtitle:
+        'Please log in or create a free account to view your review and engage with other students.',
       closable: false,
     })
   }, [user, openAuthModal])
@@ -88,6 +94,14 @@ export const ReviewPage = () => {
     setSelectedUniName("My university isn't listed")
     setSelectedUni('__not_listed')
     setShowNotListed(true)
+  }
+
+  const handleStampComplete = () => {
+    setShowStamp(false)
+    if (pendingSuccess) {
+      pendingSuccess()
+      setPendingSuccess(null)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -201,26 +215,25 @@ export const ReviewPage = () => {
 
       showToast('Review submitted! Thank you.', 'success')
 
-      // Anonymous reviewers must sign up before they can view their review
+      // Play the seal-stamp celebration, then run the post-submit action
+      // (open the auth modal for anon users, or navigate for logged-in users).
       if (!user) {
         sessionStorage.setItem('trc_anon_review_submitted', 'true')
         sessionStorage.setItem('trc_anon_review_redirect', redirectSlug || '')
-        openAuthModal('register', {
-          title: 'Thanks for your review!',
-          subtitle: 'Please log in or create a free account to view your review and engage with other students.',
-          closable: false,
-        })
-        return
+        setPendingSuccess(
+          () => () =>
+            openAuthModal('register', {
+              title: 'Thanks for your review!',
+              subtitle:
+                'Please log in or create a free account to view your review and engage with other students.',
+              closable: false,
+            })
+        )
+      } else {
+        const target = universityId && redirectSlug ? `/university/${redirectSlug}` : '/'
+        setPendingSuccess(() => () => navigate(target))
       }
-
-      // Redirect to university page or home
-      setTimeout(() => {
-        if (universityId && redirectSlug) {
-          navigate(`/university/${redirectSlug}`)
-        } else {
-          navigate('/')
-        }
-      }, 1200)
+      setShowStamp(true)
     } catch (error) {
       console.error('Error submitting review:', error)
       showToast(error.message || 'Failed to submit review', 'error')
@@ -363,8 +376,16 @@ export const ReviewPage = () => {
 
           {/* Submit */}
           <div className="form-submit-row">
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading || mediaState.uploading}>
-              {loading ? 'Submitting...' : mediaState.uploading ? 'Processing media...' : 'Submit Review'}
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={loading || mediaState.uploading}
+            >
+              {loading
+                ? 'Submitting...'
+                : mediaState.uploading
+                  ? 'Processing media...'
+                  : 'Submit Review'}
             </button>
             <span className="form-hint">By submitting, you agree to share honest content.</span>
           </div>
@@ -372,6 +393,8 @@ export const ReviewPage = () => {
       </div>
 
       <RegistrationNudge />
+
+      {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>
   )
 }
