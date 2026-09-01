@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { useMemberProfileData } from '../hooks/useMemberProfileData'
 import { SealAvatar } from './SealAvatar'
 import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
@@ -56,48 +55,7 @@ const ProfileReviewCard = ({ review }) => {
 export const ProfileView = ({ userId }) => {
   const { user } = useAuth()
   const { openAuthModal } = useAuthModal()
-  const [profile, setProfile] = useState(null)
-  const [reviews, setReviews] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  const fetchProfileData = useCallback(async () => {
-    setLoading(true)
-    try {
-      // Fetch profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('member_profiles')
-        .select('*, social_handles')
-        .eq('id', userId)
-        .single()
-
-      if (profileError) throw profileError
-      setProfile(profileData)
-
-      // Fetch user's reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(
-          'id, university_id, rating, text, program, degree_level, media, created_at, universities(name, city, slug)'
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-
-      if (reviewsError) throw reviewsError
-      setReviews(reviewsData || [])
-    } catch (error) {
-      console.error('Error fetching profile data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [userId])
-
-  useEffect(() => {
-    if (user) {
-      fetchProfileData()
-    } else {
-      setLoading(false)
-    }
-  }, [user, fetchProfileData])
+  const { profile, reviews, loading } = useMemberProfileData(userId, { enabled: !!user })
 
   if (loading) {
     return <div className="loading">Loading profile...</div>

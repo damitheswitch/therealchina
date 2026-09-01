@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useProfile } from '../hooks/useProfile'
 import { validateDisplayName } from '../lib/validateDisplayName'
 import { Icons } from './Icons'
 import { CityAutocomplete } from './CityAutocomplete'
@@ -13,8 +14,8 @@ import { SocialHandlesEditor } from './SocialHandlesEditor'
 export const ProfileEditForm = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const { profile, loading, error } = useProfile(user?.id)
 
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [passwordSectionOpen, setPasswordSectionOpen] = useState(false)
 
@@ -34,59 +35,44 @@ export const ProfileEditForm = () => {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) return
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*, social_handles')
-        .eq('id', user.id)
-        .single()
-
-      if (error) throw error
-
-      if (data) {
-        setDisplayName(data.display_name || '')
-        setBio(data.bio || '')
-        setLocation(data.location || '')
-        setUniversity(data.university || '')
-        setProgram(data.program || '')
-
-        // Handle social handles - migrate from old format if needed
-        let handles = []
-        if (
-          data.social_handles &&
-          Array.isArray(data.social_handles) &&
-          data.social_handles.length > 0
-        ) {
-          handles = data.social_handles
-        } else if (data.social_platform || data.social_handle) {
-          // Migrate old single social handle to new array format
-          handles = [
-            {
-              platform: data.social_platform || 'other',
-              handle: data.social_handle || '',
-            },
-          ]
-        }
-
-        // Ensure we always have at least one social handle field
-        setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
-        setShowSocialHandle(data.show_social_handle !== false)
-        setIsDiscoverable(data.is_discoverable !== false)
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error)
-      showToast('Failed to load profile', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [user, showToast])
-
+  // Sync the fetched profile into the form fields once it loads.
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    if (!profile) return
+
+    setDisplayName(profile.display_name || '')
+    setBio(profile.bio || '')
+    setLocation(profile.location || '')
+    setUniversity(profile.university || '')
+    setProgram(profile.program || '')
+
+    // Handle social handles - migrate from old format if needed
+    let handles = []
+    if (
+      profile.social_handles &&
+      Array.isArray(profile.social_handles) &&
+      profile.social_handles.length > 0
+    ) {
+      handles = profile.social_handles
+    } else if (profile.social_platform || profile.social_handle) {
+      // Migrate old single social handle to new array format
+      handles = [
+        {
+          platform: profile.social_platform || 'other',
+          handle: profile.social_handle || '',
+        },
+      ]
+    }
+
+    // Ensure we always have at least one social handle field
+    setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
+    setShowSocialHandle(profile.show_social_handle !== false)
+    setIsDiscoverable(profile.is_discoverable !== false)
+  }, [profile])
+
+  // Surface fetch errors as a toast (preserves previous inline behavior).
+  useEffect(() => {
+    if (error) showToast('Failed to load profile', 'error')
+  }, [error, showToast])
 
   const handleProfileSave = async (e) => {
     e.preventDefault()

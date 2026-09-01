@@ -1,60 +1,30 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useComments } from '../hooks/useComments'
 import { SealAvatar } from './SealAvatar'
 
 // CommentSection component
 export const CommentSection = ({ reviewId }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const [comments, setComments] = useState([])
-  const [authorProfiles, setAuthorProfiles] = useState({})
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [posting, setPosting] = useState(false)
   // Comments are fetched lazily: nothing is queried until the section is
   // expanded, so a page of review cards doesn't fire one query per card.
   const [expanded, setExpanded] = useState(false)
-  const [commentsLoaded, setCommentsLoaded] = useState(false)
 
-  const fetchComments = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('comments')
-      .select('id, review_id, user_id, parent_id, text, created_at')
-      .eq('review_id', reviewId)
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      console.error('Error fetching comments:', error)
-      return
-    }
-
-    const fetchedComments = data || []
-    setComments(fetchedComments)
-
-    const userIds = [...new Set(fetchedComments.map((c) => c.user_id).filter(Boolean))]
-
-    if (userIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profile_public')
-        .select('id, display_name')
-        .in('id', userIds)
-
-      const profileMap = (profiles || []).reduce((acc, p) => {
-        acc[p.id] = p
-        return acc
-      }, {})
-      setAuthorProfiles(profileMap)
-    } else {
-      setAuthorProfiles({})
-    }
-    setCommentsLoaded(true)
-  }, [reviewId])
+  const {
+    comments,
+    authorProfiles,
+    loaded: commentsLoaded,
+    refetch: refetchComments,
+  } = useComments(reviewId, { enabled: expanded })
 
   const toggleExpanded = () => {
-    if (!expanded && !commentsLoaded) fetchComments()
     setExpanded((prev) => !prev)
   }
 
@@ -71,7 +41,7 @@ export const CommentSection = ({ reviewId }) => {
       return
     }
 
-    setLoading(true)
+    setPosting(true)
     try {
       const { error } = await supabase.from('comments').insert({
         review_id: reviewId,
@@ -85,12 +55,12 @@ export const CommentSection = ({ reviewId }) => {
       showToast('Comment added!', 'success')
       setNewComment('')
       setReplyTo(null)
-      fetchComments()
+      refetchComments()
     } catch (error) {
       console.error('Error adding comment:', error)
       showToast(error.message || 'Failed to add comment', 'error')
     } finally {
-      setLoading(false)
+      setPosting(false)
     }
   }
 
@@ -241,8 +211,8 @@ export const CommentSection = ({ reviewId }) => {
                       rows="3"
                     />
                     <div style={{ display: 'flex', gap: 'var(--sp-1)', marginTop: 'var(--sp-1)' }}>
-                      <button type="submit" disabled={loading} className="btn btn-primary">
-                        {loading ? 'Posting...' : 'Post Reply'}
+                      <button type="submit" disabled={posting} className="btn btn-primary">
+                        {posting ? 'Posting...' : 'Post Reply'}
                       </button>
                       <button
                         type="button"
@@ -271,11 +241,11 @@ export const CommentSection = ({ reviewId }) => {
               />
               <button
                 type="submit"
-                disabled={loading || !user}
+                disabled={posting || !user}
                 className="btn btn-primary"
                 style={{ marginTop: 'var(--sp-1)' }}
               >
-                {loading ? 'Posting...' : 'Add Comment'}
+                {posting ? 'Posting...' : 'Add Comment'}
               </button>
             </form>
           )}
