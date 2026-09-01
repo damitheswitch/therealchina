@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useProfile } from '../hooks/useProfile'
 import { OnboardingForm } from '../components/OnboardingForm'
 import { validateDisplayName } from '../lib/validateDisplayName'
 
@@ -11,44 +11,7 @@ export const OnboardingPage = () => {
   const { showToast } = useToast()
   const navigate = useNavigate()
 
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  const fetchProfileWithRetry = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      const { data, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError && profileError.code === 'PGRST116') {
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        const { data: retry, error: retryError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-
-        if (retryError) throw retryError
-        setProfile(retry)
-      } else if (profileError) {
-        throw profileError
-      } else {
-        setProfile(data)
-      }
-    } catch (err) {
-      console.error('Error fetching profile for onboarding:', err)
-      setError('Could not load your profile. Please refresh the page or try again.')
-      showToast('Could not load your profile. Please try again.', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [user, showToast])
+  const { profile, loading, error, refetch } = useProfile(user?.id, { retry: true })
 
   useEffect(() => {
     if (authLoading) return
@@ -57,16 +20,19 @@ export const OnboardingPage = () => {
       navigate('/', { replace: true })
       return
     }
+  }, [user, authLoading, navigate])
 
-    fetchProfileWithRetry()
-  }, [user, authLoading, navigate, fetchProfileWithRetry])
+  // Surface fetch errors as a toast (preserves previous inline behavior).
+  useEffect(() => {
+    if (error) showToast('Could not load your profile. Please try again.', 'error')
+  }, [error, showToast])
 
   const handleComplete = () => {
     showToast('Welcome to The Real China!', 'success')
     navigate('/', { replace: true })
   }
 
-  if (authLoading || loading) {
+  if (authLoading || loading || !user) {
     return (
       <div
         className="loading"
@@ -87,8 +53,10 @@ export const OnboardingPage = () => {
       <div className="container" style={{ paddingTop: 'var(--sp-4)' }}>
         <div className="section" style={{ textAlign: 'center' }}>
           <h1 className="section-title">Something went wrong</h1>
-          <p className="muted">{error}</p>
-          <button onClick={fetchProfileWithRetry} className="btn btn-primary mt-2">
+          <p className="muted">
+            Could not load your profile. Please refresh the page or try again.
+          </p>
+          <button onClick={refetch} className="btn btn-primary mt-2">
             Try again
           </button>
         </div>
@@ -101,7 +69,7 @@ export const OnboardingPage = () => {
   const displayNameEditable = !hasName || !nameIsValid
   const initialDisplayName = hasName
     ? profile.display_name
-    : user.user_metadata?.full_name || user.user_metadata?.display_name || ''
+    : user?.user_metadata?.full_name || user?.user_metadata?.display_name || ''
 
   return (
     <div

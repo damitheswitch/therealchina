@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
-import { supabase } from '../lib/supabaseClient'
 import { submitReview } from '../lib/reviewSubmit'
+import { useUniversity } from '../hooks/useUniversity'
 import { StarInput } from '../components/StarInput'
 import { Icons } from '../components/Icons'
 import { useToast } from '../contexts/ToastContext'
@@ -62,32 +62,14 @@ export const ReviewPage = () => {
   // Depend on the primitive value, not the searchParams object (a new object
   // identity every render would refire this effect constantly).
   const uniSlug = searchParams.get('uni')
+  const { university: prefilledUni } = useUniversity(uniSlug || undefined)
+
+  // Sync the resolved university into the form state once it loads.
   useEffect(() => {
-    if (!uniSlug) return
-
-    const controller = new AbortController()
-    const loadUniversity = async () => {
-      const { data, error } = await supabase
-        .from('universities')
-        .select('name, slug')
-        .eq('slug', uniSlug)
-        .abortSignal(controller.signal)
-        .single()
-
-      if (error) {
-        if (error?.name !== 'AbortError') console.error('Error loading university:', error)
-        return
-      }
-
-      if (data) {
-        setSelectedUni(data.slug || '')
-        setSelectedUniName(data.name || '')
-      }
-    }
-
-    loadUniversity()
-    return () => controller.abort()
-  }, [uniSlug])
+    if (!prefilledUni) return
+    setSelectedUni(prefilledUni.slug || '')
+    setSelectedUniName(prefilledUni.name || '')
+  }, [prefilledUni])
 
   const handleUniversityChange = (value) => {
     setSelectedUniName(value)
