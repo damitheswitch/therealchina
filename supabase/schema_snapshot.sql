@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 017_definer_view_qualified_names.sql.
+-- as of migration 019_fix_upload_session_ambiguity.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
