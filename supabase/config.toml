@@ -8,3 +8,9 @@ project_id = "project"
 # sb_publishable_... / sb_secret_... API keys, which are not JWTs.
 [functions.media-upload]
 verify_jwt = false
+
+# review-submit handles its own authentication for the same reasons as
+# media-upload (publishable keys are not JWTs). Anonymous review submissions
+# are Turnstile-gated inside the function.
+[functions.review-submit]
+verify_jwt = false

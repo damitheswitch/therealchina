@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 019_fix_upload_session_ambiguity.sql.
+-- as of migration 020_gate_anonymous_submissions.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -503,10 +503,8 @@ CREATE POLICY "Public read access to universities"
   ON public.universities FOR SELECT
   TO public USING (true);
 
-DROP POLICY IF EXISTS "Public insert access to universities" ON public.universities;
-CREATE POLICY "Public insert access to universities"
-  ON public.universities FOR INSERT
-  TO public WITH CHECK (true);
+-- No direct INSERT policy on universities: rows are created server-side by the
+-- review-submit Edge Function ("not listed" flow) or by admin tooling.
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
@@ -525,10 +523,9 @@ CREATE POLICY "Authenticated users can insert reviews after onboarding"
     AND (SELECT onboarding_completed FROM public.profiles WHERE id = auth.uid()) = true
   );
 
-DROP POLICY IF EXISTS "Anonymous users can insert reviews" ON public.reviews;
-CREATE POLICY "Anonymous users can insert reviews"
-  ON public.reviews FOR INSERT
-  TO anon WITH CHECK (user_id IS NULL);
+-- No anonymous INSERT policy: anonymous reviews are submitted through the
+-- review-submit Edge Function (Turnstile + per-IP rate limit, service-role
+-- write) instead of direct table inserts.
 
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
