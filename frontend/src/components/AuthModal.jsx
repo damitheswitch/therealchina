@@ -128,7 +128,10 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
   }
 
   const modalContent = (
-    <div className="auth-modal-overlay" onClick={canClose && !verificationSent ? onClose : undefined}>
+    <div
+      className="auth-modal-overlay"
+      onClick={canClose && !verificationSent ? onClose : undefined}
+    >
       <div
         className={`auth-modal-content ${verificationSent ? 'verification' : ''}`}
         onClick={(e) => e.stopPropagation()}
@@ -152,16 +155,17 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
               <p className="verification-subtitle">The Real China</p>
             </div>
             <p className="verification-message">
-              We've sent a verification link to <strong>{email}</strong>. Please
-              check your email and click the link to activate your account.
+              We&apos;ve sent a verification link to <strong>{email}</strong>. Please check your
+              email and click the link to activate your account.
             </p>
             <p className="verification-help">
-              Didn't receive it? Check your spam or junk folder, or make sure the
-              address above is correct.
+              Didn&apos;t receive it? Check your spam or junk folder, or make sure the address above
+              is correct.
             </p>
             {canClose && (
               <p className="verification-close-hint">
-                Click the <span aria-hidden="true">✕</span> in the top-right corner when you're ready.
+                Click the <span aria-hidden="true">✕</span> in the top-right corner when you&apos;re
+                ready.
               </p>
             )}
           </div>
@@ -235,7 +239,11 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
                     className="form-input"
                     required
                   />
-                  {displayNameError && <p className="form-hint" style={{ color: 'var(--error)' }}>{displayNameError}</p>}
+                  {displayNameError && (
+                    <p className="form-hint" style={{ color: 'var(--error)' }}>
+                      {displayNameError}
+                    </p>
+                  )}
                 </div>
               )}
 

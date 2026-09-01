@@ -107,20 +107,22 @@ export const ProfileView = ({ userId }) => {
         <Icons.User size={48} />
         <h1>Meet the community</h1>
         <p>
-          Join The Real China to view member profiles and connect with students in your city or university.
-          Sign in or create a free account.
+          Join The Real China to view member profiles and connect with students in your city or
+          university. Sign in or create a free account.
         </p>
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => openAuthModal('register')}
-            className="btn btn-primary"
-          >
+        <div
+          style={{
+            marginTop: '1rem',
+            display: 'flex',
+            gap: '0.75rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <button onClick={() => openAuthModal('register')} className="btn btn-primary">
             Create account
           </button>
-          <button
-            onClick={() => openAuthModal('login')}
-            className="btn btn-outline"
-          >
+          <button onClick={() => openAuthModal('login')} className="btn btn-outline">
             Sign in
           </button>
         </div>
@@ -136,7 +138,7 @@ export const ProfileView = ({ userId }) => {
     return (
       <div className="empty-state">
         <h3>Profile not found</h3>
-        <p>This user profile doesn't exist or is not accessible.</p>
+        <p>This user profile doesn&apos;t exist or is not accessible.</p>
         <Link to="/" className="btn btn-primary mt-2">
           <Icons.ArrowLeft /> Back to universities
         </Link>
@@ -192,29 +194,29 @@ export const ProfileView = ({ userId }) => {
           <div className="profile-section">
             <h3 className="profile-section-title">Social</h3>
             <div className="profile-social-list">
-              {socialHandles.filter(sh => sh.handle).map((social, index) => {
-                const platformData = socialPlatforms[social.platform] || socialPlatforms.other
-                return (
-                  <div key={index} className="profile-social">
-                    <span className="profile-social-platform">{platformData.label}</span>
-                    <span className="profile-social-handle">{social.handle}</span>
-                  </div>
-                )
-              })}
+              {socialHandles
+                .filter((sh) => sh.handle)
+                .map((social, index) => {
+                  const platformData = socialPlatforms[social.platform] || socialPlatforms.other
+                  return (
+                    <div key={index} className="profile-social">
+                      <span className="profile-social-platform">{platformData.label}</span>
+                      <span className="profile-social-handle">{social.handle}</span>
+                    </div>
+                  )
+                })}
             </div>
           </div>
         )}
 
         <div className="profile-section">
-          <h3 className="profile-section-title">
-            Reviews ({reviews.length})
-          </h3>
+          <h3 className="profile-section-title">Reviews ({reviews.length})</h3>
           {reviews.length > 0 ? (
             <div className="profile-reviews">
               {reviews.map((review) => (
                 <div key={review.id} className="profile-review-item">
                   {review.universities && (
-                    <Link 
+                    <Link
                       to={`/university/${review.universities.slug}`}
                       className="profile-review-university"
                     >

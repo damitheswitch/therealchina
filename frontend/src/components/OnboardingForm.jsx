@@ -11,7 +11,11 @@ import { SocialHandlesEditor } from './SocialHandlesEditor'
 const emptySocialHandle = { platform: 'wechat', handle: '' }
 
 const normalizeSocialHandles = (profile) => {
-  if (profile?.social_handles && Array.isArray(profile.social_handles) && profile.social_handles.length > 0) {
+  if (
+    profile?.social_handles &&
+    Array.isArray(profile.social_handles) &&
+    profile.social_handles.length > 0
+  ) {
     return [...profile.social_handles]
   }
   if (profile?.social_platform || profile?.social_handle) {
@@ -20,7 +24,12 @@ const normalizeSocialHandles = (profile) => {
   return [emptySocialHandle]
 }
 
-export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initialProfile, onComplete }) => {
+export const OnboardingForm = ({
+  initialDisplayName,
+  displayNameEditable,
+  initialProfile,
+  onComplete,
+}) => {
   const { user } = useAuth()
   const { showToast } = useToast()
 
@@ -31,7 +40,9 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
   const [university, setUniversity] = useState(initialProfile?.university || '')
   const [program, setProgram] = useState(initialProfile?.program || '')
   const [socialHandles, setSocialHandles] = useState(normalizeSocialHandles(initialProfile))
-  const [showSocialHandle, setShowSocialHandle] = useState(initialProfile?.show_social_handle !== false)
+  const [showSocialHandle, setShowSocialHandle] = useState(
+    initialProfile?.show_social_handle !== false
+  )
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -135,7 +146,9 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
   return (
     <form onSubmit={handleSubmit} className="onboarding-form">
       <div className="form-section">
-        <h3 className="form-section-title">{displayNameEditable ? 'Choose your display name' : 'Your display name'}</h3>
+        <h3 className="form-section-title">
+          {displayNameEditable ? 'Choose your display name' : 'Your display name'}
+        </h3>
 
         {displayNameEditable ? (
           <div className="form-group">
@@ -153,17 +166,27 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
               required
             />
             <p className="form-hint">
-              This is how you'll appear across TRC — reviews, directory, and flights. You can change it later in Settings.
+              This is how you&apos;ll appear across TRC — reviews, directory, and flights. You can
+              change it later in Settings.
             </p>
-            {displayNameError && <p className="form-hint" style={{ color: 'var(--error)' }}>{displayNameError}</p>}
+            {displayNameError && (
+              <p className="form-hint" style={{ color: 'var(--error)' }}>
+                {displayNameError}
+              </p>
+            )}
           </div>
         ) : (
           <div className="form-group">
             <label className="form-label">Your display name</label>
-            <div className="form-input" style={{ background: 'var(--rice-warm)', display: 'flex', alignItems: 'center' }}>
+            <div
+              className="form-input"
+              style={{ background: 'var(--rice-warm)', display: 'flex', alignItems: 'center' }}
+            >
               {displayName}
             </div>
-            <p className="form-hint">You chose this when you signed up. You can change it later in Settings.</p>
+            <p className="form-hint">
+              You chose this when you signed up. You can change it later in Settings.
+            </p>
           </div>
         )}
       </div>
@@ -182,7 +205,8 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
             placeholder="e.g. Beijing, Shanghai"
           />
           <p className="form-hint">
-            Adding your city helps other students find relevant flights, listings, and connect with students in the same area.
+            Adding your city helps other students find relevant flights, listings, and connect with
+            students in the same area.
           </p>
         </div>
 
@@ -197,7 +221,8 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
             placeholder="Your university"
           />
           <p className="form-hint">
-            Adding your university gives your reviews more context and makes your profile more trustworthy to other international students.
+            Adding your university gives your reviews more context and makes your profile more
+            trustworthy to other international students.
           </p>
         </div>
 
@@ -211,7 +236,9 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
             onChange={setProgram}
             placeholder="Your program of study"
           />
-          <p className="form-hint">Your program of study helps students in the same field connect with you.</p>
+          <p className="form-hint">
+            Your program of study helps students in the same field connect with you.
+          </p>
         </div>
       </div>
 
@@ -242,32 +269,42 @@ export const OnboardingForm = ({ initialDisplayName, displayNameEditable, initia
             rows={4}
             disabled={saving}
           />
-          <p className="form-hint">A few lines make your profile more human and help others understand where you're coming from.</p>
+          <p className="form-hint">
+            A few lines make your profile more human and help others understand where you&apos;re
+            coming from.
+          </p>
         </div>
       </div>
 
       <p className="form-hint" style={{ textAlign: 'center' }}>
-        Your profile will appear in the student directory so other students can find you. You can turn this off in Settings later.
+        Your profile will appear in the student directory so other students can find you. You can
+        turn this off in Settings later.
       </p>
 
-      <div className="onboarding-actions" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-1)', alignItems: 'center' }}>
-        <button type="submit" disabled={saving} className="btn btn-primary btn-lg" style={{ width: '100%', maxWidth: '320px', justifyContent: 'center' }}>
+      <div
+        className="onboarding-actions"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--sp-1)',
+          alignItems: 'center',
+        }}
+      >
+        <button
+          type="submit"
+          disabled={saving}
+          className="btn btn-primary btn-lg"
+          style={{ width: '100%', maxWidth: '320px', justifyContent: 'center' }}
+        >
           {saving ? 'Saving...' : 'Save & continue'}
         </button>
 
         {!displayNameEditable && (
           <>
-            <button
-              type="button"
-              onClick={handleSkip}
-              disabled={saving}
-              className="btn-text"
-            >
+            <button type="button" onClick={handleSkip} disabled={saving} className="btn-text">
               Skip for now
             </button>
-            <p className="form-hint onboarding-skip-hint">
-              You can add these later in Settings.
-            </p>
+            <p className="form-hint onboarding-skip-hint">You can add these later in Settings.</p>
           </>
         )}
       </div>

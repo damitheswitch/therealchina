@@ -6,7 +6,7 @@ export const NotFoundPage = () => (
   <div className="container">
     <div className="empty-state" style={{ paddingTop: '6rem' }}>
       <h1>Page not found</h1>
-      <p>The page you're looking for doesn't exist.</p>
+      <p>The page you&apos;re looking for doesn&apos;t exist.</p>
       <Link to="/" className="btn btn-primary mt-2">
         <Icons.ArrowLeft /> Go home
       </Link>
