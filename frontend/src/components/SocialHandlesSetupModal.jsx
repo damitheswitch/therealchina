@@ -51,7 +51,7 @@ export const SocialHandlesSetupModal = ({ isOpen, onClose, onSaved }) => {
     }
 
     fetchProfile()
-  }, [isOpen, user])
+  }, [isOpen, user, showToast])
 
   if (!isOpen || !user) return null
 

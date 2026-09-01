@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
@@ -53,12 +53,16 @@ export const FlightListingsPage = () => {
   const [arrivalCountry, setArrivalCountry] = useState('')
   const [month, setMonth] = useState('')
 
-  const fetchListings = async () => {
+  // TODO(scale): when listings grow into the hundreds, filter and paginate
+  // server-side instead of downloading every active row.
+  const fetchListings = useCallback(async () => {
     setLoading(true)
     try {
       const { data, error } = await supabase
         .from('flight_listings_with_profile')
-        .select('*')
+        .select(
+          'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle'
+        )
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
@@ -70,9 +74,9 @@ export const FlightListingsPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [showToast])
 
-  const fetchOwnProfile = async () => {
+  const fetchOwnProfile = useCallback(async () => {
     if (!user) return null
     try {
       const { data, error } = await supabase
@@ -88,14 +92,14 @@ export const FlightListingsPage = () => {
       console.error('Error fetching own profile:', error)
       return null
     }
-  }
+  }, [user])
 
   useEffect(() => {
     if (user) {
       fetchListings()
       fetchOwnProfile()
     }
-  }, [user])
+  }, [user, fetchListings, fetchOwnProfile])
 
   const handleStartPosting = async () => {
     const currentProfile = ownProfile || (await fetchOwnProfile())

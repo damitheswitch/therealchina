@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
@@ -15,18 +15,7 @@ export const OnboardingPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    if (authLoading) return
-
-    if (!user) {
-      navigate('/', { replace: true })
-      return
-    }
-
-    fetchProfileWithRetry()
-  }, [user, authLoading, navigate])
-
-  const fetchProfileWithRetry = async () => {
+  const fetchProfileWithRetry = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -59,7 +48,18 @@ export const OnboardingPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, showToast])
+
+  useEffect(() => {
+    if (authLoading) return
+
+    if (!user) {
+      navigate('/', { replace: true })
+      return
+    }
+
+    fetchProfileWithRetry()
+  }, [user, authLoading, navigate, fetchProfileWithRetry])
 
   const handleComplete = () => {
     showToast('Welcome to The Real China!', 'success')

@@ -33,7 +33,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}'],
       },
       devOptions: {
-        enabled: true,
+        // Off by default: an active service worker in dev causes stale-cache
+        // confusion. Enable temporarily only when intentionally debugging the SW.
+        enabled: false,
       },
     }),
   ],

@@ -12,51 +12,76 @@ export const UniversityPage = () => {
   const { slug } = useParams()
   const [university, setUniversity] = useState(null)
   const [reviews, setReviews] = useState([])
+  // Author profiles keyed by user id; missing entry means no public profile.
+  const [authors, setAuthors] = useState({})
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchData()
-  }, [slug])
+    const controller = new AbortController()
 
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      // Fetch university
-      const { data: uniData, error: uniError } = await supabase
-        .from('universities')
-        .select('*')
-        .eq('slug', slug)
-        .single()
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // Fetch university
+        const { data: uniData, error: uniError } = await supabase
+          .from('universities')
+          .select('id, name, name_zh, city, slug, logo_url, is_verified')
+          .eq('slug', slug)
+          .abortSignal(controller.signal)
+          .single()
 
-      if (uniError) throw uniError
-      setUniversity(uniData)
+        if (uniError) throw uniError
+        setUniversity(uniData)
 
-      // Fetch reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('university_id', uniData.id)
-        .order('created_at', { ascending: false })
+        // Fetch reviews
+        const { data: reviewsData, error: reviewsError } = await supabase
+          .from('reviews')
+          .select(
+            'id, university_id, user_id, rating, text, program, degree_level, media, created_at'
+          )
+          .eq('university_id', uniData.id)
+          .abortSignal(controller.signal)
+          .order('created_at', { ascending: false })
 
-      if (reviewsError) throw reviewsError
-      setReviews(reviewsData || [])
+        if (reviewsError) throw reviewsError
+        setReviews(reviewsData || [])
 
-      // Fetch stats
-      const { data: statsData, error: statsError } = await supabase
-        .from('university_stats')
-        .select('*')
-        .eq('university_id', uniData.id)
-        .single()
+        // Batch-fetch author profiles in one query instead of one per card.
+        const authorIds = [...new Set((reviewsData || []).map((r) => r.user_id).filter(Boolean))]
+        if (authorIds.length > 0) {
+          const { data: authorsData, error: authorsError } = await supabase
+            .from('profile_public')
+            .select('id, display_name, avatar_url')
+            .in('id', authorIds)
+            .abortSignal(controller.signal)
 
-      if (statsError && statsError.code !== 'PGRST116') throw statsError
-      setStats(statsData)
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    } finally {
-      setLoading(false)
+          if (authorsError) throw authorsError
+          setAuthors(Object.fromEntries((authorsData || []).map((p) => [p.id, p])))
+        } else {
+          setAuthors({})
+        }
+
+        // Fetch stats
+        const { data: statsData, error: statsError } = await supabase
+          .from('university_stats')
+          .select('avg_rating, review_count, has_verified_review')
+          .eq('university_id', uniData.id)
+          .abortSignal(controller.signal)
+          .single()
+
+        if (statsError && statsError.code !== 'PGRST116') throw statsError
+        setStats(statsData)
+      } catch (error) {
+        if (error?.name !== 'AbortError') console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    fetchData()
+    return () => controller.abort()
+  }, [slug])
 
   if (loading) {
     return (
@@ -134,7 +159,13 @@ export const UniversityPage = () => {
         <h2 className="section-title">Student Reviews</h2>
         <div className="review-list">
           {reviews.length > 0 ? (
-            reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+            reviews.map((review) => (
+              <ReviewCard
+                key={review.id}
+                review={review}
+                author={authors[review.user_id] ?? null}
+              />
+            ))
           ) : (
             <div className="empty-state">
               <h3>No reviews yet</h3>

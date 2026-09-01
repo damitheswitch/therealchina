@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
@@ -34,11 +34,7 @@ export const ProfileEditForm = () => {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  useEffect(() => {
-    fetchProfile()
-  }, [user])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) return
 
     try {
@@ -86,7 +82,11 @@ export const ProfileEditForm = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, showToast])
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
 
   const handleProfileSave = async (e) => {
     e.preventDefault()

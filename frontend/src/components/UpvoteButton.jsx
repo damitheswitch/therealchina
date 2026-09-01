@@ -52,8 +52,10 @@ export const UpvoteButton = ({ reviewId }) => {
 
       if (error) throw error
 
-      setUpvoted(data[0].upvoted)
-      setCount(data[0].upvote_count)
+      const result = Array.isArray(data) ? data[0] : data
+      if (!result) throw new Error('toggle_upvote returned no result')
+      setUpvoted(result.upvoted)
+      setCount(result.upvote_count)
     } catch (error) {
       console.error('Error toggling upvote:', error)
       showToast('Failed to upvote. Please try again.', 'error')

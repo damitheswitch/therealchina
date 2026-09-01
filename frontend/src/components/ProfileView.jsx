@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { SealAvatar } from './SealAvatar'
@@ -60,7 +60,7 @@ export const ProfileView = ({ userId }) => {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchProfileData = async () => {
+  const fetchProfileData = useCallback(async () => {
     setLoading(true)
     try {
       // Fetch profile
@@ -76,7 +76,9 @@ export const ProfileView = ({ userId }) => {
       // Fetch user's reviews
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('reviews')
-        .select('*, universities(name, city, slug)')
+        .select(
+          'id, university_id, rating, text, program, degree_level, media, created_at, universities(name, city, slug)'
+        )
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
 
@@ -87,7 +89,7 @@ export const ProfileView = ({ userId }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
 
   useEffect(() => {
     if (user) {
@@ -95,7 +97,7 @@ export const ProfileView = ({ userId }) => {
     } else {
       setLoading(false)
     }
-  }, [userId, user])
+  }, [user, fetchProfileData])
 
   if (loading) {
     return <div className="loading">Loading profile...</div>
@@ -128,10 +130,6 @@ export const ProfileView = ({ userId }) => {
         </div>
       </div>
     )
-  }
-
-  if (loading) {
-    return <div className="loading">Loading profile...</div>
   }
 
   if (!profile) {
