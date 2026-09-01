@@ -1,12 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { Tables } from '../types/database.types'
 
-export const useComments = (reviewId, { enabled = false } = {}) => {
-  const [comments, setComments] = useState([])
-  const [authorProfiles, setAuthorProfiles] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  const mounted = useRef(true)
+type CommentRow = Tables<'comments'>
+type PublicProfile = Pick<Tables<'profile_public'>, 'id' | 'display_name'>
+
+export const useComments = (reviewId: string, { enabled = false }: { enabled?: boolean } = {}) => {
+  const [comments, setComments] = useState<CommentRow[]>([])
+  const [authorProfiles, setAuthorProfiles] = useState<Record<string, PublicProfile>>({})
+  const [loading, setLoading] = useState<boolean>(false)
+  const [loaded, setLoaded] = useState<boolean>(false)
+  const mounted = useRef<boolean>(true)
 
   useEffect(() => {
     mounted.current = true
@@ -26,11 +30,11 @@ export const useComments = (reviewId, { enabled = false } = {}) => {
 
       if (error) throw error
 
-      const fetched = data || []
+      const fetched = (data || []) as CommentRow[]
       if (!mounted.current) return
       setComments(fetched)
 
-      const userIds = [...new Set(fetched.map((c) => c.user_id).filter(Boolean))]
+      const userIds = [...new Set(fetched.map((c) => c.user_id).filter(Boolean))] as string[]
 
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
@@ -39,10 +43,13 @@ export const useComments = (reviewId, { enabled = false } = {}) => {
           .in('id', userIds)
 
         if (!mounted.current) return
-        const map = (profiles || []).reduce((acc, p) => {
-          acc[p.id] = p
-          return acc
-        }, {})
+        const map = ((profiles || []) as PublicProfile[]).reduce<Record<string, PublicProfile>>(
+          (acc, p) => {
+            acc[p.id as string] = p
+            return acc
+          },
+          {}
+        )
         setAuthorProfiles(map)
       } else {
         setAuthorProfiles({})

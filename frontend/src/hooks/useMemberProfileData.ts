@@ -1,11 +1,33 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { Tables } from '../types/database.types'
 
-export const useMemberProfileData = (userId, { enabled = true } = {}) => {
-  const [profile, setProfile] = useState(null)
-  const [reviews, setReviews] = useState([])
-  const [loading, setLoading] = useState(enabled && !!userId)
-  const [error, setError] = useState(null)
+type MemberProfile = Pick<
+  Tables<'member_profiles'>,
+  | 'display_name'
+  | 'location'
+  | 'university'
+  | 'program'
+  | 'bio'
+  | 'social_handles'
+  | 'show_social_handle'
+>
+
+type ReviewWithUniversity = Pick<
+  Tables<'reviews'>,
+  'id' | 'university_id' | 'rating' | 'text' | 'program' | 'degree_level' | 'media' | 'created_at'
+> & {
+  universities?: { name: string; city: string; slug: string } | null
+}
+
+export const useMemberProfileData = (
+  userId: string,
+  { enabled = true }: { enabled?: boolean } = {}
+) => {
+  const [profile, setProfile] = useState<MemberProfile | null>(null)
+  const [reviews, setReviews] = useState<ReviewWithUniversity[]>([])
+  const [loading, setLoading] = useState<boolean>(enabled && !!userId)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!enabled || !userId) {
@@ -29,7 +51,7 @@ export const useMemberProfileData = (userId, { enabled = true } = {}) => {
           .single()
 
         if (profileError) throw profileError
-        setProfile(profileData)
+        setProfile(profileData as MemberProfile)
 
         const { data: reviewsData, error: reviewsError } = await supabase
           .from('reviews')
@@ -40,11 +62,11 @@ export const useMemberProfileData = (userId, { enabled = true } = {}) => {
           .order('created_at', { ascending: false })
 
         if (reviewsError) throw reviewsError
-        setReviews(reviewsData || [])
+        setReviews((reviewsData as unknown as ReviewWithUniversity[] | null) || [])
       } catch (err) {
-        if (err?.name === 'AbortError') return
+        if ((err as Error)?.name === 'AbortError') return
         console.error('Error fetching profile data:', err)
-        setError(err)
+        setError(err as Error)
         setProfile(null)
         setReviews([])
       } finally {

@@ -1,11 +1,27 @@
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { Tables } from '../types/database.types'
 
-export const useProfile = (userId, { retry = false } = {}) => {
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const mounted = useRef(true)
+type Profile = Pick<
+  Tables<'profiles'>,
+  | 'display_name'
+  | 'bio'
+  | 'location'
+  | 'university'
+  | 'program'
+  | 'social_handles'
+  | 'social_platform'
+  | 'social_handle'
+  | 'show_social_handle'
+  | 'is_discoverable'
+  | 'onboarding_completed'
+>
+
+export const useProfile = (userId: string, { retry = false }: { retry?: boolean } = {}) => {
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<Error | null>(null)
+  const mounted = useRef<boolean>(true)
 
   useLayoutEffect(() => {
     if (userId) {
@@ -48,17 +64,17 @@ export const useProfile = (userId, { retry = false } = {}) => {
           .eq('id', userId)
           .single()
         if (retryError) throw retryError
-        setProfile(retryData)
-        return retryData
+        setProfile(retryData as Profile)
+        return retryData as Profile
       } else if (fetchError) {
         throw fetchError
       }
-      setProfile(data)
-      return data
+      setProfile(data as Profile)
+      return data as Profile
     } catch (err) {
       if (!mounted.current) return null
       console.error('Error fetching profile:', err)
-      setError(err)
+      setError(err as Error)
       setProfile(null)
       return null
     } finally {

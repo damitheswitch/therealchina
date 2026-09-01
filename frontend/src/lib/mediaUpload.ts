@@ -18,12 +18,26 @@ const ALLOWED_IMAGE_TYPES = [
 
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska']
 
-/**
- * Client-side pre-check for fast UX. The server performs the real validation.
- * @param {File} file
- * @returns {{ valid: boolean, error: string | null, type: 'image' | 'video' }}
- */
-export const validateMediaFile = (file) => {
+export type MediaType = 'image' | 'video'
+
+export interface MediaValidationResult {
+  valid: boolean
+  error: string | null
+  type: MediaType | null
+}
+
+export interface UploadSession {
+  sessionId: string
+  expiresAt: string
+}
+
+export interface UploadedFile {
+  url: string
+  type: MediaType
+  name: string
+}
+
+export const validateMediaFile = (file: File): MediaValidationResult => {
   const isImage = ALLOWED_IMAGE_TYPES.includes(file.type) || file.type.startsWith('image/')
   const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type) || file.type.startsWith('video/')
 
@@ -35,7 +49,7 @@ export const validateMediaFile = (file) => {
     }
   }
 
-  const mediaType = isVideo ? 'video' : 'image'
+  const mediaType: MediaType = isVideo ? 'video' : 'image'
   const maxBytes = (isVideo ? MAX_VIDEO_SIZE_MB : MAX_IMAGE_SIZE_MB) * 1024 * 1024
 
   if (file.size > maxBytes) {
@@ -50,26 +64,29 @@ export const validateMediaFile = (file) => {
   return { valid: true, error: null, type: mediaType }
 }
 
-export async function parseFunctionError(error) {
-  if (error?.context && typeof error.context.json === 'function') {
-    try {
-      const body = await error.context.json()
-      return body?.error || error.message
-    } catch {
-      // ignore
+export async function parseFunctionError(error: unknown): Promise<string> {
+  if (typeof error === 'object' && error !== null) {
+    const err = error as {
+      context?: { json?: () => Promise<unknown> }
+      message?: string
     }
+    if (err.context && typeof err.context.json === 'function') {
+      try {
+        const body = (await err.context.json()) as { error?: string } | undefined
+        return body?.error || err.message || 'Upload failed'
+      } catch {
+        // ignore
+      }
+    }
+    if (typeof err.message === 'string') return err.message
   }
-  if (error?.message) return error.message
+  if (typeof error === 'string') return error
   return 'Upload failed'
 }
 
-/**
- * Creates a server-side upload session.
- * For anonymous users this requires a Cloudflare Turnstile token.
- * @param {{ cfToken?: string }} options
- * @returns {Promise<{ sessionId: string, expiresAt: string }>}
- */
-export const createUploadSession = async ({ cfToken }) => {
+export const createUploadSession = async ({
+  cfToken,
+}: { cfToken?: string } = {}): Promise<UploadSession> => {
   const { data, error } = await supabase.functions.invoke('media-upload', {
     body: { action: 'createSession', cfToken },
   })
@@ -77,15 +94,16 @@ export const createUploadSession = async ({ cfToken }) => {
     const msg = await parseFunctionError(error)
     throw new Error(msg)
   }
-  return data
+  return data as UploadSession
 }
 
-/**
- * Uploads a single file through the media-upload Edge Function.
- * @param {{ file: File, sessionId: string }} options
- * @returns {Promise<{ url: string, type: 'image' | 'video', name: string }>}
- */
-export const uploadFile = async ({ file, sessionId }) => {
+export const uploadFile = async ({
+  file,
+  sessionId,
+}: {
+  file: File
+  sessionId: string
+}): Promise<UploadedFile> => {
   const formData = new FormData()
   formData.append('sessionId', sessionId)
   formData.append('file', file)
@@ -97,5 +115,5 @@ export const uploadFile = async ({ file, sessionId }) => {
     const msg = await parseFunctionError(error)
     throw new Error(msg)
   }
-  return data
+  return data as UploadedFile
 }

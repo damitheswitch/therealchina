@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { Tables } from '../types/database.types'
 
-export const useUniversityStats = (universityId) => {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+export const useUniversityStats = (universityId: string) => {
+  const [stats, setStats] = useState<Tables<'university_stats'> | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!universityId) {
@@ -27,11 +28,11 @@ export const useUniversityStats = (universityId) => {
           .single()
 
         if (fetchError && fetchError.code !== 'PGRST116') throw fetchError
-        setStats(fetchError ? null : data)
+        setStats(fetchError ? null : (data as Tables<'university_stats'>))
       } catch (err) {
-        if (err?.name === 'AbortError') return
+        if ((err as Error)?.name === 'AbortError') return
         console.error('Error fetching university stats:', err)
-        setError(err)
+        setError(err as Error)
         setStats(null)
       } finally {
         if (!controller.signal.aborted) setLoading(false)

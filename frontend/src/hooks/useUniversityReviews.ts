@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { Tables } from '../types/database.types'
 
-export const useUniversityReviews = (universityId) => {
-  const [reviews, setReviews] = useState([])
-  const [authors, setAuthors] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+type ReviewRow = Tables<'reviews'>
+type AuthorProfile = Pick<Tables<'profile_public'>, 'id' | 'display_name' | 'avatar_url'>
+
+export const useUniversityReviews = (universityId: string) => {
+  const [reviews, setReviews] = useState<ReviewRow[]>([])
+  const [authors, setAuthors] = useState<Record<string, AuthorProfile>>({})
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!universityId) {
@@ -31,9 +35,10 @@ export const useUniversityReviews = (universityId) => {
           .order('created_at', { ascending: false })
 
         if (fetchError) throw fetchError
-        setReviews(data || [])
+        const fetched = (data as ReviewRow[] | null) || []
+        setReviews(fetched)
 
-        const authorIds = [...new Set((data || []).map((r) => r.user_id).filter(Boolean))]
+        const authorIds = [...new Set(fetched.map((r) => r.user_id).filter(Boolean))] as string[]
         if (authorIds.length > 0) {
           const { data: authorsData, error: authorsError } = await supabase
             .from('profile_public')
@@ -42,14 +47,18 @@ export const useUniversityReviews = (universityId) => {
             .abortSignal(controller.signal)
 
           if (authorsError) throw authorsError
-          setAuthors(Object.fromEntries((authorsData || []).map((p) => [p.id, p])))
+          setAuthors(
+            Object.fromEntries(
+              ((authorsData as AuthorProfile[] | null) || []).map((p) => [p.id, p])
+            )
+          )
         } else {
           setAuthors({})
         }
       } catch (err) {
-        if (err?.name === 'AbortError') return
+        if ((err as Error)?.name === 'AbortError') return
         console.error('Error fetching reviews:', err)
-        setError(err)
+        setError(err as Error)
         setReviews([])
         setAuthors({})
       } finally {

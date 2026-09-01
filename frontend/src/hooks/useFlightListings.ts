@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import type { Tables } from '../types/database.types'
 
-export const useFlightListings = ({ enabled = true } = {}) => {
-  const [listings, setListings] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const mounted = useRef(true)
+type FlightListing = Tables<'flight_listings_with_profile'>
+
+export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}) => {
+  const [listings, setListings] = useState<FlightListing[]>([])
+  const [loading, setLoading] = useState<boolean>(false)
+  const [error, setError] = useState<Error | null>(null)
+  const mounted = useRef<boolean>(true)
 
   useLayoutEffect(() => {
     if (enabled) {
@@ -38,10 +41,10 @@ export const useFlightListings = ({ enabled = true } = {}) => {
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
-      if (mounted.current) setListings(data || [])
+      if (mounted.current) setListings((data as FlightListing[] | null) || [])
     } catch (err) {
       console.error('Error fetching flight listings:', err)
-      if (mounted.current) setError(err)
+      if (mounted.current) setError(err as Error)
     } finally {
       if (mounted.current) setLoading(false)
     }
