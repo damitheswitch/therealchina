@@ -33,7 +33,9 @@ export const AuthModalProvider = ({ children }) => {
   }, [])
 
   return (
-    <AuthModalContext.Provider value={{ isOpen, initialMode, config, openAuthModal, closeAuthModal }}>
+    <AuthModalContext.Provider
+      value={{ isOpen, initialMode, config, openAuthModal, closeAuthModal }}
+    >
       {children}
     </AuthModalContext.Provider>
   )

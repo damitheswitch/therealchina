@@ -87,11 +87,7 @@ export const UserDropdown = () => {
         aria-label={user ? 'User menu' : 'Menu'}
         aria-expanded={isOpen}
       >
-        {user ? (
-          <SealAvatar displayName={displayName} size={36} />
-        ) : (
-          <Icons.User size={36} />
-        )}
+        {user ? <SealAvatar displayName={displayName} size={36} /> : <Icons.User size={36} />}
       </button>
 
       {isOpen && (
@@ -110,7 +106,10 @@ export const UserDropdown = () => {
               <div className="user-dropdown-info">
                 <div className="user-dropdown-name">Welcome</div>
                 <div className="user-dropdown-email">Sign up or sign in to continue</div>
-                <div className="user-dropdown-guest-actions" style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+                <div
+                  className="user-dropdown-guest-actions"
+                  style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}
+                >
                   <button
                     className="btn btn-primary"
                     onClick={() => {
@@ -160,10 +159,7 @@ export const UserDropdown = () => {
             )}
 
             {user && (
-              <button
-                className="user-dropdown-item user-dropdown-logout"
-                onClick={handleSignOut}
-              >
+              <button className="user-dropdown-item user-dropdown-logout" onClick={handleSignOut}>
                 <Icons.ArrowLeft />
                 <span>Sign out</span>
               </button>

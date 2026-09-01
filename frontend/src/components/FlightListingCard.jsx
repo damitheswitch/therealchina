@@ -6,8 +6,18 @@ import { Icons } from './Icons'
 import { socialPlatforms } from '../lib/socialPlatforms'
 
 const MONTHS_SHORT = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ]
 
 // Parse a YYYY-MM-DD string directly so the displayed day is not
@@ -16,16 +26,18 @@ const formatDate = (dateString) => {
   if (!dateString) return ''
   const [year, month, day] = dateString.split('-').map(Number)
   if (!year || !month || !day) return dateString
-  return { short: `${day} ${MONTHS_SHORT[month - 1]}`, full: `${day} ${MONTHS_SHORT[month - 1]} ${year}`, year }
+  return {
+    short: `${day} ${MONTHS_SHORT[month - 1]}`,
+    full: `${day} ${MONTHS_SHORT[month - 1]} ${year}`,
+    year,
+  }
 }
 
 const formatDateRange = (departure, arrival) => {
   const dep = formatDate(departure)
   const arr = formatDate(arrival)
   if (!dep || !arr) return dep || arr || ''
-  return dep.year === arr.year
-    ? `${dep.short} → ${arr.full}`
-    : `${dep.full} → ${arr.full}`
+  return dep.year === arr.year ? `${dep.short} → ${arr.full}` : `${dep.full} → ${arr.full}`
 }
 
 export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
@@ -53,7 +65,7 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
   }, [notesExpanded, listing.notes])
 
   const toggleNotes = () => {
-    if (notesTruncated) setNotesExpanded(v => !v)
+    if (notesTruncated) setNotesExpanded((v) => !v)
   }
 
   const handleDelete = async () => {
@@ -63,10 +75,7 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
 
     setDeleting(true)
     try {
-      const { error } = await supabase
-        .from('flight_listings')
-        .delete()
-        .eq('id', listing.id)
+      const { error } = await supabase.from('flight_listings').delete().eq('id', listing.id)
 
       if (error) throw error
 
@@ -90,13 +99,13 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
       return null
     }
     // Prefer WeChat, then first available
-    const wechatHandle = handles.find(sh => sh.platform === 'wechat')
+    const wechatHandle = handles.find((sh) => sh.platform === 'wechat')
     return wechatHandle || handles[0]
   }
 
   const primarySocialHandle = getPrimarySocialHandle()
   const socialPlatformData = primarySocialHandle
-    ? (socialPlatforms[primarySocialHandle.platform] || socialPlatforms.other)
+    ? socialPlatforms[primarySocialHandle.platform] || socialPlatforms.other
     : null
 
   const dateRange = formatDateRange(listing.departure_date, listing.arrival_date)
@@ -111,19 +120,29 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
         {canDelete && <span className="you-badge">You</span>}
       </div>
 
-      <div className="flight-row-dates" title={`Departs ${listing.departure_date} · Arrives ${listing.arrival_date}`}>
+      <div
+        className="flight-row-dates"
+        title={`Departs ${listing.departure_date} · Arrives ${listing.arrival_date}`}
+      >
         <Icons.Calendar />
         <span>{dateRange}</span>
       </div>
 
       <div className="flight-row-detail">
         <Icons.Package />
-        <span><strong>{listing.available_kgs} kg</strong></span>
+        <span>
+          <strong>{listing.available_kgs} kg</strong>
+        </span>
       </div>
 
       <div className="flight-row-detail">
         <Icons.DollarSign />
-        <span><strong>{listing.price_per_kg} {listing.currency}</strong>/kg</span>
+        <span>
+          <strong>
+            {listing.price_per_kg} {listing.currency}
+          </strong>
+          /kg
+        </span>
       </div>
 
       {listing.notes && (
@@ -132,18 +151,26 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
             'flight-row-notes',
             notesTruncated && !notesExpanded ? 'expandable' : '',
             notesExpanded ? 'expanded' : '',
-          ].filter(Boolean).join(' ')}
+          ]
+            .filter(Boolean)
+            .join(' ')}
           onClick={notesTruncated ? toggleNotes : undefined}
           role={notesTruncated ? 'button' : undefined}
           tabIndex={notesTruncated ? 0 : undefined}
           aria-expanded={notesTruncated ? notesExpanded : undefined}
-          aria-label={notesTruncated ? (notesExpanded ? 'Collapse note' : 'Expand note') : undefined}
-          onKeyDown={notesTruncated ? (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              toggleNotes()
-            }
-          } : undefined}
+          aria-label={
+            notesTruncated ? (notesExpanded ? 'Collapse note' : 'Expand note') : undefined
+          }
+          onKeyDown={
+            notesTruncated
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    toggleNotes()
+                  }
+                }
+              : undefined
+          }
           title={notesTruncated && !notesExpanded ? listing.notes : undefined}
         >
           <Icons.Info />
@@ -154,11 +181,7 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
       <div className="flight-row-actions">
         <div className="listing-author">
           {listing.avatar_url ? (
-            <img
-              src={listing.avatar_url}
-              alt={listing.display_name}
-              className="author-avatar"
-            />
+            <img src={listing.avatar_url} alt={listing.display_name} className="author-avatar" />
           ) : (
             <span className="author-avatar author-avatar-initial">
               {(listing.display_name || '?').charAt(0).toUpperCase()}
@@ -167,8 +190,10 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
           <span className="author-name">{listing.display_name || 'Anonymous'}</span>
         </div>
 
-        {user && listing.show_social_handle && primarySocialHandle && (
-          showContact ? (
+        {user &&
+          listing.show_social_handle &&
+          primarySocialHandle &&
+          (showContact ? (
             <button
               onClick={() => setShowContact(false)}
               className="contact-chip"
@@ -184,8 +209,7 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
             >
               Show Contact
             </button>
-          )
-        )}
+          ))}
 
         {canDelete && (
           <button

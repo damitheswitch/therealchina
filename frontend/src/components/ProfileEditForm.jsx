@@ -13,11 +13,11 @@ import { SocialHandlesEditor } from './SocialHandlesEditor'
 export const ProfileEditForm = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
-  
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [passwordSectionOpen, setPasswordSectionOpen] = useState(false)
-  
+
   // Profile fields
   const [displayName, setDisplayName] = useState('')
   const [displayNameError, setDisplayNameError] = useState('')
@@ -28,7 +28,7 @@ export const ProfileEditForm = () => {
   const [socialHandles, setSocialHandles] = useState([])
   const [showSocialHandle, setShowSocialHandle] = useState(true)
   const [isDiscoverable, setIsDiscoverable] = useState(true)
-  
+
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -56,19 +56,25 @@ export const ProfileEditForm = () => {
         setLocation(data.location || '')
         setUniversity(data.university || '')
         setProgram(data.program || '')
-        
+
         // Handle social handles - migrate from old format if needed
         let handles = []
-        if (data.social_handles && Array.isArray(data.social_handles) && data.social_handles.length > 0) {
+        if (
+          data.social_handles &&
+          Array.isArray(data.social_handles) &&
+          data.social_handles.length > 0
+        ) {
           handles = data.social_handles
         } else if (data.social_platform || data.social_handle) {
           // Migrate old single social handle to new array format
-          handles = [{
-            platform: data.social_platform || 'other',
-            handle: data.social_handle || ''
-          }]
+          handles = [
+            {
+              platform: data.social_platform || 'other',
+              handle: data.social_handle || '',
+            },
+          ]
         }
-        
+
         // Ensure we always have at least one social handle field
         setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
         setShowSocialHandle(data.show_social_handle !== false)
@@ -166,7 +172,7 @@ export const ProfileEditForm = () => {
       if (updateError) throw updateError
 
       showToast('Password updated successfully!', 'success')
-      
+
       // Clear password fields
       setCurrentPassword('')
       setNewPassword('')
@@ -189,7 +195,7 @@ export const ProfileEditForm = () => {
       <form onSubmit={handleProfileSave} className="profile-edit-form">
         <div className="form-section">
           <h3 className="form-section-title">Basic Information</h3>
-          
+
           <div className="form-group">
             <label className="form-label">Display Name</label>
             <input
@@ -202,7 +208,11 @@ export const ProfileEditForm = () => {
               placeholder="Your display name"
               className="form-input"
             />
-            {displayNameError && <p className="form-hint" style={{ color: 'var(--error)' }}>{displayNameError}</p>}
+            {displayNameError && (
+              <p className="form-hint" style={{ color: 'var(--error)' }}>
+                {displayNameError}
+              </p>
+            )}
           </div>
 
           <div className="form-group">
@@ -229,7 +239,7 @@ export const ProfileEditForm = () => {
 
         <div className="form-section">
           <h3 className="form-section-title">Academic Information</h3>
-          
+
           <div className="form-group">
             <label className="form-label">University</label>
             <UniversityAutocomplete
@@ -277,7 +287,8 @@ export const ProfileEditForm = () => {
               <span>Show my profile in the student directory</span>
             </label>
             <p className="form-hint">
-              When enabled, other students can find you in the directory. Turn this off to stay unlisted.
+              When enabled, other students can find you in the directory. Turn this off to stay
+              unlisted.
             </p>
           </div>
         </div>

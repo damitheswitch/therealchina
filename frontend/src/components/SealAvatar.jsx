@@ -3,12 +3,12 @@ import { useMemo } from 'react'
 // Extract initials from display name for seal-stamp avatar
 const getInitials = (displayName) => {
   if (!displayName) return '?'
-  
+
   const words = displayName.trim().split(/\s+/)
   if (words.length === 1) {
     return words[0].charAt(0).toUpperCase()
   }
-  
+
   // Take first letter of first two words
   return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase()
 }
@@ -16,9 +16,9 @@ const getInitials = (displayName) => {
 // SealAvatar component - Chinese seal-stamp style avatar
 export const SealAvatar = ({ displayName, size = 40, className = '' }) => {
   const initials = useMemo(() => getInitials(displayName), [displayName])
-  
+
   const combinedClassName = `seal-avatar ${className}`.trim()
-  
+
   const avatarStyle = {
     width: `${size}px`,
     height: `${size}px`,
@@ -35,7 +35,7 @@ export const SealAvatar = ({ displayName, size = 40, className = '' }) => {
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     userSelect: 'none',
   }
-  
+
   return (
     <div className={combinedClassName} style={avatarStyle}>
       {initials}

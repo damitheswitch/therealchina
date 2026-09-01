@@ -68,7 +68,15 @@ export const OnboardingPage = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="loading" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        className="loading"
+        style={{
+          minHeight: '60vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         Loading...
       </div>
     )
@@ -93,13 +101,21 @@ export const OnboardingPage = () => {
   const displayNameEditable = !hasName || !nameIsValid
   const initialDisplayName = hasName
     ? profile.display_name
-    : (user.user_metadata?.full_name || user.user_metadata?.display_name || '')
+    : user.user_metadata?.full_name || user.user_metadata?.display_name || ''
 
   return (
-    <div className="container onboarding-page" style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}>
-      <div className="onboarding-header" style={{ textAlign: 'center', marginBottom: 'var(--sp-4)' }}>
+    <div
+      className="container onboarding-page"
+      style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}
+    >
+      <div
+        className="onboarding-header"
+        style={{ textAlign: 'center', marginBottom: 'var(--sp-4)' }}
+      >
         <h1 className="section-title">Welcome to The Real China</h1>
-        <p className="muted">Set up your profile so other students can find and connect with you.</p>
+        <p className="muted">
+          Set up your profile so other students can find and connect with you.
+        </p>
       </div>
 
       <OnboardingForm

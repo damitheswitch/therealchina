@@ -48,10 +48,9 @@ export const LandingPage = () => {
       // not in the browser on a single page of results.
       let query = supabase
         .from('universities')
-        .select(
-          '*, university_stats(avg_rating, review_count, has_verified_review)',
-          { count: 'exact' }
-        )
+        .select('*, university_stats(avg_rating, review_count, has_verified_review)', {
+          count: 'exact',
+        })
 
       if (debouncedSearchQuery.trim()) {
         const trimmed = debouncedSearchQuery.trim()
@@ -74,7 +73,11 @@ export const LandingPage = () => {
       }
       const { column, ascending } = sortConfig[sortBy] || sortConfig.reviews
 
-      const { data: universitiesData, error: universitiesError, count } = await query
+      const {
+        data: universitiesData,
+        error: universitiesError,
+        count,
+      } = await query
         .order(column, { ascending, nullsFirst: false })
         .abortSignal(signal)
         .range(start, end)
@@ -195,7 +198,16 @@ export const LandingPage = () => {
                 ))}
               </div>
 
-              <div className="pagination-row" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--sp-2)', marginTop: 'var(--sp-4)' }}>
+              <div
+                className="pagination-row"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 'var(--sp-2)',
+                  marginTop: 'var(--sp-4)',
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-outline"

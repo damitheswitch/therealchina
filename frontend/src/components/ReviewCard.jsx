@@ -60,7 +60,7 @@ export const ReviewCard = ({ review }) => {
           <span>{date}</span>
         </div>
       </div>
-      
+
       {user_id && (
         <div className="review-author">
           {authorProfile ? (
@@ -73,7 +73,7 @@ export const ReviewCard = ({ review }) => {
           )}
         </div>
       )}
-      
+
       <p className="review-text">{text}</p>
       {media && media.length > 0 && <MediaGallery media={media} />}
       {tagsHTML}

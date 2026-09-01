@@ -17,8 +17,7 @@ export const Autocomplete = ({
   renderOption = (option) => option.label,
   getOptionValue = (option) => option.value ?? '',
   getOptionKey = (option) => option.key ?? option.value,
-  isExactMatch = (option, value) =>
-    option.value?.toLowerCase() === value?.trim()?.toLowerCase(),
+  isExactMatch = (option, value) => option.value?.toLowerCase() === value?.trim()?.toLowerCase(),
 }) => {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)

@@ -34,9 +34,7 @@ export const CommentSection = ({ reviewId }) => {
     const fetchedComments = data || []
     setComments(fetchedComments)
 
-    const userIds = [
-      ...new Set(fetchedComments.map((c) => c.user_id).filter(Boolean)),
-    ]
+    const userIds = [...new Set(fetchedComments.map((c) => c.user_id).filter(Boolean))]
 
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
@@ -108,12 +106,38 @@ export const CommentSection = ({ reviewId }) => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
         {topLevelComments.map((comment) => (
           <div key={comment.id} style={{ paddingLeft: 0 }}>
-            <div style={{ padding: 'var(--sp-2)', background: 'var(--rice-warm)', borderRadius: 'var(--r-md)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginBottom: 'var(--sp-1)' }}>
+            <div
+              style={{
+                padding: 'var(--sp-2)',
+                background: 'var(--rice-warm)',
+                borderRadius: 'var(--r-md)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--sp-1)',
+                  marginBottom: 'var(--sp-1)',
+                }}
+              >
                 {authorProfiles[comment.user_id]?.display_name && (
-                  <Link to={`/profile/${comment.user_id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>
-                    <SealAvatar displayName={authorProfiles[comment.user_id].display_name} size={20} />
-                    <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{authorProfiles[comment.user_id].display_name}</strong>
+                  <Link
+                    to={`/profile/${comment.user_id}`}
+                    style={{
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--sp-1)',
+                    }}
+                  >
+                    <SealAvatar
+                      displayName={authorProfiles[comment.user_id].display_name}
+                      size={20}
+                    />
+                    <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>
+                      {authorProfiles[comment.user_id].display_name}
+                    </strong>
                   </Link>
                 )}
                 {!authorProfiles[comment.user_id]?.display_name && <strong>Anonymous</strong>}
@@ -123,7 +147,11 @@ export const CommentSection = ({ reviewId }) => {
                 <button
                   onClick={() => setReplyTo(comment.id)}
                   className="btn btn-outline"
-                  style={{ marginTop: 'var(--sp-1)', fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+                  style={{
+                    marginTop: 'var(--sp-1)',
+                    fontSize: '0.85rem',
+                    padding: '0.4rem 0.8rem',
+                  }}
                 >
                   Reply
                 </button>
@@ -134,12 +162,40 @@ export const CommentSection = ({ reviewId }) => {
             {repliesByParent[comment.id] && (
               <div style={{ paddingLeft: 'var(--sp-3)', marginTop: 'var(--sp-1)' }}>
                 {repliesByParent[comment.id].map((reply) => (
-                  <div key={reply.id} style={{ padding: 'var(--sp-2)', background: '#fff', borderRadius: 'var(--r-md)', marginBottom: 'var(--sp-1)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-1)', marginBottom: 'var(--sp-1)' }}>
+                  <div
+                    key={reply.id}
+                    style={{
+                      padding: 'var(--sp-2)',
+                      background: '#fff',
+                      borderRadius: 'var(--r-md)',
+                      marginBottom: 'var(--sp-1)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--sp-1)',
+                        marginBottom: 'var(--sp-1)',
+                      }}
+                    >
                       {authorProfiles[reply.user_id]?.display_name && (
-                        <Link to={`/profile/${reply.user_id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 'var(--sp-1)' }}>
-                          <SealAvatar displayName={authorProfiles[reply.user_id].display_name} size={20} />
-                          <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>{authorProfiles[reply.user_id].display_name}</strong>
+                        <Link
+                          to={`/profile/${reply.user_id}`}
+                          style={{
+                            textDecoration: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 'var(--sp-1)',
+                          }}
+                        >
+                          <SealAvatar
+                            displayName={authorProfiles[reply.user_id].display_name}
+                            size={20}
+                          />
+                          <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>
+                            {authorProfiles[reply.user_id].display_name}
+                          </strong>
                         </Link>
                       )}
                       {!authorProfiles[reply.user_id]?.display_name && <strong>Anonymous</strong>}
@@ -152,7 +208,10 @@ export const CommentSection = ({ reviewId }) => {
 
             {/* Reply form */}
             {replyTo === comment.id && (
-              <form onSubmit={handleSubmit} style={{ paddingLeft: 'var(--sp-3)', marginTop: 'var(--sp-1)' }}>
+              <form
+                onSubmit={handleSubmit}
+                style={{ paddingLeft: 'var(--sp-3)', marginTop: 'var(--sp-1)' }}
+              >
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
@@ -164,7 +223,11 @@ export const CommentSection = ({ reviewId }) => {
                   <button type="submit" disabled={loading} className="btn btn-primary">
                     {loading ? 'Posting...' : 'Post Reply'}
                   </button>
-                  <button type="button" onClick={() => setReplyTo(null)} className="btn btn-outline">
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(null)}
+                    className="btn btn-outline"
+                  >
                     Cancel
                   </button>
                 </div>
@@ -185,7 +248,12 @@ export const CommentSection = ({ reviewId }) => {
             rows="3"
             disabled={!user}
           />
-          <button type="submit" disabled={loading || !user} className="btn btn-primary" style={{ marginTop: 'var(--sp-1)' }}>
+          <button
+            type="submit"
+            disabled={loading || !user}
+            className="btn btn-primary"
+            style={{ marginTop: 'var(--sp-1)' }}
+          >
             {loading ? 'Posting...' : 'Add Comment'}
           </button>
         </form>

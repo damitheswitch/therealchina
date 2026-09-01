@@ -55,7 +55,12 @@ export const OnboardingGuard = () => {
     return (
       <div
         className="loading"
-        style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{
+          minHeight: '60vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
         Loading...
       </div>

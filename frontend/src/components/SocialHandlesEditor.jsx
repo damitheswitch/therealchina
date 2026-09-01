@@ -11,9 +11,7 @@ export const SocialHandlesEditor = ({
   const handles = value?.length > 0 ? value : [{ platform: 'wechat', handle: '' }]
 
   const updateHandle = (index, field, newValue) => {
-    const updated = handles.map((h, i) =>
-      i === index ? { ...h, [field]: newValue } : h
-    )
+    const updated = handles.map((h, i) => (i === index ? { ...h, [field]: newValue } : h))
     onChange(updated)
   }
 
@@ -73,12 +71,7 @@ export const SocialHandlesEditor = ({
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={addHandle}
-        className="btn btn-outline"
-        disabled={disabled}
-      >
+      <button type="button" onClick={addHandle} className="btn btn-outline" disabled={disabled}>
         <Icons.Plus /> Add Social Profile
       </button>
 

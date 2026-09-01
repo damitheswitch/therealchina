@@ -7,14 +7,15 @@ import { Icons } from './Icons'
 export const UniversityCard = ({ university }) => {
   const { name, name_zh, city, slug, logo_url, avg_rating, review_count, is_verified } = university
 
-  const ratingDisplay = review_count > 0 ? (
-    <div className="uni-card-rating">
-      <StarRating rating={avg_rating} />
-      <span className="num">{avg_rating?.toFixed(1) || '0.0'}</span>
-    </div>
-  ) : (
-    <span className="uni-card-no-reviews">No reviews yet</span>
-  )
+  const ratingDisplay =
+    review_count > 0 ? (
+      <div className="uni-card-rating">
+        <StarRating rating={avg_rating} />
+        <span className="num">{avg_rating?.toFixed(1) || '0.0'}</span>
+      </div>
+    ) : (
+      <span className="uni-card-no-reviews">No reviews yet</span>
+    )
 
   return (
     <Link to={`/university/${slug}`} className="uni-card fade-in">

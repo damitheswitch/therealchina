@@ -34,10 +34,7 @@ export const ToastProvider = ({ children }) => {
       {children}
       <div className="toast-container">
         {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`toast show ${toast.type}`}
-          >
+          <div key={toast.id} className={`toast show ${toast.type}`}>
             {toast.message}
           </div>
         ))}

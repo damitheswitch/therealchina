@@ -15,7 +15,12 @@ export const Header = () => {
   // Show the sign-in modal on the first load of the site (once per browser session)
   useEffect(() => {
     if (loading || user) return
-    if (location.pathname === '/users' || location.pathname === '/flights' || location.pathname.startsWith('/profile')) return
+    if (
+      location.pathname === '/users' ||
+      location.pathname === '/flights' ||
+      location.pathname.startsWith('/profile')
+    )
+      return
     if (sessionStorage.getItem('trc:auth-nudge-shown')) return
     sessionStorage.setItem('trc:auth-nudge-shown', '1')
     openAuthModal('login')

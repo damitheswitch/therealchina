@@ -58,7 +58,12 @@ function App() {
         </Routes>
       </main>
       {!isOnboarding && <Footer />}
-      <AuthModal isOpen={isOpen} onClose={closeAuthModal} initialMode={initialMode} config={config} />
+      <AuthModal
+        isOpen={isOpen}
+        onClose={closeAuthModal}
+        initialMode={initialMode}
+        config={config}
+      />
     </>
   )
 }
