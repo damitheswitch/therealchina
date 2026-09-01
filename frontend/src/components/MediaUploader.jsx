@@ -12,8 +12,6 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { Turnstile } from '@marsidev/react-turnstile'
 
-let nextItemId = 0
-
 const formatFileSize = (bytes) => {
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB'
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
@@ -42,12 +40,20 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
   const [turnstileLoaded, setTurnstileLoaded] = useState(false)
   const turnstileLoadedRef = useRef(false)
   const resolveTurnstileLoaded = useRef(null)
-  const turnstileLoadedPromise = useRef(
-    new Promise((resolve) => {
-      resolveTurnstileLoaded.current = resolve
-    })
-  )
+  const turnstileLoadedPromiseRef = useRef(null)
   const turnstileRef = useRef(null)
+  const nextItemIdRef = useRef(0)
+
+  // Created on demand from event handlers/effects only: refs must not be
+  // written during render (breaks under StrictMode / concurrent rendering).
+  const getTurnstileReadyPromise = () => {
+    if (!turnstileLoadedPromiseRef.current) {
+      turnstileLoadedPromiseRef.current = new Promise((resolve) => {
+        resolveTurnstileLoaded.current = resolve
+      })
+    }
+    return turnstileLoadedPromiseRef.current
+  }
 
   useEffect(() => {
     itemsRef.current = items
@@ -84,7 +90,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
     }
     if (!turnstileLoadedRef.current) {
       await Promise.race([
-        turnstileLoadedPromise.current,
+        getTurnstileReadyPromise(),
         new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Turnstile widget took too long to load')), 10000)
         ),
@@ -137,9 +143,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
       const message = err instanceof Error ? err.message : `Failed to upload ${item.file.name}`
       setItems((prev) =>
         prev.some((it) => it.id === item.id)
-          ? prev.map((it) =>
-              it.id === item.id ? { ...it, status: 'error', error: message } : it
-            )
+          ? prev.map((it) => (it.id === item.id ? { ...it, status: 'error', error: message } : it))
           : prev
       )
       showToast(message, 'error')
@@ -202,7 +206,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
         showToast(validation.error, 'error')
       } else {
         accepted.push({
-          id: nextItemId++,
+          id: nextItemIdRef.current++,
           file,
           type: validation.type,
           previewUrl: URL.createObjectURL(file),
@@ -334,8 +338,8 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
           </p>
           {items.length === 0 && (
             <p className="dropzone-hint">
-              Click or drag &amp; drop · JPG, PNG, WEBP, GIF, HEIC up to {MAX_IMAGE_SIZE_MB}MB · MP4,
-              WEBM, MOV, MKV up to {MAX_VIDEO_SIZE_MB}MB
+              Click or drag &amp; drop · JPG, PNG, WEBP, GIF, HEIC up to {MAX_IMAGE_SIZE_MB}MB ·
+              MP4, WEBM, MOV, MKV up to {MAX_VIDEO_SIZE_MB}MB
             </p>
           )}
         </div>
@@ -353,12 +357,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
             >
               {item.type === 'video' ? (
                 <>
-                  <video
-                    src={item.previewUrl + '#t=0.1'}
-                    preload="metadata"
-                    muted
-                    playsInline
-                  />
+                  <video src={item.previewUrl + '#t=0.1'} preload="metadata" muted playsInline />
                   <span className="tile-type-badge">
                     <Icons.Video /> VIDEO
                   </span>
@@ -417,9 +416,6 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
             ref={turnstileRef}
             siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''}
             onWidgetLoad={() => setTurnstileLoaded(true)}
-            onSuccess={(token) => {
-              console.log('[Turnstile] token ready')
-            }}
             onError={(error) => {
               console.error('[Turnstile] error:', error)
               showToast(`Verification challenge error: ${error}`, 'error')
@@ -433,7 +429,6 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
               showToast('Your browser does not support the verification challenge.', 'error')
             }}
             onExpire={() => {
-              console.log('[Turnstile] token expired')
               turnstileRef.current?.reset()
             }}
             options={{

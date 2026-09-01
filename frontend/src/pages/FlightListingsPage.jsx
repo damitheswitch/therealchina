@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
@@ -11,8 +11,18 @@ import { CountryAutocomplete, isCountryName } from '../components/CountryAutocom
 import { hasSocialHandles } from '../lib/socialHandles'
 
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ]
 
 // Extract the month (1-12) from a YYYY-MM-DD string without Date(), so the
@@ -25,8 +35,7 @@ const monthOf = (dateString) => {
 
 // Case-insensitive exact match, tolerant of legacy rows stored before the
 // strict country dropdown existed
-const sameCountry = (a, b) =>
-  a.trim().toLowerCase() === b.trim().toLowerCase()
+const sameCountry = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
 
 export const FlightListingsPage = () => {
   const { user, loading: authLoading } = useAuth()
@@ -44,12 +53,16 @@ export const FlightListingsPage = () => {
   const [arrivalCountry, setArrivalCountry] = useState('')
   const [month, setMonth] = useState('')
 
-  const fetchListings = async () => {
+  // TODO(scale): when listings grow into the hundreds, filter and paginate
+  // server-side instead of downloading every active row.
+  const fetchListings = useCallback(async () => {
     setLoading(true)
     try {
       const { data, error } = await supabase
         .from('flight_listings_with_profile')
-        .select('*')
+        .select(
+          'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle'
+        )
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
@@ -61,9 +74,9 @@ export const FlightListingsPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [showToast])
 
-  const fetchOwnProfile = async () => {
+  const fetchOwnProfile = useCallback(async () => {
     if (!user) return null
     try {
       const { data, error } = await supabase
@@ -79,14 +92,14 @@ export const FlightListingsPage = () => {
       console.error('Error fetching own profile:', error)
       return null
     }
-  }
+  }, [user])
 
   useEffect(() => {
     if (user) {
       fetchListings()
       fetchOwnProfile()
     }
-  }, [user])
+  }, [user, fetchListings, fetchOwnProfile])
 
   const handleStartPosting = async () => {
     const currentProfile = ownProfile || (await fetchOwnProfile())
@@ -126,7 +139,7 @@ export const FlightListingsPage = () => {
     const to = isCountryName(arrivalCountry) ? arrivalCountry.trim() : ''
     const mon = month ? parseInt(month, 10) : null
 
-    return listings.filter(listing => {
+    return listings.filter((listing) => {
       if (from && !sameCountry(listing.departure_country, from)) return false
       if (to && !sameCountry(listing.arrival_country, to)) return false
       if (mon !== null) {
@@ -165,20 +178,20 @@ export const FlightListingsPage = () => {
       <div className="container empty-state" style={{ paddingTop: '6rem' }}>
         <Icons.Plane size={48} />
         <h1>Get paid to fly</h1>
-        <p>
-          List your unused luggage space for cash, or hire a traveler to carry your parcel.
-        </p>
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => openAuthModal('register')}
-            className="btn btn-primary"
-          >
+        <p>List your unused luggage space for cash, or hire a traveler to carry your parcel.</p>
+        <div
+          style={{
+            marginTop: '1rem',
+            display: 'flex',
+            gap: '0.75rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <button onClick={() => openAuthModal('register')} className="btn btn-primary">
             Create account
           </button>
-          <button
-            onClick={() => openAuthModal('login')}
-            className="btn btn-outline"
-          >
+          <button onClick={() => openAuthModal('login')} className="btn btn-outline">
             Sign in
           </button>
         </div>
@@ -196,7 +209,9 @@ export const FlightListingsPage = () => {
       {/* Inline filter toolbar + Post CTA */}
       <div className="flight-toolbar">
         <div className="flight-toolbar-field">
-          <label className="flight-toolbar-label" htmlFor="filter-from">From</label>
+          <label className="flight-toolbar-label" htmlFor="filter-from">
+            From
+          </label>
           <CountryAutocomplete
             id="filter-from"
             placeholder="Departure country"
@@ -206,7 +221,9 @@ export const FlightListingsPage = () => {
         </div>
 
         <div className="flight-toolbar-field">
-          <label className="flight-toolbar-label" htmlFor="filter-to">To</label>
+          <label className="flight-toolbar-label" htmlFor="filter-to">
+            To
+          </label>
           <CountryAutocomplete
             id="filter-to"
             placeholder="Arrival country"
@@ -216,7 +233,9 @@ export const FlightListingsPage = () => {
         </div>
 
         <div className="flight-toolbar-field">
-          <label className="flight-toolbar-label" htmlFor="filter-month">Month</label>
+          <label className="flight-toolbar-label" htmlFor="filter-month">
+            Month
+          </label>
           <select
             id="filter-month"
             value={month}
@@ -242,10 +261,7 @@ export const FlightListingsPage = () => {
         <div className="flight-toolbar-spacer" />
 
         {user && !showForm && (
-          <button
-            onClick={handleStartPosting}
-            className="btn btn-primary btn-sm"
-          >
+          <button onClick={handleStartPosting} className="btn btn-primary btn-sm">
             <Icons.Plus /> Post Your Flight
           </button>
         )}
@@ -278,17 +294,14 @@ export const FlightListingsPage = () => {
                   : 'Be the first to post a flight listing!'}
               </p>
               {user && !hasActiveFilters && (
-                <button
-                  onClick={handleStartPosting}
-                  className="btn btn-primary"
-                >
+                <button onClick={handleStartPosting} className="btn btn-primary">
                   <Icons.Plus /> Post Your Flight
                 </button>
               )}
             </div>
           ) : (
             <div className="flight-rows">
-              {filteredListings.map(listing => (
+              {filteredListings.map((listing) => (
                 <FlightListingCard
                   key={listing.id}
                   listing={listing}

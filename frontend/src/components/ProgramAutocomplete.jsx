@@ -71,10 +71,7 @@ const COMMON_PROGRAMS = [
 // Every word of the query must be the prefix of some word of the program name,
 // so "comp" matches "Computer Science" and "computer en" matches "Computer Engineering".
 const matchesQuery = (program, query) => {
-  const queryWords = query
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
+  const queryWords = query.toLowerCase().split(/\s+/).filter(Boolean)
   if (!queryWords.length) return false
   const nameWords = program.toLowerCase().split(/\s+/)
   return queryWords.every((qw) => nameWords.some((nw) => nw.startsWith(qw)))
@@ -93,6 +90,4 @@ const loadPrograms = async (query) => {
     .map((p) => ({ value: p, label: p, key: p }))
 }
 
-export const ProgramAutocomplete = (props) => (
-  <Autocomplete {...props} loadOptions={loadPrograms} />
-)
+export const ProgramAutocomplete = (props) => <Autocomplete {...props} loadOptions={loadPrograms} />

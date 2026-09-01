@@ -58,7 +58,11 @@ export const MediaGallery = ({ media }) => {
                 </div>
               ) : (
                 <div className="image-grid-preview">
-                  <img src={item.url} alt={item.name || `Review photo ${index + 1}`} loading="lazy" />
+                  <img
+                    src={item.url}
+                    alt={item.name || `Review photo ${index + 1}`}
+                    loading="lazy"
+                  />
                   <div className="zoom-hover-hint">
                     <Icons.Maximize />
                   </div>

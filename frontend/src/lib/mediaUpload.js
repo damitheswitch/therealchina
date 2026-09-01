@@ -16,12 +16,7 @@ const ALLOWED_IMAGE_TYPES = [
   'image/heif',
 ]
 
-const ALLOWED_VIDEO_TYPES = [
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'video/x-matroska',
-]
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska']
 
 /**
  * Client-side pre-check for fast UX. The server performs the real validation.
@@ -29,10 +24,8 @@ const ALLOWED_VIDEO_TYPES = [
  * @returns {{ valid: boolean, error: string | null, type: 'image' | 'video' }}
  */
 export const validateMediaFile = (file) => {
-  const isImage =
-    ALLOWED_IMAGE_TYPES.includes(file.type) || file.type.startsWith('image/')
-  const isVideo =
-    ALLOWED_VIDEO_TYPES.includes(file.type) || file.type.startsWith('video/')
+  const isImage = ALLOWED_IMAGE_TYPES.includes(file.type) || file.type.startsWith('image/')
+  const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type) || file.type.startsWith('video/')
 
   if (!isImage && !isVideo) {
     return {
@@ -57,7 +50,7 @@ export const validateMediaFile = (file) => {
   return { valid: true, error: null, type: mediaType }
 }
 
-async function parseFunctionError(error) {
+export async function parseFunctionError(error) {
   if (error?.context && typeof error.context.json === 'function') {
     try {
       const body = await error.context.json()

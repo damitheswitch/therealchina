@@ -5,6 +5,7 @@
 // service role key so the bucket can remain public-read-only.
 
 import { createClient } from 'supabase'
+import { detectMediaType } from './media_detect.ts'
 
 // ---- Config --------------------------------------------------------------------
 
@@ -97,66 +98,73 @@ function jsonResponse(req: Request, body: unknown, status: number) {
 
 // ---- Auth helpers --------------------------------------------------------------
 
-function decodeJwt(token: string) {
-  const parts = token.split('.')
-  if (parts.length !== 3) return null
-  const payload = parts[1]
-  const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=')
+// The new Supabase publishable keys (sb_publishable_...) and the legacy anon
+// JWT are checked by value: they are API keys, not user credentials.
+function isPublicApiKey(token: string): boolean {
+  const raw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw)
+      const values = typeof parsed === 'object' && parsed !== null ? Object.values(parsed) : [raw]
+      if (values.includes(token)) return true
+    } catch {
+      if (raw === token) return true
+    }
+  }
+  const legacyAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  return !!legacyAnonKey && token === legacyAnonKey
+}
+
+// Verify a user token against GoTrue. Never trust base64-decoded JWT claims
+// on their own: until the signature is verified server-side, role/sub are
+// attacker-controlled. auth.getUser validates signature and expiry.
+async function verifyUserToken(token: string): Promise<{ id: string } | null> {
   try {
-    return JSON.parse(atob(padded)) as { role: 'anon' | 'authenticated'; sub?: string }
-  } catch {
+    const { data, error } = await supabaseAdmin.auth.getUser(token)
+    if (error || !data.user) return null
+    return { id: data.user.id }
+  } catch (err) {
+    console.error('Token verification error:', err)
     return null
   }
 }
 
-function getPublishableKeys(): string[] {
-  const raw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
-  if (!raw) return []
-  try {
-    const parsed = JSON.parse(raw) as Record<string, string>
-    if (typeof parsed === 'object' && parsed !== null) {
-      return Object.values(parsed).filter((k) => typeof k === 'string')
-    }
-    return [raw]
-  } catch {
-    return [raw]
-  }
-}
-
-// Accept user JWTs on Authorization and publishable/legacy API keys on apikey.
-// The new Supabase publishable/secret keys (sb_publishable_... / sb_secret_...)
-// are not JWTs and must be compared to the known publishable keys.
-function getAuthToken(req: Request): { role: 'anon' | 'authenticated'; sub?: string } | null {
-  const authHeader = req.headers.get('authorization') || ''
+// Accept user JWTs on Authorization and publishable/legacy API keys on
+// apikey or Authorization. Anything we cannot positively verify returns null:
+// auth fails closed, never open.
+async function getAuthContext(
+  req: Request
+): Promise<{ role: 'anon' | 'authenticated'; sub?: string } | null> {
+  const authToken = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
   const apikey = req.headers.get('apikey') || ''
-  const authToken = authHeader.replace(/^Bearer\s+/i, '')
 
-  const publishableKeys = getPublishableKeys()
-  const legacyAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  if (authToken) {
+    if (isPublicApiKey(authToken)) return { role: 'anon' }
+    const user = await verifyUserToken(authToken)
+    return user ? { role: 'authenticated', sub: user.id } : null
+  }
 
-  const token = authToken || apikey
-  if (!token) return null
-
-  if (publishableKeys.includes(token)) return { role: 'anon' }
-  if (legacyAnonKey && token === legacyAnonKey) return { role: 'anon' }
-
-  return decodeJwt(token)
+  if (apikey && isPublicApiKey(apikey)) return { role: 'anon' }
+  return null
 }
 
 function getClientIP(req: Request): string {
   const privateRegex =
     /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)|^(fc00:|fe80:|::1|0\.0\.0\.0)/
+  // Every proxy APPENDS to X-Forwarded-For, so the rightmost entry is the one
+  // the platform itself added. Entries to the left are client-controlled and
+  // must not be trusted for rate limiting. (cf-connecting-ip / x-real-ip are
+  // just as spoofable when we are not behind Cloudflare, so we ignore them.)
   const forwarded = req.headers.get('x-forwarded-for')
   if (forwarded) {
-    for (const ip of forwarded.split(',').map((s) => s.trim())) {
-      if (!privateRegex.test(ip) && ip) return ip
+    const ips = forwarded
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+    for (let i = ips.length - 1; i >= 0; i--) {
+      if (!privateRegex.test(ips[i])) return ips[i]
     }
   }
-  const cf = req.headers.get('cf-connecting-ip')
-  if (cf && !privateRegex.test(cf)) return cf
-  const real = req.headers.get('x-real-ip')
-  if (real && !privateRegex.test(real)) return real
   return 'unknown'
 }
 
@@ -216,135 +224,8 @@ async function verifyTurnstile(token: string, ip: string, expectedAction: string
   }
 }
 
-// ---- Magic-byte file type detection -------------------------------------------
-
-type DetectedType = {
-  mime: string
-  category: 'image' | 'video'
-  ext: string
-} | null
-
-function readString(bytes: Uint8Array, start: number, length: number): string {
-  let s = ''
-  for (let i = 0; i < length; i++) {
-    if (start + i >= bytes.length) break
-    const c = bytes[start + i]
-    if (c === 0) break
-    s += String.fromCharCode(c)
-  }
-  return s
-}
-
-function detectFtypBrand(bytes: Uint8Array): string {
-  if (bytes.length < 16) return ''
-  return readString(bytes, 8, 4).toLowerCase().trim()
-}
-
-function detectEbmlDocType(bytes: Uint8Array): 'webm' | 'matroska' | 'unknown' {
-  const head = readString(bytes, 0, Math.min(bytes.length, 200)).toLowerCase()
-  if (head.includes('webm')) return 'webm'
-  if (head.includes('matroska')) return 'matroska'
-
-  // Fallback: look for the DocType element ID 0x42 0x86 and nearby string.
-  for (let i = 0; i < bytes.length - 10; i++) {
-    if (bytes[i] === 0x42 && bytes[i + 1] === 0x86) {
-      for (let o = 2; o < 8 && i + o + 12 < bytes.length; o++) {
-        const s = readString(bytes, i + o, 12).toLowerCase()
-        if (s.includes('webm')) return 'webm'
-        if (s.includes('matroska')) return 'matroska'
-      }
-    }
-  }
-  return 'unknown'
-}
-
-function detectMediaType(buffer: ArrayBuffer): DetectedType {
-  const bytes = new Uint8Array(buffer)
-  if (bytes.length < 16) return null
-
-  // JPEG
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return { mime: 'image/jpeg', category: 'image', ext: 'jpg' }
-  }
-
-  // PNG
-  if (
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47 &&
-    bytes[4] === 0x0d &&
-    bytes[5] === 0x0a &&
-    bytes[6] === 0x1a &&
-    bytes[7] === 0x0a
-  ) {
-    return { mime: 'image/png', category: 'image', ext: 'png' }
-  }
-
-  // GIF
-  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
-    const version = bytes[4]
-    if (version === 0x37 || version === 0x39) {
-      return { mime: 'image/gif', category: 'image', ext: 'gif' }
-    }
-  }
-
-  // WebP (RIFF...WEBP)
-  if (
-    bytes[0] === 0x52 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x46 &&
-    bytes.length > 12 &&
-    bytes[8] === 0x57 &&
-    bytes[9] === 0x45 &&
-    bytes[10] === 0x42 &&
-    bytes[11] === 0x50
-  ) {
-    return { mime: 'image/webp', category: 'image', ext: 'webp' }
-  }
-
-  // HEIC / HEIF / AVIF and MP4/MOV all start with an ftyp box.
-  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
-    const brand = detectFtypBrand(bytes)
-
-    const imageBrands = ['heic', 'heif', 'mif1', 'heix', 'hevc', 'heim', 'heis', 'avci', 'avif']
-    if (imageBrands.includes(brand)) {
-      if (brand === 'avif') {
-        return { mime: 'image/avif', category: 'image', ext: 'avif' }
-      }
-      if (brand === 'heif' || brand === 'mif1' || brand === 'heim' || brand === 'heis') {
-        return { mime: 'image/heif', category: 'image', ext: 'heif' }
-      }
-      return { mime: 'image/heic', category: 'image', ext: 'heic' }
-    }
-
-    const quicktimeBrands = ['qt', 'moov', 'mqt']
-    if (quicktimeBrands.includes(brand)) {
-      return { mime: 'video/quicktime', category: 'video', ext: 'mov' }
-    }
-
-    // Other ftyp -> MP4
-    return { mime: 'video/mp4', category: 'video', ext: 'mp4' }
-  }
-
-  // QuickTime / old MOV (moov/mdat at offset 4)
-  const atomAt4 = readString(bytes, 4, 4).toLowerCase()
-  if (['moov', 'mdat', 'free', 'wide', 'skip'].includes(atomAt4)) {
-    return { mime: 'video/quicktime', category: 'video', ext: 'mov' }
-  }
-
-  // WebM / Matroska (EBML)
-  if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) {
-    const docType = detectEbmlDocType(bytes)
-    if (docType === 'matroska') {
-      return { mime: 'video/x-matroska', category: 'video', ext: 'mkv' }
-    }
-    return { mime: 'video/webm', category: 'video', ext: 'webm' }
-  }
-
-  return null
-}
+// Magic-byte file type detection lives in ./media_detect.ts (pure, unit-tested
+// by media_detect_test.ts). Imported above.
 
 // ---- Storage helpers -----------------------------------------------------------
 
@@ -374,7 +255,7 @@ async function checkRateLimit(key: string, limit: number): Promise<boolean> {
 
 async function handleCreateSession(req: Request): Promise<Response> {
   const ip = getClientIP(req)
-  const jwt = getAuthToken(req)
+  const jwt = await getAuthContext(req)
 
   if (!jwt) {
     return jsonResponse(req, { error: 'Authorization header missing or invalid' }, 401)
@@ -395,7 +276,13 @@ async function handleCreateSession(req: Request): Promise<Response> {
     if (!cfToken || typeof cfToken !== 'string') {
       return jsonResponse(req, { error: 'Turnstile token required for anonymous uploads' }, 400)
     }
-    await verifyTurnstile(cfToken, ip, TURNSTILE_ACTION)
+    // Turnstile failure is a client problem, not an internal error: return a
+    // status the frontend can act on instead of a generic 500.
+    try {
+      await verifyTurnstile(cfToken, ip, TURNSTILE_ACTION)
+    } catch {
+      return jsonResponse(req, { error: 'Verification failed. Please try again.' }, 403)
+    }
   }
 
   const expiresAt = new Date(Date.now() + SESSION_TTL_MINUTES * 60 * 1000).toISOString()
@@ -422,7 +309,7 @@ async function handleCreateSession(req: Request): Promise<Response> {
 }
 
 async function handleUpload(req: Request): Promise<Response> {
-  const jwt = getAuthToken(req)
+  const jwt = await getAuthContext(req)
 
   if (!jwt) {
     return jsonResponse(req, { error: 'Authorization header missing or invalid' }, 401)
@@ -447,38 +334,8 @@ async function handleUpload(req: Request): Promise<Response> {
     return jsonResponse(req, { error: 'File required' }, 400)
   }
 
-  // Use and increment the session counter atomically.
-  const { data: sessionRows, error: sessionError } = await supabaseAdmin.rpc(
-    'use_upload_session',
-    { p_session_id: sessionId }
-  )
-  if (sessionError || !sessionRows || (Array.isArray(sessionRows) && sessionRows.length === 0)) {
-    console.error('Session use error:', sessionError)
-    return jsonResponse(req, { error: 'Invalid or expired upload session' }, 401)
-  }
-
-  const session = Array.isArray(sessionRows) ? sessionRows[0] : sessionRows
-  if (!session) {
-    return jsonResponse(req, { error: 'Invalid or expired upload session' }, 401)
-  }
-
-  // Authenticated sessions are tied to the user.
-  if (!session.is_anon && session.user_id !== jwt.sub) {
-    return jsonResponse(req, { error: 'Session does not belong to the current user' }, 403)
-  }
-
-  // Rate limit by request IP for anonymous, by user for authenticated.
-  const ip = getClientIP(req)
-  const rateKey = session.is_anon ? `ip:${ip}` : `user:${session.user_id || jwt.sub}`
-  const rateLimit = session.is_anon ? ANON_UPLOAD_LIMIT_PER_HOUR : AUTH_UPLOAD_LIMIT_PER_HOUR
-  const shouldRateLimit = !session.is_anon || ip !== 'unknown'
-  if (shouldRateLimit) {
-    const allowed = await checkRateLimit(rateKey, rateLimit)
-    if (!allowed) {
-      return jsonResponse(req, { error: RATE_LIMIT_MESSAGE }, 429)
-    }
-  }
-
+  // Validate the file BEFORE touching any counters: rejected uploads must not
+  // consume rate-limit budget or session file slots.
   if (file.size === 0) {
     return jsonResponse(req, { error: 'File is empty' }, 400)
   }
@@ -509,6 +366,40 @@ async function handleUpload(req: Request): Promise<Response> {
       },
       413
     )
+  }
+
+  // Rate limit by verified identity: user id for authenticated callers,
+  // trusted request IP for anonymous ones.
+  const ip = getClientIP(req)
+  const isAnon = jwt.role === 'anon'
+  const rateKey = isAnon ? `ip:${ip}` : `user:${jwt.sub}`
+  const rateLimit = isAnon ? ANON_UPLOAD_LIMIT_PER_HOUR : AUTH_UPLOAD_LIMIT_PER_HOUR
+  if (!isAnon || ip !== 'unknown') {
+    const allowed = await checkRateLimit(rateKey, rateLimit)
+    if (!allowed) {
+      return jsonResponse(req, { error: RATE_LIMIT_MESSAGE }, 429)
+    }
+  }
+
+  // Consume a session slot atomically, only after the request has passed
+  // every check that could reject it for reasons the caller can fix.
+  const { data: sessionRows, error: sessionError } = await supabaseAdmin.rpc(
+    'use_upload_session',
+    { p_session_id: sessionId }
+  )
+  if (sessionError || !sessionRows || (Array.isArray(sessionRows) && sessionRows.length === 0)) {
+    console.error('Session use error:', sessionError)
+    return jsonResponse(req, { error: 'Invalid or expired upload session' }, 401)
+  }
+
+  const session = Array.isArray(sessionRows) ? sessionRows[0] : sessionRows
+  if (!session) {
+    return jsonResponse(req, { error: 'Invalid or expired upload session' }, 401)
+  }
+
+  // Authenticated sessions are tied to the user that created them.
+  if (!session.is_anon && session.user_id !== jwt.sub) {
+    return jsonResponse(req, { error: 'Session does not belong to the current user' }, 403)
   }
 
   // Verify the whole file still matches the header (defence in depth).

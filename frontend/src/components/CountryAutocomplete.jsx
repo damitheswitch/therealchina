@@ -82,9 +82,7 @@ export const CountryAutocomplete = ({ id, value, onChange, placeholder }) => {
     const typed = value.trim()
     if (!typed || COUNTRY_NAMES.includes(typed)) return
 
-    const canonical = COUNTRY_NAMES.find(
-      (name) => name.toLowerCase() === typed.toLowerCase()
-    )
+    const canonical = COUNTRY_NAMES.find((name) => name.toLowerCase() === typed.toLowerCase())
     if (canonical) {
       onChange(canonical)
     } else {

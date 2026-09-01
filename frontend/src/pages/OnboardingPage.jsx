@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
@@ -15,18 +15,7 @@ export const OnboardingPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    if (authLoading) return
-
-    if (!user) {
-      navigate('/', { replace: true })
-      return
-    }
-
-    fetchProfileWithRetry()
-  }, [user, authLoading, navigate])
-
-  const fetchProfileWithRetry = async () => {
+  const fetchProfileWithRetry = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -59,7 +48,18 @@ export const OnboardingPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, showToast])
+
+  useEffect(() => {
+    if (authLoading) return
+
+    if (!user) {
+      navigate('/', { replace: true })
+      return
+    }
+
+    fetchProfileWithRetry()
+  }, [user, authLoading, navigate, fetchProfileWithRetry])
 
   const handleComplete = () => {
     showToast('Welcome to The Real China!', 'success')
@@ -68,7 +68,15 @@ export const OnboardingPage = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="loading" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div
+        className="loading"
+        style={{
+          minHeight: '60vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         Loading...
       </div>
     )
@@ -93,13 +101,21 @@ export const OnboardingPage = () => {
   const displayNameEditable = !hasName || !nameIsValid
   const initialDisplayName = hasName
     ? profile.display_name
-    : (user.user_metadata?.full_name || user.user_metadata?.display_name || '')
+    : user.user_metadata?.full_name || user.user_metadata?.display_name || ''
 
   return (
-    <div className="container onboarding-page" style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}>
-      <div className="onboarding-header" style={{ textAlign: 'center', marginBottom: 'var(--sp-4)' }}>
+    <div
+      className="container onboarding-page"
+      style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}
+    >
+      <div
+        className="onboarding-header"
+        style={{ textAlign: 'center', marginBottom: 'var(--sp-4)' }}
+      >
         <h1 className="section-title">Welcome to The Real China</h1>
-        <p className="muted">Set up your profile so other students can find and connect with you.</p>
+        <p className="muted">
+          Set up your profile so other students can find and connect with you.
+        </p>
       </div>
 
       <OnboardingForm

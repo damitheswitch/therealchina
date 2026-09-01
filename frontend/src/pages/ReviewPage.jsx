@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { supabase } from '../lib/supabaseClient'
+import { submitReview } from '../lib/reviewSubmit'
 import { StarInput } from '../components/StarInput'
 import { Icons } from '../components/Icons'
 import { useToast } from '../contexts/ToastContext'
@@ -10,6 +12,7 @@ import { RegistrationNudge } from '../components/RegistrationNudge'
 import { ProgramAutocomplete } from '../components/ProgramAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { MediaUploader } from '../components/MediaUploader'
+import { SealStampOverlay } from '../components/SealStampOverlay'
 
 // ReviewPage component
 export const ReviewPage = () => {
@@ -32,6 +35,15 @@ export const ReviewPage = () => {
   // Media uploads start the moment files are picked; this mirrors their state
   const [mediaState, setMediaState] = useState({ media: [], uploading: false, errorCount: 0 })
   const [loading, setLoading] = useState(false)
+  const [showStamp, setShowStamp] = useState(false)
+  // Stash the post-stamp action (navigate or open auth modal) so it fires
+  // after the celebration animation completes.
+  const [pendingSuccess, setPendingSuccess] = useState(null)
+
+  // Anonymous submissions are gated by a Turnstile challenge (server-verified
+  // inside the review-submit Edge Function). Logged-in users skip it.
+  const reviewTurnstileRef = useRef(null)
+  const [reviewTurnstileReady, setReviewTurnstileReady] = useState(false)
 
   // Re-open the anonymous-review thank-you modal if the user is still signing up
   useEffect(() => {
@@ -40,25 +52,30 @@ export const ReviewPage = () => {
     if (!submitted) return
     openAuthModal('register', {
       title: 'Thanks for your review!',
-      subtitle: 'Please log in or create a free account to view your review and engage with other students.',
+      subtitle:
+        'Please log in or create a free account to view your review and engage with other students.',
       closable: false,
     })
   }, [user, openAuthModal])
 
-  // Pre-fill the university name when arriving with ?uni=<slug>
+  // Pre-fill the university name when arriving with ?uni=<slug>.
+  // Depend on the primitive value, not the searchParams object (a new object
+  // identity every render would refire this effect constantly).
+  const uniSlug = searchParams.get('uni')
   useEffect(() => {
-    const slug = searchParams.get('uni')
-    if (!slug) return
+    if (!uniSlug) return
 
+    const controller = new AbortController()
     const loadUniversity = async () => {
       const { data, error } = await supabase
         .from('universities')
         .select('name, slug')
-        .eq('slug', slug)
+        .eq('slug', uniSlug)
+        .abortSignal(controller.signal)
         .single()
 
       if (error) {
-        console.error('Error loading university:', error)
+        if (error?.name !== 'AbortError') console.error('Error loading university:', error)
         return
       }
 
@@ -69,7 +86,8 @@ export const ReviewPage = () => {
     }
 
     loadUniversity()
-  }, [searchParams])
+    return () => controller.abort()
+  }, [uniSlug])
 
   const handleUniversityChange = (value) => {
     setSelectedUniName(value)
@@ -88,6 +106,14 @@ export const ReviewPage = () => {
     setSelectedUniName("My university isn't listed")
     setSelectedUni('__not_listed')
     setShowNotListed(true)
+  }
+
+  const handleStampComplete = () => {
+    setShowStamp(false)
+    if (pendingSuccess) {
+      pendingSuccess()
+      setPendingSuccess(null)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -121,106 +147,68 @@ export const ReviewPage = () => {
     setLoading(true)
 
     try {
-      let universityId = null
-      let redirectSlug = selectedUni
-
-      // Handle "not listed" university creation
-      if (selectedUni === '__not_listed') {
-        if (!newUniName.trim() || !newUniCity.trim()) {
-          showToast('Please enter university name and city', 'error')
-          setLoading(false)
-          return
+      // Anonymous reviewers must solve the Turnstile challenge; the token is
+      // verified server-side inside the review-submit Edge Function.
+      let cfToken
+      if (!user) {
+        if (!reviewTurnstileRef.current) {
+          throw new Error('Verification is still loading. Please wait a moment and try again.')
         }
-
-        // Create slug from name
-        const slug = newUniName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-|-$/g, '')
-
-        // Insert new university
-        const { data: newUni, error: uniError } = await supabase
-          .from('universities')
-          .insert({
-            name: newUniName.trim(),
-            city: newUniCity.trim(),
-            slug,
-          })
-          .select()
-          .single()
-
-        if (uniError) throw uniError
-        universityId = newUni.id
-        redirectSlug = null // Original behavior: new universities redirect home
-      } else if (selectedUni) {
-        const { data: uni, error: uniError } = await supabase
-          .from('universities')
-          .select('id, slug')
-          .eq('slug', selectedUni)
-          .single()
-
-        if (uniError) throw uniError
-        universityId = uni.id
-      } else if (selectedUniName.trim()) {
-        // User typed a name without selecting from the list; try to resolve it.
-        const { data: uni, error: uniError } = await supabase
-          .from('universities')
-          .select('id, slug')
-          .ilike('name', selectedUniName.trim())
-          .single()
-
-        if (uniError) {
-          if (uniError.code !== 'PGRST116') throw uniError
-          showToast('Please select a university from the list', 'error')
-          setLoading(false)
-          return
+        cfToken = await reviewTurnstileRef.current.getResponsePromise(30000, 250)
+        if (!cfToken) {
+          throw new Error('Verification failed. Please refresh and try again.')
         }
-
-        universityId = uni.id
-        redirectSlug = uni.slug
       }
 
-      if (!universityId) {
-        showToast('Please select a university', 'error')
-        setLoading(false)
+      const isNotListed = selectedUni === '__not_listed'
+      if (isNotListed && (!newUniName.trim() || !newUniCity.trim())) {
+        showToast('Please enter university name and city', 'error')
         return
       }
 
-      // Media has already been uploaded while the user filled out the form.
-      const { error: reviewError } = await supabase.from('reviews').insert({
-        university_id: universityId,
-        user_id: user?.id || null,
+      // The Edge Function resolves/creates the university (server-side slug),
+      // validates the payload, and writes the review with the service role.
+      const result = await submitReview({
+        cfToken,
+        universitySlug: !isNotListed && selectedUni ? selectedUni : undefined,
+        universityName:
+          !isNotListed && !selectedUni && selectedUniName.trim()
+            ? selectedUniName.trim()
+            : undefined,
+        newUniversity: isNotListed
+          ? { name: newUniName.trim(), city: newUniCity.trim() }
+          : undefined,
         rating,
         text: reviewText.trim(),
-        program: program.trim() || null,
-        degree_level: degreeLevel || null,
+        program: program.trim() || undefined,
+        degreeLevel: degreeLevel || undefined,
         media: mediaState.media,
       })
 
-      if (reviewError) throw reviewError
-
       showToast('Review submitted! Thank you.', 'success')
 
-      // Anonymous reviewers must sign up before they can view their review
+      // Newly created universities keep the original behavior: redirect home.
+      const redirectSlug = result.universityCreated ? null : result.universitySlug
+
+      // Play the seal-stamp celebration, then run the post-submit action
+      // (open the auth modal for anon users, or navigate for logged-in users).
       if (!user) {
         sessionStorage.setItem('trc_anon_review_submitted', 'true')
         sessionStorage.setItem('trc_anon_review_redirect', redirectSlug || '')
-        openAuthModal('register', {
-          title: 'Thanks for your review!',
-          subtitle: 'Please log in or create a free account to view your review and engage with other students.',
-          closable: false,
-        })
-        return
+        setPendingSuccess(
+          () => () =>
+            openAuthModal('register', {
+              title: 'Thanks for your review!',
+              subtitle:
+                'Please log in or create a free account to view your review and engage with other students.',
+              closable: false,
+            })
+        )
+      } else {
+        const target = redirectSlug ? `/university/${redirectSlug}` : '/'
+        setPendingSuccess(() => () => navigate(target))
       }
-
-      // Redirect to university page or home
-      setTimeout(() => {
-        if (universityId && redirectSlug) {
-          navigate(`/university/${redirectSlug}`)
-        } else {
-          navigate('/')
-        }
-      }, 1200)
+      setShowStamp(true)
     } catch (error) {
       console.error('Error submitting review:', error)
       showToast(error.message || 'Failed to submit review', 'error')
@@ -361,10 +349,42 @@ export const ReviewPage = () => {
             </div>
           </div>
 
+          {/* Anonymous reviewers must pass a Turnstile challenge before submitting */}
+          {!user && (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Turnstile
+                ref={reviewTurnstileRef}
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''}
+                onWidgetLoad={() => setReviewTurnstileReady(true)}
+                onError={(error) => {
+                  console.error('[Turnstile] review widget error:', error)
+                  showToast('Verification challenge error. Please refresh and try again.', 'error')
+                }}
+                onExpire={() => reviewTurnstileRef.current?.reset()}
+                options={{
+                  execution: 'render',
+                  size: 'normal',
+                  appearance: 'interaction-only',
+                  action: 'review-submit',
+                }}
+              />
+            </div>
+          )}
+
           {/* Submit */}
           <div className="form-submit-row">
-            <button type="submit" className="btn btn-primary btn-lg" disabled={loading || mediaState.uploading}>
-              {loading ? 'Submitting...' : mediaState.uploading ? 'Processing media...' : 'Submit Review'}
+            <button
+              type="submit"
+              className="btn btn-primary btn-lg"
+              disabled={loading || mediaState.uploading || (!user && !reviewTurnstileReady)}
+            >
+              {loading
+                ? 'Submitting...'
+                : mediaState.uploading
+                  ? 'Processing media...'
+                  : !user && !reviewTurnstileReady
+                    ? 'Verifying you are human...'
+                    : 'Submit Review'}
             </button>
             <span className="form-hint">By submitting, you agree to share honest content.</span>
           </div>
@@ -372,6 +392,8 @@ export const ReviewPage = () => {
       </div>
 
       <RegistrationNudge />
+
+      {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>
   )
 }

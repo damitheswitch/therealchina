@@ -16,7 +16,8 @@ export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([])
 
   const showToast = useCallback((message, type = '') => {
-    const id = Date.now()
+    // Date.now() can collide for two toasts fired in the same millisecond.
+    const id = crypto.randomUUID()
     setToasts((prev) => [...prev, { id, message, type }])
 
     // Auto-remove after 3 seconds
@@ -34,10 +35,7 @@ export const ToastProvider = ({ children }) => {
       {children}
       <div className="toast-container">
         {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`toast show ${toast.type}`}
-          >
+          <div key={toast.id} className={`toast show ${toast.type}`}>
             {toast.message}
           </div>
         ))}

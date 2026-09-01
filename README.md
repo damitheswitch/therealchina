@@ -59,7 +59,7 @@ This repository is public as a **portfolio reference and technical spec** for re
 All data access is enforced at the database level:
 
 - Public read on `universities`, `reviews`, `comments`, and `upvotes`.
-- Anonymous insert on `reviews` and `universities` (for "not listed" submissions).
+- **No direct anonymous inserts.** All review submissions (and "not listed" university creation) route through the `review-submit` Edge Function, which verifies Cloudflare Turnstile for anonymous callers, rate-limits every caller, and writes with the service role key.
 - Authenticated users can only modify their own `comments`, `upvotes`, and `profiles`.
 - The `review-media` Storage bucket is **public-read-only**; direct uploads and deletes are denied at the RLS layer.
 
@@ -90,6 +90,16 @@ All data access is enforced at the database level:
 - `handle_new_user` trigger — auto-creates a profile row on signup.
 - `member_profiles` view — non-sensitive profile exposure for the user directory.
 - `pg_trgm` extension + indexes for fuzzy university/city/program autocomplete.
+
+### Review submission security
+
+All review submissions route through the `review-submit` Supabase Edge Function instead of inserting directly into Postgres from the browser:
+
+1. **Authenticates the caller** — publishable/anon API keys on `apikey`/`Authorization`, or a user JWT verified server-side against GoTrue (no base64-decoded claims are ever trusted).
+2. **Requires Cloudflare Turnstile for anonymous submissions** (action + hostname validated against the siteverify response).
+3. **Rate limits every caller** via Postgres: 10 reviews/hour per IP for anonymous users, 30/hour per user for authenticated users. Authenticated reviewers must also have completed onboarding (same rule as the previous RLS policy).
+4. **Validates the payload server-side** — rating bounds, text length, media URLs must point at the TRC `review-media` bucket.
+5. **Resolves or creates the university server-side.** Slugs are generated on the server; concurrent "not listed" submissions that collide on a slug reuse the existing row.
 
 ### Media upload security
 
@@ -128,6 +138,7 @@ frontend/src/
 
 supabase/
 ├── functions/media-upload/    # Edge Function for secure media uploads
+├── functions/review-submit/   # Edge Function for gated review submissions
 ├── migrations/                # Numbered schema migrations (do not rename or delete)
 ├── schema_snapshot.sql        # Canonical current schema
 └── config.toml                # Edge Function config (e.g., verify_jwt)

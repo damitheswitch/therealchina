@@ -1,4 +1,5 @@
-const RESERVED = /\b(admin|moderator|support|staff|official)\b|^\s*(admin|moderator|support|staff|official)([\s._-]|[0-9]|$)/i
+const RESERVED =
+  /\b(admin|moderator|support|staff|official)\b|^\s*(admin|moderator|support|staff|official)([\s._-]|[0-9]|$)/i
 const TRC_PREFIX = /^trc[_-]/i
 
 const BLOCKLIST = new Set([
@@ -33,7 +34,11 @@ export function validateDisplayName(name) {
   }
 
   if (!/^[-_. 'A-Za-z0-9\u4e00-\u9fff()]+$/.test(normalized)) {
-    return { valid: false, error: 'Use letters, numbers, spaces, -, _, ., apostrophes, or parentheses only.', normalized }
+    return {
+      valid: false,
+      error: 'Use letters, numbers, spaces, -, _, ., apostrophes, or parentheses only.',
+      normalized,
+    }
   }
 
   if (!/[A-Za-z\u4e00-\u9fff]/.test(normalized)) {
@@ -45,7 +50,11 @@ export function validateDisplayName(name) {
   }
 
   if (TRC_PREFIX.test(normalized)) {
-    return { valid: false, error: 'Names starting with "trc_" or "trc-" are not allowed.', normalized }
+    return {
+      valid: false,
+      error: 'Names starting with "trc_" or "trc-" are not allowed.',
+      normalized,
+    }
   }
 
   if (BLOCKLIST.has(normalized.toLowerCase())) {

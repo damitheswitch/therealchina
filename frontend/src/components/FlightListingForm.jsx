@@ -97,20 +97,18 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
         return
       }
 
-      const { error } = await supabase
-        .from('flight_listings')
-        .insert({
-          user_id: user.id,
-          departure_country: departureCountry.trim(),
-          arrival_country: arrivalCountry.trim(),
-          departure_date: departureDate,
-          arrival_date: arrivalDate,
-          available_kgs: kgs,
-          price_per_kg: price,
-          currency: currency.trim(),
-          notes: notes.trim() || null,
-          is_active: true
-        })
+      const { error } = await supabase.from('flight_listings').insert({
+        user_id: user.id,
+        departure_country: departureCountry.trim(),
+        arrival_country: arrivalCountry.trim(),
+        departure_date: departureDate,
+        arrival_date: arrivalDate,
+        available_kgs: kgs,
+        price_per_kg: price,
+        currency: currency.trim(),
+        notes: notes.trim() || null,
+        is_active: true,
+      })
 
       if (error) throw error
 
@@ -139,7 +137,9 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
       <form onSubmit={handleSubmit} className="flight-listing-form">
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label" htmlFor="departure-country">From (Country) *</label>
+            <label className="form-label" htmlFor="departure-country">
+              From (Country) *
+            </label>
             <CountryAutocomplete
               id="departure-country"
               placeholder="e.g. China"
@@ -149,7 +149,9 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="arrival-country">To (Country) *</label>
+            <label className="form-label" htmlFor="arrival-country">
+              To (Country) *
+            </label>
             <CountryAutocomplete
               id="arrival-country"
               placeholder="e.g. Morocco"
@@ -161,7 +163,9 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
 
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label" htmlFor="departure-date">Departure Date *</label>
+            <label className="form-label" htmlFor="departure-date">
+              Departure Date *
+            </label>
             <input
               id="departure-date"
               type="date"
@@ -174,7 +178,9 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="arrival-date">Arrival Date *</label>
+            <label className="form-label" htmlFor="arrival-date">
+              Arrival Date *
+            </label>
             <input
               id="arrival-date"
               type="date"
@@ -189,7 +195,9 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
 
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label" htmlFor="available-kgs">Available KGs *</label>
+            <label className="form-label" htmlFor="available-kgs">
+              Available KGs *
+            </label>
             <input
               id="available-kgs"
               type="number"
@@ -204,7 +212,9 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="price-per-kg">Price per KG *</label>
+            <label className="form-label" htmlFor="price-per-kg">
+              Price per KG *
+            </label>
             <div className="price-input-group">
               <input
                 id="price-per-kg"
@@ -235,18 +245,24 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
         </div>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="flight-notes">Notes</label>
+          <label className="form-label" htmlFor="flight-notes">
+            Notes
+          </label>
           <textarea
             id="flight-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={'e.g. "No phones or electronics. Fixed price." Feel free to add anything else useful: restrictions, exact cities or airports, pickup arrangements, or extra contact details like your WeChat ID.'}
+            placeholder={
+              'e.g. "No phones or electronics. Fixed price." Feel free to add anything else useful: restrictions, exact cities or airports, pickup arrangements, or extra contact details like your WeChat ID.'
+            }
             className="form-textarea"
             rows={3}
           />
           <p className="form-hint">
             <Icons.Info />
-            Interested travelers will see the social handle from your profile (WeChat, Instagram, etc.), so make sure it is filled in there. Anything extra — restrictions, exact cities, special instructions — belongs in the notes above.
+            Interested travelers will see the social handle from your profile (WeChat, Instagram,
+            etc.), so make sure it is filled in there. Anything extra — restrictions, exact cities,
+            special instructions — belongs in the notes above.
           </p>
         </div>
 

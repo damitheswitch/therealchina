@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
@@ -10,24 +10,73 @@ import { CityAutocomplete } from '../components/CityAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { getSocialHandles } from '../lib/socialHandles'
 
+const USERS_PER_PAGE = 12
+
 export const UserDirectoryPage = () => {
   const { user, loading: authLoading } = useAuth()
   const { openAuthModal } = useAuthModal()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  
+
   // Filter state
   const [cityFilter, setCityFilter] = useState('')
   const [universityFilter, setUniversityFilter] = useState('')
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [totalCount, setTotalCount] = useState(0)
-  const USERS_PER_PAGE = 12
   const debouncedCity = useDebounce(cityFilter, 300)
   const debouncedUniversity = useDebounce(universityFilter, 300)
+
+  const fetchUsers = useCallback(
+    async (signal) => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        let query = supabase
+          .from('member_profiles')
+          .select(
+            'id, display_name, avatar_url, location, university, bio, show_social_handle, social_platform, social_handle, social_handles',
+            { count: 'exact' }
+          )
+          .neq('id', user.id)
+          .eq('onboarding_completed', true)
+          .eq('is_discoverable', true)
+          .order('created_at', { ascending: false })
+
+        // Apply filters if provided
+        if (debouncedCity.trim() && debouncedCity !== '__not_listed') {
+          query = query.ilike('location', `%${debouncedCity.trim()}%`)
+        }
+
+        if (debouncedUniversity.trim() && debouncedUniversity !== '__not_listed') {
+          query = query.ilike('university', `%${debouncedUniversity.trim()}%`)
+        }
+
+        // Calculate pagination
+        const from = (currentPage - 1) * USERS_PER_PAGE
+        const to = from + USERS_PER_PAGE - 1
+
+        const { data, error, count } = await query.abortSignal(signal).range(from, to)
+
+        if (error) throw error
+
+        setUsers(data || [])
+        setTotalCount(count || 0)
+        setTotalPages(Math.ceil((count || 0) / USERS_PER_PAGE))
+      } catch (err) {
+        if (signal?.aborted) return
+        console.error('Error fetching users:', err)
+        setError('Failed to load users. Please try again.')
+      } finally {
+        if (!signal?.aborted) setLoading(false)
+      }
+    },
+    [user, currentPage, debouncedCity, debouncedUniversity]
+  )
 
   useEffect(() => {
     if (user) {
@@ -37,51 +86,7 @@ export const UserDirectoryPage = () => {
     } else if (!authLoading) {
       setLoading(false)
     }
-  }, [user, authLoading, currentPage, debouncedCity, debouncedUniversity])
-
-  const fetchUsers = async (signal) => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      let query = supabase
-        .from('member_profiles')
-        .select('id, display_name, avatar_url, location, university, bio, show_social_handle, social_platform, social_handle, social_handles', { count: 'exact' })
-        .neq('id', user.id)
-        .eq('onboarding_completed', true)
-        .eq('is_discoverable', true)
-        .order('created_at', { ascending: false })
-
-      // Apply filters if provided
-      if (debouncedCity.trim() && debouncedCity !== '__not_listed') {
-        query = query.ilike('location', `%${debouncedCity.trim()}%`)
-      }
-      
-      if (debouncedUniversity.trim() && debouncedUniversity !== '__not_listed') {
-        query = query.ilike('university', `%${debouncedUniversity.trim()}%`)
-      }
-
-      // Calculate pagination
-      const from = (currentPage - 1) * USERS_PER_PAGE
-      const to = from + USERS_PER_PAGE - 1
-
-      const { data, error, count } = await query
-        .abortSignal(signal)
-        .range(from, to)
-
-      if (error) throw error
-
-      setUsers(data || [])
-      setTotalCount(count || 0)
-      setTotalPages(Math.ceil((count || 0) / USERS_PER_PAGE))
-    } catch (err) {
-      if (signal?.aborted) return
-      console.error('Error fetching users:', err)
-      setError('Failed to load users. Please try again.')
-    } finally {
-      if (!signal?.aborted) setLoading(false)
-    }
-  }
+  }, [user, authLoading, fetchUsers])
 
   const handleSearch = (e) => {
     e.preventDefault()
@@ -107,17 +112,19 @@ export const UserDirectoryPage = () => {
           Join The Real China to find and connect with people in your target city or university.
           Sign in or create a free account to start exploring the directory.
         </p>
-        <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => openAuthModal('register')}
-            className="btn btn-primary"
-          >
+        <div
+          style={{
+            marginTop: '1rem',
+            display: 'flex',
+            gap: '0.75rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <button onClick={() => openAuthModal('register')} className="btn btn-primary">
             Create account
           </button>
-          <button
-            onClick={() => openAuthModal('login')}
-            className="btn btn-outline"
-          >
+          <button onClick={() => openAuthModal('login')} className="btn btn-outline">
             Sign in
           </button>
         </div>
@@ -145,7 +152,7 @@ export const UserDirectoryPage = () => {
                 onChange={setCityFilter}
               />
             </div>
-            
+
             <div className="filter-group">
               <label className="form-label">University</label>
               <UniversityAutocomplete
@@ -160,8 +167,8 @@ export const UserDirectoryPage = () => {
               <button type="submit" className="btn btn-primary">
                 <Icons.Search /> Search
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={clearFilters}
                 className="btn btn-outline"
                 disabled={!cityFilter && !universityFilter}
@@ -182,24 +189,22 @@ export const UserDirectoryPage = () => {
             <Icons.Users size={48} />
             <h3>No users found</h3>
             <p>
-              {cityFilter || universityFilter 
-                ? 'Try adjusting your filters or search terms.' 
+              {cityFilter || universityFilter
+                ? 'Try adjusting your filters or search terms.'
                 : 'Be the first to join the directory!'}
             </p>
           </div>
         ) : (
           <>
             <div className="results-count">
-              <p className="muted">Found {totalCount} user{totalCount !== 1 ? 's' : ''}</p>
+              <p className="muted">
+                Found {totalCount} user{totalCount !== 1 ? 's' : ''}
+              </p>
             </div>
 
             <div className="user-grid">
               {users.map((profile) => (
-                <Link 
-                  key={profile.id} 
-                  to={`/profile/${profile.id}`}
-                  className="user-card"
-                >
+                <Link key={profile.id} to={`/profile/${profile.id}`} className="user-card">
                   <div className="user-card-avatar">
                     <SealAvatar displayName={profile.display_name} size={60} />
                   </div>
@@ -216,15 +221,23 @@ export const UserDirectoryPage = () => {
                       </div>
                     )}
                     {profile.bio && (
-                      <p className="user-card-bio">{profile.bio.substring(0, 100)}{profile.bio.length > 100 ? '...' : ''}</p>
+                      <p className="user-card-bio">
+                        {profile.bio.substring(0, 100)}
+                        {profile.bio.length > 100 ? '...' : ''}
+                      </p>
                     )}
                     {(() => {
                       const socialHandles = getSocialHandles(profile)
-                      const hasSocialHandles = socialHandles.some((sh) => sh.handle && sh.handle.trim())
-                      return profile.show_social_handle && hasSocialHandles && (
-                        <div className="user-card-social">
-                          <Icons.Link size={14} /> Social handles available
-                        </div>
+                      const hasSocialHandles = socialHandles.some(
+                        (sh) => sh.handle && sh.handle.trim()
+                      )
+                      return (
+                        profile.show_social_handle &&
+                        hasSocialHandles && (
+                          <div className="user-card-social">
+                            <Icons.Link size={14} /> Social handles available
+                          </div>
+                        )
                       )
                     })()}
                   </div>
@@ -236,19 +249,19 @@ export const UserDirectoryPage = () => {
             {totalPages > 1 && (
               <div className="pagination">
                 <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="btn btn-outline"
                 >
                   <Icons.ArrowLeft /> Previous
                 </button>
-                
+
                 <span className="pagination-info">
                   Page {currentPage} of {totalPages}
                 </span>
-                
+
                 <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   className="btn btn-outline"
                 >

@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 017_definer_view_qualified_names.sql.
+-- as of migration 021_signup_survives_taken_display_name.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -211,8 +211,18 @@ BEGIN
       NOW()
     );
   EXCEPTION
-    WHEN unique_violation THEN
-      RAISE EXCEPTION 'Display name is already taken.';
+    WHEN unique_violation OR check_violation OR raise_exception THEN
+      -- Display name taken or rejected by validation: fall back to NULL and
+      -- let onboarding collect a fresh one instead of failing the signup.
+      INSERT INTO public.profiles (id, display_name, avatar_url, is_discoverable, onboarding_completed, created_at)
+      VALUES (
+        NEW.id,
+        NULL,
+        NEW.raw_user_meta_data->>'avatar_url',
+        true,
+        false,
+        NOW()
+      );
     WHEN OTHERS THEN
       RAISE;
   END;
@@ -503,10 +513,8 @@ CREATE POLICY "Public read access to universities"
   ON public.universities FOR SELECT
   TO public USING (true);
 
-DROP POLICY IF EXISTS "Public insert access to universities" ON public.universities;
-CREATE POLICY "Public insert access to universities"
-  ON public.universities FOR INSERT
-  TO public WITH CHECK (true);
+-- No direct INSERT policy on universities: rows are created server-side by the
+-- review-submit Edge Function ("not listed" flow) or by admin tooling.
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
@@ -525,10 +533,9 @@ CREATE POLICY "Authenticated users can insert reviews after onboarding"
     AND (SELECT onboarding_completed FROM public.profiles WHERE id = auth.uid()) = true
   );
 
-DROP POLICY IF EXISTS "Anonymous users can insert reviews" ON public.reviews;
-CREATE POLICY "Anonymous users can insert reviews"
-  ON public.reviews FOR INSERT
-  TO anon WITH CHECK (user_id IS NULL);
+-- No anonymous INSERT policy: anonymous reviews are submitted through the
+-- review-submit Edge Function (Turnstile + per-IP rate limit, service-role
+-- write) instead of direct table inserts.
 
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 

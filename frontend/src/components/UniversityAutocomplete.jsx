@@ -26,9 +26,5 @@ const loadUniversities = async (query) => {
 }
 
 export const UniversityAutocomplete = (props) => (
-  <Autocomplete
-    {...props}
-    loadOptions={loadUniversities}
-    renderOption={(option) => option.label}
-  />
+  <Autocomplete {...props} loadOptions={loadUniversities} renderOption={(option) => option.label} />
 )

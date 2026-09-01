@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { UniversityCard } from '../components/UniversityCard'
 import { Icons } from '../components/Icons'
 
+const PAGE_SIZE = 20
+
 // LandingPage component
 export const LandingPage = () => {
-  const pageSize = 20
   const [universities, setUniversities] = useState([])
   const [cities, setCities] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -19,17 +20,7 @@ export const LandingPage = () => {
   const [loading, setLoading] = useState(true)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  useEffect(() => {
-    fetchCities()
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchData(controller.signal)
-    return () => controller.abort()
-  }, [page, debouncedSearchQuery, cityFilter, sortBy])
-
-  const fetchCities = async () => {
+  const fetchCities = useCallback(async () => {
     try {
       const { data, error } = await supabase.from('universities').select('city')
       if (error) throw error
@@ -39,74 +30,90 @@ export const LandingPage = () => {
     } catch (error) {
       console.error('Error fetching cities:', error)
     }
-  }
+  }, [])
 
-  const fetchData = async (signal) => {
-    setLoading(true)
-    try {
-      // Embed university_stats so sorting by rating/reviews happens in the DB,
-      // not in the browser on a single page of results.
-      let query = supabase
-        .from('universities')
-        .select(
-          '*, university_stats(avg_rating, review_count, has_verified_review)',
-          { count: 'exact' }
-        )
+  useEffect(() => {
+    fetchCities()
+  }, [fetchCities])
 
-      if (debouncedSearchQuery.trim()) {
-        const trimmed = debouncedSearchQuery.trim()
-        query = query.or(
-          `name.ilike.%${trimmed}%,name_zh.ilike.%${trimmed}%,city.ilike.%${trimmed}%`
-        )
-      }
+  const fetchData = useCallback(
+    async (signal) => {
+      setLoading(true)
+      try {
+        // Embed university_stats so sorting by rating/reviews happens in the DB,
+        // not in the browser on a single page of results.
+        let query = supabase
+          .from('universities')
+          .select('*, university_stats(avg_rating, review_count, has_verified_review)', {
+            count: 'exact',
+          })
 
-      if (cityFilter) {
-        query = query.eq('city', cityFilter)
-      }
-
-      const start = (page - 1) * pageSize
-      const end = start + pageSize - 1
-
-      const sortConfig = {
-        name: { column: 'name', ascending: true },
-        rating: { column: 'university_stats(avg_rating)', ascending: false },
-        reviews: { column: 'university_stats(review_count)', ascending: false },
-      }
-      const { column, ascending } = sortConfig[sortBy] || sortConfig.reviews
-
-      const { data: universitiesData, error: universitiesError, count } = await query
-        .order(column, { ascending, nullsFirst: false })
-        .abortSignal(signal)
-        .range(start, end)
-
-      if (universitiesError) throw universitiesError
-
-      const mappedUniversities = (universitiesData || []).map((u) => {
-        // university_stats may be null for universities with no reviews,
-        // or an object/array depending on how PostgREST returns the one-to-one join.
-        const rawStat = u.university_stats
-        const stat = Array.isArray(rawStat) ? rawStat[0] : rawStat
-        return {
-          ...u,
-          avg_rating: stat?.avg_rating || 0,
-          review_count: stat?.review_count || 0,
-          is_verified: stat?.has_verified_review || false,
+        if (debouncedSearchQuery.trim()) {
+          const trimmed = debouncedSearchQuery.trim()
+          query = query.or(
+            `name.ilike.%${trimmed}%,name_zh.ilike.%${trimmed}%,city.ilike.%${trimmed}%`
+          )
         }
-      })
 
-      setUniversities(mappedUniversities)
-      setTotalCount(count || 0)
-      setPageCount(Math.max(1, Math.ceil((count || 0) / pageSize)))
-    } catch (error) {
-      if (signal?.aborted) return
-      console.error('Error fetching data:', error)
-      setUniversities([])
-      setTotalCount(0)
-      setPageCount(1)
-    } finally {
-      if (!signal?.aborted) setLoading(false)
-    }
-  }
+        if (cityFilter) {
+          query = query.eq('city', cityFilter)
+        }
+
+        const start = (page - 1) * PAGE_SIZE
+        const end = start + PAGE_SIZE - 1
+
+        const sortConfig = {
+          name: { column: 'name', ascending: true },
+          rating: { column: 'university_stats(avg_rating)', ascending: false },
+          reviews: { column: 'university_stats(review_count)', ascending: false },
+        }
+        const { column, ascending } = sortConfig[sortBy] || sortConfig.reviews
+
+        const {
+          data: universitiesData,
+          error: universitiesError,
+          count,
+        } = await query
+          .order(column, { ascending, nullsFirst: false })
+          .abortSignal(signal)
+          .range(start, end)
+
+        if (universitiesError) throw universitiesError
+
+        const mappedUniversities = (universitiesData || []).map((u) => {
+          // university_stats may be null for universities with no reviews,
+          // or an object/array depending on how PostgREST returns the one-to-one join.
+          const rawStat = u.university_stats
+          const stat = Array.isArray(rawStat) ? rawStat[0] : rawStat
+          return {
+            ...u,
+            avg_rating: stat?.avg_rating || 0,
+            review_count: stat?.review_count || 0,
+            is_verified: stat?.has_verified_review || false,
+          }
+        })
+
+        setUniversities(mappedUniversities)
+        setTotalCount(count || 0)
+        setPageCount(Math.max(1, Math.ceil((count || 0) / PAGE_SIZE)))
+      } catch (error) {
+        if (signal?.aborted) return
+        console.error('Error fetching data:', error)
+        setUniversities([])
+        setTotalCount(0)
+        setPageCount(1)
+      } finally {
+        if (!signal?.aborted) setLoading(false)
+      }
+    },
+    [page, debouncedSearchQuery, cityFilter, sortBy]
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchData(controller.signal)
+    return () => controller.abort()
+  }, [fetchData])
 
   const handleSearchChange = (value) => {
     setPage(1)
@@ -195,7 +202,16 @@ export const LandingPage = () => {
                 ))}
               </div>
 
-              <div className="pagination-row" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--sp-2)', marginTop: 'var(--sp-4)' }}>
+              <div
+                className="pagination-row"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 'var(--sp-2)',
+                  marginTop: 'var(--sp-4)',
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-outline"
