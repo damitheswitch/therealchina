@@ -18,7 +18,13 @@ const BLOCKLIST = new Set([
   'therealchina',
 ])
 
-export function validateDisplayName(name) {
+export interface DisplayNameValidation {
+  valid: boolean
+  error: string | null
+  normalized: string
+}
+
+export function validateDisplayName(name: unknown): DisplayNameValidation {
   if (!name || typeof name !== 'string') {
     return { valid: false, error: 'Display name is required.', normalized: '' }
   }
@@ -26,7 +32,11 @@ export function validateDisplayName(name) {
   const normalized = name.replace(/\s+/g, ' ').trim()
 
   if (normalized.length < 2 || normalized.length > 32) {
-    return { valid: false, error: 'Display name must be between 2 and 32 characters.', normalized }
+    return {
+      valid: false,
+      error: 'Display name must be between 2 and 32 characters.',
+      normalized,
+    }
   }
 
   if (/^\s|\s$/.test(normalized) || /\s{2,}/.test(normalized)) {

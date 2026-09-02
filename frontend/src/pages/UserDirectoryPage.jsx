@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useDebounce } from '../hooks/useDebounce'
+import { useMemberDirectory } from '../hooks/useMemberDirectory'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealAvatar } from '../components/SealAvatar'
@@ -10,14 +10,9 @@ import { CityAutocomplete } from '../components/CityAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { getSocialHandles } from '../lib/socialHandles'
 
-const USERS_PER_PAGE = 12
-
 export const UserDirectoryPage = () => {
   const { user, loading: authLoading } = useAuth()
   const { openAuthModal } = useAuthModal()
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   // Filter state
   const [cityFilter, setCityFilter] = useState('')
@@ -25,68 +20,15 @@ export const UserDirectoryPage = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
-  const [totalCount, setTotalCount] = useState(0)
   const debouncedCity = useDebounce(cityFilter, 300)
   const debouncedUniversity = useDebounce(universityFilter, 300)
 
-  const fetchUsers = useCallback(
-    async (signal) => {
-      setLoading(true)
-      setError(null)
-
-      try {
-        let query = supabase
-          .from('member_profiles')
-          .select(
-            'id, display_name, avatar_url, location, university, bio, show_social_handle, social_platform, social_handle, social_handles',
-            { count: 'exact' }
-          )
-          .neq('id', user.id)
-          .eq('onboarding_completed', true)
-          .eq('is_discoverable', true)
-          .order('created_at', { ascending: false })
-
-        // Apply filters if provided
-        if (debouncedCity.trim() && debouncedCity !== '__not_listed') {
-          query = query.ilike('location', `%${debouncedCity.trim()}%`)
-        }
-
-        if (debouncedUniversity.trim() && debouncedUniversity !== '__not_listed') {
-          query = query.ilike('university', `%${debouncedUniversity.trim()}%`)
-        }
-
-        // Calculate pagination
-        const from = (currentPage - 1) * USERS_PER_PAGE
-        const to = from + USERS_PER_PAGE - 1
-
-        const { data, error, count } = await query.abortSignal(signal).range(from, to)
-
-        if (error) throw error
-
-        setUsers(data || [])
-        setTotalCount(count || 0)
-        setTotalPages(Math.ceil((count || 0) / USERS_PER_PAGE))
-      } catch (err) {
-        if (signal?.aborted) return
-        console.error('Error fetching users:', err)
-        setError('Failed to load users. Please try again.')
-      } finally {
-        if (!signal?.aborted) setLoading(false)
-      }
-    },
-    [user, currentPage, debouncedCity, debouncedUniversity]
-  )
-
-  useEffect(() => {
-    if (user) {
-      const controller = new AbortController()
-      fetchUsers(controller.signal)
-      return () => controller.abort()
-    } else if (!authLoading) {
-      setLoading(false)
-    }
-  }, [user, authLoading, fetchUsers])
+  const { users, loading, error, totalCount, totalPages } = useMemberDirectory({
+    page: currentPage,
+    city: debouncedCity,
+    university: debouncedUniversity,
+    currentUserId: user?.id,
+  })
 
   const handleSearch = (e) => {
     e.preventDefault()

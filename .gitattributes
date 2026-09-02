@@ -1,0 +1,17 @@
+# Normalize line endings to LF in the repository regardless of OS.
+# Git will check out as-is on POSIX and convert to CRLF on Windows
+# only when core.autocrlf=true is set locally, but the committed
+# content is always LF — keeping diffs clean and Prettier happy.
+
+# Source code and config — always LF
+*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,scss,html,md,yml,yaml,toml,env,sh,sql,deno} text eol=lf
+*.config.* text eol=lf
+
+# Shell scripts must stay LF
+*.sh text eol=lf
+
+# Binary files — never touch
+*.{png,jpg,jpeg,gif,webp,ico,svg,pdf,zip,woff,woff2,ttf,eot} binary
+
+# Default: auto-detect text vs binary, normalize to LF
+* text=auto eol=lf

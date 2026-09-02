@@ -1,60 +1,69 @@
 # Agent Rules — TRC Project
 
+These rules are mandatory. Prefer following them even when a faster path exists.
+
 ## Database / Supabase
 
-The canonical, current database schema is captured in `supabase/schema_snapshot.sql`.
+**Canonical schema**: `supabase/schema_snapshot.sql` is the single source of truth for the current database state.
 
-When working on anything database-related (new migrations, schema changes, RLS, views, functions):
+When doing anything database-related (migrations, schema changes, RLS, views, functions, grants):
 
-1. **Start from `supabase/schema_snapshot.sql`** for the current schema state.
-2. **Always keep `supabase/schema_snapshot.sql` up to date.** If you add, alter, or drop any table, column, index, function, trigger, view, RLS policy, or grant, update `supabase/schema_snapshot.sql` so it reflects the final state of the schema after your change. Treat it as the single source of truth for the current DB structure.
-3. **Do not read all of `supabase/migrations/` by default.** The numbered files are historical.
-4. If you need to know the *chronology* of a change, read only the specific numbered migration that introduced it (e.g. `017_definer_view_qualified_names.sql`).
-5. If you are writing a new migration, place the numbered migration in `supabase/migrations/` **and** update `supabase/schema_snapshot.sql` with the same final state.
-6. Do not delete, rename, or squash `supabase/migrations/` files unless the user explicitly asks for it.
+1. Always start from `supabase/schema_snapshot.sql`.
+2. After any change (add/alter/drop table, column, index, function, trigger, view, RLS policy, or grant), update `supabase/schema_snapshot.sql` so it matches the final schema. Never leave it stale.
+3. Do **not** read the entire `supabase/migrations/` folder by default. The numbered files are historical only.
+4. If you need the history of a specific change, open only the relevant migration file (e.g. `017_definer_view_qualified_names.sql`).
+5. New migrations go in `supabase/migrations/` with the next number. Update `schema_snapshot.sql` in the same change.
+6. Never delete, rename, or squash migration files unless the user explicitly asks.
 
 ## Code Standards
 
-These rules exist to keep quality consistent across sessions and models. Follow them for every change.
-
 ### Language
-
-- **TypeScript-first.** All NEW frontend source files must be `.ts` / `.tsx`. Do not convert existing `.jsx` files unless the task is specifically a migration — convert a file only when you are already substantially rewriting it, and do it in the same change.
-- Edge Functions are already TypeScript; keep them that way.
+- TypeScript-first. All **new** frontend source files must be `.ts` / `.tsx`.
+- Do not convert existing `.jsx` files unless the task is a deliberate migration **and** you are already substantially rewriting the file.
+- Edge Functions are already TypeScript — keep them that way.
 
 ### Verification (required before finishing any task)
+These must pass. Treat them as a hard gate:
 
-1. `cd frontend && npm run lint` — must exit with 0 errors. Fix new warnings you introduce.
-2. `cd frontend && npm run format` — run Prettier on the repo before committing.
-3. `cd frontend && npm run build` — must pass.
-4. For Edge Function changes: `npx deno check --config supabase/functions/<fn>/deno.json supabase/functions/<fn>/index.ts`.
+1. `cd frontend && npm run lint` — zero errors. Fix any new warnings you introduce.
+2. `cd frontend && npm run format` 
+3. `cd frontend && npm run build` — must succeed.
+4. Edge Function changes:  
+   `npx deno check --config supabase/functions/<fn>/deno.json supabase/functions/<fn>/index.ts` 
+
+Do not claim a task is complete until the relevant checks above pass.
 
 ### React / Frontend
-
-- **Every async `useEffect` must have a cleanup path** (`AbortController` / abort signal or mounted guard). No exceptions.
-- **Never write refs during render.** Assign `ref.current` only in effects or event handlers.
-- **No mutable module-level counters/state** shared across component instances (e.g. `let nextItemId = 0`). Use `useRef` per instance.
-- **No per-row fetching in loops.** If a list of N items needs related data, batch the query in the parent (`.in('user_id', ids)`) instead of one request per card.
-- **No `key={index}`** on lists that can reorder or grow; use stable IDs.
-- **Extract data-fetching into hooks** (`useX`) instead of repeating `useState` + `useEffect` fetch boilerplate per component.
-- **Accessibility is not optional:** form inputs need a label with `htmlFor` (or `aria-label`); dialogs need `role="dialog"`, `aria-modal="true"`, initial focus and focus trapping; never auto-open modals on page load.
-- **No `console.log` in committed code.** `console.error` is allowed for genuine error paths.
-- Don't select `*` from Supabase; list the columns you actually use.
+- Every async `useEffect` **must** have a cleanup path (AbortController / abort signal or mounted guard). No exceptions.
+- Never write to refs during render. Assign `ref.current` only inside effects or event handlers.
+- No mutable module-level counters or shared state across component instances. Use `useRef` per instance.
+- Never fetch per-row inside a loop. Batch with `.in('column', ids)` (or equivalent) in the parent.
+- Never use `key={index}` on lists that can reorder, filter, or grow. Use stable IDs.
+- Extract data-fetching into custom hooks (`useX`) instead of repeating `useState` + `useEffect` boilerplate.
+- Accessibility is required:
+  - Form inputs need an associated `<label htmlFor=...>` or `aria-label`.
+  - Dialogs need `role="dialog"`, `aria-modal="true"`, initial focus, and focus trapping.
+  - Never auto-open modals on page load.
+- No `console.log` in committed code. `console.error` is allowed only on genuine error paths.
+- Prefer explicit column lists over `select('*')` from Supabase.
 
 ### Security (non-negotiable)
-
-- **Never trust JWT claims decoded client-side or via base64 alone.** Verify tokens server-side (`supabase.auth.getUser(token)` or signature check) before granting any privilege. Fail closed.
-- **Abuse-sensitive writes go through gated paths** (Edge Function with Turnstile / rate limits), not direct anonymous table inserts.
-- **Never commit secrets** (`.env` files, service role keys). Public/anon keys are fine; service keys are not.
-- **Never trust client headers** (`X-Forwarded-For` first hop, `Origin`, `User-Agent`) for security decisions.
-- When the rate limiter or an external check (e.g. Turnstile) is down, default to rejecting unless the user explicitly approves a fail-open trade-off, and document it.
+- Never trust JWT claims decoded only on the client or via base64. Always verify server-side (`supabase.auth.getUser(token)` or proper signature check) before granting privilege. Fail closed.
+- Abuse-sensitive writes must go through gated paths (Edge Function + Turnstile / rate limits). Never allow direct anonymous table inserts for those operations.
+- Never commit secrets (`.env` files, service-role keys, etc.). Anon/public keys are fine; service-role keys are not.
+- Never trust client-controlled headers (`X-Forwarded-For`, `Origin`, `User-Agent`, etc.) for security decisions.
+- If a rate limiter or external check (e.g. Turnstile) is unavailable, default to **reject**. Only fail-open if the user explicitly approves it and the decision is documented.
 
 ### Tests
-
-- New logic in `frontend/src/lib/` and changes to Edge Function logic should come with tests once the harness exists (Vitest / Deno test). If no harness exists yet, create the minimal one needed instead of skipping the test.
+- New logic in `frontend/src/lib/` and changes to Edge Function logic should include tests once a harness exists (Vitest / Deno test).
+- If no harness exists yet, create the minimal one needed rather than skipping tests.
 
 ### Git Hygiene
+- Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, etc. No placeholder messages.
+- Do not leave staged-but-uncommitted files when finishing a task.
+- Work on feature branches → PR into `staging` → then `master`.
 
-- Use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:` ...). No placeholder messages.
-- Don't leave staged-but-uncommitted files behind when finishing a task.
-- Work happens on feature branches merged via PR into `staging`, then `master`.
+## When in doubt
+- Prefer the safer / more explicit option.
+- Prefer updating `schema_snapshot.sql` and running the verification commands over “I’ll do it later”.
+- If a rule conflicts with the user’s explicit instruction, follow the user’s instruction and note the deviation.

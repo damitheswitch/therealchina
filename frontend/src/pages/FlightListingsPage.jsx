@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { useToast } from '../contexts/ToastContext'
+import { useFlightListings } from '../hooks/useFlightListings'
 import { FlightListingCard } from '../components/FlightListingCard'
 import { FlightListingForm } from '../components/FlightListingForm'
 import { SocialHandlesSetupModal } from '../components/SocialHandlesSetupModal'
@@ -42,8 +43,6 @@ export const FlightListingsPage = () => {
   const { openAuthModal } = useAuthModal()
   const { showToast } = useToast()
 
-  const [listings, setListings] = useState([])
-  const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [ownProfile, setOwnProfile] = useState(null)
   const [showSetupModal, setShowSetupModal] = useState(false)
@@ -55,26 +54,17 @@ export const FlightListingsPage = () => {
 
   // TODO(scale): when listings grow into the hundreds, filter and paginate
   // server-side instead of downloading every active row.
-  const fetchListings = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('flight_listings_with_profile')
-        .select(
-          'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle'
-        )
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+  const {
+    listings,
+    loading,
+    error: listingsError,
+    refetch: refetchListings,
+  } = useFlightListings({ enabled: !!user })
 
-      if (error) throw error
-      setListings(data || [])
-    } catch (error) {
-      console.error('Error fetching flight listings:', error)
-      showToast('Failed to load flight listings', 'error')
-    } finally {
-      setLoading(false)
-    }
-  }, [showToast])
+  // Surface fetch errors as a toast (preserves previous inline behavior).
+  useEffect(() => {
+    if (listingsError) showToast('Failed to load flight listings', 'error')
+  }, [listingsError, showToast])
 
   const fetchOwnProfile = useCallback(async () => {
     if (!user) return null
@@ -96,10 +86,9 @@ export const FlightListingsPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchListings()
       fetchOwnProfile()
     }
-  }, [user, fetchListings, fetchOwnProfile])
+  }, [user, fetchOwnProfile])
 
   const handleStartPosting = async () => {
     const currentProfile = ownProfile || (await fetchOwnProfile())
@@ -160,11 +149,11 @@ export const FlightListingsPage = () => {
 
   const handleListingCreated = () => {
     setShowForm(false)
-    fetchListings()
+    refetchListings()
   }
 
   const handleListingDeleted = () => {
-    fetchListings()
+    refetchListings()
   }
 
   const hasActiveFilters = departureCountry || arrivalCountry || month

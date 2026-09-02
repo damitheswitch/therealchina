@@ -36,12 +36,14 @@ This repository is public as a **portfolio reference and technical spec** for re
 | Layer | Technology |
 |-------|------------|
 | Frontend | React 18, Vite 5, React Router 6, vanilla CSS design system |
-| Backend / DBaaS | Supabase — Postgres 15, Auth, Storage, Edge Functions |
+| Backend / DBaaS | Supabase — Postgres 15, Auth, Storage, Edge Functions (Deno) |
 | Auth | Supabase Auth (JWT-based, session managed by SDK) |
-| Bot mitigation | Cloudflare Turnstile (managed mode) |
+| Bot mitigation | Cloudflare Turnstile (managed mode, `@marsidev/react-turnstile`) |
 | File storage | Supabase Storage for review media with RLS policies |
 | Hosting | Netlify (SPA redirects, Node 20 build environment) |
 | PWA | Vite PWA plugin, custom manifest, maskable icons |
+| Testing | Vitest + Testing Library + jsdom (frontend), Deno test (Edge Functions) |
+| CI | GitHub Actions — lint, format check, tests, build, Deno type-check |
 
 ### Why this stack
 
@@ -85,6 +87,9 @@ All data access is enforced at the database level:
 - `toggle_upvote(review_id)` RPC — atomic upvote toggle, no race conditions.
 - `use_upload_session(session_id)` RPC — atomically consumes a session slot.
 - `record_upload_attempt(key)` RPC — tracks hourly upload counts.
+- `refresh_university_stats(university_id)` RPC — recomputes stats for a single university (used by the insert/update/delete triggers).
+- `validate_display_name()` RPC + `validate_display_name_trigger` — enforces display-name rules (length, character set, no duplicates) at the DB layer on profile insert/update; signup survives a taken display name by falling back to a generated name.
+- `profile_has_social_handle(user_id)` RPC — used by the flight-listings insert policy to require at least one social handle before a listing can be created.
 - `university_stats` maintained by triggers — no expensive live aggregates on the landing page.
 - `enforce_comment_nesting` trigger — blocks replies to replies at the DB layer.
 - `handle_new_user` trigger — auto-creates a profile row on signup.
@@ -131,17 +136,21 @@ frontend/src/
 ├── components/    # UI pieces (ReviewCard, UniversityCard, AuthModal, MediaUploader, etc.)
 ├── contexts/      # AuthContext, AuthModalContext, ToastContext
 ├── hooks/         # useDebounce
-├── lib/           # Supabase client, media upload, social handle helpers
-├── pages/         # LandingPage, UniversityPage, ReviewPage, ProfilePage, etc.
+├── lib/           # Supabase client, media upload, review submit, social handles, display-name validation
+├── pages/         # LandingPage, UniversityPage, ReviewPage, ProfilePage, UserDirectoryPage, FlightListingsPage, OnboardingPage, NotFoundPage
 ├── styles/        # Global CSS + design tokens
-└── App.jsx        # Route tree with onboarding guard and auth-modal wiring
+├── test/          # Vitest setup (jsdom, Testing Library matchers)
+└── App.jsx        # Route tree with onboarding guard, auth-modal wiring, and route-level code splitting
 
 supabase/
-├── functions/media-upload/    # Edge Function for secure media uploads
+├── functions/media-upload/    # Edge Function for secure media uploads (+ media_detect module + Deno tests)
 ├── functions/review-submit/   # Edge Function for gated review submissions
 ├── migrations/                # Numbered schema migrations (do not rename or delete)
-├── schema_snapshot.sql        # Canonical current schema
+├── schema_snapshot.sql        # Canonical current schema (single source of truth)
 └── config.toml                # Edge Function config (e.g., verify_jwt)
+
+.github/workflows/ci.yml       # CI: lint, format:check, test, build (frontend) + deno check/test (Edge Functions)
+scripts/normalize_universities.py  # One-off data prep for the university seed CSVs
 ```
 
 ### Notable UX patterns
@@ -150,6 +159,8 @@ supabase/
 - **One-time registration nudge** — shown once per session, dismissible.
 - **Onboarding guard** — blocks non-onboarded users from core pages until profile setup is complete.
 - **Autocomplete everywhere** — city, country, program, and university inputs use fuzzy matching.
+- **Route-level code splitting** — every page except the landing page is `React.lazy`-loaded with a `Suspense` fallback, so the entry chunk stays small and each route is fetched on first navigation.
+- **Error boundary** — a top-level `ErrorBoundary` wraps the app so a render error in any route degrades gracefully instead of blanking the screen.
 
 ---
 
@@ -187,6 +198,7 @@ The frontend builds to `dist/` and deploys on Netlify:
 
 [build.environment]
   NODE_VERSION = "20"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_ANON_KEY,VITE_SUPABASE_URL,VITE_TURNSTILE_SITE_KEY"
 
 [[redirects]]
   from = "/*"
@@ -203,9 +215,21 @@ Supabase project, storage, migrations, and Edge Functions are managed through th
 ```bash
 cd frontend
 npm install
-npm run dev      # localhost:5173
-npm run build    # production build
-npm run preview  # preview production build
+npm run dev          # localhost:5173
+npm run build        # production build
+npm run preview      # preview production build
+npm run lint         # ESLint (must exit 0)
+npm run format       # Prettier write
+npm run format:check # Prettier check (runs in CI)
+npm test             # Vitest run (jsdom + Testing Library)
+npm run test:watch   # Vitest watch mode
+```
+
+Edge Function type-checking (matches what CI runs):
+
+```bash
+npx deno check --config supabase/functions/media-upload/deno.json supabase/functions/media-upload/index.ts
+npx deno check --config supabase/functions/review-submit/deno.json supabase/functions/review-submit/index.ts
 ```
 
 For local Supabase:
@@ -217,6 +241,13 @@ supabase functions serve --env-file supabase/.env.local media-upload
 ```
 
 > Credentials and environment variables are not included. This repo is a code reference, not a runnable turnkey template.
+
+### CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `master` and `staging`:
+
+- **Frontend job:** `npm ci`, `lint`, `format:check`, `test`, `build`.
+- **Edge Functions job:** `deno check` on every function's `index.ts`, plus `deno test` for functions that ship `*_test.ts` files (currently `media-upload`).
 
 ---
 
