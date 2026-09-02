@@ -6,7 +6,7 @@ vi.mock('./supabaseClient', () => ({ supabase: { functions: { invoke: vi.fn() } 
 
 import { validateMediaFile, MAX_IMAGE_SIZE_MB, MAX_VIDEO_SIZE_MB } from './mediaUpload'
 
-const makeFile = (name, type, sizeBytes = 1024) => {
+const makeFile = (name: string, type: string, sizeBytes = 1024): File => {
   const file = new File([new Uint8Array(Math.min(sizeBytes, 8))], name, { type })
   Object.defineProperty(file, 'size', { value: sizeBytes })
   return file
@@ -45,6 +45,7 @@ describe('validateMediaFile', () => {
     const result = validateMediaFile(file)
     expect(result.valid).toBe(false)
     expect(result.type).toBe('video')
+    expect(result.error).toMatch(/maximum video size/i)
   })
 
   it('accepts a video at exactly the size limit', () => {
