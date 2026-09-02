@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useProfileContext } from '../contexts/ProfileContext'
 import { validateDisplayName } from '../lib/validateDisplayName'
 import { CityAutocomplete } from './CityAutocomplete'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
@@ -32,6 +33,7 @@ export const OnboardingForm = ({
 }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const { refetch } = useProfileContext()
 
   const [displayName, setDisplayName] = useState(initialDisplayName || '')
   const [displayNameError, setDisplayNameError] = useState('')
@@ -110,6 +112,9 @@ export const OnboardingForm = ({
     try {
       const { error } = await supabase.from('profiles').update(update).eq('id', user.id)
       if (error) throw error
+      // Sync the app-wide profile record so the header reflects the new
+      // display name immediately after onboarding.
+      await refetch()
       onComplete()
     } catch (error) {
       console.error('Error saving onboarding:', error)

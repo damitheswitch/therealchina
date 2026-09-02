@@ -6,6 +6,7 @@ import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { AuthModalProvider } from './contexts/AuthModalContext'
+import { ProfileProvider } from './contexts/ProfileContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './styles/global.css'
 
@@ -16,11 +17,13 @@ ReactDOM.createRoot(document.getElementById('app')).render(
     <BrowserRouter>
       <ErrorBoundary>
         <AuthProvider>
-          <ToastProvider>
-            <AuthModalProvider>
-              <App />
-            </AuthModalProvider>
-          </ToastProvider>
+          <ProfileProvider>
+            <ToastProvider>
+              <AuthModalProvider>
+                <App />
+              </AuthModalProvider>
+            </ToastProvider>
+          </ProfileProvider>
         </AuthProvider>
       </ErrorBoundary>
     </BrowserRouter>

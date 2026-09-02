@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
 
-type Profile = Pick<
+export type Profile = Pick<
   Tables<'profiles'>,
   | 'display_name'
   | 'bio'

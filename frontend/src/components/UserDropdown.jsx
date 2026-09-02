@@ -4,11 +4,13 @@ import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
+import { useProfileContext } from '../contexts/ProfileContext'
 
 // UserDropdown component - Dropdown menu in header with user avatar
 export const UserDropdown = () => {
   const { user, signOut, loading } = useAuth()
   const { openAuthModal } = useAuthModal()
+  const { profile } = useProfileContext()
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   const [installPrompt, setInstallPrompt] = useState(null)
@@ -70,7 +72,8 @@ export const UserDropdown = () => {
 
   const isActive = (path) => location.pathname === path
 
-  const displayName = user?.user_metadata?.display_name || user?.email
+  // profiles table is the source of truth; auth metadata is only a seed/fallback.
+  const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email
 
   const menuLinks = [
     { to: '/review', label: 'Leave a Review', icon: <Icons.Pen /> },
