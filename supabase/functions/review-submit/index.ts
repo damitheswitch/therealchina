@@ -60,15 +60,37 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 const MEDIA_URL_PREFIX = `${SUPABASE_URL}/storage/v1/object/public/review-media/`
 
 // ---- CORS ----------------------------------------------------------------------
+// CORS_ORIGIN supports:
+//   - "*"                              (allow any origin)
+//   - "https://example.com"            (single exact origin)
+//   - "https://a.com,https://b.com"    (comma-separated list)
+//   - "https://deploy-preview-*--app.netlify.app"  (wildcard * matches any chars)
+const CORS_ORIGIN_RAW = (Deno.env.get('CORS_ORIGIN') || '*').trim()
 
-const CORS_ORIGIN = (Deno.env.get('CORS_ORIGIN') || '*').replace(/\/$/, '')
+const CORS_PATTERNS: string[] =
+  CORS_ORIGIN_RAW === '*'
+    ? ['*']
+    : CORS_ORIGIN_RAW.split(',')
+        .map((o) => o.trim().replace(/\/$/, ''))
+        .filter(Boolean)
+
+function originMatches(requestOrigin: string, pattern: string): boolean {
+  if (pattern === '*') return true
+  if (!pattern.includes('*')) return requestOrigin === pattern
+  // Convert glob pattern to regex: escape regex special chars, then turn * into .*
+  const regex = new RegExp(
+    '^' + pattern.replace(/[.*+?^${}()|[\]\\]/g, (ch) => (ch === '*' ? '.*' : '\\' + ch)) + '$'
+  )
+  return regex.test(requestOrigin)
+}
 
 const corsHeaders = (origin?: string) => {
   const requestOrigin = (origin || '').replace(/\/$/, '')
-  const allowOrigin =
-    CORS_ORIGIN === '*' || requestOrigin === CORS_ORIGIN
-      ? origin || CORS_ORIGIN
-      : CORS_ORIGIN
+  const allowOrigin = CORS_PATTERNS.some((p) => originMatches(requestOrigin, p))
+    ? origin || (CORS_PATTERNS.length === 1 ? CORS_PATTERNS[0] : '*')
+    : CORS_PATTERNS.length === 1
+      ? CORS_PATTERNS[0]
+      : ''
   return {
     'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
