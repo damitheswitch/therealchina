@@ -15,7 +15,9 @@ const supabaseMock = vi.hoisted(() => {
   const single = vi.fn(async () => ({ data: current, error: null }))
   const eq = vi.fn(() => ({ single }))
   const select = vi.fn(() => ({ eq }))
-  const from = vi.fn(() => ({ select }))
+  // `from` is typed as a rest-parameter function so it can accept a spread
+  // of `unknown[]` when forwarded from the supabaseClient mock below.
+  const from = vi.fn((..._args: unknown[]) => ({ select }))
   return {
     from,
     single,

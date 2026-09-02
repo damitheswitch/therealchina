@@ -2,6 +2,25 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { validateDisplayName } from '../lib/validateDisplayName'
 
+/**
+ * @typedef {import('@supabase/supabase-js').User} User
+ * @typedef {import('@supabase/supabase-js').Session} Session
+ */
+
+/**
+ * @typedef {Object} AuthContextValue
+ * @property {User | null} user
+ * @property {Session | null} session
+ * @property {boolean} loading
+ * @property {(email: string, password: string, displayName: string) => Promise<unknown>} signUp
+ * @property {(email: string, password: string) => Promise<unknown>} signIn
+ * @property {() => Promise<unknown>} signInWithGoogle
+ * @property {() => Promise<void>} signOut
+ */
+
+/**
+ * @type {import('react').Context<AuthContextValue>}
+ */
 const AuthContext = createContext({
   user: null,
   session: null,
@@ -21,7 +40,9 @@ export const useAuth = () => {
 }
 
 export const AuthProvider = ({ children }) => {
+  /** @type {[User | null, (u: User | null) => void]} */
   const [user, setUser] = useState(null)
+  /** @type {[Session | null, (s: Session | null) => void]} */
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -90,6 +111,7 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error
   }
 
+  /** @type {AuthContextValue} */
   const value = {
     user,
     session,

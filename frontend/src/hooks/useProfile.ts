@@ -17,7 +17,10 @@ export type Profile = Pick<
   | 'onboarding_completed'
 >
 
-export const useProfile = (userId: string, { retry = false }: { retry?: boolean } = {}) => {
+export const useProfile = (
+  userId: string | null | undefined,
+  { retry = false }: { retry?: boolean } = {}
+) => {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
