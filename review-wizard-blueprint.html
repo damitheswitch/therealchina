@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TRC Review Wizard (blueprint)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --seal-red: #a6192e;
+    --seal-red-light: #c44554;
+    --seal-red-dark: #7a0f20;
+    --seal-red-tint: #f7e8ea;
+    --gold: #c9a227;
+    --gold-light: #e0be5c;
+    --gold-dark: #9a7a1a;
+    --gold-tint: #f8f0da;
+    --rice: #faf6ef;
+    --rice-warm: #f5efe3;
+    --rice-deep: #efe7d5;
+    --ink: #1a1613;
+    --ink-soft: #4a413b;
+    --ink-faint: #8a7f76;
+    --ink-line: #d9d0c2;
+    --success: #2e7d5b;
+    --warning: #b8860b;
+    --error: #c0392b;
+    --font-display: 'Noto Serif SC', 'Songti SC', serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --sp-1: 0.5rem; --sp-2: 1rem; --sp-3: 1.5rem; --sp-4: 2rem; --sp-5: 2.5rem;
+    --r-sm: 6px; --r-md: 12px; --r-lg: 20px; --r-full: 999px;
+    --shadow-card: 0 1px 3px rgba(26,22,19,.08), 0 4px 12px rgba(26,22,19,.04);
+    --shadow-hover: 0 4px 8px rgba(26,22,19,.1), 0 12px 28px rgba(26,22,19,.08);
+    --shadow-seal: 0 2px 6px rgba(166,25,46,.25);
+    --t-fast: 150ms ease; --t-mid: 250ms ease;
+  }
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); font-size: 16px; line-height: 1.6; color: var(--ink); background: var(--rice); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  input, textarea, select { font-family: inherit; font-size: inherit; }
+  h1 { font-family: var(--font-display); font-weight: 900; font-size: clamp(1.75rem,4vw,2.75rem); line-height: 1.2; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1.25; }
+  h3 { font-weight: 600; font-size: 1.125rem; }
+  .muted { color: var(--ink-faint); }
+  .text-sm { font-size: .875rem; }
+  .container { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 var(--sp-2); }
+  @media (min-width:768px){ .container { padding: 0 var(--sp-3); } }
+
+  /* header */
+  .site-header { position: sticky; top: 0; z-index: 100; background: rgba(250,246,239,.92); backdrop-filter: blur(12px); border-bottom: 1px solid var(--ink-line); }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; padding: .75rem 0; max-width: 1200px; margin: 0 auto; padding-inline: var(--sp-2); }
+  .logo-text { font-family: var(--font-display); font-weight: 900; font-size: 1.25rem; letter-spacing: -.02em; }
+  .logo-text .accent { color: var(--seal-red); }
+  .mockup-tag { font-size: .72rem; color: var(--ink-faint); background: var(--rice-warm); border: 1px solid var(--ink-line); padding: .2rem .55rem; border-radius: var(--r-full); }
+
+  /* buttons */
+  .btn { display: inline-flex; align-items: center; gap: var(--sp-1); padding: .7rem 1.5rem; border-radius: var(--r-full); font-weight: 600; font-size: .95rem; transition: all var(--t-mid); white-space: nowrap; }
+  .btn-primary { background: var(--seal-red); color: #fff; }
+  .btn-primary:hover { background: var(--seal-red-dark); transform: translateY(-1px); box-shadow: var(--shadow-seal); }
+  .btn-primary:disabled { background: var(--ink-line); color: var(--ink-faint); cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-outline { border: 1.5px solid var(--ink-line); color: var(--ink); background: transparent; }
+  .btn-outline:hover { border-color: var(--seal-red); color: var(--seal-red); }
+  .btn-ghost { color: var(--ink-soft); padding: .5rem .8rem; }
+  .btn-ghost:hover { color: var(--seal-red); }
+  .btn-lg { padding: .9rem 2rem; font-size: 1rem; }
+
+  /* section card */
+  .section { background: #fff; border: 1px solid var(--ink-line); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: var(--sp-4); margin: var(--sp-3) 0; }
+  @media (max-width:600px){ .section { padding: var(--sp-3); } }
+
+  /* progress */
+  .wizard-progress { display: flex; align-items: center; gap: .4rem; margin-bottom: var(--sp-3); }
+  .progress-step { flex: 1; height: 6px; border-radius: var(--r-full); background: var(--ink-line); transition: background var(--t-mid); }
+  .progress-step.active { background: var(--seal-red); }
+  .progress-step.done { background: var(--gold); }
+  .step-labels { display: flex; justify-content: space-between; font-size: .72rem; color: var(--ink-faint); margin-bottom: var(--sp-3); }
+  .step-label { transition: color var(--t-fast); }
+  .step-label.current { color: var(--seal-red); font-weight: 600; }
+
+  /* forms */
+  .form-group { display: flex; flex-direction: column; gap: .4rem; margin-bottom: var(--sp-3); }
+  .form-label { font-weight: 600; font-size: .9rem; color: var(--ink); display: flex; align-items: center; gap: .35rem; }
+  .req-dot { color: var(--seal-red); }
+  .form-hint { font-size: .8rem; color: var(--ink-faint); }
+  .form-input, .form-textarea, .form-select { padding: .7rem .9rem; border: 1.5px solid var(--ink-line); border-radius: var(--r-md); background: #fff; color: var(--ink); transition: border-color var(--t-fast); width: 100%; }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--seal-red); }
+  .form-textarea { min-height: 120px; resize: vertical; line-height: 1.6; }
+  .two-col { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+  .two-col > .form-group { flex: 1; min-width: 180px; margin-bottom: var(--sp-3); }
+
+  /* star input big */
+  .stars-xl { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: .35rem; }
+  .stars-xl label { font-size: 2.6rem; color: var(--ink-line); cursor: pointer; transition: color var(--t-fast); line-height: 1; }
+  .stars-xl label:hover, .stars-xl label:hover ~ label, .stars-xl input:checked ~ label { color: var(--gold); }
+  .stars-xl input { display: none; }
+  .rating-label-out { font-size: .85rem; color: var(--ink-faint); min-height: 1.2rem; margin-top: .3rem; }
+
+  /* sub-score row */
+  .subscore-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2) var(--sp-3); }
+  @media (max-width:560px){ .subscore-grid { grid-template-columns: 1fr; } }
+  .subscore { display: flex; flex-direction: column; gap: .35rem; }
+  .subscore-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .subscore-name { font-weight: 600; font-size: .88rem; }
+  .subscore-val { font-size: .8rem; color: var(--ink-faint); }
+  .subscore-stars { display: inline-flex; flex-direction: row-reverse; gap: .15rem; }
+  .subscore-stars label { font-size: 1.3rem; color: var(--ink-line); cursor: pointer; transition: color var(--t-fast); }
+  .subscore-stars label:hover, .subscore-stars label:hover ~ label, .subscore-stars input:checked ~ label { color: var(--gold); }
+  .subscore-stars input { display: none; }
+
+  /* tag chips */
+  .chip-row { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .chip { padding: .4rem .85rem; border-radius: var(--r-full); border: 1.5px solid var(--ink-line); background: #fff; color: var(--ink-soft); font-size: .85rem; font-weight: 500; transition: all var(--t-fast); user-select: none; }
+  .chip:hover { border-color: var(--seal-red); color: var(--seal-red); }
+  .chip.selected { background: var(--seal-red-tint); border-color: var(--seal-red); color: var(--seal-red); }
+
+  /* segmented control */
+  .segmented { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .seg { padding: .55rem 1rem; border-radius: var(--r-full); border: 1.5px solid var(--ink-line); background: #fff; font-size: .88rem; font-weight: 500; color: var(--ink-soft); transition: all var(--t-fast); }
+  .seg:hover { border-color: var(--seal-red); }
+  .seg.selected { background: var(--seal-red); border-color: var(--seal-red); color: #fff; }
+
+  /* yes/no recommend */
+  .recommend-row { display: flex; gap: .6rem; }
+  .recommend-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .25rem; padding: .9rem; border: 1.5px solid var(--ink-line); border-radius: var(--r-md); background: #fff; transition: all var(--t-fast); }
+  .recommend-btn:hover { border-color: var(--seal-red); }
+  .recommend-btn.selected { border-color: var(--seal-red); background: var(--seal-red-tint); }
+  .recommend-btn .emoji { font-size: 1.6rem; }
+  .recommend-btn .lbl { font-weight: 600; font-size: .9rem; }
+
+  /* nav row */
+  .wizard-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3); flex-wrap: wrap; }
+  .step-title { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; margin-bottom: .2rem; }
+  .step-sub { color: var(--ink-faint); font-size: .9rem; margin-bottom: var(--sp-3); }
+  .step-tagline { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--seal-red); margin-bottom: var(--sp-3); letter-spacing: -.01em; }
+
+  .optional-pill { font-size: .68rem; color: var(--ink-faint); background: var(--rice-warm); border: 1px solid var(--ink-line); padding: .1rem .45rem; border-radius: var(--r-full); font-weight: 600; margin-left: .35rem; }
+  .form-hint-inline { font-size: .75rem; color: var(--ink-faint); font-weight: 400; margin-left: .3rem; }
+
+  /* validation error */
+  .field-error { font-size: .8rem; color: var(--error); margin-top: .25rem; display: none; animation: fade .2s ease; }
+  .field-error.show { display: block; }
+  .form-input.error, .form-textarea.error, .form-select.error { border-color: var(--error); }
+  .error-banner { background: var(--seal-red-tint); border: 1px solid var(--seal-red-light); border-radius: var(--r-md); padding: .7rem 1rem; font-size: .85rem; color: var(--seal-red-dark); margin-bottom: var(--sp-2); display: none; align-items: flex-start; gap: .5rem; }
+  .error-banner.show { display: flex; }
+  .error-banner .eb-icon { flex-shrink: 0; font-weight: 700; }
+
+  .field-card { background: var(--rice); border: 1px solid var(--ink-line); border-radius: var(--r-md); padding: var(--sp-2) var(--sp-3); margin-bottom: var(--sp-2); }
+  .field-card-title { font-weight: 600; font-size: .9rem; margin-bottom: .6rem; display: flex; align-items: center; gap: .35rem; }
+
+  /* success */
+  .success-screen { text-align: center; padding: var(--sp-5) var(--sp-2); }
+  .seal-circle { width: 88px; height: 88px; border-radius: 50%; background: var(--seal-red); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 900; font-size: 2rem; box-shadow: var(--shadow-seal); margin-bottom: var(--sp-2); animation: pop .5s cubic-bezier(.2,.8,.2,1); }
+  @keyframes pop { 0%{ transform: scale(.6); opacity: 0; } 100%{ transform: scale(1); opacity: 1; } }
+
+  .info-callout { background: var(--gold-tint); border: 1px solid var(--gold-light); border-radius: var(--r-md); padding: .7rem 1rem; font-size: .85rem; color: var(--ink-soft); margin-bottom: var(--sp-3); display: flex; gap: .5rem; align-items: flex-start; }
+  .info-callout .ic { color: var(--gold-dark); flex-shrink: 0; }
+
+  .step { display: none; }
+  .step.active { display: block; animation: fade .3s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .footer-note { text-align: center; color: var(--ink-faint); font-size: .8rem; margin: var(--sp-3) 0; }
+
+  /* media CTA */
+  .media-cta { display: flex; gap: var(--sp-2); align-items: flex-start; border: 1.5px dashed var(--gold); border-radius: var(--r-md); background: linear-gradient(135deg,var(--gold-tint),var(--rice-warm)); padding: var(--sp-3); transition: border-color var(--t-fast), background var(--t-fast); cursor: pointer; }
+  .media-cta:hover { border-color: var(--seal-red); background: var(--seal-red-tint); }
+  .media-cta-icon { font-size: 1.8rem; flex-shrink: 0; line-height: 1; padding-top: .1rem; }
+  .media-cta-copy { min-width: 0; }
+  .media-cta-title { font-size: .95rem; color: var(--ink); margin-bottom: .25rem; }
+  .media-cta-sub { font-size: .82rem; color: var(--ink-soft); line-height: 1.5; margin-bottom: .35rem; }
+  .media-cta-hint { font-size: .75rem; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="logo-text">TR<span class="accent">C</span></span>
+    <span class="mockup-tag">Review Wizard · mockup</span>
+  </div>
+</header>
+
+<main class="container">
+  <div class="section">
+    <!-- progress -->
+    <div class="wizard-progress">
+      <div class="progress-step active" data-step="1"></div>
+      <div class="progress-step" data-step="2"></div>
+      <div class="progress-step" data-step="3"></div>
+      <div class="progress-step" data-step="4"></div>
+      <div class="progress-step" data-step="5"></div>
+    </div>
+    <div class="step-labels">
+      <span class="step-label current" data-label="1">Basics</span>
+      <span class="step-label" data-label="2">Ratings</span>
+      <span class="step-label" data-label="3">Details</span>
+      <span class="step-label" data-label="4">Your story</span>
+      <span class="step-label" data-label="5">About you</span>
+    </div>
+
+    <h1 class="step-title">Leave a Review</h1>
+    <p class="step-sub">Help the next student decide. Takes ~2 minutes.</p>
+
+    <form id="wizard">
+
+      <!-- STEP 1: Basics -->
+      <section class="step active" data-step="1">
+        <div class="step-tagline">The essentials. What every student needs to know.</div>
+
+        <div class="form-group">
+          <label class="form-label" for="uni">University <span class="req-dot">*</span></label>
+          <input class="form-input" id="uni" placeholder="Start typing a university..." value="Tsinghua University" />
+          <span class="form-hint">Not listed? You can add it.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your overall rating <span class="req-dot">*</span></label>
+          <div class="stars-xl">
+            <input type="radio" name="overall" id="o5" value="5" checked /><label for="o5">★</label>
+            <input type="radio" name="overall" id="o4" value="4" /><label for="o4">★</label>
+            <input type="radio" name="overall" id="o3" value="3" /><label for="o3">★</label>
+            <input type="radio" name="overall" id="o2" value="2" /><label for="o2">★</label>
+            <input type="radio" name="overall" id="o1" value="1" /><label for="o1">★</label>
+          </div>
+          <div class="rating-label-out" id="rating-out">5. Excellent</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Would you recommend this university to a friend? <span class="req-dot">*</span></label>
+          <div class="recommend-row">
+            <button type="button" class="recommend-btn selected" data-rec="yes"><span class="emoji">👍</span><span class="lbl">Yes, definitely</span></button>
+            <button type="button" class="recommend-btn" data-rec="no"><span class="emoji">👎</span><span class="lbl">No</span></button>
+            <button type="button" class="recommend-btn" data-rec="maybe"><span class="emoji">🤔</span><span class="lbl">It depends</span></button>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" onclick="alert('Back to home (mockup)')">← Back</button>
+          <button type="button" class="btn btn-primary btn-lg" onclick="go(2)">Continue →</button>
+        </div>
+      </section>
+
+      <!-- STEP 2: Sub-scores -->
+      <section class="step" data-step="2">
+        <h2 class="step-title">Rate the details</h2>
+        <p class="step-sub">How does this university do on each aspect?</p>
+
+        <div class="subscore-grid" id="subscores"></div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" onclick="go(1)">← Back</button>
+          <div style="display:flex; gap:.5rem;">
+            <button type="button" class="btn btn-ghost" onclick="go(3)">Skip</button>
+            <button type="button" class="btn btn-primary btn-lg" onclick="go(3)">Continue →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3: Details (context + cost) -->
+      <section class="step" data-step="3">
+        <h2 class="step-title">Some context</h2>
+        <p class="step-sub">This helps other students compare.</p>
+
+        <div class="field-card">
+          <div class="field-card-title">Your status</div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="status">Enrollment status</label>
+            <div class="segmented" id="status-seg">
+              <button type="button" class="seg selected" data-v="current">Current student</button>
+              <button type="button" class="seg" data-v="alumni">Alumni</button>
+              <button type="button" class="seg" data-v="exchange">Exchange</button>
+              <button type="button" class="seg" data-v="applicant">Applicant</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label" for="start-year">Start year <span class="req-dot">*</span></label>
+            <select class="form-select" id="start-year"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="end-year">End year <span class="form-hint-inline">if alumni</span></label>
+            <select class="form-select" id="end-year"></select>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label" for="lang">Language of instruction</label>
+            <select class="form-select" id="lang"><option>English</option><option>Chinese (Mandarin)</option><option>Bilingual</option><option>Other</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="degree">Degree level</label>
+            <select class="form-select" id="degree"><option value="">Select...</option><option>Bachelor</option><option>Master</option><option>PhD</option><option>Exchange</option><option>Language Course</option></select>
+          </div>
+        </div>
+
+        <div class="field-card">
+          <div class="field-card-title">💰 Cost (per year)</div>
+          <div class="two-col">
+            <div class="form-group">
+              <label class="form-label" for="tuition">Tuition you paid</label>
+              <select class="form-select" id="tuition"><option value="">Prefer not to say</option><option>Under ¥20k</option><option>¥20k–¥40k</option><option>¥40k–¥80k</option><option>¥80k–¥150k</option><option>Over ¥150k</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="living">Monthly living cost</label>
+              <select class="form-select" id="living"><option value="">Prefer not to say</option><option>Under ¥2k</option><option>¥2k–¥4k</option><option>¥4k–¥8k</option><option>Over ¥8k</option></select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Funding</label>
+            <div class="segmented" id="scholar-type">
+              <button type="button" class="seg selected" data-v="self">Self-funded</button>
+              <button type="button" class="seg" data-v="csc">CSC / Government</button>
+              <button type="button" class="seg" data-v="school">School</button>
+              <button type="button" class="seg" data-v="province">Provincial</button>
+            </div>
+            <div id="scholar-coverage-wrap" style="margin-top:.6rem; display:none;">
+              <label class="form-label" style="margin-bottom:.3rem;">Coverage</label>
+              <div class="segmented" id="scholar-coverage">
+                <button type="button" class="seg selected" data-v="partial">Partial</button>
+                <button type="button" class="seg" data-v="full">Full</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tags <span class="form-hint-inline">pick any</span></label>
+          <div class="chip-row" id="tags">
+            <button type="button" class="chip selected">Strong academics</button>
+            <button type="button" class="chip">Great food</button>
+            <button type="button" class="chip">Expensive city</button>
+            <button type="button" class="chip">Easy visa</button>
+            <button type="button" class="chip">Good dorms</button>
+            <button type="button" class="chip">Crowded</button>
+            <button type="button" class="chip">Strong CS</button>
+            <button type="button" class="chip">International-friendly</button>
+            <button type="button" class="chip">Hard bureaucracy</button>
+            <button type="button" class="chip">Beautiful campus</button>
+            <button type="button" class="chip">Good nightlife</button>
+            <button type="button" class="chip">Safe</button>
+          </div>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" onclick="go(2)">← Back</button>
+          <div style="display:flex; gap:.5rem;">
+            <button type="button" class="btn btn-ghost" onclick="go(4)">Skip</button>
+            <button type="button" class="btn btn-primary btn-lg" onclick="go(4)">Continue →</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 4: Story -->
+      <section class="step" data-step="4">
+        <h2 class="step-title">Tell your story</h2>
+        <p class="step-sub">The pros, the cons, and anything else worth knowing.</p>
+
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label" for="pros">What did you love? <span class="form-hint-inline">pros</span></label>
+            <textarea class="form-textarea" id="pros" placeholder="e.g. Great professors, beautiful campus, cheap canteen..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="cons">What could be better? <span class="form-hint-inline">cons</span></label>
+            <textarea class="form-textarea" id="cons" placeholder="e.g. Bureaucratic admin, crowded dorms, hard language barrier..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="review-text">Your review <span class="req-dot">*</span></label>
+          <textarea class="form-textarea" id="review-text" placeholder="Tell other students about your experience. Academics, campus life, dormitories, the city, anything that matters..."></textarea>
+          <span class="form-hint">Min 10 characters. Be honest and specific.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Show the real life <span class="form-hint-inline">up to 5</span></label>
+          <div class="media-cta">
+            <div class="media-cta-icon">📷</div>
+            <div class="media-cta-copy">
+              <div class="media-cta-title"><strong style="color:var(--seal-red)">Click to upload</strong> or drag & drop</div>
+              <div class="media-cta-sub">Your dorm room, the library at 2am, the canteen food, the campus on a sunny day, a night out at the local bar. <em>Anything that shows what it's really like.</em></div>
+              <div class="media-cta-hint">Photos & videos · up to 5 · students love these</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="program">Program <span class="req-dot">*</span></label>
+          <input class="form-input" id="program" placeholder="e.g. Computer Science" />
+          <span class="form-hint">Your major / program name.</span>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" onclick="go(3)">← Back</button>
+          <button type="button" class="btn btn-primary btn-lg" onclick="go(5)">Continue →</button>
+        </div>
+      </section>
+
+      <!-- STEP 5: About you (same for anon + logged-in) -->
+      <section class="step" data-step="5">
+        <h2 class="step-title">A bit about you</h2>
+        <p class="step-sub">So other students like you can find your review.</p>
+
+        <div class="info-callout">
+          <span class="ic">🌍</span>
+          <span>We ask everyone the same questions, whether you're logged in or not. Your home country helps students from the same place find relevant reviews and flights.</span>
+        </div>
+
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label" for="home-country">Home country</label>
+            <select class="form-select" id="home-country">
+              <option value="">Prefer not to say</option>
+              <option>Afghanistan</option><option>Albania</option><option>Algeria</option><option>American Samoa</option><option>Andorra</option><option>Angola</option><option>Anguilla</option><option>Antarctica</option><option>Antigua and Barbuda</option><option>Argentina</option><option>Armenia</option><option>Aruba</option><option>Australia</option><option>Austria</option><option>Azerbaijan</option><option>Bahamas</option><option>Bahrain</option><option>Bangladesh</option><option>Barbados</option><option>Belarus</option><option>Belgium</option><option>Belize</option><option>Benin</option><option>Bermuda</option><option>Bhutan</option><option>Bolivia</option><option>Bosnia and Herzegovina</option><option>Botswana</option><option>Bouvet Island</option><option>Brazil</option><option>British Indian Ocean Territory</option><option>Brunei Darussalam</option><option>Bulgaria</option><option>Burkina Faso</option><option>Burundi</option><option>Cambodia</option><option>Cameroon</option><option>Canada</option><option>Cape Verde</option><option>Cayman Islands</option><option>Central African Republic</option><option>Chad</option><option>Chile</option><option>China</option><option>Christmas Island</option><option>Cocos (Keeling) Islands</option><option>Colombia</option><option>Comoros</option><option>Congo</option><option>Congo, the Democratic Republic of the</option><option>Cook Islands</option><option>Costa Rica</option><option>Cote d'Ivoire</option><option>Croatia</option><option>Cuba</option><option>Cyprus</option><option>Czech Republic</option><option>Denmark</option><option>Djibouti</option><option>Dominica</option><option>Dominican Republic</option><option>Ecuador</option><option>Egypt</option><option>El Salvador</option><option>Equatorial Guinea</option><option>Eritrea</option><option>Estonia</option><option>Ethiopia</option><option>Falkland Islands (Malvinas)</option><option>Faroe Islands</option><option>Fiji</option><option>Finland</option><option>France</option><option>French Guiana</option><option>French Polynesia</option><option>French Southern Territories</option><option>Gabon</option><option>Gambia</option><option>Georgia</option><option>Germany</option><option>Ghana</option><option>Gibraltar</option><option>Greece</option><option>Greenland</option><option>Grenada</option><option>Guadeloupe</option><option>Guam</option><option>Guatemala</option><option>Guinea</option><option>Guinea-Bissau</option><option>Guyana</option><option>Haiti</option><option>Heard Island and Mcdonald Islands</option><option>Holy See (Vatican City State)</option><option>Honduras</option><option>Hong Kong</option><option>Hungary</option><option>Iceland</option><option>India</option><option>Indonesia</option><option>Iran, Islamic Republic of</option><option>Iraq</option><option>Ireland</option><option>Israel</option><option>Italy</option><option>Jamaica</option><option>Japan</option><option>Jordan</option><option>Kazakhstan</option><option>Kenya</option><option>Kiribati</option><option>Korea, Democratic People's Republic of</option><option>Korea, Republic of</option><option>Kuwait</option><option>Kyrgyzstan</option><option>Lao People's Democratic Republic</option><option>Latvia</option><option>Lebanon</option><option>Lesotho</option><option>Liberia</option><option>Libyan Arab Jamahiriya</option><option>Liechtenstein</option><option>Lithuania</option><option>Luxembourg</option><option>Macau</option><option>Macedonia, the Former Yugoslav Republic of</option><option>Madagascar</option><option>Malawi</option><option>Malaysia</option><option>Maldives</option><option>Mali</option><option>Malta</option><option>Marshall Islands</option><option>Martinique</option><option>Mauritania</option><option>Mauritius</option><option>Mayotte</option><option>Mexico</option><option>Micronesia, Federated States of</option><option>Moldova, Republic of</option><option>Monaco</option><option>Mongolia</option><option>Montserrat</option><option>Morocco</option><option>Mozambique</option><option>Myanmar</option><option>Namibia</option><option>Nauru</option><option>Nepal</option><option>Netherlands</option><option>Netherlands Antilles</option><option>New Caledonia</option><option>New Zealand</option><option>Nicaragua</option><option>Niger</option><option>Nigeria</option><option>Niue</option><option>Norfolk Island</option><option>Northern Mariana Islands</option><option>Norway</option><option>Oman</option><option>Pakistan</option><option>Palau</option><option>Palestinian Territory, Occupied</option><option>Panama</option><option>Papua New Guinea</option><option>Paraguay</option><option>Peru</option><option>Philippines</option><option>Pitcairn</option><option>Poland</option><option>Portugal</option><option>Puerto Rico</option><option>Qatar</option><option>Reunion</option><option>Romania</option><option>Russian Federation</option><option>Rwanda</option><option>Saint Helena</option><option>Saint Kitts and Nevis</option><option>Saint Lucia</option><option>Saint Pierre and Miquelon</option><option>Saint Vincent and the Grenadines</option><option>Samoa</option><option>San Marino</option><option>Sao Tome and Principe</option><option>Saudi Arabia</option><option>Senegal</option><option>Serbia and Montenegro</option><option>Seychelles</option><option>Sierra Leone</option><option>Singapore</option><option>Slovakia</option><option>Slovenia</option><option>Solomon Islands</option><option>Somalia</option><option>South Africa</option><option>South Georgia and the South Sandwich Islands</option><option>Spain</option><option>Sri Lanka</option><option>Sudan</option><option>Suriname</option><option>Svalbard and Jan Mayen</option><option>Swaziland</option><option>Sweden</option><option>Switzerland</option><option>Syrian Arab Republic</option><option>Taiwan</option><option>Tajikistan</option><option>Tanzania, United Republic of</option><option>Thailand</option><option>Timor-Leste</option><option>Togo</option><option>Tokelau</option><option>Tonga</option><option>Trinidad and Tobago</option><option>Tunisia</option><option>Turkey</option><option>Turkmenistan</option><option>Turks and Caicos Islands</option><option>Tuvalu</option><option>Uganda</option><option>Ukraine</option><option>United Arab Emirates</option><option>United Kingdom</option><option>United States</option><option>United States Minor Outlying Islands</option><option>Uruguay</option><option>Uzbekistan</option><option>Vanuatu</option><option>Venezuela</option><option>Viet Nam</option><option>Virgin Islands, British</option><option>Virgin Islands, U.S.</option><option>Wallis and Futuna</option><option>Western Sahara</option><option>Yemen</option><option>Zambia</option><option>Zimbabwe</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="stage">Where are you in your journey?</label>
+            <select class="form-select" id="stage"><option value="">Prefer not to say</option><option>Researching options</option><option>Applying now</option><option>Admitted</option><option>Currently studying</option><option>Alumni</option></select>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label" for="budget">Monthly living budget</label>
+            <select class="form-select" id="budget"><option value="">Prefer not to say</option><option>Under ¥2k</option><option>¥2k–¥4k</option><option>¥4k–¥8k</option><option>¥8k–¥15k</option><option>Over ¥15k</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="languages">Languages you speak</label>
+            <select class="form-select" id="languages">
+              <option value="">Prefer not to say</option>
+              <option>English</option>
+              <option>Mandarin Chinese</option>
+              <option>English + Mandarin</option>
+              <option>English + another language</option>
+              <option>Mandarin + another language</option>
+              <option>French</option>
+              <option>Spanish</option>
+              <option>Arabic</option>
+              <option>Russian</option>
+              <option>Portuguese</option>
+              <option>Hindi / Urdu</option>
+              <option>Bengali</option>
+              <option>Indonesian</option>
+              <option>Thai</option>
+              <option>Vietnamese</option>
+              <option>Korean</option>
+              <option>Japanese</option>
+              <option>Turkish</option>
+              <option>Persian / Farsi</option>
+              <option>Hausa</option>
+              <option>Swahili</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Want early access & updates?</label>
+          <div class="segmented" id="email-consent">
+            <button type="button" class="seg selected" data-v="no">No thanks</button>
+            <button type="button" class="seg" data-v="yes">Yes, sign me up</button>
+          </div>
+          <span class="form-hint">Get the newsletter. Scholarships, new features, and early access before everyone else.</span>
+        </div>
+
+        <div class="wizard-nav">
+          <button type="button" class="btn btn-ghost" onclick="go(4)">← Back</button>
+          <button type="button" class="btn btn-primary btn-lg" onclick="submit()">Submit review 📜</button>
+        </div>
+      </section>
+
+      <!-- SUCCESS -->
+      <section class="step" data-step="success">
+        <div class="success-screen">
+          <div class="seal-circle">印</div>
+          <h2>Review sealed!</h2>
+          <p class="muted" style="margin:.5rem 0 var(--sp-3)">Thank you for helping the next student.</p>
+          <button type="button" class="btn btn-outline" onclick="reset()">Review another university</button>
+        </div>
+      </section>
+
+    </form>
+  </div>
+
+  <p class="footer-note">Blueprint mockup. Feed to coding agent to build the real wizard.</p>
+</main>
+
+<script>
+  const TOTAL = 5;
+  let current = 1;
+
+  const subscores = [
+    'Academics / teaching', 'Campus & facilities', 'Accommodation / dorms',
+    'Cost of living in the city', 'International office support', 'Social life / community',
+    'Extracurricular activities', 'Career & job support'
+  ];
+  const grid = document.getElementById('subscores');
+  subscores.forEach((name, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'subscore';
+    wrap.innerHTML = `
+      <div class="subscore-head"><span class="subscore-name">${name}</span><span class="subscore-val" data-ss="${i}">not rated</span></div>
+      <div class="subscore-stars">
+        ${[5,4,3,2,1].map(n => `<input type="radio" name="ss${i}" id="ss${i}-${n}" value="${n}" /><label for="ss${i}-${n}">★</label>`).join('')}
+      </div>`;
+    grid.appendChild(wrap);
+    wrap.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => {
+      wrap.querySelector(`[data-ss="${i}"]`).textContent = inp.value + '/5';
+    }));
+  });
+
+  // populate year dropdowns (2010 -> current year)
+  const currentYear = new Date().getFullYear();
+  const startSel = document.getElementById('start-year');
+  const endSel = document.getElementById('end-year');
+  for (let y = currentYear; y >= 2010; y--) {
+    const o = document.createElement('option'); o.value = y; o.textContent = y; startSel.appendChild(o);
+  }
+  startSel.value = currentYear - 1;
+  endSel.innerHTML = '<option value="">Still studying</option>';
+  for (let y = currentYear; y >= 2010; y--) {
+    const o = document.createElement('option'); o.value = y; o.textContent = y; endSel.appendChild(o);
+  }
+
+  // overall rating label
+  const labels = {1:'1. Terrible',2:'2. Poor',3:'3. OK',4:'4. Good',5:'5. Excellent'};
+  document.querySelectorAll('input[name="overall"]').forEach(r => r.addEventListener('change', () => {
+    document.getElementById('rating-out').textContent = labels[r.value];
+  }));
+
+  // recommend buttons
+  document.querySelectorAll('.recommend-btn').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.recommend-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+  }));
+
+  // segmented controls
+  function bindSeg(id) {
+    const el = document.getElementById(id);
+    el.querySelectorAll('.seg').forEach(s => s.addEventListener('click', () => {
+      el.querySelectorAll('.seg').forEach(x => x.classList.remove('selected'));
+      s.classList.add('selected');
+    }));
+  }
+  ['status-seg','scholar-type','scholar-coverage','email-consent'].forEach(bindSeg);
+
+  // Scholarship: show coverage selector only when not self-funded
+  const scholarType = document.getElementById('scholar-type');
+  const coverageWrap = document.getElementById('scholar-coverage-wrap');
+  scholarType.querySelectorAll('.seg').forEach(s => s.addEventListener('click', () => {
+    coverageWrap.style.display = s.dataset.v === 'self' ? 'none' : 'block';
+  }));
+
+  // chips
+  document.querySelectorAll('#tags .chip').forEach(c => c.addEventListener('click', () => c.classList.toggle('selected')));
+
+  function updateProgress() {
+    document.querySelectorAll('.progress-step').forEach(p => {
+      const s = +p.dataset.step;
+      p.classList.toggle('active', s === current);
+      p.classList.toggle('done', s < current);
+    });
+    document.querySelectorAll('.step-label').forEach(l => {
+      l.classList.toggle('current', +l.dataset.label === current);
+    });
+  }
+
+  function go(n) {
+    // Validate the step we're leaving before moving forward
+    if (n > current) {
+      const error = validateStep(current);
+      if (error) {
+        showError(error);
+        return;
+      }
+    }
+    clearErrors();
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    if (n === 'success') {
+      document.querySelector('.step[data-step="success"]').classList.add('active');
+      document.querySelectorAll('.progress-step').forEach(p => { p.classList.remove('active'); p.classList.add('done'); });
+      document.querySelectorAll('.step-label').forEach(l => l.classList.remove('current'));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    current = n;
+    document.querySelector(`.step[data-step="${n}"]`).classList.add('active');
+    updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // On-brand validation messages. Friendly but clear about what's missing.
+  function validateStep(step) {
+    switch (step) {
+      case 1: {
+        const uni = document.getElementById('uni').value.trim();
+        if (!uni) return "Which university? Other students can't find your review without it.";
+        const rating = document.querySelector('input[name="overall"]:checked');
+        if (!rating) return "Pick a star rating. It's the first thing every student looks at.";
+        return null;
+      }
+      case 3: {
+        const startYear = document.getElementById('start-year').value;
+        if (!startYear) return "When did you start? Future students need to know if your experience is still relevant.";
+        return null;
+      }
+      case 4: {
+        const text = document.getElementById('review-text').value.trim();
+        if (text.length < 10) return "Your story matters. Write at least a sentence so others know what to expect.";
+        const program = document.getElementById('program').value.trim();
+        if (!program) return "What's your program? Students searching for your major won't find this review without it.";
+        return null;
+      }
+      default:
+        return null;
+    }
+  }
+
+  function showError(msg) {
+    let banner = document.querySelector('.step.active .error-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.className = 'error-banner';
+      banner.innerHTML = '<span class="eb-icon">⚠</span><span class="eb-msg"></span>';
+      const step = document.querySelector('.step.active');
+      step.insertBefore(banner, step.firstChild);
+    }
+    banner.querySelector('.eb-msg').textContent = msg;
+    banner.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.error-banner').forEach(b => b.classList.remove('show'));
+  }
+
+  function submit() {
+    const error = validateStep(current);
+    if (error) {
+      showError(error);
+      return;
+    }
+    clearErrors();
+    go('success');
+  }
+  function reset() {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.querySelector('.step[data-step="1"]').classList.add('active');
+    current = 1; updateProgress();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>

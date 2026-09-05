@@ -8,6 +8,17 @@ export interface MediaItem {
   mime?: string
 }
 
+export interface SubScores {
+  rating_academics?: number
+  rating_campus?: number
+  rating_accommodation?: number
+  rating_cost?: number
+  rating_intl_office?: number
+  rating_social?: number
+  rating_extracurricular?: number
+  rating_career?: number
+}
+
 export interface ReviewPayload {
   cfToken?: string
   universitySlug?: string
@@ -18,6 +29,20 @@ export interface ReviewPayload {
   program?: string
   degreeLevel?: string
   media?: MediaItem[]
+  // Wizard fields
+  subscores?: SubScores
+  enrollmentStatus?: string
+  startYear?: number
+  endYear?: number
+  languageOfInstruction?: string
+  tuitionRange?: string
+  livingCostRange?: string
+  fundingType?: string
+  fundingCoverage?: string
+  recommend?: string
+  pros?: string
+  cons?: string
+  tags?: string[]
 }
 
 export interface ReviewSubmitResult {

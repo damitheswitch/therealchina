@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 021_signup_survives_taken_display_name.sql.
+-- as of migration 022_review_wizard_rich_data.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -22,9 +22,13 @@ CREATE TABLE IF NOT EXISTS public.universities (
   name TEXT NOT NULL,
   name_zh TEXT,
   city TEXT NOT NULL,
+  country TEXT,
   slug TEXT UNIQUE NOT NULL,
   logo_url TEXT,
   is_verified BOOLEAN DEFAULT FALSE,
+  uni_type TEXT CHECK (uni_type IS NULL OR uni_type IN ('public','private')),
+  languages_of_instruction TEXT[] DEFAULT '{}',
+  website TEXT,
   search_text TEXT GENERATED ALWAYS AS (
     lower(
       replace(coalesce(name, ''), '&amp;', '&') || ' ' ||
@@ -46,6 +50,28 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   program TEXT,
   degree_level TEXT,
   media JSONB DEFAULT '[]'::jsonb,
+  -- Sub-scores (nullable, 1-5 each)
+  rating_academics INT CHECK (rating_academics IS NULL OR rating_academics BETWEEN 1 AND 5),
+  rating_campus INT CHECK (rating_campus IS NULL OR rating_campus BETWEEN 1 AND 5),
+  rating_accommodation INT CHECK (rating_accommodation IS NULL OR rating_accommodation BETWEEN 1 AND 5),
+  rating_cost INT CHECK (rating_cost IS NULL OR rating_cost BETWEEN 1 AND 5),
+  rating_intl_office INT CHECK (rating_intl_office IS NULL OR rating_intl_office BETWEEN 1 AND 5),
+  rating_social INT CHECK (rating_social IS NULL OR rating_social BETWEEN 1 AND 5),
+  rating_extracurricular INT CHECK (rating_extracurricular IS NULL OR rating_extracurricular BETWEEN 1 AND 5),
+  rating_career INT CHECK (rating_career IS NULL OR rating_career BETWEEN 1 AND 5),
+  -- Structured context
+  enrollment_status TEXT CHECK (enrollment_status IS NULL OR enrollment_status IN ('current','alumni','exchange','applicant')),
+  start_year INT CHECK (start_year IS NULL OR (start_year BETWEEN 1990 AND EXTRACT(YEAR FROM NOW())::INT + 1)),
+  end_year INT CHECK (end_year IS NULL OR (end_year BETWEEN 1990 AND EXTRACT(YEAR FROM NOW())::INT + 1)),
+  language_of_instruction TEXT,
+  tuition_range TEXT,
+  living_cost_range TEXT,
+  funding_type TEXT CHECK (funding_type IS NULL OR funding_type IN ('self','csc','school','province')),
+  funding_coverage TEXT CHECK (funding_coverage IS NULL OR funding_coverage IN ('partial','full')),
+  recommend TEXT CHECK (recommend IS NULL OR recommend IN ('yes','no','maybe')),
+  pros TEXT,
+  cons TEXT,
+  tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -82,6 +108,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   social_handles JSONB DEFAULT '[]'::jsonb,
   is_discoverable BOOLEAN DEFAULT TRUE,
   onboarding_completed BOOLEAN DEFAULT FALSE,
+  home_country TEXT,
+  journey_stage TEXT CHECK (journey_stage IS NULL OR journey_stage IN ('researching','applying','admitted','enrolled','alumni')),
+  monthly_budget TEXT,
+  languages_spoken TEXT,
+  email_consent BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT profiles_display_name_ci_unique UNIQUE (display_name_lower)
@@ -132,6 +163,7 @@ CREATE TABLE IF NOT EXISTS public.flight_listings (
 CREATE INDEX IF NOT EXISTS idx_reviews_university_id ON public.reviews(university_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON public.reviews(created_at);
 CREATE INDEX IF NOT EXISTS idx_reviews_rating ON public.reviews(rating);
+CREATE INDEX IF NOT EXISTS idx_reviews_tags ON public.reviews USING gin(tags);
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);

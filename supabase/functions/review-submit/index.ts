@@ -19,7 +19,20 @@ const LIMITS = {
   degreeLevel: { max: 60 },
   uniName: { max: 160 },
   uniCity: { max: 120 },
+  pros: { max: 1000 },
+  cons: { max: 1000 },
+  tags: { max: 20 },
+  tagLen: { max: 40 },
 }
+
+const VALID_ENROLLMENT = ['current', 'alumni', 'exchange', 'applicant'] as const
+const VALID_FUNDING = ['self', 'csc', 'school', 'province'] as const
+const VALID_COVERAGE = ['partial', 'full'] as const
+const VALID_RECOMMEND = ['yes', 'no', 'maybe'] as const
+const VALID_SUBSCORES = [
+  'rating_academics', 'rating_campus', 'rating_accommodation', 'rating_cost',
+  'rating_intl_office', 'rating_social', 'rating_extracurricular', 'rating_career',
+] as const
 
 const RATE_LIMIT_MESSAGE =
   "You've submitted quite a few reviews in a short time. Please wait a little before sharing more — we want to keep TRC authentic and spam-free."
@@ -395,6 +408,11 @@ async function handleSubmit(req: Request): Promise<Response> {
   // ---- Validate the payload ----
   let rating: number, text: string, program: string | null, degreeLevel: string | null
   let media: MediaItem[]
+  let subscores: Record<string, number> = {}
+  let enrollmentStatus: string | null, startYear: number | null, endYear: number | null
+  let languageOfInstruction: string | null, tuitionRange: string | null, livingCostRange: string | null
+  let fundingType: string | null, fundingCoverage: string | null, recommend: string | null
+  let pros: string | null, cons: string | null, tags: string[]
   try {
     if (typeof body.rating !== 'number' || body.rating < 1 || body.rating > 5 || !Number.isInteger(body.rating)) {
       throw new Error('Rating must be a whole number between 1 and 5')
@@ -410,6 +428,80 @@ async function handleSubmit(req: Request): Promise<Response> {
     program = asTrimmedString(body.program, LIMITS.program.max)
     degreeLevel = asTrimmedString(body.degreeLevel, LIMITS.degreeLevel.max)
     media = validateMedia(body.media)
+
+    // Sub-scores (optional, 1-5)
+    if (body.subscores !== null && body.subscores !== undefined) {
+      if (typeof body.subscores !== 'object' || Array.isArray(body.subscores)) {
+        throw new Error('subscores must be an object')
+      }
+      for (const key of VALID_SUBSCORES) {
+        const val = (body.subscores as Record<string, unknown>)[key]
+        if (val === null || val === undefined) continue
+        if (typeof val !== 'number' || !Number.isInteger(val) || val < 1 || val > 5) {
+          throw new Error(`${key} must be a whole number between 1 and 5`)
+        }
+        subscores[key] = val
+      }
+    }
+
+    enrollmentStatus = asTrimmedString(body.enrollmentStatus, 20)
+    if (enrollmentStatus && !VALID_ENROLLMENT.includes(enrollmentStatus as typeof VALID_ENROLLMENT[number])) {
+      throw new Error('Invalid enrollment status')
+    }
+
+    if (body.startYear !== null && body.startYear !== undefined) {
+      if (typeof body.startYear !== 'number' || !Number.isInteger(body.startYear) || body.startYear < 1990 || body.startYear > new Date().getFullYear() + 1) {
+        throw new Error('Invalid start year')
+      }
+      startYear = body.startYear
+    } else {
+      startYear = null
+    }
+
+    if (body.endYear !== null && body.endYear !== undefined) {
+      if (typeof body.endYear !== 'number' || !Number.isInteger(body.endYear) || body.endYear < 1990 || body.endYear > new Date().getFullYear() + 1) {
+        throw new Error('Invalid end year')
+      }
+      endYear = body.endYear
+    } else {
+      endYear = null
+    }
+
+    languageOfInstruction = asTrimmedString(body.languageOfInstruction, 60)
+    tuitionRange = asTrimmedString(body.tuitionRange, 40)
+    livingCostRange = asTrimmedString(body.livingCostRange, 40)
+
+    fundingType = asTrimmedString(body.fundingType, 20)
+    if (fundingType && !VALID_FUNDING.includes(fundingType as typeof VALID_FUNDING[number])) {
+      throw new Error('Invalid funding type')
+    }
+    fundingCoverage = asTrimmedString(body.fundingCoverage, 20)
+    if (fundingCoverage && !VALID_COVERAGE.includes(fundingCoverage as typeof VALID_COVERAGE[number])) {
+      throw new Error('Invalid funding coverage')
+    }
+    // Coverage only valid when funding is not self-funded
+    if (fundingCoverage && fundingType === 'self') {
+      fundingCoverage = null
+    }
+
+    recommend = asTrimmedString(body.recommend, 10)
+    if (recommend && !VALID_RECOMMEND.includes(recommend as typeof VALID_RECOMMEND[number])) {
+      throw new Error('Invalid recommend value')
+    }
+
+    pros = asTrimmedString(body.pros, LIMITS.pros.max)
+    cons = asTrimmedString(body.cons, LIMITS.cons.max)
+
+    // Tags: array of short strings
+    tags = []
+    if (body.tags !== null && body.tags !== undefined) {
+      if (!Array.isArray(body.tags)) throw new Error('tags must be an array')
+      if (body.tags.length > LIMITS.tags.max) throw new Error(`at most ${LIMITS.tags.max} tags`)
+      for (const t of body.tags) {
+        const trimmed = asTrimmedString(t, LIMITS.tagLen.max)
+        if (trimmed) tags.push(trimmed)
+      }
+    }
   } catch (err) {
     return jsonResponse(
       req,
@@ -461,6 +553,26 @@ async function handleSubmit(req: Request): Promise<Response> {
       program,
       degree_level: degreeLevel,
       media,
+      rating_academics: subscores.rating_academics ?? null,
+      rating_campus: subscores.rating_campus ?? null,
+      rating_accommodation: subscores.rating_accommodation ?? null,
+      rating_cost: subscores.rating_cost ?? null,
+      rating_intl_office: subscores.rating_intl_office ?? null,
+      rating_social: subscores.rating_social ?? null,
+      rating_extracurricular: subscores.rating_extracurricular ?? null,
+      rating_career: subscores.rating_career ?? null,
+      enrollment_status: enrollmentStatus,
+      start_year: startYear,
+      end_year: endYear,
+      language_of_instruction: languageOfInstruction,
+      tuition_range: tuitionRange,
+      living_cost_range: livingCostRange,
+      funding_type: fundingType,
+      funding_coverage: fundingCoverage,
+      recommend,
+      pros,
+      cons,
+      tags,
     })
     .select('id')
     .single()
