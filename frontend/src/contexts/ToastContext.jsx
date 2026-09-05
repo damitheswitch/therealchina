@@ -1,8 +1,10 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 
-const ToastContext = createContext({
-  showToast: () => {},
-})
+const ToastContext = createContext(
+  /** @type {{ showToast: (message: string, type?: string) => void }} */ ({
+    showToast: () => {},
+  })
+)
 
 export const useToast = () => {
   const context = useContext(ToastContext)

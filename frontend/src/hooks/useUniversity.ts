@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
 
-export const useUniversity = (slug: string) => {
+export const useUniversity = (slug: string | undefined) => {
   const [university, setUniversity] = useState<Tables<'universities'> | null>(null)
   const [loading, setLoading] = useState<boolean>(!!slug)
   const [error, setError] = useState<Error | null>(null)

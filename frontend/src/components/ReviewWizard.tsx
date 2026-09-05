@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmit'
 import { useUniversity } from '../hooks/useUniversity'
 import { StarInput } from './StarInput'
@@ -373,10 +374,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
 
   // Turnstile (anonymous)
   // The Turnstile widget ref exposes getResponsePromise and reset.
-  const reviewTurnstileRef = useRef<{
-    getResponsePromise: (timeout?: number, interval?: number) => Promise<string>
-    reset: () => void
-  } | null>(null)
+  const reviewTurnstileRef = useRef<TurnstileInstance | undefined>(undefined)
   const [reviewTurnstileReady, setReviewTurnstileReady] = useState(false)
 
   // Pre-fill university from ?uni=<slug>
@@ -402,7 +400,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
   const handleUniversitySelect = (
     option: { data?: { name?: string; slug?: string }; value?: string; key?: string } | null
   ) => {
-    const data = option?.data || option
+    const data = option?.data
     setSelectedUniName(data?.name || option?.value || '')
     setSelectedUni(data?.slug || option?.key || '')
     setShowNotListed(false)
@@ -587,7 +585,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       setShowStamp(true)
     } catch (error) {
       console.error('Error submitting review:', error)
-      showToast(error.message || 'Failed to submit review', 'error')
+      showToast(error instanceof Error ? error.message : 'Failed to submit review', 'error')
     } finally {
       setLoading(false)
     }

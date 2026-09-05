@@ -10,8 +10,9 @@ import { useEffect, useState } from 'react'
  * Brand-anchored: seal-red (#A6192E), antique gold (#C9A227), rice-paper
  * (#FAF6EF). Pure CSS — no external assets.
  *
- * @param {() => void} onComplete  Called once the animation finishes.
- * @param {number} duration         Total animation length in ms (default 1600).
+ * @param {Object} props
+ * @param {() => void} props.onComplete  Called once the animation finishes.
+ * @param {number} [props.duration]      Total animation length in ms (default 1600).
  */
 export const SealStampOverlay = ({ onComplete, duration = 2500 }) => {
   const [phase, setPhase] = useState('impact') // 'impact' | 'hold' | 'fade'
