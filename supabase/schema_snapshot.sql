@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 022_review_wizard_rich_data.sql.
+-- as of migration 023_end_year_after_start.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -73,7 +73,9 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   cons TEXT,
   tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT chk_reviews_end_after_start
+    CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (

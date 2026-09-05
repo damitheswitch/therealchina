@@ -440,6 +440,8 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       case 3: {
         if (!startYear)
           return 'When did you start? Future students need to know if your experience is still relevant.'
+        if (endYear && endYear < startYear)
+          return "Your end year can't be before your start year — double-check your dates."
         return null
       }
       case 4: {
@@ -539,19 +541,27 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
         tags: selectedTags.length > 0 ? selectedTags : undefined,
       })
 
-      // Update profile fields for logged-in users (step 5 data)
+      // Update profile fields for logged-in users (step 5 data). The review
+      // is already saved at this point — a profile failure must not surface
+      // as a submit error, or the user may resubmit and create a duplicate.
       if (user && (homeCountry || journeyStage || monthlyBudget || languagesSpoken)) {
-        const { supabase } = await import('../lib/supabaseClient')
-        await supabase
-          .from('profiles')
-          .update({
-            home_country: homeCountry || null,
-            journey_stage: journeyStage || null,
-            monthly_budget: monthlyBudget || null,
-            languages_spoken: languagesSpoken || null,
-            email_consent: emailConsent,
-          })
-          .eq('id', user.id)
+        try {
+          const { supabase } = await import('../lib/supabaseClient')
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              home_country: homeCountry || null,
+              journey_stage: journeyStage || null,
+              monthly_budget: monthlyBudget || null,
+              languages_spoken: languagesSpoken || null,
+              email_consent: emailConsent,
+            })
+            .eq('id', user.id)
+          if (profileError)
+            console.error('Profile update failed after review submit:', profileError)
+        } catch (profileErr) {
+          console.error('Profile update failed after review submit:', profileErr)
+        }
       }
 
       showToast('Review submitted! Thank you.', 'success')

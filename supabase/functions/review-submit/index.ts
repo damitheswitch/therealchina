@@ -467,6 +467,10 @@ async function handleSubmit(req: Request): Promise<Response> {
       endYear = null
     }
 
+    if (startYear !== null && endYear !== null && endYear < startYear) {
+      throw new Error('End year cannot be before start year')
+    }
+
     languageOfInstruction = asTrimmedString(body.languageOfInstruction, 60)
     tuitionRange = asTrimmedString(body.tuitionRange, 40)
     livingCostRange = asTrimmedString(body.livingCostRange, 40)
