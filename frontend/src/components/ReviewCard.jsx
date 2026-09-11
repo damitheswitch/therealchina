@@ -5,22 +5,12 @@ import { UpvoteButton } from './UpvoteButton'
 import { CommentSection } from './CommentSection'
 import { MediaGallery } from './MediaGallery'
 import { SealAvatar } from './SealAvatar'
+import { RecommendPill, ReviewContext, ReviewExtras } from './ReviewExtras'
 
 // ReviewCard component. The author profile is looked up and batched by the
 // parent page to avoid one profile query per card (N+1).
 export const ReviewCard = ({ review, author }) => {
-  const { id, rating, text, program, degree_level, media, created_at, user_id } = review
-
-  const tags = [program, degree_level].filter(Boolean)
-  const tagsHTML = tags.length > 0 && (
-    <div className="review-tags">
-      {tags.map((tag, i) => (
-        <span key={i} className="review-tag">
-          {tag}
-        </span>
-      ))}
-    </div>
-  )
+  const { id, rating, text, media, created_at, user_id, recommend } = review
 
   const date = new Date(created_at).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -33,6 +23,7 @@ export const ReviewCard = ({ review, author }) => {
       <div className="review-header">
         <StarRating rating={rating} />
         <div className="review-meta">
+          <RecommendPill value={recommend} />
           {user_id && <SealBadge />}
           <span>{date}</span>
         </div>
@@ -51,9 +42,10 @@ export const ReviewCard = ({ review, author }) => {
         </div>
       )}
 
+      <ReviewContext review={review} />
       <p className="review-text">{text}</p>
+      <ReviewExtras review={review} />
       {media && media.length > 0 && <MediaGallery media={media} />}
-      {tagsHTML}
       <UpvoteButton reviewId={id} />
       <CommentSection reviewId={id} />
     </div>

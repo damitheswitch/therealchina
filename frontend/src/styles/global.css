@@ -403,6 +403,10 @@ h3 {
 .stars .star-empty {
   color: var(--ink-line);
 }
+.stars-sm svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
 .stars-lg svg {
   width: 1.75rem;
   height: 1.75rem;
@@ -528,6 +532,95 @@ h3 {
   background: var(--rice-warm);
   color: var(--ink-soft);
   border: 1px solid var(--ink-line);
+}
+.review-context-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.review-context {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.review-facts {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+.review-recommend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+}
+.review-recommend.rec-yes {
+  background: var(--gold-tint);
+  color: var(--gold-dark);
+}
+.review-recommend.rec-maybe {
+  background: var(--rice-warm);
+  color: var(--ink-soft);
+}
+.review-recommend.rec-no {
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+}
+.review-proscons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+@media (max-width: 560px) {
+  .review-proscons {
+    grid-template-columns: 1fr;
+  }
+}
+.review-pc {
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  padding: 0.6rem 0.9rem;
+}
+.review-pc-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+.review-pc-label.pc-pros {
+  color: var(--success);
+}
+.review-pc-label.pc-cons {
+  color: var(--seal-red);
+}
+.review-pc-text {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.review-subscores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem var(--sp-3);
+}
+@media (max-width: 560px) {
+  .review-subscores {
+    grid-template-columns: 1fr;
+  }
+}
+.review-subscore {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.review-subscore-label {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
 }
 .review-promo {
   display: flex;

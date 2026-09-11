@@ -11,21 +11,11 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { socialPlatforms } from '../lib/socialPlatforms'
 import { getSocialHandles } from '../lib/socialHandles'
+import { RecommendPill, ReviewContext, ReviewExtras } from './ReviewExtras'
 
 // Simple review card for profile view (reused logic)
 const ProfileReviewCard = ({ review }) => {
-  const { id, rating, text, program, degree_level, media, created_at } = review
-
-  const tags = [program, degree_level].filter(Boolean)
-  const tagsHTML = tags.length > 0 && (
-    <div className="review-tags">
-      {tags.map((tag, i) => (
-        <span key={i} className="review-tag">
-          {tag}
-        </span>
-      ))}
-    </div>
-  )
+  const { id, rating, text, media, created_at, recommend } = review
 
   const date = new Date(created_at).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -38,13 +28,15 @@ const ProfileReviewCard = ({ review }) => {
       <div className="review-header">
         <StarRating rating={rating} />
         <div className="review-meta">
+          <RecommendPill value={recommend} />
           <SealBadge />
           <span>{date}</span>
         </div>
       </div>
+      <ReviewContext review={review} />
       <p className="review-text">{text}</p>
+      <ReviewExtras review={review} />
       {media && media.length > 0 && <MediaGallery media={media} />}
-      {tagsHTML}
       <UpvoteButton reviewId={id} />
       <CommentSection reviewId={id} />
     </div>
