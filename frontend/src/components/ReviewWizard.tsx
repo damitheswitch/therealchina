@@ -275,7 +275,14 @@ const LANGUAGES = [
   'Other',
 ]
 
-const MONTHLY_BUDGETS = ['Under ¥2k', '¥2k–¥4k', '¥4k–¥8k', '¥8k–¥15k', 'Over ¥15k']
+const CURRENT_STATUSES = [
+  { value: 'studying', label: 'Studying' },
+  { value: 'working', label: 'Working' },
+  { value: 'internship', label: 'Doing an internship' },
+  { value: 'job_hunting', label: 'Looking for work' },
+  { value: 'break', label: 'Taking a break' },
+  { value: 'other', label: 'Something else' },
+]
 const TUITION_RANGES = ['Under ¥20k', '¥20k–¥40k', '¥40k–¥80k', '¥80k–¥150k', 'Over ¥150k']
 const LIVING_COSTS = ['Under ¥2k', '¥2k–¥4k', '¥4k–¥8k', 'Over ¥8k']
 const DEGREE_LEVELS = [
@@ -362,9 +369,8 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
 
   // Step 5: About you
   const [homeCountry, setHomeCountry] = useState('')
-  const [journeyStage, setJourneyStage] = useState('')
-  const [monthlyBudget, setMonthlyBudget] = useState('')
-  const [languagesSpoken, setLanguagesSpoken] = useState('')
+  const [currentStatus, setCurrentStatus] = useState('')
+  const [languagesSpoken, setLanguagesSpoken] = useState<string[]>([])
   const [emailConsent, setEmailConsent] = useState(false)
 
   // Submit state
@@ -542,16 +548,15 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       // Update profile fields for logged-in users (step 5 data). The review
       // is already saved at this point — a profile failure must not surface
       // as a submit error, or the user may resubmit and create a duplicate.
-      if (user && (homeCountry || journeyStage || monthlyBudget || languagesSpoken)) {
+      if (user && (homeCountry || currentStatus || languagesSpoken.length > 0)) {
         try {
           const { supabase } = await import('../lib/supabaseClient')
           const { error: profileError } = await supabase
             .from('profiles')
             .update({
               home_country: homeCountry || null,
-              journey_stage: journeyStage || null,
-              monthly_budget: monthlyBudget || null,
-              languages_spoken: languagesSpoken || null,
+              current_status: currentStatus || null,
+              languages_spoken: languagesSpoken.length > 0 ? languagesSpoken : null,
               email_consent: emailConsent,
             })
             .eq('id', user.id)
@@ -1128,61 +1133,44 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
                 </select>
               </div>
               <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
-                <label className="form-label" htmlFor="journey-stage">
-                  Where are you in your journey?
+                <label className="form-label" htmlFor="current-status">
+                  What are you up to right now?
                 </label>
                 <select
-                  id="journey-stage"
+                  id="current-status"
                   className="form-select"
-                  value={journeyStage}
-                  onChange={(e) => setJourneyStage(e.target.value)}
+                  value={currentStatus}
+                  onChange={(e) => setCurrentStatus(e.target.value)}
                 >
                   <option value="">Prefer not to say</option>
-                  <option value="researching">Researching options</option>
-                  <option value="applying">Applying now</option>
-                  <option value="admitted">Admitted</option>
-                  <option value="enrolled">Currently studying</option>
-                  <option value="alumni">Alumni</option>
+                  {CURRENT_STATUSES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
-              <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
-                <label className="form-label" htmlFor="monthly-budget">
-                  Monthly living budget
-                </label>
-                <select
-                  id="monthly-budget"
-                  className="form-select"
-                  value={monthlyBudget}
-                  onChange={(e) => setMonthlyBudget(e.target.value)}
-                >
-                  <option value="">Prefer not to say</option>
-                  {MONTHLY_BUDGETS.map((b) => (
-                    <option key={b} value={b}>
-                      {b}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
-                <label className="form-label" htmlFor="languages">
-                  Languages you speak
-                </label>
-                <select
-                  id="languages"
-                  className="form-select"
-                  value={languagesSpoken}
-                  onChange={(e) => setLanguagesSpoken(e.target.value)}
-                >
-                  <option value="">Prefer not to say</option>
-                  {LANGUAGES.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
+            <div className="form-group">
+              <label className="form-label">
+                Languages you speak <span className="form-hint-inline">pick any</span>
+              </label>
+              <div className="chip-row">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l}
+                    type="button"
+                    className={`chip ${languagesSpoken.includes(l) ? 'selected' : ''}`}
+                    onClick={() =>
+                      setLanguagesSpoken((prev) =>
+                        prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
+                      )
+                    }
+                  >
+                    {l}
+                  </button>
+                ))}
               </div>
             </div>
 

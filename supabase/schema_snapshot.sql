@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 023_end_year_after_start.sql.
+-- as of migration 024_profile_context_updates.sql.
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -111,9 +111,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   is_discoverable BOOLEAN DEFAULT TRUE,
   onboarding_completed BOOLEAN DEFAULT FALSE,
   home_country TEXT,
-  journey_stage TEXT CHECK (journey_stage IS NULL OR journey_stage IN ('researching','applying','admitted','enrolled','alumni')),
+  current_status TEXT CHECK (current_status IS NULL OR current_status IN ('studying','working','internship','job_hunting','break','other')),
   monthly_budget TEXT,
-  languages_spoken TEXT,
+  languages_spoken TEXT[] DEFAULT '{}',
   email_consent BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

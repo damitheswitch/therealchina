@@ -155,14 +155,14 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          current_status: string | null
           display_name: string | null
           display_name_lower: string | null
           email_consent: boolean | null
           home_country: string | null
           id: string
           is_discoverable: boolean | null
-          journey_stage: string | null
-          languages_spoken: string | null
+          languages_spoken: string[] | null
           location: string | null
           monthly_budget: string | null
           onboarding_completed: boolean | null
@@ -178,14 +178,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          current_status?: string | null
           display_name?: string | null
           display_name_lower?: string | null
           email_consent?: boolean | null
           home_country?: string | null
           id: string
           is_discoverable?: boolean | null
-          journey_stage?: string | null
-          languages_spoken?: string | null
+          languages_spoken?: string[] | null
           location?: string | null
           monthly_budget?: string | null
           onboarding_completed?: boolean | null
@@ -201,14 +201,14 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          current_status?: string | null
           display_name?: string | null
           display_name_lower?: string | null
           email_consent?: boolean | null
           home_country?: string | null
           id?: string
           is_discoverable?: boolean | null
-          journey_stage?: string | null
-          languages_spoken?: string | null
+          languages_spoken?: string[] | null
           location?: string | null
           monthly_budget?: string | null
           onboarding_completed?: boolean | null

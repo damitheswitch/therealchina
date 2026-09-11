@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useState, useId } from 'react'
 import React from 'react'
 
 // StarInput component - interactive star rating input
 export const StarInput = ({ value, onChange }) => {
   const [hoverLabel, setHoverLabel] = useState('')
+  // Unique radio-group name per instance — a shared name would let the
+  // browser natively uncheck stars in other StarInputs on the same page.
+  const groupName = useId()
 
   const labels = {
     5: '5 Amazing',
@@ -34,7 +37,7 @@ export const StarInput = ({ value, onChange }) => {
             <input
               key={`input-${rating}`}
               type="radio"
-              name="rating"
+              name={groupName}
               value={rating}
               checked={value === rating}
               onChange={() => handleClick(rating)}
