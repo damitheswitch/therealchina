@@ -64,6 +64,10 @@ const profileRow = (display_name: string): Profile => ({
   show_social_handle: true,
   is_discoverable: true,
   onboarding_completed: true,
+  home_country: null,
+  current_status: null,
+  languages_spoken: null,
+  email_consent: null,
 })
 
 // Captures the live ProfileContext value (incl. refetch) from the same provider

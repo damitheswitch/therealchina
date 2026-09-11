@@ -15,6 +15,10 @@ export type Profile = Pick<
   | 'show_social_handle'
   | 'is_discoverable'
   | 'onboarding_completed'
+  | 'home_country'
+  | 'current_status'
+  | 'languages_spoken'
+  | 'email_consent'
 >
 
 export const useProfile = (
@@ -51,7 +55,7 @@ export const useProfile = (
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select(
-          'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed'
+          'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
         )
         .eq('id', userId)
         .single()
@@ -62,7 +66,7 @@ export const useProfile = (
         const { data: retryData, error: retryError } = await supabase
           .from('profiles')
           .select(
-            'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed'
+            'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
           )
           .eq('id', userId)
           .single()
