@@ -5,7 +5,21 @@ import { Icons } from './Icons'
 
 // UniversityCard component
 export const UniversityCard = ({ university }) => {
-  const { name, name_zh, city, slug, logo_url, avg_rating, review_count, is_verified } = university
+  const {
+    name,
+    name_zh,
+    city,
+    slug,
+    logo_url,
+    avg_rating,
+    review_count,
+    is_verified,
+    recommendYesPct,
+    recommendAnswered,
+  } = university
+
+  // Hidden below 2 answers — a lone "yes" rendering as "👍 100%" is noise.
+  const recTier = recommendYesPct >= 60 ? 'rec-yes' : recommendYesPct >= 40 ? 'rec-maybe' : 'rec-no'
 
   const ratingDisplay =
     review_count > 0 ? (
@@ -36,6 +50,14 @@ export const UniversityCard = ({ university }) => {
           {review_count > 0 && (
             <span className="text-xs muted">
               {review_count} review{review_count !== 1 ? 's' : ''}
+            </span>
+          )}
+          {recommendAnswered >= 2 && (
+            <span
+              className={`review-recommend ${recTier}`}
+              title={`Based on ${recommendAnswered} responses`}
+            >
+              👍 {recommendYesPct}%
             </span>
           )}
         </div>

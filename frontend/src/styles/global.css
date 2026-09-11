@@ -156,6 +156,17 @@ h3 {
 .text-xs {
   font-size: 0.75rem;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ===== Buttons ===== */
 .btn {
@@ -1538,6 +1549,175 @@ h3 {
 .rating-info .count {
   font-size: 0.85rem;
   color: var(--ink-faint);
+}
+
+/* ===== University Review Summary ===== */
+.uni-summary {
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-3);
+}
+.uni-summary-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  margin-bottom: var(--sp-2);
+}
+.uni-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr;
+  gap: var(--sp-3);
+}
+.sum-col-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-bottom: 0.6rem;
+}
+.sum-note {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+.hist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.hist-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.hist-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  min-width: 2rem;
+}
+.hist-label svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  color: var(--gold);
+}
+.hist-track {
+  flex: 1;
+  height: 0.5rem;
+  background: var(--rice-warm);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.hist-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  border-radius: var(--r-full);
+}
+.hist-count {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  min-width: 1.5rem;
+  text-align: right;
+}
+.rec-bar {
+  display: flex;
+  height: 0.6rem;
+  border-radius: var(--r-full);
+  overflow: hidden;
+  background: var(--rice-warm);
+  margin-bottom: 0.6rem;
+}
+.rec-seg.rec-yes {
+  background: var(--gold);
+}
+.rec-seg.rec-maybe {
+  background: var(--ink-line);
+}
+.rec-seg.rec-no {
+  background: var(--seal-red-light);
+}
+.rec-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+.cat-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+}
+.cat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.cat-label {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+.cat-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.cat-avg {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.cat-n {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.uni-summary-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--ink-line);
+}
+.uni-summary-footer .chip {
+  cursor: default;
+}
+.uni-summary-footer .chip:hover {
+  border-color: var(--ink-line);
+  color: var(--ink-soft);
+}
+.early-note {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  margin-top: var(--sp-2);
+}
+.early-note svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+@media (max-width: 768px) {
+  .uni-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .cat-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .cat-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ===== Section ===== */
