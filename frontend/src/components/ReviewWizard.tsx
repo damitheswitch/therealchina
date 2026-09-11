@@ -251,28 +251,107 @@ const COUNTRIES: string[] = [
 ]
 
 const LANGUAGES = [
-  'English',
-  'Mandarin Chinese',
-  'English + Mandarin',
-  'English + another language',
-  'Mandarin + another language',
-  'French',
-  'Spanish',
+  'Afrikaans',
+  'Albanian',
+  'Amharic',
   'Arabic',
-  'Russian',
-  'Portuguese',
-  'Hindi / Urdu',
+  'Armenian',
+  'Azerbaijani',
+  'Basque',
+  'Belarusian',
   'Bengali',
-  'Indonesian',
-  'Thai',
-  'Vietnamese',
-  'Korean',
-  'Japanese',
-  'Turkish',
-  'Persian / Farsi',
+  'Bosnian',
+  'Bulgarian',
+  'Burmese',
+  'Cantonese',
+  'Catalan',
+  'Cebuano',
+  'Chichewa',
+  'Croatian',
+  'Czech',
+  'Danish',
+  'Dutch',
+  'English',
+  'Esperanto',
+  'Estonian',
+  'Filipino / Tagalog',
+  'Finnish',
+  'French',
+  'Galician',
+  'Georgian',
+  'German',
+  'Greek',
+  'Gujarati',
+  'Haitian Creole',
   'Hausa',
+  'Hebrew',
+  'Hindi',
+  'Hungarian',
+  'Icelandic',
+  'Igbo',
+  'Indonesian',
+  'Irish',
+  'Italian',
+  'Japanese',
+  'Javanese',
+  'Kannada',
+  'Kazakh',
+  'Khmer',
+  'Kinyarwanda',
+  'Korean',
+  'Kurdish',
+  'Kyrgyz',
+  'Lao',
+  'Latin',
+  'Latvian',
+  'Lithuanian',
+  'Macedonian',
+  'Malagasy',
+  'Malay',
+  'Malayalam',
+  'Maltese',
+  'Mandarin Chinese',
+  'Marathi',
+  'Mongolian',
+  'Nepali',
+  'Norwegian',
+  'Odia',
+  'Pashto',
+  'Persian / Farsi',
+  'Polish',
+  'Portuguese',
+  'Punjabi',
+  'Romanian',
+  'Russian',
+  'Serbian',
+  'Shona',
+  'Sindhi',
+  'Sinhala',
+  'Slovak',
+  'Slovenian',
+  'Somali',
+  'Spanish',
+  'Sundanese',
   'Swahili',
-  'Other',
+  'Swedish',
+  'Tajik',
+  'Tamil',
+  'Tatar',
+  'Telugu',
+  'Thai',
+  'Turkish',
+  'Turkmen',
+  'Ukrainian',
+  'Urdu',
+  'Uyghur',
+  'Uzbek',
+  'Vietnamese',
+  'Welsh',
+  'Wolof',
+  'Xhosa',
+  'Yiddish',
+  'Yoruba',
+  'Zulu',
 ]
 
 const CURRENT_STATUSES = [
@@ -437,6 +516,8 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
           return "Which university? Other students can't find your review without it."
         if (showNotListed && (!newUniName.trim() || !newUniCity.trim()))
           return 'Please enter the university name and city.'
+        if (!program.trim())
+          return "What's your program? Students searching for your major won't find this review without it."
         if (!rating) return "Pick a star rating. It's the first thing every student looks at."
         if (!recommend) return 'Would you recommend this university? It helps everyone.'
         return null
@@ -451,8 +532,6 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       case 4: {
         if (reviewText.trim().length < 10)
           return 'Your story matters. Write at least a sentence so others know what to expect.'
-        if (!program.trim())
-          return "What's your program? Students searching for your major won't find this review without it."
         if (mediaState.uploading) return 'Please wait for your media to finish uploading.'
         if (mediaState.errorCount > 0) return 'Please retry or remove failed media attachments.'
         return null
@@ -688,6 +767,19 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
                 </div>
               </div>
             )}
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="program">
+                Program <span className="req-dot">*</span>
+              </label>
+              <ProgramAutocomplete
+                id="program"
+                placeholder="e.g. Computer Science"
+                value={program}
+                onChange={setProgram}
+              />
+              <span className="form-hint">Your major / program name.</span>
+            </div>
 
             <div className="form-group">
               <label className="form-label">
@@ -1075,19 +1167,6 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
               <MediaUploader onStateChange={setMediaState} disabled={loading} />
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="program">
-                Program <span className="req-dot">*</span>
-              </label>
-              <ProgramAutocomplete
-                id="program"
-                placeholder="e.g. Computer Science"
-                value={program}
-                onChange={setProgram}
-              />
-              <span className="form-hint">Your major / program name.</span>
-            </div>
-
             <div className="wizard-nav">
               <button type="button" className="btn btn-ghost" onClick={goBack}>
                 ← Back
@@ -1153,25 +1232,42 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
             </div>
 
             <div className="form-group">
-              <label className="form-label">
-                Languages you speak <span className="form-hint-inline">pick any</span>
+              <label className="form-label" htmlFor="languages">
+                Languages you speak{' '}
+                <span className="form-hint-inline">add as many as you like</span>
               </label>
-              <div className="chip-row">
-                {LANGUAGES.map((l) => (
-                  <button
-                    key={l}
-                    type="button"
-                    className={`chip ${languagesSpoken.includes(l) ? 'selected' : ''}`}
-                    onClick={() =>
-                      setLanguagesSpoken((prev) =>
-                        prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
-                      )
-                    }
-                  >
+              <select
+                id="languages"
+                className="form-select"
+                value=""
+                onChange={(e) => {
+                  const lang = e.target.value
+                  if (lang && !languagesSpoken.includes(lang))
+                    setLanguagesSpoken((prev) => [...prev, lang])
+                }}
+              >
+                <option value="">Select a language...</option>
+                {LANGUAGES.filter((l) => !languagesSpoken.includes(l)).map((l) => (
+                  <option key={l} value={l}>
                     {l}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
+              {languagesSpoken.length > 0 && (
+                <div className="chip-row" style={{ marginTop: '.5rem' }}>
+                  {languagesSpoken.map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      className="chip selected"
+                      title="Remove"
+                      onClick={() => setLanguagesSpoken((prev) => prev.filter((x) => x !== l))}
+                    >
+                      {l} ✕
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="form-group">
