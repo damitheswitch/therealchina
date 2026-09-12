@@ -123,7 +123,7 @@ describe('formatEnrollmentLabel', () => {
   it('uses the singular form for count 1 and plural otherwise', () => {
     expect(formatEnrollmentLabel('current', 1)).toBe('1 current student')
     expect(formatEnrollmentLabel('current', 3)).toBe('3 current students')
-    expect(formatEnrollmentLabel('alumni', 1)).toBe('1 alumni')
+    expect(formatEnrollmentLabel('alumni', 1)).toBe('1 alum')
     expect(formatEnrollmentLabel('alumni', 2)).toBe('2 alumni')
     expect(formatEnrollmentLabel('exchange', 1)).toBe('1 exchange student')
     expect(formatEnrollmentLabel('exchange', 4)).toBe('4 exchange students')
@@ -143,7 +143,7 @@ describe('formatReviewerMix', () => {
         { status: 'current', count: 3 },
         { status: 'alumni', count: 1 },
       ])
-    ).toBe('3 current students · 1 alumni')
+    ).toBe('3 current students · 1 alum')
   })
 
   it('is empty when nothing is known', () => {

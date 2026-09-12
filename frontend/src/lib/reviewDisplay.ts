@@ -66,10 +66,10 @@ export const ENROLLMENT_LABELS: Record<string, string> = {
 }
 
 // Lowercase, count-aware variants for mid-sentence use (e.g. the reviewer-mix
-// footer line reads "3 current students · 1 alumni", not "3 Current students").
+// footer line reads "3 current students · 1 alum", not "3 Current students").
 const ENROLLMENT_SINGULAR: Record<string, string> = {
   current: 'current student',
-  alumni: 'alumni',
+  alumni: 'alum',
   exchange: 'exchange student',
   applicant: 'applicant',
 }

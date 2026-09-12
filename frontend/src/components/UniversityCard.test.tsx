@@ -52,17 +52,22 @@ describe('UniversityCard recommend pill', () => {
   it('renders with the yes tier and a response-count title at >=2 answers', () => {
     const { container } = renderCard(uni({ recommendYesPct: 75, recommendAnswered: 4 }))
     const pill = container.querySelector('.review-recommend')
-    expect(pill?.textContent).toBe('👍 75%')
+    expect(pill).toHaveTextContent('👍 75%')
     expect(pill).toHaveClass('rec-yes')
     expect(pill).toHaveAttribute('title', 'Based on 4 responses')
+    // sr-only context for screen readers / keyboard users
+    expect(pill).toHaveTextContent('of 4 reviewers recommend')
   })
 
-  it('uses rec-maybe for 40–59% and rec-no below 40%', () => {
-    const { container, unmount } = renderCard(uni({ recommendYesPct: 50, recommendAnswered: 2 }))
-    expect(container.querySelector('.review-recommend')).toHaveClass('rec-maybe')
-    unmount()
-
-    const { container: c2 } = renderCard(uni({ recommendYesPct: 0, recommendAnswered: 3 }))
-    expect(c2.querySelector('.review-recommend')).toHaveClass('rec-no')
+  it.each([
+    [60, 'rec-yes', '👍'],
+    [40, 'rec-maybe', '🤔'],
+    [39, 'rec-no', '👎'],
+    [0, 'rec-no', '👎'],
+  ])('pins tier boundary %i%% -> %s', (pct, tier, emoji) => {
+    const { container } = renderCard(uni({ recommendYesPct: pct, recommendAnswered: 5 }))
+    const pill = container.querySelector('.review-recommend')
+    expect(pill).toHaveClass(tier)
+    expect(pill).toHaveTextContent(`${emoji} ${pct}%`)
   })
 })

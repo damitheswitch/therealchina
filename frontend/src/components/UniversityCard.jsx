@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { Icons } from './Icons'
+import { getRecommendMeta } from '../lib/reviewDisplay'
 
 // UniversityCard component
 export const UniversityCard = ({ university }) => {
@@ -19,7 +20,10 @@ export const UniversityCard = ({ university }) => {
   } = university
 
   // Hidden below 2 answers — a lone "yes" rendering as "👍 100%" is noise.
-  const recTier = recommendYesPct >= 60 ? 'rec-yes' : recommendYesPct >= 40 ? 'rec-maybe' : 'rec-no'
+  const recTier =
+    (recommendYesPct ?? 0) >= 60 ? 'rec-yes' : (recommendYesPct ?? 0) >= 40 ? 'rec-maybe' : 'rec-no'
+  // Emoji follows the tier so "0% recommend" doesn't carry a thumbs-up.
+  const recEmoji = getRecommendMeta(recTier.replace('rec-', ''))?.emoji ?? '👍'
 
   const ratingDisplay =
     review_count > 0 ? (
@@ -55,7 +59,11 @@ export const UniversityCard = ({ university }) => {
               className={`review-recommend ${recTier}`}
               title={`Based on ${recommendAnswered} responses`}
             >
-              👍 {recommendYesPct}%
+              <span aria-hidden="true">{recEmoji}</span> {recommendYesPct}%
+              <span className="sr-only">
+                {' '}
+                of {recommendAnswered} reviewers recommend this university
+              </span>
             </span>
           )}
         </div>

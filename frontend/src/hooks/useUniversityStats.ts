@@ -22,9 +22,7 @@ export const useUniversityStats = (universityId: string) => {
       try {
         const { data, error: fetchError } = await supabase
           .from('university_stats')
-          .select(
-            'avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count'
-          )
+          .select('avg_rating, review_count, has_verified_review')
           .eq('university_id', universityId)
           .abortSignal(controller.signal)
           .single()

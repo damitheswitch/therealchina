@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { ReviewSummary } from './ReviewSummary'
 import { buildReviewSummary } from '../lib/reviewSummary'
 import type { ReviewDisplayData } from '../lib/reviewDisplay'
@@ -71,6 +71,19 @@ describe('ReviewSummary', () => {
     expect(livingSegs[3].classList.contains('filled')).toBe(false)
     expect(screen.getByText('¥4k–¥8k/mo')).toBeInTheDocument()
     expect(screen.getByText('¥20k–¥40k/yr')).toBeInTheDocument()
+  })
+
+  it('renders the cost text without a highlighted segment for unknown buckets', () => {
+    const summary = buildReviewSummary([
+      review({ living_cost_range: 'Something custom', tuition_range: '¥20k–¥40k' }),
+    ])
+    const { container } = render(<ReviewSummary summary={summary} />)
+    const livingRow = container.querySelector('.cost-row')
+    expect(livingRow).not.toBeNull()
+    expect(within(livingRow as HTMLElement).getByText('Something custom/mo')).toBeInTheDocument()
+    expect(livingRow?.querySelector('.cost-seg.on')).toBeNull()
+    // The known-bucket tuition row still highlights its segment.
+    expect(container.querySelectorAll('.cost-seg.on')).toHaveLength(1)
   })
 
   it('shows "No recommendation data yet" when nobody answered recommend', () => {

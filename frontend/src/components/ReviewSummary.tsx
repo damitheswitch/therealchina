@@ -62,7 +62,11 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
           <h3 className="sum-col-title">Rating breakdown</h3>
           <div className="hist-list">
             {ratingDist.map(({ stars, count }) => (
-              <div key={stars} className="hist-row">
+              <div
+                key={stars}
+                className="hist-row"
+                aria-label={`${stars} star${stars === 1 ? '' : 's'}: ${count} review${count === 1 ? '' : 's'}`}
+              >
                 <span className="hist-label">
                   {stars} <Icons.Star />
                 </span>
@@ -96,7 +100,7 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
                 )}
               </div>
               <div className="rec-legend">
-                {RECOMMEND_KEYS.map((k) => {
+                {RECOMMEND_KEYS.filter((k) => recommend[k] > 0).map((k) => {
                   const meta = getRecommendMeta(k)
                   return (
                     <span key={k} className={`review-recommend rec-${k}`}>
@@ -123,7 +127,14 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
                   <span className="cat-val">
                     <StarRating rating={s.avg} sizeClass="stars-sm" />
                     <span className="cat-avg">{s.avg.toFixed(1)}</span>
-                    {s.count < reviewCount && <span className="cat-n">({s.count})</span>}
+                    {s.count < reviewCount && (
+                      <span
+                        className="cat-n"
+                        title={`${s.count} reviewer${s.count === 1 ? '' : 's'} rated this`}
+                      >
+                        ({s.count})
+                      </span>
+                    )}
                   </span>
                 </div>
               ))}
@@ -166,7 +177,8 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
 
       {reviewCount <= 4 && (
         <p className="early-note">
-          <Icons.Info /> Early data — based on the first few reviews
+          <Icons.Info /> Early data — based on {reviewCount} review{reviewCount === 1 ? '' : 's'} so
+          far
         </p>
       )}
     </section>
