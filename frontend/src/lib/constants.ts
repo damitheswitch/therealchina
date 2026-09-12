@@ -300,3 +300,16 @@ export const CURRENT_STATUSES: { value: string; label: string }[] = [
   { value: 'break', label: 'Taking a break' },
   { value: 'other', label: 'Something else' },
 ]
+
+// Review wizard cost buckets, ordered cheap → expensive. These strings are
+// stored verbatim on reviews.tuition_range / reviews.living_cost_range, and
+// the summary cost scale maps a stored value back to its index here.
+export const TUITION_RANGES: string[] = [
+  'Under ¥20k',
+  '¥20k–¥40k',
+  '¥40k–¥80k',
+  '¥80k–¥150k',
+  'Over ¥150k',
+]
+
+export const LIVING_COSTS: string[] = ['Under ¥2k', '¥2k–¥4k', '¥4k–¥8k', 'Over ¥8k']

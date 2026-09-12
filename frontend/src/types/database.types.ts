@@ -384,6 +384,9 @@ export type Database = {
         Row: {
           avg_rating: number
           has_verified_review: boolean
+          recommend_maybe_count: number
+          recommend_no_count: number
+          recommend_yes_count: number
           review_count: number
           university_id: string
           updated_at: string | null
@@ -391,6 +394,9 @@ export type Database = {
         Insert: {
           avg_rating?: number
           has_verified_review?: boolean
+          recommend_maybe_count?: number
+          recommend_no_count?: number
+          recommend_yes_count?: number
           review_count?: number
           university_id: string
           updated_at?: string | null
@@ -398,6 +404,9 @@ export type Database = {
         Update: {
           avg_rating?: number
           has_verified_review?: boolean
+          recommend_maybe_count?: number
+          recommend_no_count?: number
+          recommend_yes_count?: number
           review_count?: number
           university_id?: string
           updated_at?: string | null

@@ -45,8 +45,9 @@ export interface SubScore {
 }
 
 // Display labels for the eight optional sub-scores (shorter than the wizard
-// labels so they fit a compact two-column grid).
-const SUBSCORE_FIELDS: { key: SubScoreKey; label: string }[] = [
+// labels so they fit a compact two-column grid). Exported so aggregate views
+// (reviewSummary) iterate the same fields in the same order.
+export const SUBSCORE_FIELDS: { key: SubScoreKey; label: string }[] = [
   { key: 'rating_academics', label: 'Academics' },
   { key: 'rating_campus', label: 'Campus' },
   { key: 'rating_accommodation', label: 'Accommodation' },
@@ -57,11 +58,27 @@ const SUBSCORE_FIELDS: { key: SubScoreKey; label: string }[] = [
   { key: 'rating_career', label: 'Career support' },
 ]
 
-const ENROLLMENT_LABELS: Record<string, string> = {
+export const ENROLLMENT_LABELS: Record<string, string> = {
   current: 'Current student',
   alumni: 'Alumni',
   exchange: 'Exchange',
   applicant: 'Applicant',
+}
+
+// Lowercase, count-aware variants for mid-sentence use (e.g. the reviewer-mix
+// footer line reads "3 current students · 1 alum", not "3 Current students").
+const ENROLLMENT_SINGULAR: Record<string, string> = {
+  current: 'current student',
+  alumni: 'alum',
+  exchange: 'exchange student',
+  applicant: 'applicant',
+}
+
+const ENROLLMENT_PLURAL: Record<string, string> = {
+  current: 'current students',
+  alumni: 'alumni',
+  exchange: 'exchange students',
+  applicant: 'applicants',
 }
 
 const FUNDING_LABELS: Record<string, string> = {
@@ -124,3 +141,16 @@ export const buildFactItems = (review: ReviewDisplayData): string[] => {
 
 export const getRecommendMeta = (value: string | null | undefined) =>
   value ? (RECOMMEND_META[value] ?? null) : null
+
+// "1 current student" / "3 alumni". Unknown statuses fall back to the raw
+// string so new wizard options still render something sensible.
+export const formatEnrollmentLabel = (status: string, count: number): string => {
+  const word =
+    count === 1 ? (ENROLLMENT_SINGULAR[status] ?? status) : (ENROLLMENT_PLURAL[status] ?? status)
+  return `${count} ${word}`
+}
+
+// Summary footer line, e.g. "3 current students · 1 alumni". Costs are
+// rendered as a separate stepped scale — this formats enrollment only.
+export const formatReviewerMix = (enrollment: { status: string; count: number }[]): string =>
+  enrollment.map(({ status, count }) => formatEnrollmentLabel(status, count)).join(' · ')

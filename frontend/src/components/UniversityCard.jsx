@@ -2,16 +2,37 @@ import { Link } from 'react-router-dom'
 import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { Icons } from './Icons'
+import { getRecommendMeta } from '../lib/reviewDisplay'
 
 // UniversityCard component
 export const UniversityCard = ({ university }) => {
-  const { name, name_zh, city, slug, logo_url, avg_rating, review_count, is_verified } = university
+  const {
+    name,
+    name_zh,
+    city,
+    slug,
+    logo_url,
+    avg_rating,
+    review_count,
+    is_verified,
+    recommendYesPct,
+    recommendAnswered,
+  } = university
+
+  // Hidden below 2 answers — a lone "yes" rendering as "👍 100%" is noise.
+  const recTier =
+    (recommendYesPct ?? 0) >= 60 ? 'rec-yes' : (recommendYesPct ?? 0) >= 40 ? 'rec-maybe' : 'rec-no'
+  // Emoji follows the tier so "0% recommend" doesn't carry a thumbs-up.
+  const recEmoji = getRecommendMeta(recTier.replace('rec-', ''))?.emoji ?? '👍'
 
   const ratingDisplay =
     review_count > 0 ? (
       <div className="uni-card-rating">
         <StarRating rating={avg_rating} />
         <span className="num">{avg_rating?.toFixed(1) || '0.0'}</span>
+        <span className="uni-card-count">
+          {review_count} review{review_count !== 1 ? 's' : ''}
+        </span>
       </div>
     ) : (
       <span className="uni-card-no-reviews">No reviews yet</span>
@@ -33,9 +54,16 @@ export const UniversityCard = ({ university }) => {
         </div>
         <div className="uni-card-meta">
           {ratingDisplay}
-          {review_count > 0 && (
-            <span className="text-xs muted">
-              {review_count} review{review_count !== 1 ? 's' : ''}
+          {recommendAnswered >= 2 && (
+            <span
+              className={`review-recommend ${recTier}`}
+              title={`Based on ${recommendAnswered} responses`}
+            >
+              <span aria-hidden="true">{recEmoji}</span> {recommendYesPct}%
+              <span className="sr-only">
+                {' '}
+                of {recommendAnswered} reviewers recommend this university
+              </span>
             </span>
           )}
         </div>

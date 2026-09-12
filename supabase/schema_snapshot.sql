@@ -1,7 +1,8 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 024_profile_context_updates.sql.
+-- as of migration 025_university_stats_recommend.sql
+-- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -137,6 +138,9 @@ CREATE TABLE IF NOT EXISTS public.university_stats (
   review_count BIGINT NOT NULL DEFAULT 0,
   avg_rating NUMERIC(3,2) NOT NULL DEFAULT 0,
   has_verified_review BOOLEAN NOT NULL DEFAULT FALSE,
+  recommend_yes_count BIGINT NOT NULL DEFAULT 0,
+  recommend_maybe_count BIGINT NOT NULL DEFAULT 0,
+  recommend_no_count BIGINT NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -344,6 +348,9 @@ BEGIN
     review_count,
     avg_rating,
     has_verified_review,
+    recommend_yes_count,
+    recommend_maybe_count,
+    recommend_no_count,
     updated_at
   )
   SELECT
@@ -351,6 +358,9 @@ BEGIN
     COUNT(*)::BIGINT,
     COALESCE(AVG(r.rating), 0)::NUMERIC(3,2),
     COALESCE(BOOL_OR(r.user_id IS NOT NULL), FALSE),
+    COUNT(*) FILTER (WHERE r.recommend = 'yes'),
+    COUNT(*) FILTER (WHERE r.recommend = 'maybe'),
+    COUNT(*) FILTER (WHERE r.recommend = 'no'),
     NOW()
   FROM public.reviews AS r
   WHERE r.university_id = p_university_id
@@ -358,6 +368,9 @@ BEGIN
     review_count = EXCLUDED.review_count,
     avg_rating = EXCLUDED.avg_rating,
     has_verified_review = EXCLUDED.has_verified_review,
+    recommend_yes_count = EXCLUDED.recommend_yes_count,
+    recommend_maybe_count = EXCLUDED.recommend_maybe_count,
+    recommend_no_count = EXCLUDED.recommend_no_count,
     updated_at = EXCLUDED.updated_at;
 END;
 $$;

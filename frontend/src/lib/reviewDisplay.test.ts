@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   buildContextLine,
   buildFactItems,
+  formatEnrollmentLabel,
+  formatReviewerMix,
   getRecommendMeta,
   getSubScores,
   type ReviewDisplayData,
@@ -114,5 +116,38 @@ describe('getRecommendMeta', () => {
     expect(getRecommendMeta('yes')?.label).toBe('Recommends')
     expect(getRecommendMeta('maybe')?.label).toBe('Neutral')
     expect(getRecommendMeta('no')?.label).toBe("Doesn't recommend")
+  })
+})
+
+describe('formatEnrollmentLabel', () => {
+  it('uses the singular form for count 1 and plural otherwise', () => {
+    expect(formatEnrollmentLabel('current', 1)).toBe('1 current student')
+    expect(formatEnrollmentLabel('current', 3)).toBe('3 current students')
+    expect(formatEnrollmentLabel('alumni', 1)).toBe('1 alum')
+    expect(formatEnrollmentLabel('alumni', 2)).toBe('2 alumni')
+    expect(formatEnrollmentLabel('exchange', 1)).toBe('1 exchange student')
+    expect(formatEnrollmentLabel('exchange', 4)).toBe('4 exchange students')
+    expect(formatEnrollmentLabel('applicant', 2)).toBe('2 applicants')
+  })
+
+  it('falls back to the raw status for unknown values', () => {
+    expect(formatEnrollmentLabel('weird', 1)).toBe('1 weird')
+    expect(formatEnrollmentLabel('weird', 5)).toBe('5 weird')
+  })
+})
+
+describe('formatReviewerMix', () => {
+  it('joins enrollment parts in order', () => {
+    expect(
+      formatReviewerMix([
+        { status: 'current', count: 3 },
+        { status: 'alumni', count: 1 },
+      ])
+    ).toBe('3 current students · 1 alum')
+  })
+
+  it('is empty when nothing is known', () => {
+    expect(formatReviewerMix([])).toBe('')
+    expect(formatReviewerMix([{ status: 'exchange', count: 2 }])).toBe('2 exchange students')
   })
 })
