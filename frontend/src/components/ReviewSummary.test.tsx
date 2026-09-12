@@ -40,7 +40,7 @@ describe('ReviewSummary', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('shows histogram counts and switches to "who answered" with legacy NULLs', () => {
+  it('shows histogram counts and percentages over answered only', () => {
     const summary = buildReviewSummary([
       review({ rating: 5, recommend: 'yes' }),
       review({ rating: 5, recommend: 'yes' }),
@@ -51,20 +51,8 @@ describe('ReviewSummary', () => {
 
     const counts = [...container.querySelectorAll('.hist-count')].map((el) => el.textContent)
     expect(counts).toEqual(['2', '0', '1', '0', '1'])
-    expect(screen.getByText(/of 2 who answered/)).toBeInTheDocument()
-  })
-
-  it('uses the "reviewers" denominator when every review answered', () => {
-    const summary = buildReviewSummary([
-      review({ recommend: 'yes' }),
-      review({ recommend: 'yes' }),
-      review({ recommend: 'no' }),
-      review({ recommend: 'yes' }),
-      review({ recommend: 'maybe' }),
-    ])
-    render(<ReviewSummary summary={summary} />)
-    expect(screen.getByText(/of 5 reviewers/)).toBeInTheDocument()
-    expect(screen.queryByText(/who answered/)).not.toBeInTheDocument()
+    // Both answered "yes" → 100%; the two legacy NULLs are excluded.
+    expect(screen.getByText('100%')).toBeInTheDocument()
   })
 
   it('shows "No recommendation data yet" when nobody answered recommend', () => {

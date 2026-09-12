@@ -69,10 +69,6 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
                   )
                 })}
               </div>
-              <p className="sum-note">
-                of {recommend.answered}{' '}
-                {recommend.answered < reviewCount ? 'who answered' : 'reviewers'}
-              </p>
             </>
           )}
         </div>
