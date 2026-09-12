@@ -55,6 +55,24 @@ describe('ReviewSummary', () => {
     expect(screen.getByText('100%')).toBeInTheDocument()
   })
 
+  it('marks the reported cost bucket on the stepped scale', () => {
+    const summary = buildReviewSummary([
+      review({ living_cost_range: '¥4k–¥8k', tuition_range: '¥20k–¥40k' }),
+      review({ living_cost_range: '¥4k–¥8k' }),
+    ])
+    const { container } = render(<ReviewSummary summary={summary} />)
+
+    const rows = container.querySelectorAll('.cost-row')
+    expect(rows.length).toBe(2)
+    const livingSegs = rows[0].querySelectorAll('.cost-seg')
+    expect(livingSegs.length).toBe(4) // 4 living-cost buckets
+    expect(livingSegs[2].classList.contains('on')).toBe(true) // '¥4k–¥8k' is index 2
+    expect(livingSegs[0].classList.contains('filled')).toBe(true)
+    expect(livingSegs[3].classList.contains('filled')).toBe(false)
+    expect(screen.getByText('¥4k–¥8k/mo')).toBeInTheDocument()
+    expect(screen.getByText('¥20k–¥40k/yr')).toBeInTheDocument()
+  })
+
   it('shows "No recommendation data yet" when nobody answered recommend', () => {
     render(<ReviewSummary summary={buildReviewSummary([review({}), review({})])} />)
     expect(screen.getByText('No recommendation data yet')).toBeInTheDocument()

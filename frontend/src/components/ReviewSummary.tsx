@@ -1,9 +1,46 @@
 import { Icons } from './Icons'
 import { StarRating } from './StarRating'
 import { formatReviewerMix, getRecommendMeta } from '../lib/reviewDisplay'
+import { TUITION_RANGES, LIVING_COSTS } from '../lib/constants'
 import type { ReviewSummary as ReviewSummaryData } from '../lib/reviewSummary'
 
 const RECOMMEND_KEYS = ['yes', 'maybe', 'no'] as const
+
+// Stepped cost scale: one segment per wizard bucket, cheap → expensive.
+// Segments up to the reported bucket get a light fill and the reported
+// bucket itself gets the solid mark — reads as a position without the
+// false precision of a dot on a continuous gradient. Decorative; the
+// range text carries the actual value.
+const CostScale = ({
+  label,
+  buckets,
+  value,
+  suffix,
+}: {
+  label: string
+  buckets: string[]
+  value: string
+  suffix: string
+}) => {
+  const idx = buckets.indexOf(value)
+  return (
+    <div className="cost-row">
+      <span className="cost-label">{label}</span>
+      <span className="cost-scale" aria-hidden="true">
+        {buckets.map((b, i) => (
+          <span
+            key={b}
+            className={`cost-seg${i < idx ? ' filled' : ''}${i === idx ? ' on' : ''}`}
+          />
+        ))}
+      </span>
+      <span className="cost-val">
+        {value}
+        {suffix}
+      </span>
+    </div>
+  )
+}
 
 // Aggregate "student verdict" card shown on the university page under the
 // rating strip. Purely presentational — every number arrives pre-computed
@@ -12,8 +49,9 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
   if (summary.reviewCount === 0) return null
 
   const { reviewCount, ratingDist, recommend, subscores, topTags, enrollment } = summary
-  const reviewerMix = formatReviewerMix(enrollment, summary.modalLivingCost, summary.modalTuition)
-  const hasFooter = topTags.length > 0 || reviewerMix !== ''
+  const reviewerMix = formatReviewerMix(enrollment)
+  const hasCost = Boolean(summary.modalLivingCost) || Boolean(summary.modalTuition)
+  const hasFooter = topTags.length > 0 || hasCost || reviewerMix !== ''
 
   return (
     <section className="uni-summary">
@@ -105,6 +143,22 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
                 </span>
               ))}
             </div>
+          )}
+          {summary.modalLivingCost && (
+            <CostScale
+              label="Living cost"
+              buckets={LIVING_COSTS}
+              value={summary.modalLivingCost}
+              suffix="/mo"
+            />
+          )}
+          {summary.modalTuition && (
+            <CostScale
+              label="Tuition"
+              buckets={TUITION_RANGES}
+              value={summary.modalTuition}
+              suffix="/yr"
+            />
           )}
           {reviewerMix && <p className="sum-note">{reviewerMix}</p>}
         </div>

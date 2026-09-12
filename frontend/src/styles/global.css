@@ -1678,6 +1678,42 @@ h3 {
   font-size: 0.75rem;
   color: var(--ink-faint);
 }
+.cost-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.cost-label {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  flex: 0 0 4.6rem;
+}
+.cost-scale {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 6.5rem;
+}
+.cost-seg {
+  flex: 1;
+  height: 0.45rem;
+  background: var(--rice-warm);
+}
+.cost-seg:first-child {
+  border-radius: var(--r-full) 0 0 var(--r-full);
+}
+.cost-seg:last-child {
+  border-radius: 0 var(--r-full) var(--r-full) 0;
+}
+.cost-seg.filled {
+  background: var(--gold-tint);
+}
+.cost-seg.on {
+  background: var(--gold);
+}
+.cost-val {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
 .uni-summary-footer {
   display: flex;
   flex-direction: column;

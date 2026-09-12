@@ -3,7 +3,13 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmit'
-import { COUNTRIES, LANGUAGES, CURRENT_STATUSES } from '../lib/constants'
+import {
+  COUNTRIES,
+  LANGUAGES,
+  CURRENT_STATUSES,
+  TUITION_RANGES,
+  LIVING_COSTS,
+} from '../lib/constants'
 import { useUniversity } from '../hooks/useUniversity'
 import { StarInput } from './StarInput'
 import { Icons } from './Icons'
@@ -65,8 +71,6 @@ const MORE_TAGS = [
   'Easy grading',
 ]
 
-const TUITION_RANGES = ['Under ¥20k', '¥20k–¥40k', '¥40k–¥80k', '¥80k–¥150k', 'Over ¥150k']
-const LIVING_COSTS = ['Under ¥2k', '¥2k–¥4k', '¥4k–¥8k', 'Over ¥8k']
 const DEGREE_LEVELS = [
   'Bachelor',
   'Master',

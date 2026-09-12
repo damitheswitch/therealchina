@@ -137,27 +137,17 @@ describe('formatEnrollmentLabel', () => {
 })
 
 describe('formatReviewerMix', () => {
-  it('joins enrollment parts with cost context in order', () => {
+  it('joins enrollment parts in order', () => {
     expect(
-      formatReviewerMix(
-        [
-          { status: 'current', count: 3 },
-          { status: 'alumni', count: 1 },
-        ],
-        '¥4k–¥8k',
-        '¥20k–¥40k'
-      )
-    ).toBe(
-      '3 current students · 1 alumni · typical living cost ¥4k–¥8k/mo · typical tuition ¥20k–¥40k/yr'
-    )
+      formatReviewerMix([
+        { status: 'current', count: 3 },
+        { status: 'alumni', count: 1 },
+      ])
+    ).toBe('3 current students · 1 alumni')
   })
 
-  it('omits missing parts and is empty when nothing is known', () => {
-    expect(formatReviewerMix([], null, null)).toBe('')
-    expect(formatReviewerMix([], null, '¥20k–¥40k')).toBe('typical tuition ¥20k–¥40k/yr')
-    expect(formatReviewerMix([{ status: 'exchange', count: 2 }], null, null)).toBe(
-      '2 exchange students'
-    )
-    expect(formatReviewerMix([], '¥4k–¥8k', null)).toBe('typical living cost ¥4k–¥8k/mo')
+  it('is empty when nothing is known', () => {
+    expect(formatReviewerMix([])).toBe('')
+    expect(formatReviewerMix([{ status: 'exchange', count: 2 }])).toBe('2 exchange students')
   })
 })

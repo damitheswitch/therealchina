@@ -150,16 +150,7 @@ export const formatEnrollmentLabel = (status: string, count: number): string => 
   return `${count} ${word}`
 }
 
-// Summary footer line, e.g.
-// "3 current students · 1 alumni · typical living cost ¥4k–¥8k/mo".
-// Joins only non-empty parts; returns '' when nothing is known.
-export const formatReviewerMix = (
-  enrollment: { status: string; count: number }[],
-  modalLivingCost: string | null,
-  modalTuition: string | null
-): string => {
-  const parts = enrollment.map(({ status, count }) => formatEnrollmentLabel(status, count))
-  if (modalLivingCost) parts.push(`typical living cost ${modalLivingCost}/mo`)
-  if (modalTuition) parts.push(`typical tuition ${modalTuition}/yr`)
-  return parts.join(' · ')
-}
+// Summary footer line, e.g. "3 current students · 1 alumni". Costs are
+// rendered as a separate stepped scale — this formats enrollment only.
+export const formatReviewerMix = (enrollment: { status: string; count: number }[]): string =>
+  enrollment.map(({ status, count }) => formatEnrollmentLabel(status, count)).join(' · ')
