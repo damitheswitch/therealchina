@@ -471,8 +471,16 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 0.35rem;
+  column-gap: 0.5rem;
   margin-top: auto;
   padding-top: 0.4rem;
+}
+/* A wrapped recommend pill stays right-aligned on its own line. */
+.uni-card-meta .review-recommend {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .uni-card-city {
   display: flex;
@@ -489,6 +497,12 @@ h3 {
 .uni-card-rating .num {
   font-weight: 600;
   font-size: 0.85rem;
+}
+.uni-card-count {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .uni-card-no-reviews {
   font-size: 0.75rem;

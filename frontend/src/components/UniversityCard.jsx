@@ -26,6 +26,9 @@ export const UniversityCard = ({ university }) => {
       <div className="uni-card-rating">
         <StarRating rating={avg_rating} />
         <span className="num">{avg_rating?.toFixed(1) || '0.0'}</span>
+        <span className="uni-card-count">
+          {review_count} review{review_count !== 1 ? 's' : ''}
+        </span>
       </div>
     ) : (
       <span className="uni-card-no-reviews">No reviews yet</span>
@@ -47,11 +50,6 @@ export const UniversityCard = ({ university }) => {
         </div>
         <div className="uni-card-meta">
           {ratingDisplay}
-          {review_count > 0 && (
-            <span className="text-xs muted">
-              {review_count} review{review_count !== 1 ? 's' : ''}
-            </span>
-          )}
           {recommendAnswered >= 2 && (
             <span
               className={`review-recommend ${recTier}`}
