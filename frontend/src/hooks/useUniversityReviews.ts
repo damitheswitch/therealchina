@@ -5,6 +5,10 @@ import type { Tables } from '../types/database.types'
 type ReviewRow = Tables<'reviews'>
 type AuthorProfile = Pick<Tables<'profile_public'>, 'id' | 'display_name' | 'avatar_url'>
 
+// Kept as one literal so supabase-js can infer the row shape from the select.
+const REVIEW_COLUMNS =
+  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
+
 export const useUniversityReviews = (universityId: string) => {
   const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [authors, setAuthors] = useState<Record<string, AuthorProfile>>({})
@@ -27,9 +31,7 @@ export const useUniversityReviews = (universityId: string) => {
       try {
         const { data, error: fetchError } = await supabase
           .from('reviews')
-          .select(
-            'id, university_id, user_id, rating, text, program, degree_level, media, created_at'
-          )
+          .select(REVIEW_COLUMNS)
           .eq('university_id', universityId)
           .abortSignal(controller.signal)
           .order('created_at', { ascending: false })

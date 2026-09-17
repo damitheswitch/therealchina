@@ -1,6 +1,11 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '14.5'
+  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -150,10 +155,16 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string | null
+          current_status: string | null
           display_name: string | null
+          display_name_lower: string | null
+          email_consent: boolean | null
+          home_country: string | null
           id: string
           is_discoverable: boolean | null
+          languages_spoken: string[] | null
           location: string | null
+          monthly_budget: string | null
           onboarding_completed: boolean | null
           program: string | null
           show_social_handle: boolean | null
@@ -167,10 +178,16 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          current_status?: string | null
           display_name?: string | null
+          display_name_lower?: string | null
+          email_consent?: boolean | null
+          home_country?: string | null
           id: string
           is_discoverable?: boolean | null
+          languages_spoken?: string[] | null
           location?: string | null
+          monthly_budget?: string | null
           onboarding_completed?: boolean | null
           program?: string | null
           show_social_handle?: boolean | null
@@ -184,10 +201,16 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string | null
+          current_status?: string | null
           display_name?: string | null
+          display_name_lower?: string | null
+          email_consent?: boolean | null
+          home_country?: string | null
           id?: string
           is_discoverable?: boolean | null
+          languages_spoken?: string[] | null
           location?: string | null
+          monthly_budget?: string | null
           onboarding_completed?: boolean | null
           program?: string | null
           show_social_handle?: boolean | null
@@ -201,37 +224,97 @@ export type Database = {
       }
       reviews: {
         Row: {
+          cons: string | null
           created_at: string | null
           degree_level: string | null
+          end_year: number | null
+          enrollment_status: string | null
+          funding_coverage: string | null
+          funding_type: string | null
           id: string
+          language_of_instruction: string | null
+          living_cost_range: string | null
           media: Json | null
           program: string | null
+          pros: string | null
           rating: number
+          rating_academics: number | null
+          rating_accommodation: number | null
+          rating_campus: number | null
+          rating_career: number | null
+          rating_cost: number | null
+          rating_extracurricular: number | null
+          rating_intl_office: number | null
+          rating_social: number | null
+          recommend: string | null
+          start_year: number | null
+          tags: string[] | null
           text: string
+          tuition_range: string | null
           university_id: string
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          cons?: string | null
           created_at?: string | null
           degree_level?: string | null
+          end_year?: number | null
+          enrollment_status?: string | null
+          funding_coverage?: string | null
+          funding_type?: string | null
           id?: string
+          language_of_instruction?: string | null
+          living_cost_range?: string | null
           media?: Json | null
           program?: string | null
+          pros?: string | null
           rating: number
+          rating_academics?: number | null
+          rating_accommodation?: number | null
+          rating_campus?: number | null
+          rating_career?: number | null
+          rating_cost?: number | null
+          rating_extracurricular?: number | null
+          rating_intl_office?: number | null
+          rating_social?: number | null
+          recommend?: string | null
+          start_year?: number | null
+          tags?: string[] | null
           text: string
+          tuition_range?: string | null
           university_id: string
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          cons?: string | null
           created_at?: string | null
           degree_level?: string | null
+          end_year?: number | null
+          enrollment_status?: string | null
+          funding_coverage?: string | null
+          funding_type?: string | null
           id?: string
+          language_of_instruction?: string | null
+          living_cost_range?: string | null
           media?: Json | null
           program?: string | null
+          pros?: string | null
           rating?: number
+          rating_academics?: number | null
+          rating_accommodation?: number | null
+          rating_campus?: number | null
+          rating_career?: number | null
+          rating_cost?: number | null
+          rating_extracurricular?: number | null
+          rating_intl_office?: number | null
+          rating_social?: number | null
+          recommend?: string | null
+          start_year?: number | null
+          tags?: string[] | null
           text?: string
+          tuition_range?: string | null
           university_id?: string
           updated_at?: string | null
           user_id?: string | null
@@ -249,39 +332,51 @@ export type Database = {
       universities: {
         Row: {
           city: string
+          country: string | null
           created_at: string | null
           id: string
           is_verified: boolean | null
+          languages_of_instruction: string[] | null
           logo_url: string | null
           name: string
           name_zh: string | null
           search_text: string | null
           slug: string
+          uni_type: string | null
           updated_at: string | null
+          website: string | null
         }
         Insert: {
           city: string
+          country?: string | null
           created_at?: string | null
           id?: string
           is_verified?: boolean | null
+          languages_of_instruction?: string[] | null
           logo_url?: string | null
           name: string
           name_zh?: string | null
           search_text?: string | null
           slug: string
+          uni_type?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
           city?: string
+          country?: string | null
           created_at?: string | null
           id?: string
           is_verified?: boolean | null
+          languages_of_instruction?: string[] | null
           logo_url?: string | null
           name?: string
           name_zh?: string | null
           search_text?: string | null
           slug?: string
+          uni_type?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -289,6 +384,9 @@ export type Database = {
         Row: {
           avg_rating: number
           has_verified_review: boolean
+          recommend_maybe_count: number
+          recommend_no_count: number
+          recommend_yes_count: number
           review_count: number
           university_id: string
           updated_at: string | null
@@ -296,6 +394,9 @@ export type Database = {
         Insert: {
           avg_rating?: number
           has_verified_review?: boolean
+          recommend_maybe_count?: number
+          recommend_no_count?: number
+          recommend_yes_count?: number
           review_count?: number
           university_id: string
           updated_at?: string | null
@@ -303,6 +404,9 @@ export type Database = {
         Update: {
           avg_rating?: number
           has_verified_review?: boolean
+          recommend_maybe_count?: number
+          recommend_no_count?: number
+          recommend_yes_count?: number
           review_count?: number
           university_id?: string
           updated_at?: string | null

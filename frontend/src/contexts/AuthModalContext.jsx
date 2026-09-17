@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 
-const AuthModalContext = createContext({
-  isOpen: false,
-  initialMode: 'login',
-  config: {},
-  openAuthModal: () => {},
-  closeAuthModal: () => {},
-})
+const AuthModalContext = createContext(
+  /** @type {{ isOpen: boolean, initialMode: string, config: Record<string, unknown>, openAuthModal: (mode?: string, config?: Record<string, unknown>) => void, closeAuthModal: () => void }} */ ({
+    isOpen: false,
+    initialMode: 'login',
+    config: {},
+    openAuthModal: () => {},
+    closeAuthModal: () => {},
+  })
+)
 
 export const useAuthModal = () => {
   const ctx = useContext(AuthModalContext)

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { getRecommendYesPct } from '../lib/reviewSummary'
 import type { Tables } from '../types/database.types'
 
 const PAGE_SIZE = 20
@@ -18,7 +19,12 @@ type UniversityRow = Pick<
 >
 type UniversityStats = Pick<
   Tables<'university_stats'>,
-  'avg_rating' | 'review_count' | 'has_verified_review'
+  | 'avg_rating'
+  | 'review_count'
+  | 'has_verified_review'
+  | 'recommend_yes_count'
+  | 'recommend_maybe_count'
+  | 'recommend_no_count'
 >
 
 type UniversityWithStats = UniversityRow & {
@@ -29,6 +35,8 @@ type UniversityDisplay = UniversityWithStats & {
   avg_rating: number
   review_count: number
   is_verified: boolean
+  recommendYesPct: number | null
+  recommendAnswered: number
 }
 
 export const useUniversities = ({
@@ -56,7 +64,7 @@ export const useUniversities = ({
         const query = supabase
           .from('universities')
           .select(
-            'id, name, name_zh, city, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review)',
+            'id, name, name_zh, city, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
             { count: 'exact' }
           )
 
@@ -87,11 +95,16 @@ export const useUniversities = ({
           (u): UniversityDisplay => {
             const rawStat = u.university_stats
             const stat = Array.isArray(rawStat) ? rawStat[0] : rawStat
+            const recYes = stat?.recommend_yes_count || 0
+            const recMaybe = stat?.recommend_maybe_count || 0
+            const recNo = stat?.recommend_no_count || 0
             return {
               ...u,
               avg_rating: stat?.avg_rating || 0,
               review_count: stat?.review_count || 0,
               is_verified: stat?.has_verified_review || false,
+              recommendYesPct: getRecommendYesPct(recYes, recMaybe, recNo),
+              recommendAnswered: recYes + recMaybe + recNo,
             }
           }
         )
