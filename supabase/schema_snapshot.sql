@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 025_university_stats_recommend.sql
+-- as of migration 027_reviewer_context.sql
 -- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
@@ -77,6 +77,20 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT chk_reviews_end_after_start
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
+);
+
+-- Anonymous reviewer "about you" data. Internal-only: RLS enabled
+-- with no policies and all client grants revoked — service role only.
+CREATE TABLE IF NOT EXISTS public.reviewer_context (
+  review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
+  email TEXT,
+  email_consent BOOLEAN NOT NULL DEFAULT FALSE,
+  home_country TEXT,
+  current_status TEXT
+    CHECK (current_status IS NULL OR current_status IN
+      ('studying','working','internship','job_hunting','break','other')),
+  languages_spoken TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -583,6 +597,11 @@ CREATE POLICY "Authenticated users can insert reviews after onboarding"
 -- No anonymous INSERT policy: anonymous reviews are submitted through the
 -- review-submit Edge Function (Turnstile + per-IP rate limit, service-role
 -- write) instead of direct table inserts.
+
+-- reviewer_context: no policies at all — anonymous reviewer context is
+-- written and read only by the review-submit Edge Function (service role).
+ALTER TABLE public.reviewer_context ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.reviewer_context FROM anon, authenticated;
 
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 

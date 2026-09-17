@@ -29,6 +29,14 @@ const VALID_ENROLLMENT = ['current', 'alumni', 'exchange', 'applicant'] as const
 const VALID_FUNDING = ['self', 'csc', 'school', 'province'] as const
 const VALID_COVERAGE = ['partial', 'full'] as const
 const VALID_RECOMMEND = ['yes', 'no', 'maybe'] as const
+const VALID_CURRENT_STATUS = [
+  'studying',
+  'working',
+  'internship',
+  'job_hunting',
+  'break',
+  'other',
+] as const
 const VALID_SUBSCORES = [
   'rating_academics', 'rating_campus', 'rating_accommodation', 'rating_cost',
   'rating_intl_office', 'rating_social', 'rating_extracurricular', 'rating_career',
@@ -413,6 +421,13 @@ async function handleSubmit(req: Request): Promise<Response> {
   let languageOfInstruction: string | null, tuitionRange: string | null, livingCostRange: string | null
   let fundingType: string | null, fundingCoverage: string | null, recommend: string | null
   let pros: string | null, cons: string | null, tags: string[]
+  let reviewerContext: {
+    email: string | null
+    emailConsent: boolean
+    homeCountry: string | null
+    currentStatus: string | null
+    languagesSpoken: string[]
+  } | null = null
   try {
     if (typeof body.rating !== 'number' || body.rating < 1 || body.rating > 5 || !Number.isInteger(body.rating)) {
       throw new Error('Rating must be a whole number between 1 and 5')
@@ -506,6 +521,43 @@ async function handleSubmit(req: Request): Promise<Response> {
         if (trimmed) tags.push(trimmed)
       }
     }
+
+    // Anonymous reviewer context (optional): stored in the private
+    // reviewer_context table, never exposed to clients.
+    if (body.reviewerContext !== null && body.reviewerContext !== undefined) {
+      if (typeof body.reviewerContext !== 'object' || Array.isArray(body.reviewerContext)) {
+        throw new Error('reviewerContext must be an object')
+      }
+      const rc = body.reviewerContext as Record<string, unknown>
+      const email = asTrimmedString(rc.email, 254)
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        throw new Error('Invalid email address')
+      }
+      const rcStatus = asTrimmedString(rc.currentStatus, 20)
+      if (
+        rcStatus &&
+        !VALID_CURRENT_STATUS.includes(rcStatus as (typeof VALID_CURRENT_STATUS)[number])
+      ) {
+        throw new Error('Invalid current status')
+      }
+      const languagesSpoken: string[] = []
+      if (rc.languagesSpoken !== null && rc.languagesSpoken !== undefined) {
+        if (!Array.isArray(rc.languagesSpoken) || rc.languagesSpoken.length > 15) {
+          throw new Error('Invalid languages list')
+        }
+        for (const l of rc.languagesSpoken) {
+          const trimmed = asTrimmedString(l, 60)
+          if (trimmed) languagesSpoken.push(trimmed)
+        }
+      }
+      reviewerContext = {
+        email,
+        emailConsent: rc.emailConsent === true,
+        homeCountry: asTrimmedString(rc.homeCountry, 80),
+        currentStatus: rcStatus,
+        languagesSpoken,
+      }
+    }
   } catch (err) {
     return jsonResponse(
       req,
@@ -584,6 +636,31 @@ async function handleSubmit(req: Request): Promise<Response> {
   if (insertError) {
     console.error('Review insert error:', insertError)
     return jsonResponse(req, { error: 'Failed to save the review. Please try again.' }, 500)
+  }
+
+  // Anonymous "about you" answers land in the private reviewer_context table
+  // (no client access at all). Best-effort: a context failure must not fail
+  // the review that was just saved.
+  if (isAnon && reviewerContext) {
+    const hasContext =
+      reviewerContext.email !== null ||
+      reviewerContext.emailConsent ||
+      reviewerContext.homeCountry !== null ||
+      reviewerContext.currentStatus !== null ||
+      reviewerContext.languagesSpoken.length > 0
+    if (hasContext) {
+      const { error: contextError } = await supabaseAdmin.from('reviewer_context').insert({
+        review_id: review.id,
+        email: reviewerContext.email,
+        email_consent: reviewerContext.emailConsent,
+        home_country: reviewerContext.homeCountry,
+        current_status: reviewerContext.currentStatus,
+        languages_spoken: reviewerContext.languagesSpoken,
+      })
+      if (contextError) {
+        console.error('Reviewer context insert error:', contextError)
+      }
+    }
   }
 
   return jsonResponse(

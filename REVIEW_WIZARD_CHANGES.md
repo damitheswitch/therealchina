@@ -47,7 +47,14 @@ reviewer demographics — for both anonymous and authenticated users.
 - `country` TEXT, `uni_type` (`public|private`), `languages_of_instruction` TEXT[] DEFAULT '{}',
   `website` TEXT — **no UI writes these yet**, all NULL until curation
 
-`supabase/schema_snapshot.sql` is up to date through migration 024 (per AGENTS.md).
+`supabase/schema_snapshot.sql` is up to date through migration 027 (per AGENTS.md).
+
+### `reviewer_context` — new table (migration 027)
+Private store for anonymous reviewers' "about you" answers (`email`,
+`email_consent`, `home_country`, `current_status`, `languages_spoken`), keyed by
+`review_id` with CASCADE delete. RLS enabled, no policies, `REVOKE ALL` from
+anon + authenticated — only the review-submit edge function (service role)
+touches it. Insert is best-effort: a context failure never fails the review.
 
 ---
 
@@ -144,18 +151,23 @@ Dev server: `cd frontend && npm run dev` → `http://localhost:5173/review`
 
 ## Known gaps / follow-ups
 
-1. **Review display not updated** — `ReviewCard.jsx`/`UniversityPage.jsx` don't render
-   sub-scores, tags, pros/cons, funding, or years. Data is stored but invisible.
-2. **Anonymous step-5 data is discarded** — demographics only persist for logged-in
-   users (client-side `profiles` update). Decide: send to edge function or accept loss.
+1. ~~Review display not updated~~ — **fixed** (PR #10: `ReviewExtras` renders
+   sub-scores, tags, pros/cons, funding, years on cards).
+2. ~~Anonymous step-5 data is discarded~~ — **fixed**: anonymous answers now go to
+   the private `reviewer_context` table via the edge function (migration 027);
+   no client can read it. Logged-in users get an opt-in "save to profile?"
+   prompt that only writes provided, changed fields (never nulls, never
+   downgrades `email_consent`).
 3. **`monthly_budget` column unused** — kept in schema, not collected (was redundant
    with step-3 living cost).
-4. **Onboarding/profile-edit don't collect the new profile fields.**
+4. ~~Onboarding/profile-edit don't collect the new profile fields~~ — **fixed**
+   (PR #11).
 5. **University new columns (`country`, `uni_type`, etc.) have no UI** — need curation.
-6. **No wizard tests** — AGENTS.md requires tests for `lib/` + edge function logic.
-7. **`review-wizard-blueprint.html`** — remove or move to `docs/` before merge.
-8. **Hardcoded constants** — COUNTRIES (~150), LANGUAGES (~100), tags, ranges live in
-   the component; extract to a shared file eventually.
+6. **No wizard tests** — `lib/` helpers are covered; the wizard component itself
+   has no tests yet.
+7. ~~`review-wizard-blueprint.html`~~ — deleted.
+8. **Hardcoded constants** — COUNTRIES/LANGUAGES/statuses/ranges now live in
+   `src/lib/constants.ts`; tags and wizard option lists still inline.
 9. **`tsc --noEmit` isn't in the build** — 9 type errors shipped unnoticed because
    `vite build` skips typechecking. Consider `npm run typecheck` in CI.
 10. **Time-dependent CHECKs** — `start_year`/`end_year` use `EXTRACT(YEAR FROM NOW())`

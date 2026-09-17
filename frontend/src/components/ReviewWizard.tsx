@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmit'
+import type { TablesUpdate } from '../types/database.types'
 import {
   COUNTRIES,
   LANGUAGES,
@@ -11,11 +12,13 @@ import {
   LIVING_COSTS,
 } from '../lib/constants'
 import { useUniversity } from '../hooks/useUniversity'
+import { useProfileContext } from '../contexts/ProfileContext'
 import { StarInput } from './StarInput'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
+import { ProfileSavePrompt, type ProfileSaveItem } from './ProfileSavePrompt'
 import { RegistrationNudge } from './RegistrationNudge'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
@@ -99,6 +102,25 @@ const RECOMMEND_OPTIONS = [
   { value: 'maybe', label: 'It depends', emoji: '🤔' },
 ]
 
+// What the save prompt shows the user: friendly labels for the raw
+// profiles column names and values about to be written.
+const promptItems = (updates: Record<string, unknown>): ProfileSaveItem[] => {
+  const items: ProfileSaveItem[] = []
+  if (updates.home_country)
+    items.push({ label: 'Home country', value: String(updates.home_country) })
+  if (updates.current_status) {
+    const label =
+      CURRENT_STATUSES.find((s) => s.value === updates.current_status)?.label ??
+      String(updates.current_status)
+    items.push({ label: 'Right now', value: label })
+  }
+  if (Array.isArray(updates.languages_spoken) && updates.languages_spoken.length > 0) {
+    items.push({ label: 'Languages', value: updates.languages_spoken.join(', ') })
+  }
+  if (updates.email_consent === true) items.push({ label: 'Early access', value: 'Yes' })
+  return items
+}
+
 // ---- Component -----------------------------------------------------------------
 
 interface MediaState {
@@ -110,6 +132,7 @@ interface MediaState {
 export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }) => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { profile, refetch: refetchProfile } = useProfileContext()
   const { showToast } = useToast()
   const { openAuthModal } = useAuthModal()
 
@@ -129,15 +152,16 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
   // Step 2: Sub-scores
   const [subscores, setSubscores] = useState<Record<string, number>>({})
 
-  // Step 3: Details
-  const [enrollmentStatus, setEnrollmentStatus] = useState('current')
+  // Step 3: Details — no preselected values: a skipped field must stay NULL,
+  // not write a fabricated "current student" / "self-funded" onto the review.
+  const [enrollmentStatus, setEnrollmentStatus] = useState('')
   const [startYear, setStartYear] = useState<number | ''>('')
   const [endYear, setEndYear] = useState<number | ''>('')
   const [languageOfInstruction, setLanguageOfInstruction] = useState('')
   const [degreeLevel, setDegreeLevel] = useState('')
   const [tuitionRange, setTuitionRange] = useState('')
   const [livingCostRange, setLivingCostRange] = useState('')
-  const [fundingType, setFundingType] = useState('self')
+  const [fundingType, setFundingType] = useState('')
   const [fundingCoverage, setFundingCoverage] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showMoreTags, setShowMoreTags] = useState(false)
@@ -158,11 +182,17 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
   const [currentStatus, setCurrentStatus] = useState('')
   const [languagesSpoken, setLanguagesSpoken] = useState<string[]>([])
   const [emailConsent, setEmailConsent] = useState(false)
+  const [anonEmail, setAnonEmail] = useState('')
 
   // Submit state
   const [loading, setLoading] = useState(false)
   const [showStamp, setShowStamp] = useState(false)
   const [pendingSuccess, setPendingSuccess] = useState<(() => void) | null>(null)
+
+  // Post-submit profile prompt (logged-in users only)
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false)
+  const [profileUpdates, setProfileUpdates] = useState<TablesUpdate<'profiles'> | null>(null)
+  const [savingProfile, setSavingProfile] = useState(false)
 
   // Turnstile (anonymous)
   // The Turnstile widget ref exposes getResponsePromise and reset.
@@ -180,6 +210,20 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       setSelectedUniName(prefilledUni.name || '')
     }
   }, [prefilledUni])
+
+  // Pre-fill from the user's profile once it loads. Functional setState only
+  // fills fields that are still empty, so a user who typed before the profile
+  // arrived never loses input. Also prevents the save-prompt from offering to
+  // write back values the profile already has.
+  useEffect(() => {
+    if (!profile) return
+    setProgram((v) => v || profile.program || '')
+    setSelectedUniName((v) => v || profile.university || '')
+    setHomeCountry((v) => v || profile.home_country || '')
+    setCurrentStatus((v) => v || profile.current_status || '')
+    setLanguagesSpoken((v) => (v.length > 0 ? v : (profile.languages_spoken ?? [])))
+    setEmailConsent((v) => v || profile.email_consent === true)
+  }, [profile])
 
   // ---- Handlers ----
 
@@ -219,7 +263,9 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
   const validateStep = (s: number): string | null => {
     switch (s) {
       case 1: {
-        if (!selectedUni)
+        // A slug is ideal, but a typed name also works — the edge function
+        // resolves it (ilike) the same way the old form did.
+        if (!selectedUni && !selectedUniName.trim())
           return "Which university? Other students can't find your review without it."
         if (showNotListed && (!newUniName.trim() || !newUniCity.trim()))
           return 'Please enter the university name and city.'
@@ -231,7 +277,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       }
       case 3: {
         if (!startYear)
-          return 'When did you start? Future students need to know if your experience is still relevant.'
+          return 'Just your start year — everything else here is optional, takes 2 seconds. Future students need to know if your experience is still relevant.'
         if (endYear && endYear < startYear)
           return "Your end year can't be before your start year — double-check your dates."
         return null
@@ -270,10 +316,60 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
 
   const handleStampComplete = () => {
     setShowStamp(false)
+    // Logged-in users who gave us new "about you" answers get the opt-in
+    // prompt before navigating; everyone else goes straight on.
+    if (profileUpdates && Object.keys(profileUpdates).length > 0) {
+      setShowProfilePrompt(true)
+      return
+    }
     if (pendingSuccess) {
       pendingSuccess()
       setPendingSuccess(null)
     }
+  }
+
+  const finishAfterPrompt = () => {
+    if (pendingSuccess) {
+      pendingSuccess()
+      setPendingSuccess(null)
+    }
+  }
+
+  const handleProfileSave = async () => {
+    if (!user || !profileUpdates) return
+    setSavingProfile(true)
+    try {
+      const { supabase } = await import('../lib/supabaseClient')
+      const { error: saveError } = await supabase
+        .from('profiles')
+        .update(profileUpdates)
+        .eq('id', user.id)
+      if (saveError) {
+        console.error('Profile save after review failed:', saveError)
+        showToast(
+          "Couldn't save to your profile — you can update it later from your profile page.",
+          'error'
+        )
+      } else {
+        await refetchProfile()
+        showToast('Done! You can always update these in your profile.', 'success')
+      }
+    } catch (err) {
+      console.error('Profile save after review failed:', err)
+      showToast(
+        "Couldn't save to your profile — you can update it later from your profile page.",
+        'error'
+      )
+    } finally {
+      setSavingProfile(false)
+      setShowProfilePrompt(false)
+      finishAfterPrompt()
+    }
+  }
+
+  const handleProfileSkip = () => {
+    setShowProfilePrompt(false)
+    finishAfterPrompt()
   }
 
   const handleSubmit = async () => {
@@ -329,28 +425,37 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
         pros: pros.trim() || undefined,
         cons: cons.trim() || undefined,
         tags: selectedTags.length > 0 ? selectedTags : undefined,
+        reviewerContext: !user
+          ? {
+              email: anonEmail.trim() || undefined,
+              emailConsent,
+              homeCountry: homeCountry || undefined,
+              currentStatus: currentStatus || undefined,
+              languagesSpoken: languagesSpoken.length > 0 ? languagesSpoken : undefined,
+            }
+          : undefined,
       })
 
-      // Update profile fields for logged-in users (step 5 data). The review
-      // is already saved at this point — a profile failure must not surface
-      // as a submit error, or the user may resubmit and create a duplicate.
-      if (user && (homeCountry || currentStatus || languagesSpoken.length > 0)) {
-        try {
-          const { supabase } = await import('../lib/supabaseClient')
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-              home_country: homeCountry || null,
-              current_status: currentStatus || null,
-              languages_spoken: languagesSpoken.length > 0 ? languagesSpoken : null,
-              email_consent: emailConsent,
-            })
-            .eq('id', user.id)
-          if (profileError)
-            console.error('Profile update failed after review submit:', profileError)
-        } catch (profileErr) {
-          console.error('Profile update failed after review submit:', profileErr)
+      // For logged-in users, figure out which step-5 answers the profile
+      // doesn't already have. Only provided-and-different values are offered
+      // to the save prompt — never nulls, and email_consent can only be
+      // upgraded to true here (revoking happens in profile settings).
+      if (user) {
+        const updates: TablesUpdate<'profiles'> = {}
+        if (homeCountry && homeCountry !== (profile?.home_country ?? '')) {
+          updates.home_country = homeCountry
         }
+        if (currentStatus && currentStatus !== (profile?.current_status ?? '')) {
+          updates.current_status = currentStatus
+        }
+        const existingLangs = [...(profile?.languages_spoken ?? [])].sort().join(',')
+        if (languagesSpoken.length > 0 && [...languagesSpoken].sort().join(',') !== existingLangs) {
+          updates.languages_spoken = languagesSpoken
+        }
+        if (emailConsent && profile?.email_consent !== true) {
+          updates.email_consent = true
+        }
+        setProfileUpdates(Object.keys(updates).length > 0 ? updates : null)
       }
 
       showToast('Review submitted! Thank you.', 'success')
@@ -731,7 +836,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
                     </button>
                   ))}
                 </div>
-                {fundingType !== 'self' && (
+                {fundingType && fundingType !== 'self' && (
                   <div style={{ marginTop: '.6rem' }}>
                     <label className="form-label" style={{ marginBottom: '.3rem' }}>
                       Coverage
@@ -802,14 +907,9 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
                 ← Back
               </button>
               <div style={{ display: 'flex', gap: '.5rem' }}>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    clearError()
-                    setStep(4)
-                  }}
-                >
+                {/* Skip still runs validation — required fields are a must,
+                    the rest of the step is what's skippable. */}
+                <button type="button" className="btn btn-ghost" onClick={goNext}>
                   Skip
                 </button>
                 <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
@@ -896,8 +996,29 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
               <span>
                 We ask everyone the same questions, whether you&apos;re logged in or not. Your home
                 country helps students from the same place find relevant reviews and flights.
+                {!user && ' Answers stay private — stored with your review, never shown publicly.'}
               </span>
             </div>
+
+            {!user && (
+              <div className="form-group">
+                <label className="form-label" htmlFor="anon-email">
+                  Email{' '}
+                  <span className="form-hint-inline">optional — we never show it publicly</span>
+                </label>
+                <input
+                  type="email"
+                  id="anon-email"
+                  className="form-input"
+                  placeholder="you@example.com"
+                  value={anonEmail}
+                  onChange={(e) => setAnonEmail(e.target.value)}
+                />
+                <span className="form-hint">
+                  Only used if you want early access. Not linked to your public review.
+                </span>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
               <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
@@ -1052,6 +1173,15 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       <RegistrationNudge />
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
+
+      {showProfilePrompt && profileUpdates && (
+        <ProfileSavePrompt
+          items={promptItems(profileUpdates)}
+          saving={savingProfile}
+          onSave={handleProfileSave}
+          onSkip={handleProfileSkip}
+        />
+      )}
     </div>
   )
 }

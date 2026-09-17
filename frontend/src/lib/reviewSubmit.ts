@@ -19,6 +19,16 @@ export interface SubScores {
   rating_career?: number
 }
 
+// "About you" answers from anonymous reviewers. Stored in the private
+// reviewer_context table by the edge function — never readable by clients.
+export interface ReviewerContext {
+  email?: string
+  emailConsent?: boolean
+  homeCountry?: string
+  currentStatus?: string
+  languagesSpoken?: string[]
+}
+
 export interface ReviewPayload {
   cfToken?: string
   universitySlug?: string
@@ -29,6 +39,7 @@ export interface ReviewPayload {
   program?: string
   degreeLevel?: string
   media?: MediaItem[]
+  reviewerContext?: ReviewerContext
   // Wizard fields
   subscores?: SubScores
   enrollmentStatus?: string
