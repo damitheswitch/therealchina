@@ -1523,6 +1523,11 @@ h3 {
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+/* Keep the CTA pinned right even when a long uni name wraps it to a new row */
+.uni-profile-top > .btn {
+  flex-shrink: 0;
+  margin-left: auto;
+}
 .uni-profile-name-block h1 {
   margin-bottom: 0.3rem;
 }
