@@ -1820,6 +1820,17 @@ a.uni-rank-chip:hover {
   font-size: 0.8rem;
   color: var(--ink-faint);
 }
+.uni-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--rice-deep);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-full);
+}
 .uni-site-link {
   display: inline-flex;
   align-items: center;

@@ -370,10 +370,12 @@ export type Database = {
           logo_url: string | null
           name: string
           name_zh: string | null
+          province: string | null
           rankings: Json
           search_text: string | null
           slug: string
           slug_aliases: string[]
+          uni_category: string | null
           uni_type: string | null
           updated_at: string | null
           website: string | null
@@ -388,10 +390,12 @@ export type Database = {
           logo_url?: string | null
           name: string
           name_zh?: string | null
+          province?: string | null
           rankings?: Json
           search_text?: string | null
           slug: string
           slug_aliases?: string[]
+          uni_category?: string | null
           uni_type?: string | null
           updated_at?: string | null
           website?: string | null
@@ -406,10 +410,12 @@ export type Database = {
           logo_url?: string | null
           name?: string
           name_zh?: string | null
+          province?: string | null
           rankings?: Json
           search_text?: string | null
           slug?: string
           slug_aliases?: string[]
+          uni_category?: string | null
           uni_type?: string | null
           updated_at?: string | null
           website?: string | null

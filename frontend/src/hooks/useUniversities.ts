@@ -73,7 +73,13 @@ export const useUniversities = ({
               `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%`
             )
           : query
-        const withCity = city ? withSearch.eq('city', city) : withSearch
+        // 'prov:X' filters by province (the grouped select emits these);
+        // anything else is a city value.
+        const withCity = city?.startsWith('prov:')
+          ? withSearch.eq('province', city.slice(5))
+          : city
+            ? withSearch.eq('city', city)
+            : withSearch
 
         const start = (page - 1) * PAGE_SIZE
         const end = start + PAGE_SIZE - 1

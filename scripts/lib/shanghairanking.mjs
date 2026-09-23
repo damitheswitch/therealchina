@@ -36,14 +36,18 @@ export async function fetchUnivData(year = '2026') {
 }
 
 // Parse the VALUES tuples of `INSERT INTO universities` in our seed files.
-// Column order differs per file — pass the slug/logo indexes.
+// Column order differs per file — pass 0-based indexes of the slug/logo
+// fields (counting single-quoted fields only):
+//   seed_universities.sql: (name, name_zh, city, slug, logo_url, is_verified)
+//   seed.sql:              (name, name_zh, city, country, province,
+//                           uni_category, slug, logo_url, is_verified, ...)
 const FIELD_RE = /'((?:[^'\\]|\\.|'')*)'/g
 const unquote = (s) => s.replace(/''/g, "'").replace(/\\'/g, "'")
 export function parseSeedRows(rootDir) {
   const ours = []
   for (const [file, slugIx, logoIx] of [
     ['supabase/seed_universities.sql', 3, 4],
-    ['supabase/seed.sql', 4, 5],
+    ['supabase/seed.sql', 6, 7],
   ]) {
     const sql = readFileSync(join(rootDir, file), 'utf8')
     for (const stmt of sql.split(/;(?=\s*(?:--|INSERT|$))/g)) {
@@ -104,3 +108,21 @@ export function matchUniversities(univData, ours) {
 }
 
 export const sqlString = (s) => `'${String(s).replace(/'/g, "''")}'`
+
+// zh → en maps for fields we persist
+export const PROVINCE_EN = {
+  '北京': 'Beijing', '上海': 'Shanghai', '天津': 'Tianjin', '重庆': 'Chongqing',
+  '河北': 'Hebei', '山西': 'Shanxi', '内蒙古': 'Inner Mongolia', '辽宁': 'Liaoning',
+  '吉林': 'Jilin', '黑龙江': 'Heilongjiang', '江苏': 'Jiangsu', '浙江': 'Zhejiang',
+  '安徽': 'Anhui', '福建': 'Fujian', '江西': 'Jiangxi', '山东': 'Shandong',
+  '河南': 'Henan', '湖北': 'Hubei', '湖南': 'Hunan', '广东': 'Guangdong',
+  '广西': 'Guangxi', '海南': 'Hainan', '四川': 'Sichuan', '贵州': 'Guizhou',
+  '云南': 'Yunnan', '西藏': 'Tibet', '陕西': 'Shaanxi', '甘肃': 'Gansu',
+  '青海': 'Qinghai', '宁夏': 'Ningxia', '新疆': 'Xinjiang',
+}
+export const CATEGORY_EN = {
+  '综合': 'comprehensive', '理工': 'stem', '师范': 'normal', '农业': 'agriculture',
+  '林业': 'forestry', '医药': 'medicine', '财经': 'finance', '语言': 'language',
+  '政法': 'politics', '民族': 'ethnic', '体育': 'sports', '艺术': 'arts',
+  '中医药': 'tcm', '合作办学': 'cooperative',
+}

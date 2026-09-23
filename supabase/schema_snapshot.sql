@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS public.universities (
   uni_type TEXT CHECK (uni_type IS NULL OR uni_type IN ('public','private')),
   languages_of_instruction TEXT[] DEFAULT '{}',
   website TEXT,
+  province TEXT,
+  -- 软科 subject category, English token (comprehensive/stem/normal/…)
+  uni_category TEXT CHECK (uni_category IS NULL OR uni_category IN ('comprehensive','stem','normal','agriculture','forestry','medicine','finance','language','politics','ethnic','sports','arts','tcm','cooperative','other')),
   -- { "<source>": rank, "<source>_url": link } e.g. {"shanghai_national": 1, "shanghai_url": "https://..."}
   rankings JSONB NOT NULL DEFAULT '{}'::jsonb,
   -- alternate slugs that resolve to this row (e.g. 'zhejiang', 'tsinghua-university')

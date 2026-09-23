@@ -21,6 +21,8 @@ import {
   parseSeedRows,
   matchUniversities,
   sqlString,
+  PROVINCE_EN,
+  CATEGORY_EN,
 } from './lib/shanghairanking.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -66,12 +68,24 @@ for (const m of matched) {
   const rank = /^(\d+)/.exec(String(m.theirs.ranking))?.[1]
   if (!rank) continue
 
+  const score = Number.parseFloat(m.theirs.score)
+  const rankings = {
+    shanghai_national: Number(rank),
+    shanghai_url: `${BASE}/institution/${m.theirs.univUp}`,
+    ...(Number.isFinite(score) && score > 0 ? { shanghai_score: score } : {}),
+  }
   const setParts = [
     `name = ${esc(m.theirs.univNameEn)}`,
     `name_zh = ${esc(m.theirs.univNameCn)}`,
-    `rankings = rankings || ${esc(JSON.stringify({ shanghai_national: Number(rank), shanghai_url: `${BASE}/institution/${m.theirs.univUp}` }))}::jsonb`,
+    `rankings = rankings || ${esc(JSON.stringify(rankings))}::jsonb`,
     `slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{${m.theirs.univUp}}')) x)`,
   ]
+  const provEn = PROVINCE_EN[m.theirs.province]
+  if (provEn) setParts.push(`province = ${esc(provEn)}`)
+  // the 软科 national list only ranks mainland schools
+  setParts.push(`country = COALESCE(country, 'China')`)
+  const catEn = CATEGORY_EN[m.theirs.univCategory]
+  if (catEn) setParts.push(`uni_category = ${esc(catEn)}`)
   // broken logo ids (ours ends in 00 / different from theirs) → take theirs
   if (m.ours.logoId && m.logoId && m.ours.logoId !== m.logoId) {
     setParts.push(`logo_url = ${esc(`${BASE}/_uni/${m.theirs.univLogo}`)}`)

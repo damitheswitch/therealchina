@@ -17,6 +17,24 @@ import {
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { Icons } from '../components/Icons'
 
+// ShanghaiRanking 软科 category tokens → display labels
+const CATEGORY_LABELS = {
+  comprehensive: 'Comprehensive',
+  stem: 'Science & Tech',
+  normal: 'Normal',
+  agriculture: 'Agricultural',
+  forestry: 'Forestry',
+  medicine: 'Medical',
+  finance: 'Finance & Economics',
+  language: 'Language',
+  politics: 'Politics & Law',
+  ethnic: 'Minzu',
+  sports: 'Sports',
+  arts: 'Arts',
+  tcm: 'TCM',
+  cooperative: 'Cooperative',
+}
+
 // UniversityPage component
 export const UniversityPage = () => {
   const { slug } = useParams()
@@ -61,7 +79,15 @@ export const UniversityPage = () => {
   const avgRating = stats?.avg_rating || 0
   const reviewCount = stats?.review_count || 0
   const hasVerified = stats?.has_verified_review || false
-  const location = [university.city, university.country].filter(Boolean).join(', ')
+  // municipalities are their own province — don't render "Beijing, Beijing"
+  const location = [
+    university.city,
+    university.province && university.province !== university.city ? university.province : null,
+    university.country,
+  ]
+    .filter(Boolean)
+    .join(', ')
+  const categoryLabel = CATEGORY_LABELS[university.uni_category] ?? null
   const rankings =
     university.rankings &&
     typeof university.rankings === 'object' &&
@@ -71,6 +97,7 @@ export const UniversityPage = () => {
   const rankNational =
     typeof rankings.shanghai_national === 'number' ? rankings.shanghai_national : null
   const rankWorld = typeof rankings.arwu_world === 'number' ? rankings.arwu_world : null
+  const shanghaiScore = typeof rankings.shanghai_score === 'number' ? rankings.shanghai_score : null
   const rankUrl =
     typeof rankings.shanghai_url === 'string'
       ? rankings.shanghai_url
@@ -135,6 +162,16 @@ export const UniversityPage = () => {
                 {rankWorld !== null && (
                   <span className="uni-rank-chip" title="Academic Ranking of World Universities">
                     #{rankWorld} worldwide · ARWU
+                  </span>
+                )}
+                {categoryLabel && (
+                  <span className="uni-cat-chip" title="University category (软科)">
+                    {categoryLabel}
+                  </span>
+                )}
+                {shanghaiScore !== null && (
+                  <span className="uni-meta-text" title="ShanghaiRanking total score">
+                    Score {shanghaiScore}
                   </span>
                 )}
                 {extras.programCount > 0 && (

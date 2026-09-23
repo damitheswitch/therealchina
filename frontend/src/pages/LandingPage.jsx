@@ -14,7 +14,7 @@ export const LandingPage = () => {
   const [page, setPage] = useState(1)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-  const { cities } = useCities()
+  const { groups } = useCities()
   const { universities, totalCount, pageCount, loading } = useUniversities({
     search: debouncedSearchQuery,
     city: cityFilter,
@@ -73,12 +73,26 @@ export const LandingPage = () => {
               value={cityFilter}
               onChange={(e) => handleCityChange(e.target.value)}
             >
-              <option value="">All cities</option>
-              {cities.map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
+              <option value="">All locations</option>
+              {groups.map((g) =>
+                g.province === null ? (
+                  // municipalities + ungrouped cities render flat
+                  g.cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))
+                ) : (
+                  <optgroup key={g.province} label={g.province}>
+                    <option value={`prov:${g.province}`}>All of {g.province}</option>
+                    {g.cities.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </optgroup>
+                )
+              )}
             </select>
             <select
               id="uni-sort"
