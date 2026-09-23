@@ -373,6 +373,7 @@ export type Database = {
           rankings: Json
           search_text: string | null
           slug: string
+          slug_aliases: string[]
           uni_type: string | null
           updated_at: string | null
           website: string | null
@@ -390,6 +391,7 @@ export type Database = {
           rankings?: Json
           search_text?: string | null
           slug: string
+          slug_aliases?: string[]
           uni_type?: string | null
           updated_at?: string | null
           website?: string | null
@@ -407,6 +409,7 @@ export type Database = {
           rankings?: Json
           search_text?: string | null
           slug?: string
+          slug_aliases?: string[]
           uni_type?: string | null
           updated_at?: string | null
           website?: string | null

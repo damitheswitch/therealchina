@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS public.universities (
   website TEXT,
   -- { "<source>": rank, "<source>_url": link } e.g. {"shanghai_national": 1, "shanghai_url": "https://..."}
   rankings JSONB NOT NULL DEFAULT '{}'::jsonb,
+  -- alternate slugs that resolve to this row (e.g. 'zhejiang', 'tsinghua-university')
+  slug_aliases TEXT[] NOT NULL DEFAULT '{}',
   search_text TEXT GENERATED ALWAYS AS (
     lower(
       replace(coalesce(name, ''), '&amp;', '&') || ' ' ||
@@ -210,6 +212,8 @@ CREATE INDEX IF NOT EXISTS idx_universities_city_trgm
   ON public.universities USING gin (city gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_universities_name_trgm
   ON public.universities USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS universities_slug_aliases_gin
+  ON public.universities USING gin (slug_aliases);
 
 -- ---------------------------------------------------------
 -- 4. Functions
