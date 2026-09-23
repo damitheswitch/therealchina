@@ -1,7 +1,8 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 021_signup_survives_taken_display_name.sql.
+-- as of migration 027_reviewer_context.sql
+-- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
 -- Deployment still happens through the numbered migrations in
@@ -22,9 +23,13 @@ CREATE TABLE IF NOT EXISTS public.universities (
   name TEXT NOT NULL,
   name_zh TEXT,
   city TEXT NOT NULL,
+  country TEXT,
   slug TEXT UNIQUE NOT NULL,
   logo_url TEXT,
   is_verified BOOLEAN DEFAULT FALSE,
+  uni_type TEXT CHECK (uni_type IS NULL OR uni_type IN ('public','private')),
+  languages_of_instruction TEXT[] DEFAULT '{}',
+  website TEXT,
   search_text TEXT GENERATED ALWAYS AS (
     lower(
       replace(coalesce(name, ''), '&amp;', '&') || ' ' ||
@@ -46,8 +51,46 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   program TEXT,
   degree_level TEXT,
   media JSONB DEFAULT '[]'::jsonb,
+  -- Sub-scores (nullable, 1-5 each)
+  rating_academics INT CHECK (rating_academics IS NULL OR rating_academics BETWEEN 1 AND 5),
+  rating_campus INT CHECK (rating_campus IS NULL OR rating_campus BETWEEN 1 AND 5),
+  rating_accommodation INT CHECK (rating_accommodation IS NULL OR rating_accommodation BETWEEN 1 AND 5),
+  rating_cost INT CHECK (rating_cost IS NULL OR rating_cost BETWEEN 1 AND 5),
+  rating_intl_office INT CHECK (rating_intl_office IS NULL OR rating_intl_office BETWEEN 1 AND 5),
+  rating_social INT CHECK (rating_social IS NULL OR rating_social BETWEEN 1 AND 5),
+  rating_extracurricular INT CHECK (rating_extracurricular IS NULL OR rating_extracurricular BETWEEN 1 AND 5),
+  rating_career INT CHECK (rating_career IS NULL OR rating_career BETWEEN 1 AND 5),
+  -- Structured context
+  enrollment_status TEXT CHECK (enrollment_status IS NULL OR enrollment_status IN ('current','alumni','exchange','applicant')),
+  start_year INT CHECK (start_year IS NULL OR (start_year BETWEEN 1990 AND EXTRACT(YEAR FROM NOW())::INT + 1)),
+  end_year INT CHECK (end_year IS NULL OR (end_year BETWEEN 1990 AND EXTRACT(YEAR FROM NOW())::INT + 1)),
+  language_of_instruction TEXT,
+  tuition_range TEXT,
+  living_cost_range TEXT,
+  funding_type TEXT CHECK (funding_type IS NULL OR funding_type IN ('self','csc','school','province')),
+  funding_coverage TEXT CHECK (funding_coverage IS NULL OR funding_coverage IN ('partial','full')),
+  recommend TEXT CHECK (recommend IS NULL OR recommend IN ('yes','no','maybe')),
+  pros TEXT,
+  cons TEXT,
+  tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT chk_reviews_end_after_start
+    CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
+);
+
+-- Anonymous reviewer "about you" data. Internal-only: RLS enabled
+-- with no policies and all client grants revoked — service role only.
+CREATE TABLE IF NOT EXISTS public.reviewer_context (
+  review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
+  email TEXT,
+  email_consent BOOLEAN NOT NULL DEFAULT FALSE,
+  home_country TEXT,
+  current_status TEXT
+    CHECK (current_status IS NULL OR current_status IN
+      ('studying','working','internship','job_hunting','break','other')),
+  languages_spoken TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -82,6 +125,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   social_handles JSONB DEFAULT '[]'::jsonb,
   is_discoverable BOOLEAN DEFAULT TRUE,
   onboarding_completed BOOLEAN DEFAULT FALSE,
+  home_country TEXT,
+  current_status TEXT CHECK (current_status IS NULL OR current_status IN ('studying','working','internship','job_hunting','break','other')),
+  monthly_budget TEXT,
+  languages_spoken TEXT[] DEFAULT '{}',
+  email_consent BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT profiles_display_name_ci_unique UNIQUE (display_name_lower)
@@ -104,6 +152,9 @@ CREATE TABLE IF NOT EXISTS public.university_stats (
   review_count BIGINT NOT NULL DEFAULT 0,
   avg_rating NUMERIC(3,2) NOT NULL DEFAULT 0,
   has_verified_review BOOLEAN NOT NULL DEFAULT FALSE,
+  recommend_yes_count BIGINT NOT NULL DEFAULT 0,
+  recommend_maybe_count BIGINT NOT NULL DEFAULT 0,
+  recommend_no_count BIGINT NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -132,6 +183,7 @@ CREATE TABLE IF NOT EXISTS public.flight_listings (
 CREATE INDEX IF NOT EXISTS idx_reviews_university_id ON public.reviews(university_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON public.reviews(created_at);
 CREATE INDEX IF NOT EXISTS idx_reviews_rating ON public.reviews(rating);
+CREATE INDEX IF NOT EXISTS idx_reviews_tags ON public.reviews USING gin(tags);
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
@@ -310,6 +362,9 @@ BEGIN
     review_count,
     avg_rating,
     has_verified_review,
+    recommend_yes_count,
+    recommend_maybe_count,
+    recommend_no_count,
     updated_at
   )
   SELECT
@@ -317,6 +372,9 @@ BEGIN
     COUNT(*)::BIGINT,
     COALESCE(AVG(r.rating), 0)::NUMERIC(3,2),
     COALESCE(BOOL_OR(r.user_id IS NOT NULL), FALSE),
+    COUNT(*) FILTER (WHERE r.recommend = 'yes'),
+    COUNT(*) FILTER (WHERE r.recommend = 'maybe'),
+    COUNT(*) FILTER (WHERE r.recommend = 'no'),
     NOW()
   FROM public.reviews AS r
   WHERE r.university_id = p_university_id
@@ -324,6 +382,9 @@ BEGIN
     review_count = EXCLUDED.review_count,
     avg_rating = EXCLUDED.avg_rating,
     has_verified_review = EXCLUDED.has_verified_review,
+    recommend_yes_count = EXCLUDED.recommend_yes_count,
+    recommend_maybe_count = EXCLUDED.recommend_maybe_count,
+    recommend_no_count = EXCLUDED.recommend_no_count,
     updated_at = EXCLUDED.updated_at;
 END;
 $$;
@@ -536,6 +597,11 @@ CREATE POLICY "Authenticated users can insert reviews after onboarding"
 -- No anonymous INSERT policy: anonymous reviews are submitted through the
 -- review-submit Edge Function (Turnstile + per-IP rate limit, service-role
 -- write) instead of direct table inserts.
+
+-- reviewer_context: no policies at all — anonymous reviewer context is
+-- written and read only by the review-submit Edge Function (service role).
+ALTER TABLE public.reviewer_context ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.reviewer_context FROM anon, authenticated;
 
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
-import { useProfile } from '../hooks/useProfile'
+import { useProfileContext } from '../contexts/ProfileContext'
 import { validateDisplayName } from '../lib/validateDisplayName'
 import { Icons } from './Icons'
 import { CityAutocomplete } from './CityAutocomplete'
@@ -14,7 +14,7 @@ import { SocialHandlesEditor } from './SocialHandlesEditor'
 export const ProfileEditForm = () => {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const { profile, loading, error } = useProfile(user?.id)
+  const { profile, loading, error, refetch } = useProfileContext()
 
   const [saving, setSaving] = useState(false)
   const [passwordSectionOpen, setPasswordSectionOpen] = useState(false)
@@ -106,6 +106,10 @@ export const ProfileEditForm = () => {
 
       if (error) throw error
 
+      // Refresh the app-wide profile record so the header dropdown (and any
+      // other consumer of the profiles table) reflects the new display name
+      // immediately, instead of relying on stale auth user_metadata.
+      await refetch()
       setDisplayName(normalized)
       showToast('Profile updated successfully!', 'success')
     } catch (error) {

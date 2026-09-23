@@ -1,10 +1,13 @@
+import { useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useUniversity } from '../hooks/useUniversity'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { useUniversityStats } from '../hooks/useUniversityStats'
+import { buildReviewSummary } from '../lib/reviewSummary'
 import { StarRating } from '../components/StarRating'
 import { SealBadge } from '../components/SealBadge'
 import { ReviewCard } from '../components/ReviewCard'
+import { ReviewSummary } from '../components/ReviewSummary'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { Icons } from '../components/Icons'
 
@@ -15,6 +18,9 @@ export const UniversityPage = () => {
   const universityId = university?.id
   const { reviews, authors, loading: reviewsLoading } = useUniversityReviews(universityId)
   const { stats, loading: statsLoading } = useUniversityStats(universityId)
+  // Hook must sit before the early returns below; reviews defaults to [] so
+  // buildReviewSummary([]) is a safe no-op during loading.
+  const summary = useMemo(() => buildReviewSummary(reviews), [reviews])
 
   // Reviews and stats only fire after the university row resolves, so the
   // page is considered loading until the university is done AND (if it was
@@ -91,6 +97,7 @@ export const UniversityPage = () => {
           </Link>
         </div>
         {ratingBlock}
+        <ReviewSummary summary={summary} />
       </div>
 
       <div className="section" style={{ paddingTop: 'var(--sp-2)' }}>

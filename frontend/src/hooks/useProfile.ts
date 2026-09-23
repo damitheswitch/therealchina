@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
 
-type Profile = Pick<
+export type Profile = Pick<
   Tables<'profiles'>,
   | 'display_name'
   | 'bio'
@@ -15,9 +15,16 @@ type Profile = Pick<
   | 'show_social_handle'
   | 'is_discoverable'
   | 'onboarding_completed'
+  | 'home_country'
+  | 'current_status'
+  | 'languages_spoken'
+  | 'email_consent'
 >
 
-export const useProfile = (userId: string, { retry = false }: { retry?: boolean } = {}) => {
+export const useProfile = (
+  userId: string | null | undefined,
+  { retry = false }: { retry?: boolean } = {}
+) => {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
@@ -48,7 +55,7 @@ export const useProfile = (userId: string, { retry = false }: { retry?: boolean 
       const { data, error: fetchError } = await supabase
         .from('profiles')
         .select(
-          'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed'
+          'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
         )
         .eq('id', userId)
         .single()
@@ -59,7 +66,7 @@ export const useProfile = (userId: string, { retry = false }: { retry?: boolean 
         const { data: retryData, error: retryError } = await supabase
           .from('profiles')
           .select(
-            'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed'
+            'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
           )
           .eq('id', userId)
           .single()

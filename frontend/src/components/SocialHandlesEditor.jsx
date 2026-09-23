@@ -1,4 +1,4 @@
-import { socialPlatforms } from '../lib/socialPlatforms'
+import { socialPlatforms, phonePlatforms, sanitizePhoneHandle } from '../lib/socialPlatforms'
 import { Icons } from './Icons'
 
 export const SocialHandlesEditor = ({
@@ -11,7 +11,11 @@ export const SocialHandlesEditor = ({
   const handles = value?.length > 0 ? value : [{ platform: 'wechat', handle: '' }]
 
   const updateHandle = (index, field, newValue) => {
-    const updated = handles.map((h, i) => (i === index ? { ...h, [field]: newValue } : h))
+    const sanitized =
+      field === 'handle' && phonePlatforms.has(handles[index]?.platform)
+        ? sanitizePhoneHandle(newValue)
+        : newValue
+    const updated = handles.map((h, i) => (i === index ? { ...h, [field]: sanitized } : h))
     onChange(updated)
   }
 
@@ -46,12 +50,16 @@ export const SocialHandlesEditor = ({
             </div>
 
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Handle</label>
+              <label className="form-label">
+                {phonePlatforms.has(social.platform) ? 'Phone number' : 'Handle'}
+              </label>
               <input
-                type="text"
+                type={phonePlatforms.has(social.platform) ? 'tel' : 'text'}
                 value={social.handle || ''}
                 onChange={(e) => updateHandle(index, 'handle', e.target.value)}
-                placeholder="@your_handle"
+                placeholder={
+                  phonePlatforms.has(social.platform) ? '+1 555 123 4567' : '@your_handle'
+                }
                 className="form-input"
                 disabled={disabled}
               />

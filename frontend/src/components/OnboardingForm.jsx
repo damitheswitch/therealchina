@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useProfileContext } from '../contexts/ProfileContext'
 import { validateDisplayName } from '../lib/validateDisplayName'
+import { COUNTRIES, LANGUAGES, CURRENT_STATUSES } from '../lib/constants'
 import { CityAutocomplete } from './CityAutocomplete'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
@@ -32,6 +34,7 @@ export const OnboardingForm = ({
 }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const { refetch } = useProfileContext()
 
   const [displayName, setDisplayName] = useState(initialDisplayName || '')
   const [displayNameError, setDisplayNameError] = useState('')
@@ -43,6 +46,12 @@ export const OnboardingForm = ({
   const [showSocialHandle, setShowSocialHandle] = useState(
     initialProfile?.show_social_handle !== false
   )
+  const [homeCountry, setHomeCountry] = useState(initialProfile?.home_country || '')
+  const [currentStatus, setCurrentStatus] = useState(initialProfile?.current_status || '')
+  const [languagesSpoken, setLanguagesSpoken] = useState(
+    Array.isArray(initialProfile?.languages_spoken) ? initialProfile.languages_spoken : []
+  )
+  const [emailConsent, setEmailConsent] = useState(initialProfile?.email_consent === true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -53,6 +62,12 @@ export const OnboardingForm = ({
     setProgram(initialProfile?.program || '')
     setSocialHandles(normalizeSocialHandles(initialProfile))
     setShowSocialHandle(initialProfile?.show_social_handle !== false)
+    setHomeCountry(initialProfile?.home_country || '')
+    setCurrentStatus(initialProfile?.current_status || '')
+    setLanguagesSpoken(
+      Array.isArray(initialProfile?.languages_spoken) ? initialProfile.languages_spoken : []
+    )
+    setEmailConsent(initialProfile?.email_consent === true)
 
     if (displayNameEditable && initialDisplayName) {
       setDisplayNameError(validateDisplayName(initialDisplayName).error || '')
@@ -77,6 +92,10 @@ export const OnboardingForm = ({
       university: university.trim() !== '__not_listed' ? university.trim() || null : null,
       program: program.trim() || null,
       show_social_handle: showSocialHandle,
+      home_country: homeCountry || null,
+      current_status: currentStatus || null,
+      languages_spoken: languagesSpoken.length > 0 ? languagesSpoken : null,
+      email_consent: emailConsent,
       social_handles: socialHandles.filter((sh) => sh.handle && sh.handle.trim()),
       social_platform: null,
       social_handle: null,
@@ -110,6 +129,9 @@ export const OnboardingForm = ({
     try {
       const { error } = await supabase.from('profiles').update(update).eq('id', user.id)
       if (error) throw error
+      // Sync the app-wide profile record so the header reflects the new
+      // display name immediately after onboarding.
+      await refetch()
       onComplete()
     } catch (error) {
       console.error('Error saving onboarding:', error)
@@ -239,6 +261,118 @@ export const OnboardingForm = ({
           <p className="form-hint">
             Your program of study helps students in the same field connect with you.
           </p>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <h3 className="form-section-title">A bit more about you</h3>
+
+        <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
+          <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+            <label className="form-label" htmlFor="onboarding-home-country">
+              Home country
+            </label>
+            <select
+              id="onboarding-home-country"
+              className="form-select"
+              value={homeCountry}
+              onChange={(e) => setHomeCountry(e.target.value)}
+              disabled={saving}
+            >
+              <option value="">Prefer not to say</option>
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+            <label className="form-label" htmlFor="onboarding-current-status">
+              What are you up to right now?
+            </label>
+            <select
+              id="onboarding-current-status"
+              className="form-select"
+              value={currentStatus}
+              onChange={(e) => setCurrentStatus(e.target.value)}
+              disabled={saving}
+            >
+              <option value="">Prefer not to say</option>
+              {CURRENT_STATUSES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="onboarding-languages">
+            Languages you speak <span className="form-hint-inline">add as many as you like</span>
+          </label>
+          <select
+            id="onboarding-languages"
+            className="form-select"
+            value=""
+            onChange={(e) => {
+              const lang = e.target.value
+              if (lang && !languagesSpoken.includes(lang))
+                setLanguagesSpoken((prev) => [...prev, lang])
+            }}
+            disabled={saving}
+          >
+            <option value="">Select a language...</option>
+            {LANGUAGES.filter((l) => !languagesSpoken.includes(l)).map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </select>
+          {languagesSpoken.length > 0 && (
+            <div className="chip-row" style={{ marginTop: '.5rem' }}>
+              {languagesSpoken.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  className="chip selected"
+                  title="Remove"
+                  onClick={() => setLanguagesSpoken((prev) => prev.filter((x) => x !== l))}
+                  disabled={saving}
+                >
+                  {l} ✕
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="form-group">
+          <span className="form-label" id="onboarding-email-consent-label">
+            Want early access & updates?
+          </span>
+          <div className="segmented" role="group" aria-labelledby="onboarding-email-consent-label">
+            <button
+              type="button"
+              className={`seg ${!emailConsent ? 'selected' : ''}`}
+              onClick={() => setEmailConsent(false)}
+              disabled={saving}
+            >
+              No thanks
+            </button>
+            <button
+              type="button"
+              className={`seg ${emailConsent ? 'selected' : ''}`}
+              onClick={() => setEmailConsent(true)}
+              disabled={saving}
+            >
+              Yes, sign me up
+            </button>
+          </div>
+          <span className="form-hint">
+            Get the newsletter. Scholarships, new features, and early access before everyone else.
+          </span>
         </div>
       </div>
 
