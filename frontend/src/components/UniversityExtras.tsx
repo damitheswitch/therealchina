@@ -4,14 +4,11 @@ import { MediaGallery } from './MediaGallery'
 import type { Tables } from '../types/database.types'
 import type { UniversityExtras } from '../lib/universityExtras'
 
-type University = Pick<
-  Tables<'universities'>,
-  'city' | 'country' | 'uni_type' | 'languages_of_instruction' | 'website'
->
+type University = Pick<Tables<'universities'>, 'city' | 'country' | 'website' | 'rankings'>
 
 // ---- "University facts" rail card -----------------------------------------
-// Static directory fields (country/type/languages/website) blended with
-// reviewer-reported facts. Rows render only when their data exists, so sparse
+// Static directory fields (country/ranking/website) blended with
+// reviewer-derived facts. Rows render only when their data exists, so sparse
 // universities never show empty labels.
 export const UniversityFacts = ({
   university,
@@ -21,25 +18,16 @@ export const UniversityFacts = ({
   extras: UniversityExtras
 }) => {
   const location = [university.city, university.country].filter(Boolean).join(', ')
-  const languages =
-    university.languages_of_instruction && university.languages_of_instruction.length > 0
-      ? university.languages_of_instruction.join(' · ')
-      : extras.reportedLanguages.length > 0
-        ? `${extras.reportedLanguages.join(' · ')}*`
-        : null
+  const rankings = (university.rankings ?? {}) as Record<string, number>
+  const rankBits: string[] = []
+  if (typeof rankings.shanghai_national === 'number')
+    rankBits.push(`#${rankings.shanghai_national} in China (ShanghaiRanking)`)
+  if (typeof rankings.arwu_world === 'number')
+    rankBits.push(`#${rankings.arwu_world} worldwide (ARWU)`)
 
   const rows: { label: string; node: ReactNode }[] = []
   if (location) rows.push({ label: 'Location', node: location })
-  if (university.uni_type)
-    rows.push({
-      label: 'Type',
-      node: `${university.uni_type === 'public' ? 'Public' : 'Private'} university`,
-    })
-  if (languages)
-    rows.push({
-      label: 'Teaching',
-      node: languages,
-    })
+  if (rankBits.length > 0) rows.push({ label: 'Ranking', node: rankBits.join(' · ') })
   if (university.website)
     rows.push({
       label: 'Website',
@@ -76,9 +64,6 @@ export const UniversityFacts = ({
           </div>
         ))}
       </dl>
-      {!university.languages_of_instruction?.length && extras.reportedLanguages.length > 0 && (
-        <p className="sum-note">* reported by reviewers</p>
-      )}
     </section>
   )
 }

@@ -1793,17 +1793,6 @@ h3 {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
-.uni-type-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--gold-dark);
-  background: var(--gold-tint);
-  border: 1px solid var(--gold-light);
-  border-radius: var(--r-full);
-}
 .uni-site-link {
   display: inline-flex;
   align-items: center;

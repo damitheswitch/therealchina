@@ -64,15 +64,6 @@ export const UniversityPage = () => {
   const hasVerified = stats?.has_verified_review || false
   const location = [university.city, university.country].filter(Boolean).join(', ')
 
-  // Sidebar renders only when at least one card inside it has data — otherwise
-  // the grid would reserve an empty rail next to the reviews.
-  const showAside =
-    Boolean(university.country || university.uni_type || university.website) ||
-    (university.languages_of_instruction?.length ?? 0) > 0 ||
-    extras.reportedLanguages.length > 0 ||
-    extras.programCount > 0 ||
-    extras.fundingAnswered > 0
-
   const ratingBlock =
     reviewCount > 0 ? (
       <div className="uni-profile-rating-block">
@@ -117,23 +108,16 @@ export const UniversityPage = () => {
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
-              {(university.uni_type || university.website) && (
+              {university.website && (
                 <div className="uni-profile-badges">
-                  {university.uni_type && (
-                    <span className="uni-type-badge">
-                      {university.uni_type === 'public' ? 'Public' : 'Private'} university
-                    </span>
-                  )}
-                  {university.website && (
-                    <a
-                      href={university.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="uni-site-link"
-                    >
-                      Official website <span aria-hidden="true">↗</span>
-                    </a>
-                  )}
+                  <a
+                    href={university.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="uni-site-link"
+                  >
+                    Official website <span aria-hidden="true">↗</span>
+                  </a>
                 </div>
               )}
             </div>
@@ -147,7 +131,7 @@ export const UniversityPage = () => {
 
       <UniversityPhotoStrip extras={extras} />
 
-      <div className={showAside ? 'uni-profile-layout' : undefined}>
+      <div className="uni-profile-layout">
         <div className="uni-profile-main">
           <ReviewSummary summary={summary} />
 
@@ -175,13 +159,11 @@ export const UniversityPage = () => {
           </div>
         </div>
 
-        {showAside && (
-          <aside className="uni-profile-aside">
-            <UniversityFacts university={university} extras={extras} />
-            <UniversityFunding extras={extras} />
-            <UniversityPrograms extras={extras} />
-          </aside>
-        )}
+        <aside className="uni-profile-aside">
+          <UniversityFacts university={university} extras={extras} />
+          <UniversityFunding extras={extras} />
+          <UniversityPrograms extras={extras} />
+        </aside>
       </div>
 
       <RegistrationNudge />

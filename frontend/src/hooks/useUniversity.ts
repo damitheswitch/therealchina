@@ -23,7 +23,7 @@ export const useUniversity = (slug: string | undefined) => {
         const { data, error: fetchError } = await supabase
           .from('universities')
           .select(
-            'id, name, name_zh, city, country, slug, logo_url, is_verified, uni_type, languages_of_instruction, website'
+            'id, name, name_zh, city, country, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings'
           )
           .eq('slug', slug)
           .abortSignal(controller.signal)
