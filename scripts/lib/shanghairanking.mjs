@@ -32,7 +32,9 @@ export async function fetchUnivData(year = '2026') {
   const univData = captured?.data?.[0]?.univData
   if (!Array.isArray(univData) || univData.length < 100)
     throw new Error(`univData missing/short (got ${univData?.length})`)
-  return { univData, listUrl }
+  // indicator code → Chinese name (codes change per year; names are stable)
+  const indList = captured?.data?.[0]?.indList ?? []
+  return { univData, indList, listUrl }
 }
 
 // Parse the VALUES tuples of `INSERT INTO universities` in our seed files.
@@ -125,4 +127,18 @@ export const CATEGORY_EN = {
   '林业': 'forestry', '医药': 'medicine', '财经': 'finance', '语言': 'language',
   '政法': 'politics', '民族': 'ethnic', '体育': 'sports', '艺术': 'arts',
   '中医药': 'tcm', '合作办学': 'cooperative',
+}
+
+// 软科 indicator names → stable EN keys (codes shift per year; map via name)
+export const INDICATOR_EN = {
+  '办学层次': 'school_level',
+  '学科水平': 'discipline',
+  '办学资源': 'resources',
+  '师资规模与结构': 'faculty',
+  '人才培养': 'talent_training',
+  '科学研究': 'research',
+  '服务社会': 'social_service',
+  '高端人才': 'top_talent',
+  '重大项目与成果': 'major_projects',
+  '国际竞争力': 'international',
 }

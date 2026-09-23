@@ -13,6 +13,7 @@ import {
   UniversityPrograms,
   UniversityFunding,
   UniversityPhotoStrip,
+  RankingBreakdown,
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { Icons } from '../components/Icons'
@@ -98,6 +99,11 @@ export const UniversityPage = () => {
     typeof rankings.shanghai_national === 'number' ? rankings.shanghai_national : null
   const rankWorld = typeof rankings.arwu_world === 'number' ? rankings.arwu_world : null
   const shanghaiScore = typeof rankings.shanghai_score === 'number' ? rankings.shanghai_score : null
+  const prestigeTags = Array.isArray(rankings.shanghai_tags) ? rankings.shanghai_tags : []
+  const indicators =
+    rankings.shanghai_indicators && typeof rankings.shanghai_indicators === 'object'
+      ? rankings.shanghai_indicators
+      : null
   const rankUrl =
     typeof rankings.shanghai_url === 'string'
       ? rankings.shanghai_url
@@ -164,6 +170,15 @@ export const UniversityPage = () => {
                     #{rankWorld} worldwide · ARWU
                   </span>
                 )}
+                {prestigeTags.map((t) => (
+                  <span
+                    key={t}
+                    className="uni-tag-chip"
+                    title={t === '双一流' ? 'Double First-Class initiative' : `Project ${t}`}
+                  >
+                    {t}
+                  </span>
+                ))}
                 {categoryLabel && (
                   <span className="uni-cat-chip" title="University category (软科)">
                     {categoryLabel}
@@ -209,6 +224,7 @@ export const UniversityPage = () => {
         <aside className="uni-profile-aside">
           <UniversityFunding extras={extras} />
           <UniversityPrograms extras={extras} />
+          <RankingBreakdown indicators={indicators} />
         </aside>
         <div className="uni-reviews-cell">
           <div className="section" style={{ paddingTop: 'var(--sp-1)' }}>

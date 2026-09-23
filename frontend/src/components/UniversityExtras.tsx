@@ -77,6 +77,49 @@ export const UniversityFunding = ({ extras }: { extras: UniversityExtras }) => {
   )
 }
 
+// ---- "Ranking breakdown" rail card -----------------------------------------
+// 软科 10-dimension indicator scores (top ~100 ranked schools only).
+const INDICATOR_LABELS: Record<string, string> = {
+  school_level: 'School level',
+  discipline: 'Discipline',
+  resources: 'Resources',
+  faculty: 'Faculty',
+  talent_training: 'Talent training',
+  research: 'Research',
+  social_service: 'Social service',
+  top_talent: 'Top talent',
+  major_projects: 'Major projects',
+  international: 'International',
+}
+
+export const RankingBreakdown = ({ indicators }: { indicators: Record<string, number> | null }) => {
+  const rows = Object.entries(indicators ?? {}).filter(
+    (e): e is [string, number] => typeof e[1] === 'number'
+  )
+  if (rows.length === 0) return null
+  const max = Math.max(...rows.map(([, v]) => v))
+
+  return (
+    <section className="uni-summary uni-rail-card" aria-labelledby="uni-ind-title">
+      <h2 className="uni-summary-title" id="uni-ind-title">
+        Ranking breakdown · 软科
+      </h2>
+      <ul className="ind-list">
+        {rows.map(([k, v]) => (
+          <li key={k} className="ind-row">
+            <span className="ind-label">{INDICATOR_LABELS[k] ?? k}</span>
+            <span className="ind-bar" aria-hidden="true">
+              <i style={{ width: `${(v / max) * 100}%` }} />
+            </span>
+            <span className="ind-val">{v}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="sum-note">ShanghaiRanking indicator scores — higher is stronger</p>
+    </section>
+  )
+}
+
 // ---- Photo strip ------------------------------------------------------------
 // Reviewer-attached images above the verdict. MediaGallery caps the visible
 // tiles at 3 and turns the last one into a "+N more" tile opening the

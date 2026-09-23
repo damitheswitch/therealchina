@@ -23,6 +23,7 @@ import {
   sqlString,
   PROVINCE_EN,
   CATEGORY_EN,
+  INDICATOR_EN,
 } from './lib/shanghairanking.mjs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -31,7 +32,9 @@ const YEAR = process.argv.includes('--year')
   : '2026'
 const OUT = resolve(ROOT, 'supabase/seed_merge.sql')
 
-const { univData, listUrl } = await fetchUnivData(YEAR)
+const { univData, indList, listUrl } = await fetchUnivData(YEAR)
+const indCodeToName = new Map(indList.map((i) => [String(i.code), i.nameCn]))
+const indCodeToEn = (code) => INDICATOR_EN[indCodeToName.get(String(code))]
 const ours = parseSeedRows(ROOT)
 const { matched, unmatchedTheirs } = matchUniversities(univData, ours)
 
@@ -77,7 +80,14 @@ for (const m of matched) {
     ...(m.theirs.univTags?.length ? { shanghai_tags: m.theirs.univTags } : {}),
     // 软科 10-dimension indicator sub-scores — only top ~100 schools get them
     ...(m.theirs.indData && Object.values(m.theirs.indData).some((v) => v !== '')
-      ? { shanghai_indicators: m.theirs.indData }
+      ? {
+          // normalize year-varying codes (788…) to stable EN keys via indList
+          shanghai_indicators: Object.fromEntries(
+            Object.entries(m.theirs.indData)
+              .filter(([, v]) => v !== '')
+              .map(([code, v]) => [indCodeToEn(code) ?? code, Number.parseFloat(v)])
+          ),
+        }
       : {}),
   }
   const setParts = [
