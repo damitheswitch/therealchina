@@ -62,7 +62,10 @@ FROM (
       ARRAY['Strong academics', 'Research opportunities', 'Beautiful campus', 'Active clubs'],
       '[
         {"url": "https://picsum.photos/seed/trc-tsinghua-quad/800/600", "type": "image", "name": "main-quad.jpg"},
-        {"url": "https://picsum.photos/seed/trc-tsinghua-lib/800/600", "type": "image", "name": "library.jpg"}
+        {"url": "https://picsum.photos/seed/trc-tsinghua-lib/800/600", "type": "image", "name": "library.jpg"},
+        {"url": "https://picsum.photos/seed/trc-tsinghua-dorm/800/600", "type": "image", "name": "dorm.jpg"},
+        {"url": "https://picsum.photos/seed/trc-tsinghua-gate/800/600", "type": "image", "name": "gate.jpg"},
+        {"url": "https://picsum.photos/seed/trc-tsinghua-lake/800/600", "type": "image", "name": "lake.jpg"}
       ]'::jsonb,
       NOW() - INTERVAL '16 days'
     ),
@@ -92,7 +95,7 @@ FROM (
       ARRAY['Great food', 'International-friendly', 'Beautiful campus', 'Good nightlife'],
       '[
         {"url": "https://picsum.photos/seed/trc-tsinghua-canteen/800/600", "type": "image", "name": "canteen.jpg"},
-        {"url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", "type": "video", "name": "campus-walk.mp4"}
+        {"url": "https://cdn.pixabay.com/video/2023/10/22/186115-877653483_large.mp4", "type": "video", "name": "campus-walk.mp4"}
       ]'::jsonb,
       NOW() - INTERVAL '4 days'
     ),

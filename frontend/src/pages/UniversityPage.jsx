@@ -10,7 +10,6 @@ import { SealBadge } from '../components/SealBadge'
 import { ReviewCard } from '../components/ReviewCard'
 import { ReviewSummary } from '../components/ReviewSummary'
 import {
-  UniversityFacts,
   UniversityPrograms,
   UniversityFunding,
   UniversityPhotoStrip,
@@ -63,6 +62,12 @@ export const UniversityPage = () => {
   const reviewCount = stats?.review_count || 0
   const hasVerified = stats?.has_verified_review || false
   const location = [university.city, university.country].filter(Boolean).join(', ')
+  const rankings =
+    university.rankings &&
+    typeof university.rankings === 'object' &&
+    !Array.isArray(university.rankings)
+      ? university.rankings
+      : {}
 
   const ratingBlock =
     reviewCount > 0 ? (
@@ -108,16 +113,28 @@ export const UniversityPage = () => {
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
-              {university.website && (
+              {(typeof rankings.shanghai_national === 'number' || university.website) && (
                 <div className="uni-profile-badges">
-                  <a
-                    href={university.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="uni-site-link"
-                  >
-                    Official website <span aria-hidden="true">↗</span>
-                  </a>
+                  {typeof rankings.shanghai_national === 'number' && (
+                    <span className="uni-rank-chip" title="ShanghaiRanking 软科中国大学排名 2025">
+                      #{rankings.shanghai_national} in China
+                    </span>
+                  )}
+                  {typeof rankings.arwu_world === 'number' && (
+                    <span className="uni-rank-chip" title="Academic Ranking of World Universities">
+                      #{rankings.arwu_world} worldwide
+                    </span>
+                  )}
+                  {university.website && (
+                    <a
+                      href={university.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="uni-site-link"
+                    >
+                      Official website <span aria-hidden="true">↗</span>
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -129,13 +146,19 @@ export const UniversityPage = () => {
         {ratingBlock}
       </div>
 
-      <UniversityPhotoStrip extras={extras} />
-
       <div className="uni-profile-layout">
-        <div className="uni-profile-main">
+        <div className="uni-photos-cell">
+          <UniversityPhotoStrip extras={extras} />
+        </div>
+        <div className="uni-verdict-cell">
           <ReviewSummary summary={summary} />
-
-          <div className="section" style={{ paddingTop: 'var(--sp-3)' }}>
+        </div>
+        <aside className="uni-profile-aside">
+          <UniversityFunding extras={extras} />
+          <UniversityPrograms extras={extras} />
+        </aside>
+        <div className="uni-reviews-cell">
+          <div className="section" style={{ paddingTop: 'var(--sp-1)' }}>
             <h2 className="section-title">Student Reviews</h2>
             <div className="review-list">
               {reviews.length > 0 ? (
@@ -158,12 +181,6 @@ export const UniversityPage = () => {
             </div>
           </div>
         </div>
-
-        <aside className="uni-profile-aside">
-          <UniversityFacts university={university} extras={extras} />
-          <UniversityFunding extras={extras} />
-          <UniversityPrograms extras={extras} />
-        </aside>
       </div>
 
       <RegistrationNudge />

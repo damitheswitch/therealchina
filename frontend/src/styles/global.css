@@ -1793,6 +1793,17 @@ h3 {
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+.uni-rank-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+  background: var(--gold-tint);
+  border: 1px solid var(--gold-light);
+  border-radius: var(--r-full);
+}
 .uni-site-link {
   display: inline-flex;
   align-items: center;
@@ -1805,9 +1816,10 @@ h3 {
   text-decoration: underline;
 }
 
-/* Photo strip: reuse the review gallery visuals in a wider, shorter grid. */
+/* Photo strip inside the main column: 3 equal tiles, last one carries a
+   "+N more" overlay that opens the lightbox on the first hidden photo. */
 .uni-photos {
-  margin-bottom: var(--sp-3);
+  margin-bottom: var(--sp-1);
 }
 .uni-photos > .uni-summary-title {
   display: flex;
@@ -1818,30 +1830,78 @@ h3 {
   margin: 0;
 }
 .uni-photos .media-grid {
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: none;
 }
 .uni-photos .gallery-item {
-  height: 160px;
+  height: 150px;
+}
+.uni-photos .grid-count-3 .gallery-item:first-child {
+  grid-row: auto;
 }
 .uni-photos .media-grid.grid-count-1 {
+  grid-template-columns: 1fr;
+}
+.uni-photos .media-grid.grid-count-2 {
   grid-template-columns: repeat(2, 1fr);
 }
 .uni-photos .media-grid.grid-count-1 .gallery-item,
 .uni-photos .media-grid.grid-count-2 .gallery-item {
   height: 200px;
 }
+.more-photos-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: rgba(26, 22, 19, 0.55);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  transition: background var(--t-fast);
+}
+.gallery-item:hover .more-photos-overlay {
+  background: rgba(26, 22, 19, 0.7);
+}
+.gallery-item:has(.more-photos-overlay) img,
+.gallery-item:has(.more-photos-overlay) video {
+  filter: grayscale(0.5) brightness(0.9);
+}
+.gallery-item:has(.more-photos-overlay):hover img,
+.gallery-item:has(.more-photos-overlay):hover video {
+  transform: none;
+}
 
-/* Two-column profile body: content + facts rail (Niche/QS-style). */
+/* Profile body: photos → verdict → reviews in the left column, stat cards in
+   a right rail spanning all rows. Named areas also define the mobile order:
+   photos → verdict → cards → reviews. */
 .uni-profile-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas:
+    'photos aside'
+    'verdict aside'
+    'reviews aside';
   gap: var(--sp-3);
   align-items: start;
 }
-.uni-profile-main {
+.uni-profile-layout > * {
   min-width: 0;
 }
+.uni-photos-cell {
+  grid-area: photos;
+}
+.uni-verdict-cell {
+  grid-area: verdict;
+}
+.uni-reviews-cell {
+  grid-area: reviews;
+}
 .uni-profile-aside {
+  grid-area: aside;
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
@@ -1850,38 +1910,6 @@ h3 {
 }
 .uni-rail-card {
   padding: var(--sp-2);
-}
-
-/* Facts card rows */
-.fact-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-.fact-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-.fact-row dt {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-}
-.fact-row dd {
-  font-size: 0.9rem;
-  color: var(--ink);
-  line-height: 1.4;
-}
-.fact-link {
-  color: var(--seal-red);
-  font-weight: 500;
-  word-break: break-all;
-}
-.fact-link:hover {
-  text-decoration: underline;
 }
 
 /* Programs card */
@@ -1995,16 +2023,20 @@ h3 {
 @media (max-width: 900px) {
   .uni-profile-layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'photos'
+      'verdict'
+      'aside'
+      'reviews';
   }
   .uni-profile-aside {
     position: static;
-    order: -1;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     align-items: start;
   }
-  .uni-photos .media-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .uni-photos .gallery-item {
+    height: 110px;
   }
 }
 @media (max-width: 560px) {
@@ -2016,7 +2048,7 @@ h3 {
     height: 64px;
   }
   .uni-photos .gallery-item {
-    height: 120px;
+    height: 90px;
   }
 }
 

@@ -1,72 +1,6 @@
-import type { ReactNode } from 'react'
 import { Icons } from './Icons'
 import { MediaGallery } from './MediaGallery'
-import type { Tables } from '../types/database.types'
 import type { UniversityExtras } from '../lib/universityExtras'
-
-type University = Pick<Tables<'universities'>, 'city' | 'country' | 'website' | 'rankings'>
-
-// ---- "University facts" rail card -----------------------------------------
-// Static directory fields (country/ranking/website) blended with
-// reviewer-derived facts. Rows render only when their data exists, so sparse
-// universities never show empty labels.
-export const UniversityFacts = ({
-  university,
-  extras,
-}: {
-  university: University
-  extras: UniversityExtras
-}) => {
-  const location = [university.city, university.country].filter(Boolean).join(', ')
-  const rankings = (university.rankings ?? {}) as Record<string, number>
-  const rankBits: string[] = []
-  if (typeof rankings.shanghai_national === 'number')
-    rankBits.push(`#${rankings.shanghai_national} in China (ShanghaiRanking)`)
-  if (typeof rankings.arwu_world === 'number')
-    rankBits.push(`#${rankings.arwu_world} worldwide (ARWU)`)
-
-  const rows: { label: string; node: ReactNode }[] = []
-  if (location) rows.push({ label: 'Location', node: location })
-  if (rankBits.length > 0) rows.push({ label: 'Ranking', node: rankBits.join(' · ') })
-  if (university.website)
-    rows.push({
-      label: 'Website',
-      node: (
-        <a
-          href={university.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fact-link"
-        >
-          {university.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}{' '}
-          <span aria-hidden="true">↗</span>
-        </a>
-      ),
-    })
-  if (extras.programCount > 0)
-    rows.push({
-      label: 'Programs reviewed',
-      node: `${extras.programCount}`,
-    })
-
-  if (rows.length === 0) return null
-
-  return (
-    <section className="uni-summary uni-rail-card" aria-labelledby="uni-facts-title">
-      <h2 className="uni-summary-title" id="uni-facts-title">
-        University facts
-      </h2>
-      <dl className="fact-list">
-        {rows.map((r) => (
-          <div key={r.label} className="fact-row">
-            <dt>{r.label}</dt>
-            <dd>{r.node}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  )
-}
 
 // ---- "Programs students reviewed" rail card --------------------------------
 export const UniversityPrograms = ({ extras }: { extras: UniversityExtras }) => {
@@ -144,8 +78,9 @@ export const UniversityFunding = ({ extras }: { extras: UniversityExtras }) => {
 }
 
 // ---- Photo strip ------------------------------------------------------------
-// Every image reviewers attached, as one gallery above the review feed.
-// MediaGallery supplies the lightbox; styling tweaks live under .uni-photos.
+// Reviewer-attached images above the verdict. MediaGallery caps the visible
+// tiles at 3 and turns the last one into a "+N more" tile opening the
+// lightbox on the first hidden photo (Booking/Agoda-style).
 export const UniversityPhotoStrip = ({ extras }: { extras: UniversityExtras }) => {
   if (extras.photos.length === 0) return null
   return (
@@ -153,7 +88,7 @@ export const UniversityPhotoStrip = ({ extras }: { extras: UniversityExtras }) =
       <h2 className="uni-summary-title" id="uni-photos-title">
         <Icons.Camera /> Student photos
       </h2>
-      <MediaGallery media={extras.photos} />
+      <MediaGallery media={extras.photos} maxVisible={3} />
     </section>
   )
 }
