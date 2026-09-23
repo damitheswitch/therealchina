@@ -4,10 +4,17 @@ import { useUniversity } from '../hooks/useUniversity'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { useUniversityStats } from '../hooks/useUniversityStats'
 import { buildReviewSummary } from '../lib/reviewSummary'
+import { buildUniversityExtras } from '../lib/universityExtras'
 import { StarRating } from '../components/StarRating'
 import { SealBadge } from '../components/SealBadge'
 import { ReviewCard } from '../components/ReviewCard'
 import { ReviewSummary } from '../components/ReviewSummary'
+import {
+  UniversityFacts,
+  UniversityPrograms,
+  UniversityFunding,
+  UniversityPhotoStrip,
+} from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { Icons } from '../components/Icons'
 
@@ -18,9 +25,10 @@ export const UniversityPage = () => {
   const universityId = university?.id
   const { reviews, authors, loading: reviewsLoading } = useUniversityReviews(universityId)
   const { stats, loading: statsLoading } = useUniversityStats(universityId)
-  // Hook must sit before the early returns below; reviews defaults to [] so
-  // buildReviewSummary([]) is a safe no-op during loading.
+  // Hooks must sit before the early returns below; reviews defaults to [] so
+  // both builders are safe no-ops during loading.
   const summary = useMemo(() => buildReviewSummary(reviews), [reviews])
+  const extras = useMemo(() => buildUniversityExtras(reviews), [reviews])
 
   // Reviews and stats only fire after the university row resolves, so the
   // page is considered loading until the university is done AND (if it was
@@ -54,6 +62,16 @@ export const UniversityPage = () => {
   const avgRating = stats?.avg_rating || 0
   const reviewCount = stats?.review_count || 0
   const hasVerified = stats?.has_verified_review || false
+  const location = [university.city, university.country].filter(Boolean).join(', ')
+
+  // Sidebar renders only when at least one card inside it has data — otherwise
+  // the grid would reserve an empty rail next to the reviews.
+  const showAside =
+    Boolean(university.country || university.uni_type || university.website) ||
+    (university.languages_of_instruction?.length ?? 0) > 0 ||
+    extras.reportedLanguages.length > 0 ||
+    extras.programCount > 0 ||
+    extras.fundingAnswered > 0
 
   const ratingBlock =
     reviewCount > 0 ? (
@@ -85,42 +103,85 @@ export const UniversityPage = () => {
 
       <div className="uni-profile-header">
         <div className="uni-profile-top">
-          <div className="uni-profile-name-block">
-            <div className="uni-profile-city">
-              <Icons.MapPin /> {university.city}
+          <div className="uni-profile-identity">
+            {university.logo_url && (
+              <img
+                src={university.logo_url}
+                alt={`${university.name} campus`}
+                className="uni-profile-logo"
+              />
+            )}
+            <div className="uni-profile-name-block">
+              <div className="uni-profile-city">
+                <Icons.MapPin /> {location}
+              </div>
+              <h1>{university.name}</h1>
+              <div className="uni-profile-name-zh">{university.name_zh}</div>
+              {(university.uni_type || university.website) && (
+                <div className="uni-profile-badges">
+                  {university.uni_type && (
+                    <span className="uni-type-badge">
+                      {university.uni_type === 'public' ? 'Public' : 'Private'} university
+                    </span>
+                  )}
+                  {university.website && (
+                    <a
+                      href={university.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="uni-site-link"
+                    >
+                      Official website <span aria-hidden="true">↗</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
-            <h1>{university.name}</h1>
-            <div className="uni-profile-name-zh">{university.name_zh}</div>
           </div>
           <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
             <Icons.Pen /> Leave a Review
           </Link>
         </div>
         {ratingBlock}
-        <ReviewSummary summary={summary} />
       </div>
 
-      <div className="section" style={{ paddingTop: 'var(--sp-2)' }}>
-        <h2 className="section-title">Student Reviews</h2>
-        <div className="review-list">
-          {reviews.length > 0 ? (
-            reviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                author={authors[review.user_id] ?? null}
-              />
-            ))
-          ) : (
-            <div className="empty-state">
-              <h3>No reviews yet</h3>
-              <p>Be the first to share your experience at {university.name}.</p>
-              <Link to={`/review?uni=${university.slug}`} className="btn btn-primary mt-2">
-                <Icons.Pen /> Leave a Review
-              </Link>
+      <UniversityPhotoStrip extras={extras} />
+
+      <div className={showAside ? 'uni-profile-layout' : undefined}>
+        <div className="uni-profile-main">
+          <ReviewSummary summary={summary} />
+
+          <div className="section" style={{ paddingTop: 'var(--sp-3)' }}>
+            <h2 className="section-title">Student Reviews</h2>
+            <div className="review-list">
+              {reviews.length > 0 ? (
+                reviews.map((review) => (
+                  <ReviewCard
+                    key={review.id}
+                    review={review}
+                    author={authors[review.user_id] ?? null}
+                  />
+                ))
+              ) : (
+                <div className="empty-state">
+                  <h3>No reviews yet</h3>
+                  <p>Be the first to share your experience at {university.name}.</p>
+                  <Link to={`/review?uni=${university.slug}`} className="btn btn-primary mt-2">
+                    <Icons.Pen /> Leave a Review
+                  </Link>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
+
+        {showAside && (
+          <aside className="uni-profile-aside">
+            <UniversityFacts university={university} extras={extras} />
+            <UniversityFunding extras={extras} />
+            <UniversityPrograms extras={extras} />
+          </aside>
+        )}
       </div>
 
       <RegistrationNudge />

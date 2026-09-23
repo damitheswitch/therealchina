@@ -81,7 +81,7 @@ const ENROLLMENT_PLURAL: Record<string, string> = {
   applicant: 'applicants',
 }
 
-const FUNDING_LABELS: Record<string, string> = {
+export const FUNDING_LABELS: Record<string, string> = {
   self: 'Self-funded',
   csc: 'CSC / Government',
   school: 'School',
