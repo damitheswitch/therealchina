@@ -68,6 +68,13 @@ export const UniversityPage = () => {
     !Array.isArray(university.rankings)
       ? university.rankings
       : {}
+  const rankNational =
+    typeof rankings.shanghai_national === 'number' ? rankings.shanghai_national : null
+  const rankWorld = typeof rankings.arwu_world === 'number' ? rankings.arwu_world : null
+  const rankUrl =
+    typeof rankings.shanghai_url === 'string'
+      ? rankings.shanghai_url
+      : 'https://www.shanghairanking.cn/rankings/bcur'
 
   const ratingBlock =
     reviewCount > 0 ? (
@@ -113,30 +120,39 @@ export const UniversityPage = () => {
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
-              {(typeof rankings.shanghai_national === 'number' || university.website) && (
-                <div className="uni-profile-badges">
-                  {typeof rankings.shanghai_national === 'number' && (
-                    <span className="uni-rank-chip" title="ShanghaiRanking 软科中国大学排名 2025">
-                      #{rankings.shanghai_national} in China
-                    </span>
-                  )}
-                  {typeof rankings.arwu_world === 'number' && (
-                    <span className="uni-rank-chip" title="Academic Ranking of World Universities">
-                      #{rankings.arwu_world} worldwide
-                    </span>
-                  )}
-                  {university.website && (
-                    <a
-                      href={university.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="uni-site-link"
-                    >
-                      Official website <span aria-hidden="true">↗</span>
-                    </a>
-                  )}
-                </div>
-              )}
+              <div className="uni-profile-badges">
+                {rankNational !== null && (
+                  <a
+                    className="uni-rank-chip"
+                    href={rankUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View this university's current ranking on ShanghaiRanking (软科)"
+                  >
+                    #{rankNational} in China · ShanghaiRanking <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+                {rankWorld !== null && (
+                  <span className="uni-rank-chip" title="Academic Ranking of World Universities">
+                    #{rankWorld} worldwide · ARWU
+                  </span>
+                )}
+                {extras.programCount > 0 && (
+                  <span className="uni-meta-text">
+                    {extras.programCount} program{extras.programCount === 1 ? '' : 's'} reviewed
+                  </span>
+                )}
+                {university.website && (
+                  <a
+                    href={university.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="uni-site-link"
+                  >
+                    Official website <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
           <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">

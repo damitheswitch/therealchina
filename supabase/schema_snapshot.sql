@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.universities (
   uni_type TEXT CHECK (uni_type IS NULL OR uni_type IN ('public','private')),
   languages_of_instruction TEXT[] DEFAULT '{}',
   website TEXT,
-  -- { "<source>": rank } e.g. {"shanghai_national": 1, "arwu_world": 22}
+  -- { "<source>": rank, "<source>_url": link } e.g. {"shanghai_national": 1, "shanghai_url": "https://..."}
   rankings JSONB NOT NULL DEFAULT '{}'::jsonb,
   search_text TEXT GENERATED ALWAYS AS (
     lower(
