@@ -73,6 +73,8 @@ for (const m of matched) {
     shanghai_national: Number(rank),
     shanghai_url: `${BASE}/institution/${m.theirs.univUp}`,
     ...(Number.isFinite(score) && score > 0 ? { shanghai_score: score } : {}),
+    // prestige tags (985 / 211 / 双一流) — most rows have none
+    ...(m.theirs.univTags?.length ? { shanghai_tags: m.theirs.univTags } : {}),
   }
   const setParts = [
     `name = ${esc(m.theirs.univNameEn)}`,
