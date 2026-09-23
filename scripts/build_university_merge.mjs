@@ -75,6 +75,10 @@ for (const m of matched) {
     ...(Number.isFinite(score) && score > 0 ? { shanghai_score: score } : {}),
     // prestige tags (985 / 211 / 双一流) — most rows have none
     ...(m.theirs.univTags?.length ? { shanghai_tags: m.theirs.univTags } : {}),
+    // 软科 10-dimension indicator sub-scores — only top ~100 schools get them
+    ...(m.theirs.indData && Object.values(m.theirs.indData).some((v) => v !== '')
+      ? { shanghai_indicators: m.theirs.indData }
+      : {}),
   }
   const setParts = [
     `name = ${esc(m.theirs.univNameEn)}`,
