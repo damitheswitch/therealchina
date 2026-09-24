@@ -1,21 +1,23 @@
 -- =========================================================
--- 026_seed_demo_reviews.sql
+-- seed_demo.sql — DEMO DATA, NOT A MIGRATION
 --
--- DEMO SEED DATA (not schema). Six realistic anonymous reviews on three
--- universities so the review-summary card and the listing "recommend" pill
--- have enough recommend answers to render (pill gate: answered >= 2).
--- Universities are resolved BY SLUG so this replays on any environment that
--- has those universities; rows whose university is absent are skipped.
+-- Six realistic anonymous reviews on three universities so the
+-- review-summary card and the listing "recommend" pill have enough
+-- recommend answers to render (pill gate: answered >= 2).
 --
--- Combined figures on the live DB at seed time (existing answers counted):
---   Tsinghua  +2 yes +1 maybe  (+1 existing yes)   -> 3/4 = 75%  rec-yes
---   Peking    +1 maybe         (+1 existing yes)   -> 1/2 = 50%  rec-maybe
---   Fudan     +2 no            (+1 existing maybe) -> 0/3 = 0%   rec-no
--- On a fresh DB without those pre-existing answers: Tsinghua shows 67% and
--- Peking's pill stays hidden (only 1 answer).
+-- FAKE DATA POLICY: demo/fake rows are allowed on local, feat branches,
+-- and staging — never on prod. This file is intentionally NOT in
+-- supabase/migrations/ so `supabase db push` can never apply it to prod.
 --
--- Fixed UUIDs + ON CONFLICT DO NOTHING keep this idempotent and make
--- cleanup a single DELETE:
+-- Local: nothing to do — the same block runs via seed.sql on
+--   `supabase db reset`.
+-- Staging / any env that already has the uni dataset:
+--   supabase link --project-ref pthlbalvkunugifbzgzk   # once per worktree
+--   supabase db query --linked --file supabase/seed_demo.sql
+--
+-- Universities are resolved BY SLUG; rows whose university is absent are
+-- skipped. Fixed UUIDs + ON CONFLICT DO NOTHING keep it idempotent —
+-- cleanup is a single DELETE:
 --   DELETE FROM public.reviews WHERE id IN (
 --     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
 --     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
@@ -27,6 +29,8 @@
 -- Media URLs are public placeholders (picsum / Google sample bucket) —
 -- direct table inserts are not bound by review-submit's bucket-prefix
 -- validation. Review triggers refresh university_stats automatically.
+--
+-- Keep the INSERT block in sync with the DEMO REVIEWS section of seed.sql.
 -- =========================================================
 
 INSERT INTO public.reviews (
