@@ -37,7 +37,6 @@ export const UniversityLogo = ({ name, logoUrl, size, className, eager = false }
       height={size}
       className={className}
       loading={eager ? 'eager' : 'lazy'}
-      fetchPriority={eager ? 'high' : undefined}
       decoding="async"
       style={{ objectFit: 'contain' }}
     />

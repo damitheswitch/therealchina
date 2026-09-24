@@ -1,15 +1,26 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { usePrerenderData } from '../lib/prerenderData'
+import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
 export const useUniversityStats = (universityId: string) => {
-  const [stats, setStats] = useState<Tables<'university_stats'> | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+  const pd = usePrerenderData<UniversityPageData>('universityPage')
+  const seeded = pd?.university?.id === universityId ? pd : null
+  const [stats, setStats] = useState<Tables<'university_stats'> | null>(seeded?.stats ?? null)
+  const [loading, setLoading] = useState<boolean>(!!universityId && !seeded)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!universityId) {
       setStats(null)
+      setLoading(false)
+      return
+    }
+    // Hydration: stats came baked into the page (null = zero-review page).
+    if (seeded) {
+      setStats(seeded.stats ?? null)
+      setError(null)
       setLoading(false)
       return
     }
@@ -41,7 +52,7 @@ export const useUniversityStats = (universityId: string) => {
 
     run()
     return () => controller.abort()
-  }, [universityId])
+  }, [universityId, seeded])
 
   return { stats, loading, error }
 }

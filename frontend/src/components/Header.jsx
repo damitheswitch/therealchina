@@ -1,15 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Logo } from './Logo'
 import { Icons } from './Icons'
-import { useAuth } from '../contexts/AuthContext'
-import { useAuthModal } from '../contexts/AuthModalContext'
 import { UserDropdown } from './UserDropdown'
 
 // Header component
 export const Header = () => {
   const location = useLocation()
-  const { user, loading } = useAuth()
-  const { openAuthModal } = useAuthModal()
 
   const isActive = (path) => location.pathname === path
 

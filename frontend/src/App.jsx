@@ -14,6 +14,9 @@ import { useAuth } from './contexts/AuthContext'
 const UniversityPage = lazy(() =>
   import('./pages/UniversityPage').then((m) => ({ default: m.UniversityPage }))
 )
+const UniversitiesPage = lazy(() =>
+  import('./pages/UniversitiesPage').then((m) => ({ default: m.UniversitiesPage }))
+)
 const ReviewPage = lazy(() => import('./pages/ReviewPage').then((m) => ({ default: m.ReviewPage })))
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -70,6 +73,7 @@ function App() {
 
             <Route element={<OnboardingGuard />}>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/universities" element={<UniversitiesPage />} />
               <Route path="/university/:slug" element={<UniversityPage />} />
               <Route path="/review" element={<ReviewPage />} />
               <Route path="/profile" element={<ProfilePage />} />

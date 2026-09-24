@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run prerender",
     "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -14,7 +14,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "types:local": "cd .. && npx supabase gen types typescript --db-url \"postgresql://postgres:postgres@localhost:54322/postgres\" > frontend/src/types/database.types.ts && cd frontend && npx prettier --write src/types/database.types.ts"
+    "types:local": "cd .. && npx supabase gen types typescript --db-url \"postgresql://postgres:postgres@localhost:54322/postgres\" > frontend/src/types/database.types.ts && cd frontend && npx prettier --write src/types/database.types.ts",
+    "export:data": "vite-node scripts/export_prerender_data.ts",
+    "generate:static": "vite-node scripts/generate_static.ts",
+    "prerender": "npm run export:data && npm run generate:static && vite-node scripts/prerender.tsx",
+    "validate:seo": "node scripts/validate_build.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "5.3.0",

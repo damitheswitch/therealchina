@@ -17,6 +17,10 @@ import {
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { UniversityLogo } from '../components/UniversityLogo'
+import { Seo } from '../components/Seo'
+import { firstPartyLogo } from '../lib/logo'
+import { hasSubstantiveReview } from '../lib/seo/indexable'
+import { stringify, universitySchema, breadcrumbSchema } from '../lib/seo/jsonld'
 import { Icons } from '../components/Icons'
 
 // ShanghaiRanking 软科 category tokens → display labels
@@ -67,6 +71,7 @@ export const UniversityPage = () => {
   if (!university) {
     return (
       <div className="container">
+        <Seo path={`/university/${slug}`} title="University not found" index={false} />
         <div className="empty-state" style={{ paddingTop: '6rem' }}>
           <h1>University not found</h1>
           <p>This university doesn&apos;t exist in our database.</p>
@@ -132,9 +137,41 @@ export const UniversityPage = () => {
       </div>
     )
 
+  const seoTitle = `${university.name} Reviews`
+  const seoDescription =
+    reviewCount > 0
+      ? `${university.name} in ${location}: rated ${avgRating.toFixed(1)}/5 by ${reviewCount} international student${reviewCount !== 1 ? 's' : ''}. Honest reviews on academics, costs, campus life and support.`
+      : `${university.name} in ${location}. Honest reviews by international students — academics, costs, campus life and support.`
+
   return (
     <div className="container">
-      <Link to="/" className="btn btn-outline mt-3" style={{ marginBottom: 0 }}>
+      <Seo
+        path={`/university/${university.slug}`}
+        title={seoTitle}
+        description={seoDescription}
+        image={firstPartyLogo(university.logo_url) ?? undefined}
+        index={hasSubstantiveReview(reviews)}
+        jsonLd={[
+          stringify(
+            universitySchema({
+              name: university.name,
+              slug: university.slug,
+              city: university.city,
+              logo: firstPartyLogo(university.logo_url),
+              website: university.website,
+              rating: reviewCount >= 2 ? { value: avgRating, count: reviewCount } : null,
+            })
+          ),
+          stringify(
+            breadcrumbSchema([
+              { name: 'Home', url: '/' },
+              { name: 'Universities', url: '/universities' },
+              { name: university.name, url: `/university/${university.slug}` },
+            ])
+          ),
+        ]}
+      />
+      <Link to="/universities" className="btn btn-outline mt-3" style={{ marginBottom: 0 }}>
         <Icons.ArrowLeft /> All universities
       </Link>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { usePrerenderData } from '../lib/prerenderData'
 import type { Tables } from '../types/database.types'
 
 export interface CityGroup {
@@ -8,11 +9,18 @@ export interface CityGroup {
 }
 
 export const useCities = () => {
-  const [cities, setCities] = useState<string[]>([])
-  const [groups, setGroups] = useState<CityGroup[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const pd = usePrerenderData<{ cities: string[]; groups: CityGroup[] }>('cities')
+  const [cities, setCities] = useState<string[]>(pd?.cities ?? [])
+  const [groups, setGroups] = useState<CityGroup[]>(pd?.groups ?? [])
+  const [loading, setLoading] = useState<boolean>(!pd)
 
   useEffect(() => {
+    if (pd) {
+      setCities(pd.cities)
+      setGroups(pd.groups)
+      setLoading(false)
+      return
+    }
     const controller = new AbortController()
 
     const run = async () => {
@@ -49,7 +57,7 @@ export const useCities = () => {
 
     run()
     return () => controller.abort()
-  }, [])
+  }, [pd])
 
   return { cities, groups, loading }
 }

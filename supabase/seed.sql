@@ -121,11 +121,11 @@ FROM (
       'Dorms are dated for the price, and course registration for international students is confusing.',
       ARRAY['Strong academics', 'Research opportunities', 'Beautiful campus', 'Active clubs'],
       '[
-        {"url": "https://picsum.photos/seed/trc-tsinghua-quad/800/600", "type": "image", "name": "main-quad.jpg"},
-        {"url": "https://picsum.photos/seed/trc-tsinghua-lib/800/600", "type": "image", "name": "library.jpg"},
-        {"url": "https://picsum.photos/seed/trc-tsinghua-dorm/800/600", "type": "image", "name": "dorm.jpg"},
-        {"url": "https://picsum.photos/seed/trc-tsinghua-gate/800/600", "type": "image", "name": "gate.jpg"},
-        {"url": "https://picsum.photos/seed/trc-tsinghua-lake/800/600", "type": "image", "name": "lake.jpg"}
+        {"url": "/media/demo/trc-tsinghua-quad.jpg", "type": "image", "name": "main-quad.jpg"},
+        {"url": "/media/demo/trc-tsinghua-lib.jpg", "type": "image", "name": "library.jpg"},
+        {"url": "/media/demo/trc-tsinghua-dorm.jpg", "type": "image", "name": "dorm.jpg"},
+        {"url": "/media/demo/trc-tsinghua-gate.jpg", "type": "image", "name": "gate.jpg"},
+        {"url": "/media/demo/trc-tsinghua-lake.jpg", "type": "image", "name": "lake.jpg"}
       ]'::jsonb,
       NOW() - INTERVAL '16 days'
     ),
@@ -154,9 +154,7 @@ FROM (
       'International office response times; dorm heating is centrally controlled.',
       ARRAY['Great food', 'International-friendly', 'Beautiful campus', 'Good nightlife'],
       '[
-        {"url": "https://picsum.photos/seed/trc-tsinghua-canteen/800/600", "type": "image", "name": "canteen.jpg"},
-        {"url": "https://cdn.pixabay.com/video/2023/10/22/186115-877653483_large.mp4", "type": "video", "name": "campus-walk.mp4"}
-      ]'::jsonb,
+        {"url": "/media/demo/trc-tsinghua-canteen.jpg", "type": "image", "name": "canteen.jpg"}]'::jsonb,
       NOW() - INTERVAL '4 days'
     ),
     -- ---- Peking University ----
@@ -200,8 +198,8 @@ FROM (
       'Dorm quality and prices near campus.',
       ARRAY['Expensive city', 'Good nightlife', 'Great food'],
       '[
-        {"url": "https://picsum.photos/seed/trc-fudan-street/800/600", "type": "image", "name": "street-food.jpg"},
-        {"url": "https://picsum.photos/seed/trc-fudan-river/800/600", "type": "image", "name": "suzhou-creek.jpg"}
+        {"url": "/media/demo/trc-fudan-street.jpg", "type": "image", "name": "street-food.jpg"},
+        {"url": "/media/demo/trc-fudan-river.jpg", "type": "image", "name": "suzhou-creek.jpg"}
       ]'::jsonb,
       NOW() - INTERVAL '11 days'
     )

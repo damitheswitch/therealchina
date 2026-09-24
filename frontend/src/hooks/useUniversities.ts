@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { getRecommendYesPct } from '../lib/reviewSummary'
+import { usePrerenderData } from '../lib/prerenderData'
 import type { Tables } from '../types/database.types'
 
 const PAGE_SIZE = 20
@@ -11,7 +12,7 @@ const SORT_CONFIG = {
   reviews: { column: 'university_stats(review_count)', ascending: false },
 } as const
 
-type SortBy = keyof typeof SORT_CONFIG
+export type SortBy = keyof typeof SORT_CONFIG
 
 type UniversityRow = Pick<
   Tables<'universities'>,
@@ -39,6 +40,15 @@ type UniversityDisplay = UniversityWithStats & {
   recommendAnswered: number
 }
 
+// Prerender payload written by scripts/generate_static.ts — matches the page's
+// initial query so hydration shows identical content without re-fetching.
+export interface UniversitiesPageData {
+  for: { search: string; city: string; sortBy: string; page: number }
+  rows: UniversityDisplay[]
+  totalCount: number
+  pageCount: number
+}
+
 export const useUniversities = ({
   search,
   city,
@@ -50,12 +60,28 @@ export const useUniversities = ({
   sortBy: SortBy
   page: number
 }) => {
-  const [universities, setUniversities] = useState<UniversityDisplay[]>([])
-  const [totalCount, setTotalCount] = useState<number>(0)
-  const [pageCount, setPageCount] = useState<number>(1)
-  const [loading, setLoading] = useState<boolean>(true)
+  const pd = usePrerenderData<UniversitiesPageData>('universitiesPage')
+  const seeded =
+    pd &&
+    pd.for.page === page &&
+    pd.for.sortBy === sortBy &&
+    (pd.for.search ?? '') === (search ?? '') &&
+    (pd.for.city ?? '') === (city ?? '')
+      ? pd
+      : null
+  const [universities, setUniversities] = useState<UniversityDisplay[]>(seeded?.rows ?? [])
+  const [totalCount, setTotalCount] = useState<number>(seeded?.totalCount ?? 0)
+  const [pageCount, setPageCount] = useState<number>(seeded?.pageCount ?? 1)
+  const [loading, setLoading] = useState<boolean>(!seeded)
 
   useEffect(() => {
+    if (seeded) {
+      setUniversities(seeded.rows)
+      setTotalCount(seeded.totalCount)
+      setPageCount(seeded.pageCount)
+      setLoading(false)
+      return
+    }
     const controller = new AbortController()
 
     const run = async () => {
@@ -131,7 +157,7 @@ export const useUniversities = ({
 
     run()
     return () => controller.abort()
-  }, [search, city, sortBy, page])
+  }, [search, city, sortBy, page, seeded])
 
   return { universities, totalCount, pageCount, loading }
 }

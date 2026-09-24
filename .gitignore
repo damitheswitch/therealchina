@@ -49,3 +49,7 @@ __pycache__/
 
 # OS files
 Thumbs.db
+
+# Prerender pipeline artifacts (regenerated per build)
+frontend/.prerender-data/
+frontend/lhci/

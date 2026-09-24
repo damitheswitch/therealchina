@@ -7,7 +7,9 @@
   NODE_VERSION = "20"
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_ANON_KEY,VITE_SUPABASE_URL,VITE_TURNSTILE_SITE_KEY"
 
+# SPA fallback → app shell. Content routes are real files / generated
+# _redirects (alias 301s, dynamic 404s) which take precedence.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/app.html"
   status = 200

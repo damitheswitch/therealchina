@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
 
@@ -30,7 +30,9 @@ export const useProfile = (
   const [error, setError] = useState<Error | null>(null)
   const mounted = useRef<boolean>(true)
 
-  useLayoutEffect(() => {
+  // Plain effect — useLayoutEffect warns under renderToString and this only
+  // syncs loading state, never measures layout.
+  useEffect(() => {
     if (userId) {
       setLoading(true)
     } else {

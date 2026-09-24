@@ -1,0 +1,54 @@
+# SEO guardrail pipeline — runs the build + validator + unit tests on every PR
+# that touches SEO-sensitive paths, and on staging/master pushes.
+name: SEO
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'netlify.toml'
+      - 'supabase/migrations/**slug**'
+  push:
+    branches: [staging, master]
+  workflow_dispatch:
+
+jobs:
+  seo-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint + typecheck + unit tests
+        working-directory: frontend
+        run: |
+          npm run lint
+          npm run typecheck
+          npx vitest run
+
+      - name: Build + prerender
+        working-directory: frontend
+        env:
+          # Committed fixture — no Supabase in CI. CI builds are never the
+          # prod deploy, so the validator runs in noindex mode.
+          TRC_EXPORT_FIXTURE: '1'
+          TRC_INDEXABLE: '0'
+        run: npm run build
+
+      - name: SEO validator
+        working-directory: frontend
+        run: node scripts/validate_build.mjs
+
+      - name: Lighthouse CI (warnings only — budgets enforced after data lands)
+        working-directory: frontend
+        if: github.event_name == 'pull_request'
+        run: npx lhci autorun --config=lighthouserc.cjs || echo "::warning::lhci unavailable in this environment"
