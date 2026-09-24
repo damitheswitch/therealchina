@@ -15,7 +15,7 @@ export const orgSchema = () => ({
   '@type': 'Organization',
   name: SITE.name,
   url: siteUrl('/'),
-  logo: siteUrl('/icons/icon-512.png'),
+  logo: siteUrl('/pwa-512x512.png'),
   email: SITE.contactEmail,
   ...(SITE.sameAs.length ? { sameAs: SITE.sameAs } : {}),
 })
@@ -27,11 +27,6 @@ export const websiteSchema = () => ({
   url: siteUrl('/'),
   description: SITE.tagline,
   publisher: { '@type': 'Organization', name: SITE.name },
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: { '@type': 'EntryPoint', urlTemplate: siteUrl('/universities?q={query}') },
-    'query-input': 'required name=query',
-  },
 })
 
 interface UniInput {
@@ -41,11 +36,14 @@ interface UniInput {
   logo?: string | null
   website?: string | null
   rating?: { value: number; count: number } | null
+  // Visible reviews embedded as Review markup — only pass reviews whose text
+  // actually renders on the page.
+  reviews?: { author: string; rating: number; text: string; date: string }[]
 }
 
 export const universitySchema = (u: UniInput) => ({
   '@context': 'https://schema.org',
-  '@type': 'EducationalOrganization',
+  '@type': 'CollegeOrUniversity',
   name: u.name,
   url: siteUrl(`/university/${u.slug}`),
   ...(u.city
@@ -64,6 +62,7 @@ export const universitySchema = (u: UniInput) => ({
         },
       }
     : {}),
+  ...(u.reviews?.length ? { review: u.reviews.map(reviewSchema) } : {}),
 })
 
 export const courseSchema = (input: {
@@ -127,7 +126,7 @@ export const articleSchema = (a: ArticleInput) => ({
   publisher: {
     '@type': 'Organization',
     name: SITE.name,
-    logo: { '@type': 'ImageObject', url: siteUrl('/icons/icon-512.png') },
+    logo: { '@type': 'ImageObject', url: siteUrl('/pwa-512x512.png') },
   },
 })
 

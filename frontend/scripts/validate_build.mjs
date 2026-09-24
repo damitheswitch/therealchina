@@ -13,7 +13,7 @@ import { parse } from 'node-html-parser'
 const FRONTEND = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = resolve(FRONTEND, 'dist')
 const SRC = resolve(FRONTEND, 'src')
-const PROD = 'https://therealchina.net'
+const PROD = 'https://www.therealchina.net'
 const isProd =
   process.env.TRC_INDEXABLE === '1' ||
   (process.env.CONTEXT === 'production' && (process.env.URL ?? '').includes('therealchina.net'))
@@ -182,7 +182,7 @@ if (!existsSync(resolve(DIST, 'sitemap.xml'))) {
 if (!existsSync(resolve(DIST, 'robots.txt'))) fail('robots.txt missing')
 else {
   const robots = read(DIST + '/robots.txt')
-  if (isProd && !/Sitemap:\s*https:\/\/therealchina\.net\/sitemap\.xml/.test(robots)) {
+  if (isProd && !/Sitemap:\s*https:\/\/www\.therealchina\.net\/sitemap\.xml/.test(robots)) {
     fail('prod robots.txt missing sitemap line')
   }
   if (!isProd && !/Disallow:\s*\//.test(robots)) fail('non-prod robots.txt must Disallow: /')

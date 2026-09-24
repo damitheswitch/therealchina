@@ -1,1 +1,92 @@
-[{"university_id":"372e17ef-cb93-40e7-a94a-a9d977983153","avg_rating":5,"review_count":1,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"ade07bbf-a957-4e1c-b9e8-858906e9e234","avg_rating":4,"review_count":1,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"387a8428-7cad-40e2-a26e-8fa95d27cca4","avg_rating":5,"review_count":1,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"a548ce74-f26c-4649-95fb-2ab3ad53f96b","avg_rating":3,"review_count":1,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"b7b4db34-3a6f-4615-bfa9-7f48673683e2","avg_rating":4,"review_count":1,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"47a6670e-bc06-48ea-99b9-71d76b804215","avg_rating":4,"review_count":1,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"3b1b5ea6-e4b3-409f-8351-3b99015e2970","avg_rating":4.4,"review_count":5,"has_verified_review":false,"recommend_yes_count":2,"recommend_maybe_count":1,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"04dc820c-7009-490b-b136-c4acf4d3460c","avg_rating":4.5,"review_count":2,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":1,"recommend_no_count":0,"updated_at":"2026-09-24T12:49:46.459163+00:00"},{"university_id":"c9cd5eee-b90e-4b87-8981-0d02bd2a3453","avg_rating":3,"review_count":3,"has_verified_review":false,"recommend_yes_count":0,"recommend_maybe_count":0,"recommend_no_count":2,"updated_at":"2026-09-24T12:49:46.459163+00:00"}]
+[
+  {
+    "university_id": "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+    "avg_rating": 5,
+    "review_count": 1,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "1bf99127-d308-43e4-8629-9cab5981a12a",
+    "avg_rating": 4,
+    "review_count": 1,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "292593e2-4346-4a33-8d83-b8658aa7066e",
+    "avg_rating": 5,
+    "review_count": 1,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+    "avg_rating": 3,
+    "review_count": 1,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+    "avg_rating": 4,
+    "review_count": 1,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "f702bbe4-db0f-43be-a63f-04623f006f26",
+    "avg_rating": 4,
+    "review_count": 1,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "eef9ff77-314f-40e8-b121-d2c609aa472f",
+    "avg_rating": 4.4,
+    "review_count": 5,
+    "has_verified_review": false,
+    "recommend_yes_count": 2,
+    "recommend_maybe_count": 1,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+    "avg_rating": 4.5,
+    "review_count": 2,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 1,
+    "recommend_no_count": 0,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "university_id": "45808a80-001c-47d8-a726-83a07fdde5ce",
+    "avg_rating": 3,
+    "review_count": 3,
+    "has_verified_review": false,
+    "recommend_yes_count": 0,
+    "recommend_maybe_count": 0,
+    "recommend_no_count": 2,
+    "updated_at": "2026-09-24T13:53:48.160506+00:00"
+  }
+]

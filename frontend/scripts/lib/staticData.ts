@@ -4,7 +4,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { getRecommendYesPct } from '../../src/lib/reviewSummary'
-import { isSubstantiveReview } from '../../src/lib/seo/indexable'
+import { indexableByReviews } from '../../src/lib/seo/indexable'
 import { slugify } from '../../src/lib/seo/slugify'
 
 export interface UniRow {
@@ -59,12 +59,26 @@ const load = <T>(dir: string, name: string): T => {
   return JSON.parse(readFileSync(p, 'utf8')) as T
 }
 
+export interface UpvoteRow {
+  review_id: string
+}
+
 export const loadData = (dataDir: string) => {
   const universities = load<UniRow[]>(dataDir, 'universities')
   const stats = load<StatsRow[]>(dataDir, 'stats')
   const reviews = load<ReviewRow[]>(dataDir, 'reviews')
   const authors = load<AuthorRow[]>(dataDir, 'authors')
-  return { universities, stats, reviews, authors }
+  const upvotes = existsSync(resolve(dataDir, 'upvotes.json'))
+    ? load<UpvoteRow[]>(dataDir, 'upvotes')
+    : []
+  return { universities, stats, reviews, authors, upvotes }
+}
+
+/** review_id → public count. Voter identity is never exported. */
+export const upvoteCounts = (upvotes: UpvoteRow[]): Record<string, number> => {
+  const counts: Record<string, number> = {}
+  for (const u of upvotes) counts[u.review_id] = (counts[u.review_id] ?? 0) + 1
+  return counts
 }
 
 // ── Indexability ────────────────────────────────────────────────────────────
@@ -72,11 +86,12 @@ export const loadData = (dataDir: string) => {
 // Everything else is reachable via the SPA (noindex) but kept out of the index
 // — keeps the site from launching as 500+ thin pages.
 export const indexableUniversities = (unis: UniRow[], reviews: ReviewRow[]): UniRow[] => {
-  const counts = new Set<string>()
+  const byUni = new Map<string, ReviewRow[]>()
   for (const r of reviews) {
-    if (isSubstantiveReview(r.text)) counts.add(r.university_id)
+    if (!byUni.has(r.university_id)) byUni.set(r.university_id, [])
+    byUni.get(r.university_id)!.push(r)
   }
-  return unis.filter((u) => counts.has(u.id))
+  return unis.filter((u) => indexableByReviews(byUni.get(u.id)))
 }
 
 // ── Payload builders (must mirror the app hooks) ────────────────────────────
@@ -158,16 +173,23 @@ export const universityPageData = (
 // ── Hub/index payload builders ──────────────────────────────────────────────
 import { normalizeProgram, PROGRAM_HUBS, type HubDef } from '../../src/lib/seo/programs'
 import { normalizeDegree, DEGREE_HUBS } from '../../src/lib/seo/degrees'
-import { hasSubstantiveReview } from '../../src/lib/seo/indexable'
+import { indexableByReviews } from '../../src/lib/seo/indexable'
 
 const REVIEW_PAGE_SIZE = 50
 
-export const reviewsPageData = (reviews: ReviewRow[], unis: UniRow[], authors: AuthorRow[]) => {
+export const reviewsPageData = (
+  reviews: ReviewRow[],
+  unis: UniRow[],
+  authors: AuthorRow[],
+  upvotes: UpvoteRow[]
+) => {
   const rows = [...reviews]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, REVIEW_PAGE_SIZE)
   const uniIds = new Set(rows.map((r) => r.university_id))
   const authorIds = new Set(rows.map((r) => r.user_id).filter(Boolean))
+  const rowIds = new Set(rows.map((r) => r.id))
+  const counts = upvoteCounts(upvotes.filter((u) => rowIds.has(u.review_id)))
   return {
     reviews: rows,
     universities: Object.fromEntries(
@@ -176,21 +198,23 @@ export const reviewsPageData = (reviews: ReviewRow[], unis: UniRow[], authors: A
         .map((u) => [u.id, { id: u.id, name: u.name, slug: u.slug }])
     ),
     authors: Object.fromEntries(authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])),
+    upvoteCounts: counts,
   }
 }
 
 export interface CityEntry {
   city: string
   slug: string
-  universities: UniRow[]
+  universities: UniDisplay[]
   reviewCount: number
   indexable: boolean
 }
 
-export const allCities = (unis: UniRow[], reviews: ReviewRow[]): CityEntry[] => {
+export const allCities = (unis: UniRow[], reviews: ReviewRow[], stats: StatsRow[]): CityEntry[] => {
   const reviewCountByUni = new Map<string, number>()
   for (const r of reviews)
     reviewCountByUni.set(r.university_id, (reviewCountByUni.get(r.university_id) ?? 0) + 1)
+  const statById = new Map(stats.map((s) => [s.university_id, s]))
   const byCity = new Map<string, UniRow[]>()
   for (const u of unis) {
     const c = u.city ?? ''
@@ -203,7 +227,10 @@ export const allCities = (unis: UniRow[], reviews: ReviewRow[]): CityEntry[] => 
     return {
       city,
       slug: slugify(city),
-      universities: list.sort((a, b) => a.name.localeCompare(b.name)),
+      // Cards need stats — a raw UniRow renders "No reviews yet" on reviewed unis.
+      universities: list
+        .map((u) => toDisplay(u, statById.get(u.id)))
+        .sort((a, b) => a.name.localeCompare(b.name)),
       reviewCount,
       // Same rule the page applies — ≥3 unis or ≥3 reviews earns indexing.
       indexable: list.length >= 3 || reviewCount >= 3,
@@ -214,12 +241,13 @@ export const allCities = (unis: UniRow[], reviews: ReviewRow[]): CityEntry[] => 
 export interface HubEntry {
   kind: 'program' | 'degree'
   hub: HubDef
-  universities: UniRow[]
+  universities: UniDisplay[]
   reviews: ReviewRow[]
   indexable: boolean
 }
 
-export const allHubs = (unis: UniRow[], reviews: ReviewRow[]): HubEntry[] => {
+export const allHubs = (unis: UniRow[], reviews: ReviewRow[], stats: StatsRow[]): HubEntry[] => {
+  const statById = new Map(stats.map((s) => [s.university_id, s]))
   const build = (
     kind: 'program' | 'degree',
     hubs: HubDef[],
@@ -233,9 +261,10 @@ export const allHubs = (unis: UniRow[], reviews: ReviewRow[]): HubEntry[] => {
         hub,
         universities: unis
           .filter((u) => uniIds.has(u.id))
+          .map((u) => toDisplay(u, statById.get(u.id)))
           .sort((a, b) => a.name.localeCompare(b.name)),
         reviews: rows,
-        indexable: hasSubstantiveReview(rows),
+        indexable: indexableByReviews(rows),
       }
     })
   return [
@@ -244,14 +273,16 @@ export const allHubs = (unis: UniRow[], reviews: ReviewRow[]): HubEntry[] => {
   ]
 }
 
-export const hubPageData = (entry: HubEntry, authors: AuthorRow[]) => {
+export const hubPageData = (entry: HubEntry, authors: AuthorRow[], upvotes: UpvoteRow[]) => {
   const authorIds = new Set(entry.reviews.map((r) => r.user_id).filter(Boolean))
+  const rowIds = new Set(entry.reviews.map((r) => r.id))
   return {
     kind: entry.kind,
     hub: entry.hub,
     universities: entry.universities,
     reviews: entry.reviews,
     authors: Object.fromEntries(authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])),
+    upvoteCounts: upvoteCounts(upvotes.filter((u) => rowIds.has(u.review_id))),
   }
 }
 

@@ -21,7 +21,7 @@ const HubPage = ({
   resolve: (review: Tables<'reviews'>) => string | null
 }) => {
   const { slug } = useParams()
-  const { hub, universities, reviews, authors, loading, resolved } = useHubData(
+  const { hub, universities, reviews, authors, upvoteCounts, loading, resolved } = useHubData(
     kind,
     slug,
     lookup,
@@ -116,6 +116,7 @@ const HubPage = ({
                 key={review.id}
                 review={review}
                 author={(authors as HubPageData['authors'])?.[review.user_id ?? '']}
+                upvote={{ count: upvoteCounts[review.id] ?? 0 }}
               />
             ))}
           </div>

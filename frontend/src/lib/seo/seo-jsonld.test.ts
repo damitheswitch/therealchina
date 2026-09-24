@@ -31,7 +31,7 @@ describe('jsonld', () => {
     expect(org.email).toBe(SITE.contactEmail)
   })
 
-  it('universitySchema emits EducationalOrganization with canonical URL', () => {
+  it('universitySchema emits CollegeOrUniversity with canonical URL', () => {
     const o = parse(
       stringify(
         universitySchema({
@@ -42,7 +42,7 @@ describe('jsonld', () => {
         })
       )
     )
-    expect(o['@type']).toBe('EducationalOrganization')
+    expect(o['@type']).toBe('CollegeOrUniversity')
     expect(o.url).toBe(`${PROD_ORIGIN}/university/tsinghua-university`)
     expect(o.aggregateRating.ratingValue).toBe(4.4)
     expect(o.aggregateRating.ratingCount).toBe(5)

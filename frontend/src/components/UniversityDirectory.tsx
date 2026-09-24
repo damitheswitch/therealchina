@@ -1,16 +1,22 @@
-import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useDebounce } from '../hooks/useDebounce'
 import { useUniversities, type SortBy } from '../hooks/useUniversities'
 import { useCities } from '../hooks/useCities'
 import { UniversityCard } from './UniversityCard'
 
+const VALID_SORTS: SortBy[] = ['name', 'rating', 'reviews']
+
 // Shared browse/search/sort/paginate grid — used by the homepage and the
-// canonical /universities index page.
+// canonical /universities index page. Filters and page live in the URL
+// (?q=&city=&sort=&page=) so filtered views are linkable and crawlers can
+// reach beyond page 1.
 export const UniversityDirectory = () => {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [cityFilter, setCityFilter] = useState('')
-  const [sortBy, setSortBy] = useState<SortBy>('reviews')
-  const [page, setPage] = useState(1)
+  const [params, setParams] = useSearchParams()
+  const searchQuery = params.get('q') ?? ''
+  const cityFilter = params.get('city') ?? ''
+  const sortParam = params.get('sort') ?? 'reviews'
+  const sortBy = (VALID_SORTS.includes(sortParam as SortBy) ? sortParam : 'reviews') as SortBy
+  const page = Math.max(1, Number(params.get('page')) || 1)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const { groups } = useCities()
@@ -21,17 +27,26 @@ export const UniversityDirectory = () => {
     page,
   })
 
-  const handleSearchChange = (value: string) => {
-    setPage(1)
-    setSearchQuery(value)
+  const update = (patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(params)
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === null || v === '') next.delete(k)
+      else next.set(k, v)
+    }
+    setParams(next, { preventScrollReset: true })
   }
-  const handleCityChange = (value: string) => {
-    setPage(1)
-    setCityFilter(value)
-  }
-  const handleSortChange = (value: string) => {
-    setPage(1)
-    setSortBy(value as SortBy)
+
+  const handleSearchChange = (value: string) => update({ q: value || null, page: null })
+  const handleCityChange = (value: string) => update({ city: value || null, page: null })
+  const handleSortChange = (value: string) =>
+    update({ sort: value === 'reviews' ? null : value, page: null })
+
+  const pageLink = (p: number) => {
+    const next = new URLSearchParams(params)
+    if (p <= 1) next.delete('page')
+    else next.set('page', String(p))
+    const q = next.toString()
+    return `/universities${q ? `?${q}` : ''}`
   }
 
   return (
@@ -43,12 +58,14 @@ export const UniversityDirectory = () => {
             id="uni-search"
             className="search-input"
             placeholder="Search by university name or city..."
+            aria-label="Search universities by name or city"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
           <select
             id="uni-city-filter"
             className="filter-select"
+            aria-label="Filter by city or province"
             value={cityFilter}
             onChange={(e) => handleCityChange(e.target.value)}
           >
@@ -75,6 +92,7 @@ export const UniversityDirectory = () => {
           <select
             id="uni-sort"
             className="filter-select"
+            aria-label="Sort universities"
             value={sortBy}
             onChange={(e) => handleSortChange(e.target.value)}
           >
@@ -101,36 +119,40 @@ export const UniversityDirectory = () => {
               ))}
             </div>
 
-            <div
-              className="pagination-row"
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 'var(--sp-2)',
-                marginTop: 'var(--sp-4)',
-              }}
-            >
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={page <= 1 || loading}
+            {pageCount > 1 && (
+              <div
+                className="pagination-row"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 'var(--sp-2)',
+                  marginTop: 'var(--sp-4)',
+                }}
               >
-                Previous
-              </button>
-              <span className="muted">
-                Page {page} of {pageCount} · {totalCount} results
-              </span>
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-                disabled={page >= pageCount || loading}
-              >
-                Next
-              </button>
-            </div>
+                {page > 1 ? (
+                  <Link to={pageLink(page - 1)} className="btn btn-outline" rel="prev">
+                    Previous
+                  </Link>
+                ) : (
+                  <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.5 }}>
+                    Previous
+                  </span>
+                )}
+                <span className="muted">
+                  Page {page} of {pageCount} · {totalCount} results
+                </span>
+                {page < pageCount ? (
+                  <Link to={pageLink(page + 1)} className="btn btn-outline" rel="next">
+                    Next
+                  </Link>
+                ) : (
+                  <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.5 }}>
+                    Next
+                  </span>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>

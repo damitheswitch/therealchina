@@ -19,7 +19,7 @@ import { RegistrationNudge } from '../components/RegistrationNudge'
 import { UniversityLogo } from '../components/UniversityLogo'
 import { Seo } from '../components/Seo'
 import { firstPartyLogo } from '../lib/logo'
-import { hasSubstantiveReview } from '../lib/seo/indexable'
+import { indexableByReviews } from '../lib/seo/indexable'
 import { slugify } from '../lib/seo/slugify'
 import { stringify, universitySchema, breadcrumbSchema } from '../lib/seo/jsonld'
 import { Icons } from '../components/Icons'
@@ -151,7 +151,7 @@ export const UniversityPage = () => {
         title={seoTitle}
         description={seoDescription}
         image={firstPartyLogo(university.logo_url) ?? undefined}
-        index={hasSubstantiveReview(reviews)}
+        index={indexableByReviews(reviews)}
         jsonLd={[
           stringify(
             universitySchema({
@@ -161,6 +161,17 @@ export const UniversityPage = () => {
               logo: firstPartyLogo(university.logo_url),
               website: university.website,
               rating: reviewCount >= 2 ? { value: avgRating, count: reviewCount } : null,
+              // Embed the first substantive reviews — only text visible on
+              // this page may become Review markup.
+              reviews: reviews
+                .filter((r) => (r.text?.trim().length ?? 0) >= 200)
+                .slice(0, 5)
+                .map((r) => ({
+                  author: authors[r.user_id]?.display_name ?? 'Anonymous',
+                  rating: r.rating,
+                  text: (r.text ?? '').slice(0, 500),
+                  date: (r.created_at ?? '').slice(0, 10),
+                })),
             })
           ),
           stringify(

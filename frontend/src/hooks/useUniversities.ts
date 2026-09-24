@@ -118,6 +118,7 @@ export const useUniversities = ({
           count,
         } = await withCity
           .order(column, { ascending, nullsFirst: false })
+          .order('name', { ascending: true }) // stable tiebreak — deterministic pagination
           .abortSignal(controller.signal)
           .range(start, end)
 

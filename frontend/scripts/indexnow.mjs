@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const FRONTEND = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const HOST = 'therealchina.net'
+const HOST = 'www.therealchina.net'
 const KEY = '0f4d0874e85f43c1933b9fd11f9b60ad'
 const KEY_LOCATION = `https://${HOST}/${KEY}.txt`
 

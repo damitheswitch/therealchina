@@ -1,13 +1,13 @@
 // smoke_live.mjs — post-deploy SEO smoke test against the LIVE site.
-//   node scripts/smoke_live.mjs https://therealchina.net
+//   node scripts/smoke_live.mjs https://www.therealchina.net
 //   node scripts/smoke_live.mjs https://deploy-preview-123--site.netlify.app --preview
 // Fails (exit 1) on: non-200 content pages, wrong canonical, missing
 // noindex on app routes, soft-404s, broken sitemap/robots, dev-server HTML.
 import { parse } from 'node-html-parser'
 
-const base = (process.argv[2] ?? 'https://therealchina.net').replace(/\/$/, '')
+const base = (process.argv[2] ?? 'https://www.therealchina.net').replace(/\/$/, '')
 const isPreview = process.argv.includes('--preview')
-const PROD = 'https://therealchina.net'
+const PROD = 'https://www.therealchina.net'
 
 const failures = []
 const notes = []

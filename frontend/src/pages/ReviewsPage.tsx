@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { useRecentReviews } from '../hooks/useRecentReviews'
 import { ReviewCard } from '../components/ReviewCard'
 import { Seo } from '../components/Seo'
@@ -7,7 +8,10 @@ import { stringify, itemListSchema, breadcrumbSchema } from '../lib/seo/jsonld'
 // /reviews — every review across all universities, newest first. The
 // collection page reviewers and crawlers use to see the corpus.
 export const ReviewsPage = () => {
-  const { reviews, universities, authors, loading } = useRecentReviews()
+  const { user } = useAuth()
+  const { reviews, universities, authors, upvoteCounts, upvotedMine, loading } = useRecentReviews(
+    user?.id
+  )
 
   return (
     <div className="container">
@@ -65,7 +69,14 @@ export const ReviewsPage = () => {
                     </Link>
                   </p>
                 )}
-                <ReviewCard review={review} author={authors[review.user_id ?? '']} />
+                <ReviewCard
+                  review={review}
+                  author={authors[review.user_id ?? '']}
+                  upvote={{
+                    count: upvoteCounts[review.id] ?? 0,
+                    upvoted: upvotedMine.has(review.id),
+                  }}
+                />
               </div>
             )
           })}

@@ -11,6 +11,7 @@ import { PRERENDER_ROUTES } from '../src/routes.generated'
 import { stringify } from '../src/lib/seo/jsonld'
 import { escapeAttr } from '../src/lib/seo/escape'
 import { SITE } from '../src/lib/seo/site'
+import { buildEnv } from './lib/env'
 
 const FRONTEND = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = resolve(FRONTEND, 'dist')
@@ -41,6 +42,17 @@ const baseTemplate = TEMPLATE.replace(/\s*<meta\s+name="description"[^>]*>/, '')
   '<title></title>'
 )
 
+// Cloudflare Web Analytics — production deploys only, only when the owner has
+// set CF_BEACON_TOKEN in Netlify env. Never ships on previews/local.
+const env = buildEnv(FRONTEND)
+const isProdDeploy =
+  env.TRC_INDEXABLE === '1' ||
+  (env.CONTEXT === 'production' && (env.URL ?? '').includes('therealchina.net'))
+const BEACON =
+  isProdDeploy && env.CF_BEACON_TOKEN
+    ? `\n    <!-- Cloudflare Web Analytics -->\n    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${escapeAttr(env.CF_BEACON_TOKEN)}"}'></script>`
+    : ''
+
 const inject = (
   path: string,
   html: string,
@@ -50,7 +62,7 @@ const inject = (
   const payload = `<script>window.__PRERENDERED_DATA__ = ${stringify(data)};</script>`
   return baseTemplate
     .replace('<title></title>', `<title>${escapeAttr(head.title)}</title>`)
-    .replace('</head>', `    ${head.html}\n  </head>`)
+    .replace('</head>', `    ${head.html}${BEACON}\n  </head>`)
     .replace('<div id="app"></div>', `<div id="app">${html}</div>\n    ${payload}`)
 }
 
@@ -85,7 +97,7 @@ writeFileSync(
   resolve(DIST, 'app.html'),
   baseTemplate
     .replace('<title></title>', `<title>${escapeAttr(SITE.name)}</title>`)
-    .replace('</head>', `    <meta name="robots" content="noindex, follow">\n  </head>`)
+    .replace('</head>', `    <meta name="robots" content="noindex, follow">${BEACON}\n  </head>`)
 )
 
 // Real 404 page for the generated splat rules (served with status 404).

@@ -31,7 +31,9 @@ export const useCities = () => {
           .abortSignal(controller.signal)
 
         if (error) throw error
-        const rows = (data || []) as Array<Pick<Tables<'universities'>, 'city' | 'province'>>
+        const rows = (
+          (data || []) as Array<Pick<Tables<'universities'>, 'city' | 'province'>>
+        ).filter((r) => r.city)
         setCities([...new Set(rows.map((u) => u.city))].sort())
 
         // province → sorted city list; municipalities collapse to the city

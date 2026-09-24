@@ -47,30 +47,34 @@ export const buildPageHead = (input: PageHeadInput): PageHead => {
     : siteUrl('/og/default.png')
   const type = input.type ?? 'website'
 
+  // Every emitted tag carries data-seo-managed — applyHead() removes marked
+  // nodes before inserting new ones, so hydration/client nav replaces tags
+  // instead of duplicating them.
+  const M = ' data-seo-managed'
   const tags = [
-    `<meta name="description" content="${escapeAttr(description)}">`,
-    `<meta name="robots" content="${robots}">`,
-    `<link rel="canonical" href="${escapeAttr(canonical)}">`,
-    `<meta property="og:type" content="${type}">`,
-    `<meta property="og:site_name" content="${escapeAttr(SITE.name)}">`,
-    `<meta property="og:title" content="${escapeAttr(title)}">`,
-    `<meta property="og:description" content="${escapeAttr(description)}">`,
-    `<meta property="og:url" content="${escapeAttr(canonical)}">`,
-    `<meta property="og:image" content="${escapeAttr(ogImage)}">`,
-    `<meta property="og:image:width" content="1200">`,
-    `<meta property="og:image:height" content="630">`,
-    `<meta name="twitter:card" content="summary_large_image">`,
-    `<meta name="twitter:title" content="${escapeAttr(title)}">`,
-    `<meta name="twitter:description" content="${escapeAttr(description)}">`,
-    `<meta name="twitter:image" content="${escapeAttr(ogImage)}">`,
-    SITE.twitter ? `<meta name="twitter:site" content="${escapeAttr(SITE.twitter)}">` : '',
+    `<meta name="description" content="${escapeAttr(description)}"${M}>`,
+    `<meta name="robots" content="${robots}"${M}>`,
+    `<link rel="canonical" href="${escapeAttr(canonical)}"${M}>`,
+    `<meta property="og:type" content="${type}"${M}>`,
+    `<meta property="og:site_name" content="${escapeAttr(SITE.name)}"${M}>`,
+    `<meta property="og:title" content="${escapeAttr(title)}"${M}>`,
+    `<meta property="og:description" content="${escapeAttr(description)}"${M}>`,
+    `<meta property="og:url" content="${escapeAttr(canonical)}"${M}>`,
+    `<meta property="og:image" content="${escapeAttr(ogImage)}"${M}>`,
+    `<meta property="og:image:width" content="1200"${M}>`,
+    `<meta property="og:image:height" content="630"${M}>`,
+    `<meta name="twitter:card" content="summary_large_image"${M}>`,
+    `<meta name="twitter:title" content="${escapeAttr(title)}"${M}>`,
+    `<meta name="twitter:description" content="${escapeAttr(description)}"${M}>`,
+    `<meta name="twitter:image" content="${escapeAttr(ogImage)}"${M}>`,
+    SITE.twitter ? `<meta name="twitter:site" content="${escapeAttr(SITE.twitter)}"${M}>` : '',
     input.published
-      ? `<meta property="article:published_time" content="${escapeAttr(input.published)}">`
+      ? `<meta property="article:published_time" content="${escapeAttr(input.published)}"${M}>`
       : '',
     input.updated
-      ? `<meta property="article:modified_time" content="${escapeAttr(input.updated)}">`
+      ? `<meta property="article:modified_time" content="${escapeAttr(input.updated)}"${M}>`
       : '',
-    ...(input.jsonLd ?? []).map((j) => `<script type="application/ld+json">${j}</script>`),
+    ...(input.jsonLd ?? []).map((j) => `<script type="application/ld+json"${M}>${j}</script>`),
   ].filter(Boolean)
 
   return { title, description, canonical, robots, html: tags.join('\n    ') }

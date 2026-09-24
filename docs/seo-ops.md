@@ -33,7 +33,7 @@ Detection: `CONTEXT=production` AND `URL` contains `therealchina.net`, or
 1. Merge to `staging` → Netlify preview builds.
 2. `node scripts/smoke_live.mjs <preview-url> --preview` — must pass.
 3. Merge to `master` → production deploy.
-4. `node scripts/smoke_live.mjs https://therealchina.net` — must pass.
+4. `node scripts/smoke_live.mjs https://www.therealchina.net` — must pass.
 5. `node scripts/indexnow.mjs` — submit the sitemap (Bing/Yandex/AI search).
 6. Check Search Console coverage in the following days.
 
@@ -49,12 +49,20 @@ Detection: `CONTEXT=production` AND `URL` contains `therealchina.net`, or
 
 - [ ] Delete the 23 leftover media objects: Supabase dashboard → Storage →
       `review-media` (inventory: `backups/prod-wipe-2026-09-24/storage_objects.json`)
-- [ ] Google Search Console: verify `therealchina.net`, submit `sitemap.xml`
+- [ ] Google Search Console: verify `www.therealchina.net`, submit `sitemap.xml`
+      (apex `therealchina.net` 301s to www — verify the www property)
 - [ ] Bing Webmaster Tools: verify site (IndexNow key file is already deployed)
+- [ ] Netlify → Build hooks → create one → add as GitHub repo secret
+      `NETLIFY_BUILD_HOOK` (enables the daily rebuild in
+      `.github/workflows/daily-rebuild.yml` — without it, new reviews only
+      appear in prerendered pages on the next code deploy)
+- [ ] Netlify env var `CF_BEACON_TOKEN` (Cloudflare Web Analytics token) —
+      optional; when set, prod pages get the beacon automatically
 - [ ] Confirm Netlify env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`,
       `VITE_TURNSTILE_SITE_KEY` on the production site
 - [ ] Confirm staging site is a separate Netlify site/branch-deploy (it is
-      noindex automatically either way)
+      noindex automatically either way; `therealchina.netlify.app` force-301s
+      to the canonical www host)
 
 ## Weekly / monthly
 

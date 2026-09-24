@@ -102,25 +102,25 @@ export const TRUST_PAGES: TrustDoc[] = [
   {
     slug: 'how-we-verify',
     title: 'How We Verify Reviews',
-    description: 'The signals used to keep reviews authentic.',
+    description: 'What "verified" means here — and what it does not.',
     updated: '2026-09-24',
     sections: [
       {
-        h: 'Enrollment signals',
+        h: 'What "verified" means',
         body: [
-          'Reviewers can attach proof of enrollment (admission letter, student card) which is reviewed by a human and marked with a verified badge. Proof documents are deleted after review.',
+          'A review counts as verified when its author was signed into an account when posting. That proves they registered — it does not prove they studied at the university. Anonymous reviews are equally welcome; enrollment status (current student, alumni, exchange, applicant) is self-reported and shown as written.',
         ],
       },
       {
-        h: 'Behavioral signals',
+        h: 'What we actually check',
         body: [
-          'Rate limits, submission patterns, and disposable-email blocking filter most fake content before it publishes. Reviews that pass still show "unverified" unless proof is attached — we never claim a review is verified when it is not.',
+          'Submissions pass through rate limits, bot detection (Cloudflare Turnstile), and disposable-email blocking. Reported reviews are read by a human and removed if they break the review guidelines.',
         ],
       },
       {
-        h: 'What we do not do',
+        h: 'What we do not do — read this',
         body: [
-          'We do not publish IP addresses or identity documents. We do not sell reviewer data. Anonymous reviews stay anonymous to readers.',
+          'We do not check student IDs, admission letters, or enrollment documents. We do not verify that a reviewer attended the university they describe. Treat every review as one person&apos;s claimed experience — weigh specifics, not stars.',
         ],
       },
     ],

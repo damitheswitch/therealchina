@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
+import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
 import type { HubDef } from '../lib/seo/programs'
 import type { Tables } from '../types/database.types'
 
 type UniRow = Tables<'universities'>
 type ReviewRow = Tables<'reviews'>
+export type UniDisplayRow = UniRow & UniStatFields
 
 export interface HubPageData {
   kind?: 'program' | 'degree'
   hub?: HubDef
-  universities?: UniRow[]
+  universities?: UniDisplayRow[]
   reviews?: ReviewRow[]
   authors?: Record<string, { id: string; display_name: string | null; avatar_url: string | null }>
+  upvoteCounts?: Record<string, number>
 }
 
 const UNI_COLS =
@@ -34,9 +37,12 @@ export const useHubData = (
   const pd = usePrerenderData<HubPageData>('hubPage')
   const seeded = pd?.kind === kind && pd.hub?.slug === slug ? pd : null
   const [hub, setHub] = useState<HubDef | null>(seeded?.hub ?? (slug ? lookup(slug) : null))
-  const [universities, setUniversities] = useState<UniRow[]>(seeded?.universities ?? [])
+  const [universities, setUniversities] = useState<UniDisplayRow[]>(seeded?.universities ?? [])
   const [reviews, setReviews] = useState<ReviewRow[]>(seeded?.reviews ?? [])
   const [authors, setAuthors] = useState<HubPageData['authors']>(seeded?.authors ?? {})
+  const [upvoteCounts, setUpvoteCounts] = useState<Record<string, number>>(
+    seeded?.upvoteCounts ?? {}
+  )
   const [loading, setLoading] = useState<boolean>(!!slug && !!lookup(slug) && !seeded)
   const [resolved, setResolved] = useState<boolean>(!!seeded || (!!slug && !lookup(slug)))
 
@@ -59,6 +65,7 @@ export const useHubData = (
       setUniversities(seeded.universities ?? [])
       setReviews(seeded.reviews ?? [])
       setAuthors(seeded.authors ?? {})
+      setUpvoteCounts(seeded.upvoteCounts ?? {})
       setResolved(true)
       setLoading(false)
       return
@@ -75,11 +82,12 @@ export const useHubData = (
         const rows = ((data as ReviewRow[] | null) || []).filter((r) => resolve(r) === slug)
         const uniIds = [...new Set(rows.map((r) => r.university_id))]
         const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[]
-        const [uniRes, authorRes] = await Promise.all([
+        const reviewIds = rows.map((r) => r.id)
+        const [uniRes, authorRes, upRes] = await Promise.all([
           uniIds.length
             ? supabase
                 .from('universities')
-                .select(UNI_COLS)
+                .select(`${UNI_COLS}, ${STATS_EMBED}`)
                 .in('id', uniIds)
                 .order('name')
                 .abortSignal(controller.signal)
@@ -91,11 +99,28 @@ export const useHubData = (
                 .in('id', authorIds)
                 .abortSignal(controller.signal)
             : Promise.resolve({ data: [], error: null }),
+          reviewIds.length
+            ? supabase
+                .from('upvotes')
+                .select('review_id')
+                .in('review_id', reviewIds)
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [], error: null }),
         ])
         if (uniRes.error) throw uniRes.error
         if (authorRes.error) throw authorRes.error
+        const counts: Record<string, number> = {}
+        for (const u of (upRes.data as { review_id: string }[] | null) || []) {
+          counts[u.review_id] = (counts[u.review_id] ?? 0) + 1
+        }
+        setUpvoteCounts(counts)
         setReviews(rows)
-        setUniversities((uniRes.data as UniRow[] | null) || [])
+        setUniversities(
+          (
+            (uniRes.data as
+              (UniRow & { university_stats?: StatsEmbed | StatsEmbed[] | null })[] | null) || []
+          ).map(withStats)
+        )
         setAuthors(
           Object.fromEntries(
             ((authorRes.data as { id: string }[] | null) || []).map((a) => [a.id, a])
@@ -114,5 +139,5 @@ export const useHubData = (
     return () => controller.abort()
   }, [kind, slug, lookup, resolve, seeded])
 
-  return { hub, universities, reviews, authors, loading, resolved }
+  return { hub, universities, reviews, authors, upvoteCounts, loading, resolved }
 }

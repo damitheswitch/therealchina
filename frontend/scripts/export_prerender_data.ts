@@ -63,11 +63,13 @@ const stats = await fetchAll(
 )
 const reviews = await fetchAll('reviews', REVIEW_COLS)
 const authors = await fetchAll('profile_public', 'id, display_name, avatar_url')
+// review_id only — voter identity never enters the public payload.
+const upvotes = await fetchAll('upvotes', 'review_id')
 
 mkdirSync(OUT_DIR, { recursive: true })
-for (const [name, rows] of Object.entries({ universities, stats, reviews, authors })) {
+for (const [name, rows] of Object.entries({ universities, stats, reviews, authors, upvotes })) {
   writeFileSync(resolve(OUT_DIR, `${name}.json`), JSON.stringify(rows))
 }
 console.log(
-  `exported ${universities.length} universities, ${stats.length} stats, ${reviews.length} reviews, ${authors.length} author profiles → ${OUT_DIR}`
+  `exported ${universities.length} universities, ${stats.length} stats, ${reviews.length} reviews, ${authors.length} author profiles, ${upvotes.length} upvotes → ${OUT_DIR}`
 )

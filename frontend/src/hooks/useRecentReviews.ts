@@ -11,6 +11,8 @@ export interface ReviewsPageData {
   reviews: RecentReview[]
   universities: Record<string, UniLite>
   authors: Record<string, AuthorLite>
+  // review_id → public upvote count (batch — cards must not query per-row)
+  upvoteCounts?: Record<string, number>
 }
 
 const REVIEW_COLUMNS =
@@ -18,11 +20,13 @@ const REVIEW_COLUMNS =
 
 const PAGE_SIZE = 50
 
-export const useRecentReviews = () => {
+export const useRecentReviews = (userId?: string | null) => {
   const pd = usePrerenderData<ReviewsPageData>('reviewsPage')
   const [reviews, setReviews] = useState<RecentReview[]>(pd?.reviews ?? [])
   const [universities, setUniversities] = useState<Record<string, UniLite>>(pd?.universities ?? {})
   const [authors, setAuthors] = useState<Record<string, AuthorLite>>(pd?.authors ?? {})
+  const [upvoteCounts, setUpvoteCounts] = useState<Record<string, number>>(pd?.upvoteCounts ?? {})
+  const [upvotedMine, setUpvotedMine] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState<boolean>(!pd)
   const [error, setError] = useState<Error | null>(null)
 
@@ -31,8 +35,28 @@ export const useRecentReviews = () => {
       setReviews(pd.reviews)
       setUniversities(pd.universities)
       setAuthors(pd.authors)
+      setUpvoteCounts(pd.upvoteCounts ?? {})
       setError(null)
       setLoading(false)
+      // Payload can't know the viewer — fetch own upvotes in one query.
+      if (userId && pd.reviews.length) {
+        const c = new AbortController()
+        supabase
+          .from('upvotes')
+          .select('review_id')
+          .eq('user_id', userId)
+          .in(
+            'review_id',
+            pd.reviews.map((r) => r.id)
+          )
+          .abortSignal(c.signal)
+          .then(({ data }) => {
+            if (!c.signal.aborted && data) {
+              setUpvotedMine(new Set(data.map((r) => r.review_id as string)))
+            }
+          })
+        return () => c.abort()
+      }
       return
     }
     const controller = new AbortController()
@@ -51,7 +75,8 @@ export const useRecentReviews = () => {
 
         const uniIds = [...new Set(rows.map((r) => r.university_id))]
         const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[]
-        const [uniRes, authorRes] = await Promise.all([
+        const reviewIds = rows.map((r) => r.id)
+        const [uniRes, authorRes, upRes, mineRes] = await Promise.all([
           supabase
             .from('universities')
             .select('id, name, slug')
@@ -64,9 +89,32 @@ export const useRecentReviews = () => {
                 .in('id', authorIds)
                 .abortSignal(controller.signal)
             : Promise.resolve({ data: [], error: null }),
+          reviewIds.length
+            ? supabase
+                .from('upvotes')
+                .select('review_id')
+                .in('review_id', reviewIds)
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [], error: null }),
+          userId && reviewIds.length
+            ? supabase
+                .from('upvotes')
+                .select('review_id')
+                .eq('user_id', userId)
+                .in('review_id', reviewIds)
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [], error: null }),
         ])
         if (uniRes.error) throw uniRes.error
         if (authorRes.error) throw authorRes.error
+        const counts: Record<string, number> = {}
+        for (const u of (upRes.data as { review_id: string }[] | null) || []) {
+          counts[u.review_id] = (counts[u.review_id] ?? 0) + 1
+        }
+        setUpvoteCounts(counts)
+        setUpvotedMine(
+          new Set(((mineRes.data as { review_id: string }[] | null) || []).map((r) => r.review_id))
+        )
         setUniversities(
           Object.fromEntries(((uniRes.data as UniLite[] | null) || []).map((u) => [u.id, u]))
         )
@@ -83,7 +131,7 @@ export const useRecentReviews = () => {
     }
     run()
     return () => controller.abort()
-  }, [pd])
+  }, [pd, userId])
 
-  return { reviews, universities, authors, loading, error }
+  return { reviews, universities, authors, upvoteCounts, upvotedMine, loading, error }
 }

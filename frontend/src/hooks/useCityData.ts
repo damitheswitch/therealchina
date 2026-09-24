@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { slugify } from '../lib/seo/slugify'
+import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
 import type { Tables } from '../types/database.types'
 
 type UniRow = Tables<'universities'>
+export type CityUni = UniRow & UniStatFields
 
 export interface CityPageData {
   city?: string
-  universities?: UniRow[]
+  universities?: CityUni[]
   reviewCount?: number
 }
 
@@ -24,7 +26,7 @@ export const useCityData = (citySlug: string | undefined) => {
   const pd = usePrerenderData<CityPageData>('cityPage')
   const seeded = pd?.city && slugify(pd.city) === citySlug ? pd : null
   const [city, setCity] = useState<string | null>(seeded?.city ?? null)
-  const [universities, setUniversities] = useState<UniRow[]>(seeded?.universities ?? [])
+  const [universities, setUniversities] = useState<CityUni[]>(seeded?.universities ?? [])
   const [reviewCount, setReviewCount] = useState<number>(seeded?.reviewCount ?? 0)
   const [loading, setLoading] = useState<boolean>(!!citySlug && !seeded)
   const [resolved, setResolved] = useState<boolean>(!!seeded)
@@ -64,12 +66,15 @@ export const useCityData = (citySlug: string | undefined) => {
         }
         const { data: unis, error: uniErr } = await supabase
           .from('universities')
-          .select(UNI_COLS)
+          .select(`${UNI_COLS}, ${STATS_EMBED}`)
           .eq('city', match)
           .order('name', { ascending: true })
           .abortSignal(controller.signal)
         if (uniErr) throw uniErr
-        const uniList = (unis as UniRow[] | null) || []
+        const uniList = (
+          (unis as (UniRow & { university_stats?: StatsEmbed | StatsEmbed[] | null })[] | null) ||
+          []
+        ).map(withStats)
         const { count } = await supabase
           .from('reviews')
           .select('id', { count: 'exact', head: true })

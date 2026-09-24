@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { Seo } from '../components/Seo'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
@@ -190,6 +191,7 @@ export const FlightListingsPage = () => {
 
   return (
     <div className="container" style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}>
+      <Seo path="/flights" title="Flight listings" index={false} />
       <div className="section-header">
         <h1 className="section-title">Flight Listings</h1>
         <p className="page-subtitle">Find people flying your way and send packages through them</p>

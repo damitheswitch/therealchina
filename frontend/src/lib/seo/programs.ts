@@ -143,13 +143,11 @@ export const PROGRAM_HUBS: HubDef[] = [
 ]
 
 const norm = (s: string): string => s.toLowerCase().trim().replace(/\s+/g, ' ')
-const wordRe = (a: string) =>
-  new RegExp(`(^|[^a-z0-9])${a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`)
 
 /**
  * Map a free-text program string to its hub slug, or null when the program
- * doesn't belong to any hub. Exact normalized match first, then a
- * word-boundary contains match for aliases of 3+ characters.
+ * doesn't belong to any hub. EXACT normalized match only — fuzzy contains
+ * matching mis-files programs like "Business Law" under `law`.
  */
 export const normalizeProgram = (p: string | null | undefined): string | null => {
   if (!p) return null
@@ -157,11 +155,6 @@ export const normalizeProgram = (p: string | null | undefined): string | null =>
   if (!n) return null
   for (const h of PROGRAM_HUBS) {
     if (h.aliases.includes(n) || h.slug === n) return h.slug
-  }
-  for (const h of PROGRAM_HUBS) {
-    for (const a of h.aliases) {
-      if (a.length >= 3 && (wordRe(a).test(n) || wordRe(n).test(a))) return h.slug
-    }
   }
   return null
 }
