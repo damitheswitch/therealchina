@@ -55,10 +55,9 @@ No DB password needed anywhere — the Management API token covers all of it.
 
 ### GitHub / web
 
-- `github.com` and `ssh.github.com` are intermittently unreachable here (connection reset / 443 timeout) while `api.github.com` and `codeload.github.com` keep working. When git fetch/push fails:
-  1. Retry once or twice — it is flaky, not always down.
-  2. Use `gh api` / `gh pr` (hits `api.github.com`) — branch deletion, ref updates, even committing files via blobs → tree → commit → `PATCH refs/heads/<branch>` all work without git transport.
-  3. Or use `github-mcp-server` tools.
+- On this machine, prefer the GitHub API path first for branch/ref updates and PR file pushes. `github.com` and `ssh.github.com` are intermittently unreachable (connection reset / 443 timeout), while `api.github.com` and `codeload.github.com` are the reliable path.
+- For ordinary git fetch/push, retry once. If it fails — or when creating/updating PR branches — use `gh api` / `gh pr` or `github-mcp-server` directly instead of burning time on repeated git retries.
+- If `gh api` POSTs time out, use `curl --retry` with `gh auth token` stored in a shell variable, or MCP `push_files`.
 - Never route git through third-party github proxies — credentials leak.
 - `webfetch` blocked or redirect loop → domain-scoped `web_search`, then fetch the result URL.
 - Docs-only commits: put `[skip netlify]` in the commit message to avoid burning build minutes.

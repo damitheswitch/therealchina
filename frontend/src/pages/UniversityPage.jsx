@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useUniversity } from '../hooks/useUniversity'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
@@ -13,7 +13,7 @@ import {
   UniversityPrograms,
   UniversityFunding,
   UniversityPhotoStrip,
-  RankingBreakdown,
+  RankingIndicatorList,
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
 import { UniversityLogo } from '../components/UniversityLogo'
@@ -23,24 +23,6 @@ import { indexableByReviews } from '../lib/seo/indexable'
 import { cityPath } from '../lib/seo/slugify'
 import { stringify, universitySchema, breadcrumbSchema } from '../lib/seo/jsonld'
 import { Icons } from '../components/Icons'
-
-// ShanghaiRanking 软科 category tokens → display labels
-const CATEGORY_LABELS = {
-  comprehensive: 'Comprehensive',
-  stem: 'Science & Tech',
-  normal: 'Normal',
-  agriculture: 'Agricultural',
-  forestry: 'Forestry',
-  medicine: 'Medical',
-  finance: 'Finance & Economics',
-  language: 'Language',
-  politics: 'Politics & Law',
-  ethnic: 'Minzu',
-  sports: 'Sports',
-  arts: 'Arts',
-  tcm: 'TCM',
-  cooperative: 'Cooperative',
-}
 
 // UniversityPage component
 export const UniversityPage = () => {
@@ -53,6 +35,11 @@ export const UniversityPage = () => {
   // both builders are safe no-ops during loading.
   const summary = useMemo(() => buildReviewSummary(reviews), [reviews])
   const extras = useMemo(() => buildUniversityExtras(reviews), [reviews])
+  const [rankingDetailsOpen, setRankingDetailsOpen] = useState(false)
+
+  useEffect(() => {
+    setRankingDetailsOpen(false)
+  }, [slug])
 
   // Reviews and stats only fire after the university row resolves, so the
   // page is considered loading until the university is done AND (if it was
@@ -95,7 +82,6 @@ export const UniversityPage = () => {
   ]
     .filter(Boolean)
     .join(', ')
-  const categoryLabel = CATEGORY_LABELS[university.uni_category] ?? null
   const rankings =
     university.rankings &&
     typeof university.rankings === 'object' &&
@@ -111,6 +97,8 @@ export const UniversityPage = () => {
     rankings.shanghai_indicators && typeof rankings.shanghai_indicators === 'object'
       ? rankings.shanghai_indicators
       : null
+  const hasRankingDetails =
+    indicators !== null && Object.values(indicators).some((value) => typeof value === 'number')
   const rankUrl =
     typeof rankings.shanghai_url === 'string'
       ? rankings.shanghai_url
@@ -126,6 +114,11 @@ export const UniversityPage = () => {
             Based on {reviewCount} review{reviewCount !== 1 ? 's' : ''}
           </span>
         </div>
+        {extras.programCount > 0 && (
+          <span className="rating-programs">
+            {extras.programCount} program{extras.programCount === 1 ? '' : 's'} represented
+          </span>
+        )}
         {hasVerified && <SealBadge large={true} />}
       </div>
     ) : (
@@ -187,13 +180,13 @@ export const UniversityPage = () => {
         <Icons.ArrowLeft /> All universities
       </Link>
 
-      <div className="uni-profile-header">
+      <div className="uni-profile-header has-logo">
         <div className="uni-profile-top">
           <div className="uni-profile-identity">
             <UniversityLogo
               name={university.name}
               logoUrl={university.logo_url}
-              size={84}
+              size={78}
               className="uni-profile-logo"
               eager
             />
@@ -210,58 +203,121 @@ export const UniversityPage = () => {
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
-              <div className="uni-profile-badges">
-                {rankNational !== null && (
-                  <a
-                    className="uni-rank-chip"
-                    href={rankUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="View this university's current ranking on ShanghaiRanking (软科)"
-                  >
-                    #{rankNational} in China · ShanghaiRanking <span aria-hidden="true">↗</span>
-                  </a>
-                )}
-                {rankWorld !== null && (
-                  <span className="uni-rank-chip" title="Academic Ranking of World Universities">
-                    #{rankWorld} worldwide · ARWU
-                  </span>
-                )}
-                {prestigeTags.map((t) => (
-                  <span
-                    key={t}
-                    className="uni-tag-chip"
-                    title={t === '双一流' ? 'Double First-Class initiative' : `Project ${t}`}
-                  >
-                    {t}
-                  </span>
-                ))}
-                {categoryLabel && (
-                  <span className="uni-cat-chip" title="University category (软科)">
-                    {categoryLabel}
-                  </span>
-                )}
-                {shanghaiScore !== null && (
-                  <span className="uni-meta-text" title="ShanghaiRanking total score">
-                    Score {shanghaiScore}
-                  </span>
-                )}
-                {extras.programCount > 0 && (
-                  <span className="uni-meta-text">
-                    {extras.programCount} program{extras.programCount === 1 ? '' : 's'} reviewed
-                  </span>
-                )}
-                {university.website && (
-                  <a
-                    href={university.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="uni-site-link"
-                  >
-                    Official website <span aria-hidden="true">↗</span>
-                  </a>
-                )}
-              </div>
+
+              {(rankNational !== null ||
+                rankWorld !== null ||
+                shanghaiScore !== null ||
+                prestigeTags.length > 0) && (
+                <div className="uni-profile-facts">
+                  {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
+                    <div className="uni-profile-fact">
+                      <span className="uni-profile-fact-label">National ranking</span>
+                      <div className="uni-profile-ranks">
+                        {rankNational !== null && (
+                          <span className="uni-profile-rank">
+                            <strong>#{rankNational}</strong> in China
+                          </span>
+                        )}
+                        {rankWorld !== null && (
+                          <span className="uni-profile-rank">
+                            <strong>#{rankWorld}</strong> worldwide
+                          </span>
+                        )}
+                      </div>
+                      {shanghaiScore !== null &&
+                        (hasRankingDetails ? (
+                          <button
+                            type="button"
+                            className="uni-profile-score-toggle"
+                            onClick={() => setRankingDetailsOpen((open) => !open)}
+                            aria-expanded={rankingDetailsOpen}
+                            aria-controls="uni-ranking-details"
+                          >
+                            <span>Ranking score</span>
+                            <strong>{shanghaiScore}</strong>
+                            <span className="uni-profile-score-hint">
+                              {rankingDetailsOpen ? 'Hide breakdown' : 'View breakdown'}
+                            </span>
+                            <span className="uni-profile-score-icon" aria-hidden="true">
+                              <Icons.Chevron />
+                            </span>
+                          </button>
+                        ) : (
+                          <span className="uni-profile-score-static">
+                            <span>Ranking score</span>
+                            <strong>{shanghaiScore}</strong>
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                  {prestigeTags.length > 0 && (
+                    <div className="uni-profile-fact">
+                      <span className="uni-profile-fact-label">National distinctions</span>
+                      <div className="uni-profile-distinctions">
+                        {prestigeTags.map((tag, index) => (
+                          <Fragment key={tag}>
+                            {index > 0 && (
+                              <span className="uni-profile-distinction-sep" aria-hidden="true">
+                                ·
+                              </span>
+                            )}
+                            <span
+                              className="uni-profile-distinction"
+                              title={
+                                tag === '双一流'
+                                  ? 'Double First-Class initiative'
+                                  : `Project ${tag}`
+                              }
+                            >
+                              {tag === '双一流' ? 'Double First-Class' : tag}
+                            </span>
+                          </Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {hasRankingDetails && (
+                    <div
+                      className="uni-profile-rank-details"
+                      id="uni-ranking-details"
+                      hidden={!rankingDetailsOpen}
+                    >
+                      <div className="uni-profile-rank-details-head">
+                        <span>ShanghaiRanking breakdown</span>
+                      </div>
+                      <RankingIndicatorList indicators={indicators} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(university.website ||
+                rankNational !== null ||
+                rankWorld !== null ||
+                shanghaiScore !== null) && (
+                <div className="uni-profile-links">
+                  {university.website && (
+                    <a
+                      href={university.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="uni-profile-link"
+                    >
+                      Official website <span aria-hidden="true">↗</span>
+                    </a>
+                  )}
+                  {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
+                    <a
+                      href={rankUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="uni-profile-link"
+                    >
+                      ShanghaiRanking profile <span aria-hidden="true">↗</span>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
@@ -269,6 +325,12 @@ export const UniversityPage = () => {
           </Link>
         </div>
         {ratingBlock}
+        <Link
+          to={`/review?uni=${university.slug}`}
+          className="btn btn-primary btn-lg uni-profile-mobile-cta"
+        >
+          <Icons.Pen /> Leave a Review
+        </Link>
       </div>
 
       <div className="uni-profile-layout">
@@ -281,7 +343,6 @@ export const UniversityPage = () => {
         <aside className="uni-profile-aside">
           <UniversityFunding extras={extras} />
           <UniversityPrograms extras={extras} />
-          <RankingBreakdown indicators={indicators} />
         </aside>
         <div className="uni-reviews-cell">
           <div className="section" style={{ paddingTop: 'var(--sp-1)' }}>
