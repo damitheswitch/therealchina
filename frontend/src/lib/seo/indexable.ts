@@ -14,9 +14,3 @@ export const indexableByReviews = (
   const substantive = rows.filter((r) => isSubstantiveReview(r.text)).length
   return substantive >= 2 || rows.length >= 3
 }
-
-/** @deprecated use indexableByReviews — kept for hub checks that only care
- *  about "any substance" rather than the indexing bar. */
-export const hasSubstantiveReview = (
-  reviews: { text?: string | null }[] | null | undefined
-): boolean => indexableByReviews(reviews)

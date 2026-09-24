@@ -299,10 +299,15 @@ function validateMedia(value: unknown): MediaItem[] {
 // ---- University resolution ------------------------------------------------------
 
 function slugify(name: string): string {
+  // Mirrors frontend/src/lib/seo/slugify.ts — keep in sync (slug has a DB
+  // CHECK: ^[a-z0-9]+(-[a-z0-9]+)*$, max 120 chars).
   const slug = name
     .toLowerCase()
+    .trim()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120)
+    .replace(/-+$/g, '')
   return slug || 'university'
 }
 

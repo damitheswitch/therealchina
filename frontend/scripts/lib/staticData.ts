@@ -173,7 +173,6 @@ export const universityPageData = (
 // ── Hub/index payload builders ──────────────────────────────────────────────
 import { normalizeProgram, PROGRAM_HUBS, type HubDef } from '../../src/lib/seo/programs'
 import { normalizeDegree, DEGREE_HUBS } from '../../src/lib/seo/degrees'
-import { indexableByReviews } from '../../src/lib/seo/indexable'
 
 const REVIEW_PAGE_SIZE = 50
 

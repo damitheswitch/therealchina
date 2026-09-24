@@ -32,7 +32,8 @@ export const useHubData = (
   kind: 'program' | 'degree',
   slug: string | undefined,
   lookup: (slug: string) => HubDef | null,
-  resolve: (review: ReviewRow) => string | null
+  resolve: (review: ReviewRow) => string | null,
+  userId?: string | null
 ) => {
   const pd = usePrerenderData<HubPageData>('hubPage')
   const seeded = pd?.kind === kind && pd.hub?.slug === slug ? pd : null
@@ -43,6 +44,7 @@ export const useHubData = (
   const [upvoteCounts, setUpvoteCounts] = useState<Record<string, number>>(
     seeded?.upvoteCounts ?? {}
   )
+  const [upvotedMine, setUpvotedMine] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState<boolean>(!!slug && !!lookup(slug) && !seeded)
   const [resolved, setResolved] = useState<boolean>(!!seeded || (!!slug && !lookup(slug)))
 
@@ -68,6 +70,26 @@ export const useHubData = (
       setUpvoteCounts(seeded.upvoteCounts ?? {})
       setResolved(true)
       setLoading(false)
+      // Payload can't know the viewer — fetch own upvotes in one query.
+      const rows = seeded.reviews ?? []
+      if (userId && rows.length) {
+        const c = new AbortController()
+        supabase
+          .from('upvotes')
+          .select('review_id')
+          .eq('user_id', userId)
+          .in(
+            'review_id',
+            rows.map((r) => r.id)
+          )
+          .abortSignal(c.signal)
+          .then(({ data }) => {
+            if (!c.signal.aborted && data) {
+              setUpvotedMine(new Set(data.map((r) => r.review_id as string)))
+            }
+          })
+        return () => c.abort()
+      }
       return
     }
     const controller = new AbortController()
@@ -83,7 +105,7 @@ export const useHubData = (
         const uniIds = [...new Set(rows.map((r) => r.university_id))]
         const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[]
         const reviewIds = rows.map((r) => r.id)
-        const [uniRes, authorRes, upRes] = await Promise.all([
+        const [uniRes, authorRes, upRes, mineRes] = await Promise.all([
           uniIds.length
             ? supabase
                 .from('universities')
@@ -106,6 +128,14 @@ export const useHubData = (
                 .in('review_id', reviewIds)
                 .abortSignal(controller.signal)
             : Promise.resolve({ data: [], error: null }),
+          userId && reviewIds.length
+            ? supabase
+                .from('upvotes')
+                .select('review_id')
+                .eq('user_id', userId)
+                .in('review_id', reviewIds)
+                .abortSignal(controller.signal)
+            : Promise.resolve({ data: [], error: null }),
         ])
         if (uniRes.error) throw uniRes.error
         if (authorRes.error) throw authorRes.error
@@ -114,6 +144,9 @@ export const useHubData = (
           counts[u.review_id] = (counts[u.review_id] ?? 0) + 1
         }
         setUpvoteCounts(counts)
+        setUpvotedMine(
+          new Set(((mineRes.data as { review_id: string }[] | null) || []).map((r) => r.review_id))
+        )
         setReviews(rows)
         setUniversities(
           (
@@ -137,7 +170,7 @@ export const useHubData = (
     }
     run()
     return () => controller.abort()
-  }, [kind, slug, lookup, resolve, seeded])
+  }, [kind, slug, lookup, resolve, seeded, userId])
 
-  return { hub, universities, reviews, authors, upvoteCounts, loading, resolved }
+  return { hub, universities, reviews, authors, upvoteCounts, upvotedMine, loading, resolved }
 }

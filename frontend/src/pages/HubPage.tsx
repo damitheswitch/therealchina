@@ -1,8 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { useHubData, type HubPageData } from '../hooks/useHubData'
 import { hubBySlug, normalizeProgram } from '../lib/seo/programs'
 import { degreeHubBySlug, normalizeDegree } from '../lib/seo/degrees'
-import { hasSubstantiveReview } from '../lib/seo/indexable'
+import { indexableByReviews } from '../lib/seo/indexable'
 import { UniversityCard } from '../components/UniversityCard'
 import { ReviewCard } from '../components/ReviewCard'
 import { Seo } from '../components/Seo'
@@ -21,12 +22,9 @@ const HubPage = ({
   resolve: (review: Tables<'reviews'>) => string | null
 }) => {
   const { slug } = useParams()
-  const { hub, universities, reviews, authors, upvoteCounts, loading, resolved } = useHubData(
-    kind,
-    slug,
-    lookup,
-    resolve
-  )
+  const { user } = useAuth()
+  const { hub, universities, reviews, authors, upvoteCounts, upvotedMine, loading, resolved } =
+    useHubData(kind, slug, lookup, resolve, user?.id)
 
   if (loading) {
     return (
@@ -53,7 +51,7 @@ const HubPage = ({
     )
   }
 
-  const indexable = hasSubstantiveReview(reviews)
+  const indexable = indexableByReviews(reviews)
 
   return (
     <div className="container">
@@ -116,7 +114,10 @@ const HubPage = ({
                 key={review.id}
                 review={review}
                 author={(authors as HubPageData['authors'])?.[review.user_id ?? '']}
-                upvote={{ count: upvoteCounts[review.id] ?? 0 }}
+                upvote={{
+                  count: upvoteCounts[review.id] ?? 0,
+                  ...(user ? { upvoted: upvotedMine.has(review.id) } : {}),
+                }}
               />
             ))}
           </div>
