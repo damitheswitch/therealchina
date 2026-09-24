@@ -16,6 +16,7 @@ import {
   RankingBreakdown,
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
+import { UniversityLogo } from '../components/UniversityLogo'
 import { Icons } from '../components/Icons'
 
 // ShanghaiRanking 软科 category tokens → display labels
@@ -140,13 +141,13 @@ export const UniversityPage = () => {
       <div className="uni-profile-header">
         <div className="uni-profile-top">
           <div className="uni-profile-identity">
-            {university.logo_url && (
-              <img
-                src={university.logo_url}
-                alt={`${university.name} campus`}
-                className="uni-profile-logo"
-              />
-            )}
+            <UniversityLogo
+              name={university.name}
+              logoUrl={university.logo_url}
+              size={84}
+              className="uni-profile-logo"
+              eager
+            />
             <div className="uni-profile-name-block">
               <div className="uni-profile-city">
                 <Icons.MapPin /> {location}

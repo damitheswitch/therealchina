@@ -16,10 +16,11 @@ export const ReviewCard = ({ review, author }) => {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 
   return (
-    <div className="review-card fade-in">
+    <div id={`review-${id}`} className="review-card fade-in">
       <div className="review-header">
         <StarRating rating={rating} />
         <div className="review-meta">
