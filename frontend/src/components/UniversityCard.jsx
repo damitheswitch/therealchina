@@ -40,7 +40,7 @@ export const UniversityCard = ({ university }) => {
     )
 
   return (
-    <Link to={`/university/${slug}`} className="uni-card fade-in">
+    <Link to={`/university/${slug}/`} className="uni-card fade-in">
       <UniversityLogo name={name} logoUrl={logo_url} size={160} className="uni-card-img" />
       <div className="uni-card-body">
         <div>

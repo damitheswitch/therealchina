@@ -28,7 +28,7 @@ export const CityPage = () => {
         <div className="empty-state" style={{ paddingTop: '6rem' }}>
           <h1>City not found</h1>
           <p>We don&apos;t have any universities in this city yet.</p>
-          <Link to="/universities" className="btn btn-primary mt-2">
+          <Link to="/universities/" className="btn btn-primary mt-2">
             Browse all universities
           </Link>
         </div>
@@ -63,7 +63,7 @@ export const CityPage = () => {
       />
       <div style={{ paddingTop: '2.5rem' }}>
         <Link
-          to="/universities"
+          to="/universities/"
           className="btn btn-outline"
           style={{ marginBottom: 'var(--sp-3)' }}
         >

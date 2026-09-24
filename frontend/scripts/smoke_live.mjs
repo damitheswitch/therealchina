@@ -58,7 +58,8 @@ if (uniSlug) {
   const doc = parse(r.body)
   if (r.status !== 200) fail(`/university/${uniSlug} → ${r.status}`)
   const canonical = doc.querySelector('link[rel="canonical"]')?.getAttribute('href')
-  if (canonical !== `${PROD}/university/${uniSlug}`) fail(`uni canonical: ${canonical}`)
+  if (canonical !== `${PROD}/university/${uniSlug}/`)
+    fail(`uni canonical: ${canonical} (expected trailing-slash ${PROD}/university/${uniSlug}/)`)
   for (const s of doc.querySelectorAll('script[type="application/ld+json"]')) {
     try {
       JSON.parse(s.textContent)

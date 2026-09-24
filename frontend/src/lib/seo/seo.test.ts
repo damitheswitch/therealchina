@@ -67,7 +67,7 @@ describe('meta: buildPageHead', () => {
   })
   it('respects explicit index/follow overrides', () => {
     const h = buildPageHead({ path: '/p', index: false })
-    expect(h.canonical).toBe(`${PROD_ORIGIN}/p`)
+    expect(h.canonical).toBe(`${PROD_ORIGIN}/p/`)
     expect(h.robots).toBe('noindex, follow')
     expect(h.html).toContain('noindex')
   })
@@ -115,8 +115,8 @@ describe('escape', () => {
 describe('siteUrl', () => {
   it('builds absolute prod URLs', () => {
     expect(siteUrl('/')).toBe(`${PROD_ORIGIN}/`)
-    expect(siteUrl('university/x')).toBe(`${PROD_ORIGIN}/university/x`)
-    expect(siteUrl('/x', 'https://preview.netlify.app')).toBe('https://preview.netlify.app/x')
+    expect(siteUrl('university/x')).toBe(`${PROD_ORIGIN}/university/x/`)
+    expect(siteUrl('/x', 'https://preview.netlify.app')).toBe('https://preview.netlify.app/x/')
   })
 })
 

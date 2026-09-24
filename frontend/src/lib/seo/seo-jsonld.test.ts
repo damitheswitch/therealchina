@@ -43,7 +43,7 @@ describe('jsonld', () => {
       )
     )
     expect(o['@type']).toBe('CollegeOrUniversity')
-    expect(o.url).toBe(`${PROD_ORIGIN}/university/tsinghua-university`)
+    expect(o.url).toBe(`${PROD_ORIGIN}/university/tsinghua-university/`)
     expect(o.aggregateRating.ratingValue).toBe(4.4)
     expect(o.aggregateRating.ratingCount).toBe(5)
   })
@@ -69,7 +69,7 @@ describe('jsonld', () => {
     )
     expect(o['@type']).toBe('BreadcrumbList')
     expect(o.itemListElement).toHaveLength(2)
-    expect(o.itemListElement[1].item).toBe(`${PROD_ORIGIN}/universities`)
+    expect(o.itemListElement[1].item).toBe(`${PROD_ORIGIN}/universities/`)
   })
 
   it('itemListSchema wraps urls into ListItem urls', () => {
@@ -86,7 +86,7 @@ describe('jsonld', () => {
     )
     expect(o['@type']).toBe('ItemList')
     expect(o.numberOfItems).toBe(2)
-    expect(o.itemListElement[0].url).toBe(`${PROD_ORIGIN}/university/a`)
+    expect(o.itemListElement[0].url).toBe(`${PROD_ORIGIN}/university/a/`)
   })
 
   it('reviewSchema carries rating + body', () => {

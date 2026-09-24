@@ -166,7 +166,7 @@ export const ProfileView = ({ userId }) => {
                 <div key={review.id} className="profile-review-item">
                   {review.universities && (
                     <Link
-                      to={`/university/${review.universities.slug}`}
+                      to={`/university/${review.universities.slug}/`}
                       className="profile-review-university"
                     >
                       <Icons.Book /> {review.universities.name} — {review.universities.city}

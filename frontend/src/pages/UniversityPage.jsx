@@ -20,7 +20,7 @@ import { UniversityLogo } from '../components/UniversityLogo'
 import { Seo } from '../components/Seo'
 import { firstPartyLogo } from '../lib/logo'
 import { indexableByReviews } from '../lib/seo/indexable'
-import { slugify } from '../lib/seo/slugify'
+import { cityPath } from '../lib/seo/slugify'
 import { stringify, universitySchema, breadcrumbSchema } from '../lib/seo/jsonld'
 import { Icons } from '../components/Icons'
 
@@ -183,7 +183,7 @@ export const UniversityPage = () => {
           ),
         ]}
       />
-      <Link to="/universities" className="btn btn-outline mt-3" style={{ marginBottom: 0 }}>
+      <Link to="/universities/" className="btn btn-outline mt-3" style={{ marginBottom: 0 }}>
         <Icons.ArrowLeft /> All universities
       </Link>
 
@@ -201,7 +201,7 @@ export const UniversityPage = () => {
               <div className="uni-profile-city">
                 <Icons.MapPin />{' '}
                 {university.city ? (
-                  <Link to={`/city/${slugify(university.city)}`} className="review-author-link">
+                  <Link to={cityPath(university.city)} className="review-author-link">
                     {location}
                   </Link>
                 ) : (

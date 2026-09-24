@@ -52,7 +52,7 @@ export const routeToPattern = (path: string): string => {
  *  a new route stays OUT of Google until a human explicitly registers it
  *  here (and in routes.generated.ts). */
 export const getPolicy = (path: string): Policy => {
-  const clean = path.split(/[?#]/)[0]
+  const clean = path.split(/[?#]/)[0].replace(/\/+$/, '') || '/'
   const indexable = INDEXABLE_PATTERNS.some((r) => r.test(clean))
   const nofollow = NOFOLLOW_PATTERNS.some((r) => r.test(clean))
   if (indexable) return { index: true, follow: !nofollow }

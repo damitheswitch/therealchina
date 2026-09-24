@@ -11,8 +11,8 @@ export const Footer = () => (
         <span className="logo-text">The Real China</span>
       </div>
       <div className="footer-links">
-        <Link to="/universities">Universities</Link>
-        <Link to="/reviews">Reviews</Link>
+        <Link to="/universities/">Universities</Link>
+        <Link to="/reviews/">Reviews</Link>
         <Link to="/review">Leave a Review</Link>
         <Link to="/about">About</Link>
         <Link to="/how-we-verify">How we verify</Link>

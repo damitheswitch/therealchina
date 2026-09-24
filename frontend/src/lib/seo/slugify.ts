@@ -8,7 +8,9 @@ export const slugify = (s: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
 
-export const uniPath = (slug: string): string => `/university/${slug}`
-export const cityPath = (city: string): string => `/city/${slugify(city)}`
-export const programPath = (slug: string): string => `/program/${slug}`
-export const degreePath = (slug: string): string => `/degree/${slug}`
+// Canonical URLs carry the trailing slash (see site.ts — Netlify pretty-URL
+// normalization redirects /x → /x/; links must point at the final URL).
+export const uniPath = (slug: string): string => `/university/${slug}/`
+export const cityPath = (city: string): string => `/city/${slugify(city)}/`
+export const programPath = (slug: string): string => `/program/${slug}/`
+export const degreePath = (slug: string): string => `/degree/${slug}/`

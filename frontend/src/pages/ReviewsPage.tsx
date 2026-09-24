@@ -64,7 +64,7 @@ export const ReviewsPage = () => {
               <div key={review.id}>
                 {uni && (
                   <p className="muted" style={{ marginBottom: 'var(--sp-1)' }}>
-                    <Link to={`/university/${uni.slug}`} className="review-author-link">
+                    <Link to={`/university/${uni.slug}/`} className="review-author-link">
                       {uni.name}
                     </Link>
                   </p>

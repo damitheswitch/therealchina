@@ -120,17 +120,28 @@ const redirects = [
   '# (duplicate site in Google). Force-301 everything to the www canonical host.',
   'https://therealchina.netlify.app/* https://www.therealchina.net/:splat 301!',
   '',
-  '# Alias → canonical (permanent). Aliases are recorded in universities.slug_aliases.',
-  ...aliasRedirects(universities).map((r) => `${r.from} ${r.to} 301`),
+  '# Alias → canonical (permanent, forced — must beat pretty-URL normalization',
+  '# and never serve content). Both /x and /x/ forms; canonical URLs end in /.',
+  ...aliasRedirects(universities).flatMap((r) => [
+    `${r.from} ${r.to}/ 301!`,
+    `${r.from}/ ${r.to}/ 301!`,
+  ]),
   '',
-  '# Valid-but-thin pages → SPA shell (client-rendered, noindex).',
-  ...spaOnlySlugs.map((u) => `/university/${u.slug} /app.html 200`),
+  '# Valid-but-thin pages → SPA shell (client-rendered, noindex). Both slash forms',
+  '# — Netlify normalization turns /x into /x/, which must not fall to the 404 splat.',
+  ...spaOnlySlugs.flatMap((u) => [
+    `/university/${u.slug} /app.html 200`,
+    `/university/${u.slug}/ /app.html 200`,
+  ]),
   ...cities
     .filter((c) => !prerenderedCities.has(c.slug))
-    .map((c) => `/city/${c.slug} /app.html 200`),
+    .flatMap((c) => [`/city/${c.slug} /app.html 200`, `/city/${c.slug}/ /app.html 200`]),
   ...hubs
     .filter((h) => !prerenderedHubs.has(`/${h.kind}/${h.hub.slug}`))
-    .map((h) => `/${h.kind}/${h.hub.slug} /app.html 200`),
+    .flatMap((h) => [
+      `/${h.kind}/${h.hub.slug} /app.html 200`,
+      `/${h.kind}/${h.hub.slug}/ /app.html 200`,
+    ]),
   '',
   '# Unknown slugs under dynamic prefixes → real 404 (existing files still win).',
   '/university/* /404.html 404',

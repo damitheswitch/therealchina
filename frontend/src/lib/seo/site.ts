@@ -21,5 +21,11 @@ export const TEST_ORIGIN = 'https://trc-seo.test'
 
 /** Absolute canonical URL for a path. Always same-origin, always PROD — canonical
  *  never points at a deploy preview or staging host. */
-export const siteUrl = (path: string, origin = PROD_ORIGIN): string =>
-  `${origin}${path.startsWith('/') ? path : `/${path}`}`
+export const siteUrl = (path: string, origin = PROD_ORIGIN): string => {
+  const p = path.startsWith('/') ? path : `/${path}`
+  // Netlify pretty-URL normalization 301s /x → /x/ on directory-index pages,
+  // so every canonical/OG/sitemap/JSON-LD URL must carry the trailing slash —
+  // otherwise it points at a redirect. File paths (/og/default.png) don't.
+  const dir = p === '/' || /\.[a-z0-9]+$/i.test(p) ? p : `${p}/`
+  return `${origin}${dir}`
+}

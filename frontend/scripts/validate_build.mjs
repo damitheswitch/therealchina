@@ -80,7 +80,10 @@ for (const path of routePaths) {
 
   const canonical = doc.querySelector('link[rel="canonical"]')?.getAttribute('href')
   if (!canonical) fail(`${path}: missing canonical`)
-  else if (canonical !== `${PROD}${path}`) fail(`${path}: canonical ${canonical} != ${PROD}${path}`)
+  // Canonical URLs carry the trailing slash — Netlify pretty-URL normalization
+  // 301s /x → /x/, so a slash-less canonical would point at a redirect.
+  else if (canonical !== `${PROD}${path === '/' ? '/' : `${path}/`}`)
+    fail(`${path}: canonical ${canonical} != ${PROD}${path}/`)
 
   const robots = doc.querySelector('meta[name="robots"]')?.getAttribute('content') ?? ''
   if (!robots) fail(`${path}: missing robots meta`)
@@ -171,7 +174,10 @@ if (!existsSync(resolve(DIST, 'sitemap.xml'))) {
   fail('sitemap.xml missing')
 } else {
   const sm = read(resolve(DIST, 'sitemap.xml'))
-  const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(PROD, ''))
+  // Sitemap locs end in / (canonical form); route paths don't.
+  const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
+    m[1].replace(PROD, '').replace(/\/$/, '') || '/'
+  )
   const missing = routePaths.filter((r) => !locs.includes(r))
   const extra = locs.filter((l) => !routeSet.has(l))
   if (missing.length) fail(`sitemap missing routes: ${missing.join(', ')}`)
