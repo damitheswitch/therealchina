@@ -175,8 +175,8 @@ if (!existsSync(resolve(DIST, 'sitemap.xml'))) {
 } else {
   const sm = read(resolve(DIST, 'sitemap.xml'))
   // Sitemap locs end in / (canonical form); route paths don't.
-  const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) =>
-    m[1].replace(PROD, '').replace(/\/$/, '') || '/'
+  const locs = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map(
+    (m) => m[1].replace(PROD, '').replace(/\/$/, '') || '/'
   )
   const missing = routePaths.filter((r) => !locs.includes(r))
   const extra = locs.filter((l) => !routeSet.has(l))
