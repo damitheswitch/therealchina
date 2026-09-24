@@ -156,5 +156,5 @@ FROM (
   rating_accommodation, rating_cost, rating_intl_office, rating_social,
   rating_extracurricular, rating_career, pros, cons, tags, media, created_at
 )
-JOIN public.universities u ON u.slug = v.uni_slug
+JOIN public.universities u ON u.slug = v.uni_slug OR v.uni_slug = ANY(u.slug_aliases)
 ON CONFLICT (id) DO NOTHING;
