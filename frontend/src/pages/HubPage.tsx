@@ -79,14 +79,20 @@ const HubPage = ({
         ]}
       />
       <div style={{ paddingTop: '2.5rem' }}>
-        <Link to="/universities" className="btn btn-outline" style={{ marginBottom: 'var(--sp-3)' }}>
+        <Link
+          to="/universities"
+          className="btn btn-outline"
+          style={{ marginBottom: 'var(--sp-3)' }}
+        >
           ← All universities
         </Link>
         <h1>{hub?.label}</h1>
-        <p className="muted" style={{ maxWidth: '46rem' }}>{hub?.blurb}</p>
+        <p className="muted" style={{ maxWidth: '46rem' }}>
+          {hub?.blurb}
+        </p>
         <p className="muted">
-          {reviews.length} review{reviews.length === 1 ? '' : 's'} · {universities.length}{' '}
-          universit{universities.length === 1 ? 'y' : 'ies'}
+          {reviews.length} review{reviews.length === 1 ? '' : 's'} · {universities.length} universit
+          {universities.length === 1 ? 'y' : 'ies'}
         </p>
       </div>
 
@@ -124,5 +130,9 @@ export const ProgramHubPage = () => (
 )
 
 export const DegreeHubPage = () => (
-  <HubPage kind="degree" lookup={degreeHubBySlug} resolve={(r) => normalizeDegree(r.degree_level)} />
+  <HubPage
+    kind="degree"
+    lookup={degreeHubBySlug}
+    resolve={(r) => normalizeDegree(r.degree_level)}
+  />
 )

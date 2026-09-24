@@ -171,7 +171,9 @@ export const reviewsPageData = (reviews: ReviewRow[], unis: UniRow[], authors: A
   return {
     reviews: rows,
     universities: Object.fromEntries(
-      unis.filter((u) => uniIds.has(u.id)).map((u) => [u.id, { id: u.id, name: u.name, slug: u.slug }])
+      unis
+        .filter((u) => uniIds.has(u.id))
+        .map((u) => [u.id, { id: u.id, name: u.name, slug: u.slug }])
     ),
     authors: Object.fromEntries(authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])),
   }
@@ -187,7 +189,8 @@ export interface CityEntry {
 
 export const allCities = (unis: UniRow[], reviews: ReviewRow[]): CityEntry[] => {
   const reviewCountByUni = new Map<string, number>()
-  for (const r of reviews) reviewCountByUni.set(r.university_id, (reviewCountByUni.get(r.university_id) ?? 0) + 1)
+  for (const r of reviews)
+    reviewCountByUni.set(r.university_id, (reviewCountByUni.get(r.university_id) ?? 0) + 1)
   const byCity = new Map<string, UniRow[]>()
   for (const u of unis) {
     const c = u.city ?? ''
@@ -217,14 +220,20 @@ export interface HubEntry {
 }
 
 export const allHubs = (unis: UniRow[], reviews: ReviewRow[]): HubEntry[] => {
-  const build = (kind: 'program' | 'degree', hubs: HubDef[], norm: (r: ReviewRow) => string | null) =>
+  const build = (
+    kind: 'program' | 'degree',
+    hubs: HubDef[],
+    norm: (r: ReviewRow) => string | null
+  ) =>
     hubs.map((hub): HubEntry => {
       const rows = reviews.filter((r) => norm(r) === hub.slug)
       const uniIds = new Set(rows.map((r) => r.university_id))
       return {
         kind,
         hub,
-        universities: unis.filter((u) => uniIds.has(u.id)).sort((a, b) => a.name.localeCompare(b.name)),
+        universities: unis
+          .filter((u) => uniIds.has(u.id))
+          .sort((a, b) => a.name.localeCompare(b.name)),
         reviews: rows,
         indexable: hasSubstantiveReview(rows),
       }
@@ -235,10 +244,7 @@ export const allHubs = (unis: UniRow[], reviews: ReviewRow[]): HubEntry[] => {
   ]
 }
 
-export const hubPageData = (
-  entry: HubEntry,
-  authors: AuthorRow[]
-) => {
+export const hubPageData = (entry: HubEntry, authors: AuthorRow[]) => {
   const authorIds = new Set(entry.reviews.map((r) => r.user_id).filter(Boolean))
   return {
     kind: entry.kind,

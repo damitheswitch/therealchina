@@ -10,8 +10,8 @@ export const SITE = {
   contactUrl: 'https://therealchina.net/contact',
   twitter: '', // no account yet — update when created
   sameAs: [] as string[],
-  // IndexNow key; set in the ops step (M7). Empty = IndexNow ping skipped.
-  indexnowKey: '',
+  // IndexNow key — the matching key file lives at frontend/public/<key>.txt.
+  indexnowKey: '0f4d0874e85f43c1933b9fd11f9b60ad',
 } as const
 
 export const PROD_ORIGIN = 'https://therealchina.net'

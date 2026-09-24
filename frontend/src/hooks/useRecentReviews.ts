@@ -21,9 +21,7 @@ const PAGE_SIZE = 50
 export const useRecentReviews = () => {
   const pd = usePrerenderData<ReviewsPageData>('reviewsPage')
   const [reviews, setReviews] = useState<RecentReview[]>(pd?.reviews ?? [])
-  const [universities, setUniversities] = useState<Record<string, UniLite>>(
-    pd?.universities ?? {}
-  )
+  const [universities, setUniversities] = useState<Record<string, UniLite>>(pd?.universities ?? {})
   const [authors, setAuthors] = useState<Record<string, AuthorLite>>(pd?.authors ?? {})
   const [loading, setLoading] = useState<boolean>(!pd)
   const [error, setError] = useState<Error | null>(null)

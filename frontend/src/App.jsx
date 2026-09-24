@@ -17,10 +17,16 @@ const UniversityPage = lazy(() =>
 const UniversitiesPage = lazy(() =>
   import('./pages/UniversitiesPage').then((m) => ({ default: m.UniversitiesPage }))
 )
-const ReviewsPage = lazy(() => import('./pages/ReviewsPage').then((m) => ({ default: m.ReviewsPage })))
+const ReviewsPage = lazy(() =>
+  import('./pages/ReviewsPage').then((m) => ({ default: m.ReviewsPage }))
+)
 const CityPage = lazy(() => import('./pages/CityPage').then((m) => ({ default: m.CityPage })))
-const ProgramHubPage = lazy(() => import('./pages/HubPage').then((m) => ({ default: m.ProgramHubPage })))
-const DegreeHubPage = lazy(() => import('./pages/HubPage').then((m) => ({ default: m.DegreeHubPage })))
+const ProgramHubPage = lazy(() =>
+  import('./pages/HubPage').then((m) => ({ default: m.ProgramHubPage }))
+)
+const DegreeHubPage = lazy(() =>
+  import('./pages/HubPage').then((m) => ({ default: m.DegreeHubPage }))
+)
 const TrustPage = lazy(() => import('./pages/TrustPage').then((m) => ({ default: m.TrustPage })))
 const ReviewPage = lazy(() => import('./pages/ReviewPage').then((m) => ({ default: m.ReviewPage })))
 const ProfilePage = lazy(() =>

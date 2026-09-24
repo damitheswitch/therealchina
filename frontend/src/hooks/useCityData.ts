@@ -52,9 +52,9 @@ export const useCityData = (citySlug: string | undefined) => {
           .select('city')
           .abortSignal(controller.signal)
         if (cityErr) throw cityErr
-        const match = [...new Set(((cityRows as { city: string }[] | null) || []).map((r) => r.city))].find(
-          (c) => slugify(c) === citySlug
-        )
+        const match = [
+          ...new Set(((cityRows as { city: string }[] | null) || []).map((r) => r.city)),
+        ].find((c) => slugify(c) === citySlug)
         if (!match) {
           setCity(null)
           setUniversities([])

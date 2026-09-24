@@ -62,13 +62,17 @@ export const CityPage = () => {
         ]}
       />
       <div style={{ paddingTop: '2.5rem' }}>
-        <Link to="/universities" className="btn btn-outline" style={{ marginBottom: 'var(--sp-3)' }}>
+        <Link
+          to="/universities"
+          className="btn btn-outline"
+          style={{ marginBottom: 'var(--sp-3)' }}
+        >
           ← All universities
         </Link>
         <h1>Universities in {city}</h1>
         <p className="muted" style={{ maxWidth: '46rem' }}>
-          {universities.length} universit{universities.length === 1 ? 'y' : 'ies'} ·{' '}
-          {reviewCount} review{reviewCount === 1 ? '' : 's'} from international students.
+          {universities.length} universit{universities.length === 1 ? 'y' : 'ies'} · {reviewCount}{' '}
+          review{reviewCount === 1 ? '' : 's'} from international students.
         </p>
       </div>
 

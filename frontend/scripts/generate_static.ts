@@ -69,15 +69,21 @@ const routes: RouteEntry[] = [
   { path: '/reviews', data: { reviewsPage: reviewsPageData(reviews, universities, authors) } },
   // City hubs — only indexable ones are prerendered; thin cities go through
   // the SPA shell with noindex (rule emitted below).
-  ...cities.filter((c) => c.indexable).map((c) => ({
-    path: `/city/${c.slug}`,
-    data: { cityPage: { city: c.city, universities: c.universities, reviewCount: c.reviewCount } },
-  })),
+  ...cities
+    .filter((c) => c.indexable)
+    .map((c) => ({
+      path: `/city/${c.slug}`,
+      data: {
+        cityPage: { city: c.city, universities: c.universities, reviewCount: c.reviewCount },
+      },
+    })),
   // Program/degree hubs — same: only substantive-review hubs prerender.
-  ...hubs.filter((h) => h.indexable).map((h) => ({
-    path: `/${h.kind}/${h.hub.slug}`,
-    data: { hubPage: hubPageData(h, authors) },
-  })),
+  ...hubs
+    .filter((h) => h.indexable)
+    .map((h) => ({
+      path: `/${h.kind}/${h.hub.slug}`,
+      data: { hubPage: hubPageData(h, authors) },
+    })),
   // Trust/legal pages — always indexable, static content.
   ...TRUST_PAGES.map((d) => ({ path: `/${d.slug}`, data: {} })),
   ...indexableUnis.map((u) => ({
@@ -100,7 +106,9 @@ writeFileSync(resolve(FRONTEND, 'src/routes.generated.ts'), routesTs)
 // → anything else under a dynamic prefix is a real 404 → SPA fallback.
 const prerenderedSlugs = new Set(indexableUnis.map((u) => u.slug))
 const spaOnlySlugs = universities.filter((u) => !prerenderedSlugs.has(u.slug))
-const prerenderedHubs = new Set(hubs.filter((h) => h.indexable).map((h) => `/${h.kind}/${h.hub.slug}`))
+const prerenderedHubs = new Set(
+  hubs.filter((h) => h.indexable).map((h) => `/${h.kind}/${h.hub.slug}`)
+)
 const prerenderedCities = new Set(cities.filter((c) => c.indexable).map((c) => c.slug))
 
 const redirects = [
@@ -110,7 +118,9 @@ const redirects = [
   '',
   '# Valid-but-thin pages → SPA shell (client-rendered, noindex).',
   ...spaOnlySlugs.map((u) => `/university/${u.slug} /app.html 200`),
-  ...cities.filter((c) => !prerenderedCities.has(c.slug)).map((c) => `/city/${c.slug} /app.html 200`),
+  ...cities
+    .filter((c) => !prerenderedCities.has(c.slug))
+    .map((c) => `/city/${c.slug} /app.html 200`),
   ...hubs
     .filter((h) => !prerenderedHubs.has(`/${h.kind}/${h.hub.slug}`))
     .map((h) => `/${h.kind}/${h.hub.slug} /app.html 200`),

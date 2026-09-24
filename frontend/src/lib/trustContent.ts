@@ -49,7 +49,9 @@ export const TRUST_PAGES: TrustDoc[] = [
     sections: [
       {
         h: 'General',
-        body: ['Email: nihao@therealchina.net — we read everything, though replies may take a few days.'],
+        body: [
+          'Email: nihao@therealchina.net — we read everything, though replies may take a few days.',
+        ],
       },
       {
         h: 'Report a review or a safety issue',
@@ -169,9 +171,7 @@ export const TRUST_PAGES: TrustDoc[] = [
       },
       {
         h: 'Corrections',
-        body: [
-          'Found an error? Email nihao@therealchina.net with the page URL and a source.',
-        ],
+        body: ['Found an error? Email nihao@therealchina.net with the page URL and a source.'],
       },
     ],
   },
@@ -259,7 +259,9 @@ export const TRUST_PAGES: TrustDoc[] = [
       },
       {
         h: 'External links',
-        body: ['Links to university sites and other resources are provided for convenience; we do not control their content.'],
+        body: [
+          'Links to university sites and other resources are provided for convenience; we do not control their content.',
+        ],
       },
     ],
   },

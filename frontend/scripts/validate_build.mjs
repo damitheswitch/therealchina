@@ -263,6 +263,13 @@ for (const f of scanDir(SRC)) {
 const globalCss = read(resolve(SRC, 'styles/global.css'))
 if (/@import\s+url\(/.test(globalCss)) fail('global.css still contains a remote @import')
 
+// IndexNow key file must exist when a key is configured
+const siteSrc = read(resolve(SRC, 'lib/seo/site.ts'))
+const inKey = siteSrc.match(/indexnowKey:\s*'([^']+)'/)?.[1] ?? ''
+if (inKey && !existsSync(resolve(FRONTEND, 'public', `${inKey}.txt`))) {
+  fail(`IndexNow key file public/${inKey}.txt missing (or key out of sync with site.ts)`)
+}
+
 // ── summary ─────────────────────────────────────────────────────────────────
 for (const w of warns) console.warn(`  WARN ${w}`)
 if (errors.length) {

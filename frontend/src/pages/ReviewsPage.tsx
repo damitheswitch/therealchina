@@ -38,8 +38,8 @@ export const ReviewsPage = () => {
       <div style={{ paddingTop: '2.5rem' }}>
         <h1>Latest reviews</h1>
         <p className="muted" style={{ maxWidth: '46rem' }}>
-          Unfiltered reviews from international students — what the brochures
-          don&apos;t tell you about studying in China.
+          Unfiltered reviews from international students — what the brochures don&apos;t tell you
+          about studying in China.
         </p>
       </div>
 

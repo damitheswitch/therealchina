@@ -230,8 +230,10 @@ Schema and Edge Functions are managed through the Supabase CLI:
 cd frontend
 npm install
 npm run dev          # localhost:5173
-npm run build        # production build
+npm run build        # vite build + prerender pipeline (export:data → generate:static → prerender)
 npm run preview      # preview production build
+npm run validate:seo # post-build SEO gate — fails on missing canonicals,
+                     # soft-404s, sitemap drift, hotlinks, payload leaks
 npm run lint         # ESLint (must exit 0)
 npm run format       # Prettier write
 npm run format:check # Prettier check (runs in CI)
@@ -245,6 +247,16 @@ Edge Function type-checking (matches what CI runs):
 npx deno check --config supabase/functions/media-upload/deno.json supabase/functions/media-upload/index.ts
 npx deno check --config supabase/functions/review-submit/deno.json supabase/functions/review-submit/index.ts
 ```
+
+SEO pipeline notes (see `docs/seo-ops.md` for the full runbook):
+
+- `npm run build` requires Supabase access for `export:data` (uses
+  `.env.local`). `TRC_EXPORT_FIXTURE=1 npm run build` uses the committed
+  fixture instead — no DB needed.
+- Prerendered routes live in `frontend/src/routes.generated.ts` — generated,
+  committed, review it like config.
+- Non-production deploys (previews, staging, local) emit `noindex`
+  robots/headers automatically — only the real production site is indexable.
 
 For local Supabase — a full Docker stack (Postgres, Auth, Storage, Studio at http://127.0.0.1:54323), rebuilt from migrations + `seed.sql`:
 
