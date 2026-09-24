@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 027_reviewer_context.sql
+-- as of migration 031_block_disposable_email_signups.sql
 -- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
@@ -181,6 +181,17 @@ CREATE TABLE IF NOT EXISTS public.flight_listings (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Disposable/temp-mail domains rejected at signup and on email change.
+-- Seeded by migration 031 from the community disposable-email-domains list;
+-- refresh with new rows as providers appear. Legit providers the upstream
+-- list over-blocks are carved out (e.g. 21cn.com, sify.com). Internal-only:
+-- RLS enabled with no policies and client grants revoked — read only via
+-- is_email_allowed().
+CREATE TABLE IF NOT EXISTS public.blocked_email_domains (
+  domain TEXT PRIMARY KEY
+    CHECK (domain = lower(btrim(domain)) AND position('.' IN domain) > 0)
 );
 
 -- ---------------------------------------------------------
@@ -508,6 +519,94 @@ AS $$
   );
 $$;
 
+-- Returns false when the email's domain (or any parent domain, so
+-- sub.mailinator.com matches mailinator.com) is on the blocklist.
+-- Malformed/empty emails return true: format validation is Auth's job, and
+-- the UX pre-check should not mask the real "invalid email" error.
+CREATE OR REPLACE FUNCTION public.is_email_allowed(p_email TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_domain TEXT;
+  v_labels TEXT[];
+  i INT;
+BEGIN
+  v_domain := btrim(split_part(lower(btrim(COALESCE(p_email, ''))), '@', -1), '.');
+  IF v_domain = '' THEN
+    RETURN true;
+  END IF;
+
+  v_labels := string_to_array(v_domain, '.');
+  -- Check 'a.b.c', then 'b.c'; never the bare TLD.
+  FOR i IN 1 .. greatest(array_length(v_labels, 1) - 1, 0) LOOP
+    IF EXISTS (
+      SELECT 1
+      FROM public.blocked_email_domains d
+      WHERE d.domain = array_to_string(v_labels[i:array_length(v_labels, 1)], '.')
+    ) THEN
+      RETURN false;
+    END IF;
+  END LOOP;
+  RETURN true;
+END;
+$$;
+
+-- Supabase Auth "before user created" hook (pg-functions URI). Returning an
+-- error object rejects the signup with a 403 and shows the message to the
+-- client. Runs inside Auth itself, so it covers email/password AND OAuth.
+CREATE OR REPLACE FUNCTION public.hook_reject_disposable_email(event JSONB)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_email TEXT;
+BEGIN
+  v_email := event->'user'->>'email';
+  -- Phone signups and other flows without an email pass through.
+  IF v_email IS NULL OR v_email = '' THEN
+    RETURN '{}'::jsonb;
+  END IF;
+
+  IF NOT public.is_email_allowed(v_email) THEN
+    RETURN jsonb_build_object(
+      'error', jsonb_build_object(
+        'http_code', 403,
+        'message', 'Please use a permanent email address — disposable email domains are not allowed.'
+      )
+    );
+  END IF;
+  RETURN '{}'::jsonb;
+END;
+$$;
+
+-- The auth hook only covers user creation; this trigger also blocks direct
+-- SQL/admin-API inserts and an existing user switching their email to a
+-- disposable domain afterwards.
+CREATE OR REPLACE FUNCTION public.enforce_email_domain_block()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  -- On INSERT, OLD is an all-NULL record, so this check runs whenever the
+  -- new row carries an email. On UPDATE it only runs when email changed.
+  IF NEW.email IS DISTINCT FROM OLD.email
+     AND NEW.email IS NOT NULL
+     AND NEW.email <> ''
+     AND NOT public.is_email_allowed(NEW.email) THEN
+    RAISE EXCEPTION 'Please use a permanent email address — disposable email domains are not allowed.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
 -- ---------------------------------------------------------
 -- 5. Triggers
 -- ---------------------------------------------------------
@@ -547,6 +646,12 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+DROP TRIGGER IF EXISTS enforce_email_domain_block ON auth.users;
+CREATE TRIGGER enforce_email_domain_block
+  BEFORE INSERT OR UPDATE OF email ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_email_domain_block();
 
 DROP TRIGGER IF EXISTS update_profiles_updated_at_trigger ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at_trigger
@@ -611,6 +716,11 @@ CREATE POLICY "Authenticated users can insert reviews after onboarding"
 -- written and read only by the review-submit Edge Function (service role).
 ALTER TABLE public.reviewer_context ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.reviewer_context FROM anon, authenticated;
+
+-- blocked_email_domains: no policies at all — the blocklist is read only by
+-- the security-definer is_email_allowed / hook functions.
+ALTER TABLE public.blocked_email_domains ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.blocked_email_domains FROM anon, authenticated;
 
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 
@@ -811,6 +921,14 @@ GRANT EXECUTE ON FUNCTION public.profile_has_social_handle(UUID) TO authenticate
 
 REVOKE ALL ON FUNCTION public.toggle_upvote(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_role;
+
+REVOKE ALL ON FUNCTION public.is_email_allowed(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;
+
+-- Auth calls the before-user-created hook as supabase_auth_admin.
+REVOKE ALL ON FUNCTION public.hook_reject_disposable_email(JSONB) FROM PUBLIC, anon, authenticated;
+GRANT USAGE ON SCHEMA public TO supabase_auth_admin;
+GRANT EXECUTE ON FUNCTION public.hook_reject_disposable_email(JSONB) TO supabase_auth_admin;
 
 -- ---------------------------------------------------------
 -- 9. Storage bucket and policies

@@ -28,6 +28,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_email_domains: {
+        Row: {
+          domain: string
+        }
+        Insert: {
+          domain: string
+        }
+        Update: {
+          domain?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           created_at: string | null
@@ -647,6 +659,8 @@ export type Database = {
     }
     Functions: {
       cleanup_upload_rate_limits: { Args: never; Returns: undefined }
+      hook_reject_disposable_email: { Args: { event: Json }; Returns: Json }
+      is_email_allowed: { Args: { p_email: string }; Returns: boolean }
       profile_has_social_handle: {
         Args: { p_user_id: string }
         Returns: boolean
