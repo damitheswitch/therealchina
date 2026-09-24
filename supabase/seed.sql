@@ -6,20 +6,23 @@
 -- ============================================
 -- 1. UNIVERSITIES
 -- ============================================
-INSERT INTO universities (name, name_zh, city, slug, logo_url, is_verified)
+-- rankings: ShanghaiRanking (软科) national list positions + institution
+-- page links; province/uni_category in English (merge script keeps these
+-- in sync with the scraped list).
+INSERT INTO universities (name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings)
 VALUES
-  ('Tsinghua University', '清华大学', 'Beijing', 'tsinghua', 'https://images.pexels.com/photos/32384116/pexels-photo-32384116.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Peking University', '北京大学', 'Beijing', 'peking', 'https://images.pexels.com/photos/32421367/pexels-photo-32421367.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Fudan University', '复旦大学', 'Shanghai', 'fudan', 'https://images.pexels.com/photos/35052489/pexels-photo-35052489.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Shanghai Jiao Tong University', '上海交通大学', 'Shanghai', 'sjtu', 'https://images.pexels.com/photos/37137233/pexels-photo-37137233.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Zhejiang University', '浙江大学', 'Hangzhou', 'zju', 'https://images.pexels.com/photos/35564755/pexels-photo-35564755.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Wuhan University', '武汉大学', 'Wuhan', 'whu', 'https://images.pexels.com/photos/36949547/pexels-photo-36949547.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Sichuan University', '四川大学', 'Chengdu', 'scu', 'https://images.pexels.com/photos/37333836/pexels-photo-37333836.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Xiamen University', '厦门大学', 'Xiamen', 'xmu', 'https://images.pexels.com/photos/20265634/pexels-photo-20265634.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Nanjing University', '南京大学', 'Nanjing', 'nju', 'https://images.pexels.com/photos/19193975/pexels-photo-19193975.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Hunan University', '湖南大学', 'Changsha', 'hnu', 'https://images.pexels.com/photos/7883872/pexels-photo-7883872.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Tianjin University', '天津大学', 'Tianjin', 'tju', 'https://images.pexels.com/photos/37186801/pexels-photo-37186801.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false),
-  ('Beihang University', '北京航空航天大学', 'Beijing', 'buaa', 'https://images.pexels.com/photos/36606325/pexels-photo-36606325.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false)
+  ('Tsinghua University', '清华大学', 'Beijing', 'China', 'Beijing', 'comprehensive', 'tsinghua', 'https://images.pexels.com/photos/32384116/pexels-photo-32384116.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://www.tsinghua.edu.cn/en/', '{"shanghai_national": 1, "shanghai_url": "https://www.shanghairanking.cn/institution/tsinghua-university"}'),
+  ('Peking University', '北京大学', 'Beijing', 'China', 'Beijing', 'comprehensive', 'peking', 'https://images.pexels.com/photos/32421367/pexels-photo-32421367.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://english.pku.edu.cn/', '{"shanghai_national": 2, "shanghai_url": "https://www.shanghairanking.cn/institution/peking-university"}'),
+  ('Fudan University', '复旦大学', 'Shanghai', 'China', 'Shanghai', 'comprehensive', 'fudan', 'https://images.pexels.com/photos/35052489/pexels-photo-35052489.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://www.fudan.edu.cn/en/', '{"shanghai_national": 5, "shanghai_url": "https://www.shanghairanking.cn/institution/fudan-university"}'),
+  ('Shanghai Jiao Tong University', '上海交通大学', 'Shanghai', 'China', 'Shanghai', 'comprehensive', 'sjtu', 'https://images.pexels.com/photos/37137233/pexels-photo-37137233.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://en.sjtu.edu.cn/', '{"shanghai_national": 4, "shanghai_url": "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university"}'),
+  ('Zhejiang University', '浙江大学', 'Hangzhou', 'China', 'Zhejiang', 'comprehensive', 'zju', 'https://images.pexels.com/photos/35564755/pexels-photo-35564755.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://www.zju.edu.cn/english/', '{"shanghai_national": 3, "shanghai_url": "https://www.shanghairanking.cn/institution/zhejiang-university"}'),
+  ('Wuhan University', '武汉大学', 'Wuhan', 'China', 'Hubei', 'comprehensive', 'whu', 'https://images.pexels.com/photos/36949547/pexels-photo-36949547.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://en.whu.edu.cn/', '{"shanghai_national": 8, "shanghai_url": "https://www.shanghairanking.cn/institution/wuhan-university"}'),
+  ('Sichuan University', '四川大学', 'Chengdu', 'China', 'Sichuan', 'comprehensive', 'scu', 'https://images.pexels.com/photos/37333836/pexels-photo-37333836.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese}', 'https://en.scu.edu.cn/', '{"shanghai_national": 15, "shanghai_url": "https://www.shanghairanking.cn/institution/sichuan-university"}'),
+  ('Xiamen University', '厦门大学', 'Xiamen', 'China', 'Fujian', 'comprehensive', 'xmu', 'https://images.pexels.com/photos/20265634/pexels-photo-20265634.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://en.xmu.edu.cn/', '{"shanghai_national": 24, "shanghai_url": "https://www.shanghairanking.cn/institution/xiamen-university"}'),
+  ('Nanjing University', '南京大学', 'Nanjing', 'China', 'Jiangsu', 'comprehensive', 'nju', 'https://images.pexels.com/photos/19193975/pexels-photo-19193975.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://www.nju.edu.cn/en/', '{"shanghai_national": 6, "shanghai_url": "https://www.shanghairanking.cn/institution/nanjing-university"}'),
+  ('Hunan University', '湖南大学', 'Changsha', 'China', 'Hunan', 'comprehensive', 'hnu', 'https://images.pexels.com/photos/7883872/pexels-photo-7883872.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese}', 'https://www.hnu.edu.cn/', '{"shanghai_national": 29, "shanghai_url": "https://www.shanghairanking.cn/institution/hunan-university"}'),
+  ('Tianjin University', '天津大学', 'Tianjin', 'China', 'Tianjin', 'comprehensive', 'tju', 'https://images.pexels.com/photos/37186801/pexels-photo-37186801.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://www.tju.edu.cn/english/', '{"shanghai_national": 20, "shanghai_url": "https://www.shanghairanking.cn/institution/tianjin-university"}'),
+  ('Beihang University', '北京航空航天大学', 'Beijing', 'China', 'Beijing', 'stem', 'buaa', 'https://images.pexels.com/photos/36606325/pexels-photo-36606325.jpeg?auto=compress&cs=tinysrgb&h=650&w=940', false, 'public', '{Chinese,English}', 'https://ev.buaa.edu.cn/', '{"shanghai_national": 11, "shanghai_url": "https://www.shanghairanking.cn/institution/beihang-university"}')
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================

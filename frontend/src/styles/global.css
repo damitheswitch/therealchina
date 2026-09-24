@@ -1523,6 +1523,11 @@ h3 {
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
+/* Keep the CTA pinned right even when a long uni name wraps it to a new row */
+.uni-profile-top > .btn {
+  flex-shrink: 0;
+  margin-left: auto;
+}
 .uni-profile-name-block h1 {
   margin-bottom: 0.3rem;
 }
@@ -1544,9 +1549,7 @@ h3 {
   align-items: center;
   gap: var(--sp-2);
   flex-wrap: wrap;
-  padding: var(--sp-2) 0;
-  border-top: 1px solid var(--ink-line);
-  border-bottom: 1px solid var(--ink-line);
+  padding: var(--sp-1) 0 var(--sp-2);
 }
 .rating-number {
   font-family: var(--font-display);
@@ -1767,6 +1770,364 @@ h3 {
 @media (max-width: 560px) {
   .cat-list {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ===== University Profile — identity + facts rail ===== */
+.uni-profile-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.uni-profile-logo {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  border: 1px solid var(--ink-line);
+  background: var(--rice-deep);
+  flex-shrink: 0;
+}
+.uni-profile-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.uni-rank-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold-dark);
+  background: var(--gold-tint);
+  border: 1px solid var(--gold-light);
+  border-radius: var(--r-full);
+}
+a.uni-rank-chip {
+  text-decoration: none;
+}
+a.uni-rank-chip:hover {
+  border-color: var(--gold);
+  color: var(--gold-dark);
+  background: var(--gold-tint);
+}
+.uni-meta-text {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+.uni-cat-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  background: var(--rice-deep);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-full);
+}
+
+/* prestige tag chips (985 / 211 / 双一流) — crimson accent */
+.uni-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--seal);
+  background: color-mix(in srgb, var(--seal) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--seal) 35%, transparent);
+  border-radius: var(--r-full);
+}
+
+/* ranking breakdown rows */
+.ind-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.ind-row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, auto) 1fr 3.2rem;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+}
+.ind-label {
+  color: var(--ink-soft);
+}
+.ind-bar {
+  height: 5px;
+  background: var(--rice-deep);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.ind-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+}
+.ind-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  font-weight: 500;
+}
+.uni-site-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--seal-red);
+}
+.uni-site-link:hover {
+  text-decoration: underline;
+}
+
+/* Photo strip inside the main column: 3 equal tiles, last one carries a
+   "+N more" overlay that opens the lightbox on the first hidden photo. */
+.uni-photos {
+  margin-bottom: var(--sp-1);
+}
+.uni-photos > .uni-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.uni-photos .review-media-gallery {
+  margin: 0;
+}
+.uni-photos .media-grid {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: none;
+}
+.uni-photos .gallery-item {
+  height: 150px;
+}
+.uni-photos .grid-count-3 .gallery-item:first-child {
+  grid-row: auto;
+}
+.uni-photos .media-grid.grid-count-1 {
+  grid-template-columns: 1fr;
+}
+.uni-photos .media-grid.grid-count-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.uni-photos .media-grid.grid-count-1 .gallery-item,
+.uni-photos .media-grid.grid-count-2 .gallery-item {
+  height: 200px;
+}
+.more-photos-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background: rgba(26, 22, 19, 0.55);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  transition: background var(--t-fast);
+}
+.gallery-item:hover .more-photos-overlay {
+  background: rgba(26, 22, 19, 0.7);
+}
+.gallery-item:has(.more-photos-overlay) img,
+.gallery-item:has(.more-photos-overlay) video {
+  filter: grayscale(0.5) brightness(0.9);
+}
+.gallery-item:has(.more-photos-overlay):hover img,
+.gallery-item:has(.more-photos-overlay):hover video {
+  transform: none;
+}
+
+/* Profile body: photos → verdict → reviews in the left column, stat cards in
+   a right rail spanning all rows. Named areas also define the mobile order:
+   photos → verdict → cards → reviews. */
+.uni-profile-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas:
+    'photos aside'
+    'verdict aside'
+    'reviews aside';
+  gap: var(--sp-3);
+  align-items: start;
+}
+.uni-profile-layout > * {
+  min-width: 0;
+}
+.uni-photos-cell {
+  grid-area: photos;
+}
+.uni-verdict-cell {
+  grid-area: verdict;
+}
+.uni-reviews-cell {
+  grid-area: reviews;
+}
+.uni-profile-aside {
+  grid-area: aside;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  position: sticky;
+  top: var(--sp-2);
+}
+.uni-rail-card {
+  padding: var(--sp-2);
+}
+
+/* Programs card */
+.prog-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+.prog-row {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rice-warm);
+}
+.prog-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.prog-row:first-child {
+  padding-top: 0;
+}
+.prog-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.prog-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+.prog-count {
+  white-space: nowrap;
+}
+
+/* Funding card */
+.fund-headline {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.6rem;
+}
+.fund-headline strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: var(--ink);
+  margin-right: 0.15rem;
+}
+.fund-seg,
+.fund-dot {
+  background: var(--ink-faint);
+}
+.rec-seg.fund-csc,
+.fund-dot.fund-csc {
+  background: var(--gold);
+}
+.rec-seg.fund-school,
+.fund-dot.fund-school {
+  background: var(--gold-light);
+}
+.rec-seg.fund-province,
+.fund-dot.fund-province {
+  background: var(--gold-dark);
+}
+.rec-seg.fund-self,
+.fund-dot.fund-self {
+  background: var(--ink-line);
+}
+.fund-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  list-style: none;
+  margin-top: 0.6rem;
+}
+.fund-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+.fund-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: center;
+}
+.fund-label {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.fund-sub {
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.fund-pct {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.uni-rail-card .sum-note {
+  margin-top: 0.6rem;
+}
+
+@media (max-width: 900px) {
+  .uni-profile-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'photos'
+      'verdict'
+      'aside'
+      'reviews';
+  }
+  .uni-profile-aside {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: start;
+  }
+  .uni-photos .gallery-item {
+    height: 110px;
+  }
+}
+@media (max-width: 560px) {
+  .uni-profile-identity {
+    flex-direction: column;
+  }
+  .uni-profile-logo {
+    width: 64px;
+    height: 64px;
+  }
+  .uni-photos .gallery-item {
+    height: 90px;
   }
 }
 

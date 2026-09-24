@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.5'
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -157,7 +152,6 @@ export type Database = {
           created_at: string | null
           current_status: string | null
           display_name: string | null
-          display_name_lower: string | null
           email_consent: boolean | null
           home_country: string | null
           id: string
@@ -180,7 +174,6 @@ export type Database = {
           created_at?: string | null
           current_status?: string | null
           display_name?: string | null
-          display_name_lower?: string | null
           email_consent?: boolean | null
           home_country?: string | null
           id: string
@@ -203,7 +196,6 @@ export type Database = {
           created_at?: string | null
           current_status?: string | null
           display_name?: string | null
-          display_name_lower?: string | null
           email_consent?: boolean | null
           home_country?: string | null
           id?: string
@@ -221,6 +213,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reviewer_context: {
+        Row: {
+          created_at: string
+          current_status: string | null
+          email: string | null
+          email_consent: boolean
+          home_country: string | null
+          languages_spoken: string[]
+          review_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_status?: string | null
+          email?: string | null
+          email_consent?: boolean
+          home_country?: string | null
+          languages_spoken?: string[]
+          review_id: string
+        }
+        Update: {
+          created_at?: string
+          current_status?: string | null
+          email?: string | null
+          email_consent?: boolean
+          home_country?: string | null
+          languages_spoken?: string[]
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reviewer_context_review_id_fkey'
+            columns: ['review_id']
+            isOneToOne: true
+            referencedRelation: 'reviews'
+            referencedColumns: ['id']
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -340,8 +370,12 @@ export type Database = {
           logo_url: string | null
           name: string
           name_zh: string | null
+          province: string | null
+          rankings: Json
           search_text: string | null
           slug: string
+          slug_aliases: string[]
+          uni_category: string | null
           uni_type: string | null
           updated_at: string | null
           website: string | null
@@ -356,8 +390,12 @@ export type Database = {
           logo_url?: string | null
           name: string
           name_zh?: string | null
+          province?: string | null
+          rankings?: Json
           search_text?: string | null
           slug: string
+          slug_aliases?: string[]
+          uni_category?: string | null
           uni_type?: string | null
           updated_at?: string | null
           website?: string | null
@@ -372,8 +410,12 @@ export type Database = {
           logo_url?: string | null
           name?: string
           name_zh?: string | null
+          province?: string | null
+          rankings?: Json
           search_text?: string | null
           slug?: string
+          slug_aliases?: string[]
+          uni_category?: string | null
           uni_type?: string | null
           updated_at?: string | null
           website?: string | null

@@ -27,6 +27,15 @@ supabase/.branches
 .supabase
 supabase/functions/**/deno.lock
 
+# Local tool configuration
+.devin/*.local.*
+.bolt/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,6 +1,6 @@
 # Supabase CLI configuration
 # This file is used for local development and Edge Function deployments.
-project_id = "project"
+project_id = "env(SUPABASE_PROJECT_ID)"
 
 # The media-upload function handles its own authentication (publishable key
 # / user JWT / legacy anon key validation) and does not rely on the API
