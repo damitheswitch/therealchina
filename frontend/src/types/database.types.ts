@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '14.5'
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -33,6 +28,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_email_domains: {
+        Row: {
+          domain: string
+        }
+        Insert: {
+          domain: string
+        }
+        Update: {
+          domain?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           created_at: string | null
@@ -157,7 +164,6 @@ export type Database = {
           created_at: string | null
           current_status: string | null
           display_name: string | null
-          display_name_lower: string | null
           email_consent: boolean | null
           home_country: string | null
           id: string
@@ -180,7 +186,6 @@ export type Database = {
           created_at?: string | null
           current_status?: string | null
           display_name?: string | null
-          display_name_lower?: string | null
           email_consent?: boolean | null
           home_country?: string | null
           id: string
@@ -203,7 +208,6 @@ export type Database = {
           created_at?: string | null
           current_status?: string | null
           display_name?: string | null
-          display_name_lower?: string | null
           email_consent?: boolean | null
           home_country?: string | null
           id?: string
@@ -221,6 +225,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      reviewer_context: {
+        Row: {
+          created_at: string
+          current_status: string | null
+          email: string | null
+          email_consent: boolean
+          home_country: string | null
+          languages_spoken: string[]
+          review_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_status?: string | null
+          email?: string | null
+          email_consent?: boolean
+          home_country?: string | null
+          languages_spoken?: string[]
+          review_id: string
+        }
+        Update: {
+          created_at?: string
+          current_status?: string | null
+          email?: string | null
+          email_consent?: boolean
+          home_country?: string | null
+          languages_spoken?: string[]
+          review_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'reviewer_context_review_id_fkey'
+            columns: ['review_id']
+            isOneToOne: true
+            referencedRelation: 'reviews'
+            referencedColumns: ['id']
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -605,6 +647,8 @@ export type Database = {
     }
     Functions: {
       cleanup_upload_rate_limits: { Args: never; Returns: undefined }
+      hook_reject_disposable_email: { Args: { event: Json }; Returns: Json }
+      is_email_allowed: { Args: { p_email: string }; Returns: boolean }
       profile_has_social_handle: {
         Args: { p_user_id: string }
         Returns: boolean
