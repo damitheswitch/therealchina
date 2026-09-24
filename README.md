@@ -33,17 +33,17 @@ This repository is public as a **portfolio reference and technical spec** for re
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, Vite 5, React Router 6, vanilla CSS design system |
-| Backend / DBaaS | Supabase — Postgres 15, Auth, Storage, Edge Functions (Deno) |
-| Auth | Supabase Auth (JWT-based, session managed by SDK) |
-| Bot mitigation | Cloudflare Turnstile (managed mode, `@marsidev/react-turnstile`) |
-| File storage | Supabase Storage for review media with RLS policies |
-| Hosting | Netlify (SPA redirects, Node 20 build environment) |
-| PWA | Vite PWA plugin, custom manifest, maskable icons |
-| Testing | Vitest + Testing Library + jsdom (frontend), Deno test (Edge Functions) |
-| CI | GitHub Actions — lint, format check, tests, build, Deno type-check |
+| Layer           | Technology                                                              |
+| --------------- | ----------------------------------------------------------------------- |
+| Frontend        | React 18, Vite 5, React Router 6, vanilla CSS design system             |
+| Backend / DBaaS | Supabase — Postgres 15, Auth, Storage, Edge Functions (Deno)            |
+| Auth            | Supabase Auth (JWT-based, session managed by SDK)                       |
+| Bot mitigation  | Cloudflare Turnstile (managed mode, `@marsidev/react-turnstile`)        |
+| File storage    | Supabase Storage for review media with RLS policies                     |
+| Hosting         | Netlify (SPA redirects, Node 20 build environment)                      |
+| PWA             | Vite PWA plugin, custom manifest, maskable icons                        |
+| Testing         | Vitest + Testing Library + jsdom (frontend), Deno test (Edge Functions) |
+| CI              | GitHub Actions — lint, format check, tests, build, Deno type-check      |
 
 ### Why this stack
 
@@ -170,19 +170,19 @@ Values are set in Netlify (frontend) and Supabase Edge Function secrets (backend
 
 ### Frontend (Netlify)
 
-| Name | Purpose |
-|------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase public anon / publishable key |
+| Name                      | Purpose                                |
+| ------------------------- | -------------------------------------- |
+| `VITE_SUPABASE_URL`       | Supabase project URL                   |
+| `VITE_SUPABASE_ANON_KEY`  | Supabase public anon / publishable key |
 | `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public) |
 
 ### Edge Function (Supabase)
 
-| Name | Purpose |
-|------|---------|
-| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server-side secret |
-| `TURNSTILE_HOSTNAMES` | Optional: comma-separated frontend hostname allowlist validated against the siteverify response (skip in local dev; never include `localhost`) |
-| `CORS_ORIGIN` | Optional: restrict function CORS to a single origin |
+| Name                   | Purpose                                                                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server-side secret                                                                                                        |
+| `TURNSTILE_HOSTNAMES`  | Optional: comma-separated frontend hostname allowlist validated against the siteverify response (skip in local dev; never include `localhost`) |
+| `CORS_ORIGIN`          | Optional: comma-separated origin allowlist; supports `*` globs (e.g. `https://*.netlify.app`)                                                  |
 
 ---
 
@@ -206,7 +206,21 @@ The frontend builds to `dist/` and deploys on Netlify:
   status = 200
 ```
 
-Supabase project, storage, migrations, and Edge Functions are managed through the Supabase CLI. Run migrations with `supabase migration up --linked` and deploy functions with `supabase functions deploy media-upload`.
+### Environments
+
+| Surface                                              | Git ref                     | Supabase project                                                       |
+| ---------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------- |
+| Local dev (`npm run dev`)                            | any branch / worktree       | Local Docker stack (`supabase start`), wired via `frontend/.env.local` |
+| `staging.therealchina.net` + Netlify deploy previews | `staging`, feature branches | `trc-staging` (`pthlbalvkunugifbzgzk`)                                 |
+| `therealchina.net`                                   | `master`                    | `TRC prod` (`hfinkagueeojyyrpauav`)                                    |
+
+Netlify scopes each frontend env var per deploy context: production uses prod credentials; every other context (staging, branch deploys, deploy previews, local/CLI, agent runners) uses `trc-staging`.
+
+Schema and Edge Functions are managed through the Supabase CLI:
+
+- Feature work: `supabase migration new <name>`, test locally with `supabase db reset`, push to staging when a preview needs it: `supabase db push --project-ref pthlbalvkunugifbzgzk`.
+- Production receives `supabase db push` and `supabase functions deploy` only after merge to `master`. No hand-run schema changes or test writes against prod.
+- A `staging` git worktree at `../project-staging` pushes staging-branch migrations/functions to `trc-staging` without switching the main checkout.
 
 ---
 
@@ -232,13 +246,16 @@ npx deno check --config supabase/functions/media-upload/deno.json supabase/funct
 npx deno check --config supabase/functions/review-submit/deno.json supabase/functions/review-submit/index.ts
 ```
 
-For local Supabase:
+For local Supabase — a full Docker stack (Postgres, Auth, Storage, Studio at http://127.0.0.1:54323), rebuilt from migrations + `seed.sql`:
 
 ```bash
-supabase start
-supabase migration up
-supabase functions serve --env-file supabase/.env.local media-upload
+supabase start         # first run pulls images; later starts are fast
+supabase status        # prints local URL + keys
+supabase db reset      # wipe + rebuild schema and seed data
+supabase functions serve --env-file supabase/.env.local
 ```
+
+`frontend/.env.local` (gitignored) points Vite at the local stack — it overrides `.env`, so local dev never touches prod. It uses Cloudflare's always-pass Turnstile test keys, mirrored in `supabase/.env.local` for local function serving.
 
 > Credentials and environment variables are not included. This repo is a code reference, not a runnable turnkey template.
 
@@ -256,6 +273,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR to `master` an
 **Shipped:** MVP review platform, auth, comments, upvotes, secure media uploads, user profiles, member directory, flight listings, PWA shell.
 
 **Next:**
+
 - Referral program with manual payout tracking.
 - Admin moderation panel (approvals, spam gating, CSV import).
 - Community Discovery / Q&A features.
