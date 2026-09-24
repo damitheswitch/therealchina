@@ -47,7 +47,11 @@ let uniSlug = null
   const sm = await get('/sitemap.xml')
   if (sm.status !== 200) fail(`/sitemap.xml → ${sm.status}`)
   const locs = [...sm.body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
-  uniSlug = locs.find((l) => l.includes('/university/'))?.split('/university/')[1] ?? null
+  uniSlug =
+    locs
+      .find((l) => l.includes('/university/'))
+      ?.split('/university/')[1]
+      ?.replace(/\/+$/, '') ?? null
   if (!isPreview && locs.length === 0) fail('sitemap empty on production')
 }
 
