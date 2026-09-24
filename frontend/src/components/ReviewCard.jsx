@@ -9,17 +9,18 @@ import { RecommendPill, ReviewContext, ReviewExtras } from './ReviewExtras'
 
 // ReviewCard component. The author profile is looked up and batched by the
 // parent page to avoid one profile query per card (N+1).
-export const ReviewCard = ({ review, author }) => {
+export const ReviewCard = ({ review, author, upvote }) => {
   const { id, rating, text, media, created_at, user_id, recommend } = review
 
   const date = new Date(created_at).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 
   return (
-    <div className="review-card fade-in">
+    <div id={`review-${id}`} className="review-card fade-in">
       <div className="review-header">
         <StarRating rating={rating} />
         <div className="review-meta">
@@ -46,7 +47,7 @@ export const ReviewCard = ({ review, author }) => {
       <p className="review-text">{text}</p>
       <ReviewExtras review={review} />
       {media && media.length > 0 && <MediaGallery media={media} />}
-      <UpvoteButton reviewId={id} />
+      <UpvoteButton reviewId={id} initialCount={upvote?.count} initialUpvoted={upvote?.upvoted} />
       <CommentSection reviewId={id} />
     </div>
   )

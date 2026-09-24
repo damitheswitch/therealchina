@@ -1,15 +1,33 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { usePrerenderData } from '../lib/prerenderData'
 import type { Tables } from '../types/database.types'
 
+// Prerender payload written by scripts/prerender.tsx into the page.
+export interface UniversityPageData {
+  university?: Tables<'universities'>
+  reviews?: Tables<'reviews'>[]
+  authors?: Record<string, { id: string; display_name: string | null; avatar_url: string | null }>
+  stats?: Tables<'university_stats'> | null
+}
+
 export const useUniversity = (slug: string | undefined) => {
-  const [university, setUniversity] = useState<Tables<'universities'> | null>(null)
-  const [loading, setLoading] = useState<boolean>(!!slug)
+  const pd = usePrerenderData<UniversityPageData>('universityPage')
+  const seeded = pd?.university && pd.university.slug === slug ? pd.university : null
+  const [university, setUniversity] = useState<Tables<'universities'> | null>(seeded ?? null)
+  const [loading, setLoading] = useState<boolean>(!!slug && !seeded)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!slug) {
       setUniversity(null)
+      setLoading(false)
+      return
+    }
+    // Hydration: the page was rendered with this university's data already.
+    if (seeded) {
+      setUniversity(seeded)
+      setError(null)
       setLoading(false)
       return
     }
@@ -46,7 +64,7 @@ export const useUniversity = (slug: string | undefined) => {
 
     run()
     return () => controller.abort()
-  }, [slug])
+  }, [slug, seeded])
 
   return { university, loading, error }
 }

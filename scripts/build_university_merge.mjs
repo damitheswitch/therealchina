@@ -61,6 +61,8 @@ const lines = [
   `-- Matched ${matched.length} of ${ours.length} seed rows; ${unmatchedTheirs.length} scraped schools not in our dataset.`,
   `-- Field policy: names/logos/rankings ← ShanghaiRanking; slug, city,`,
   `-- country, website, uni_type, languages ← ours. univUp → slug_aliases.`,
+  `-- Canonical slug ← ShanghaiRanking univUp via`,
+  `-- supabase/data/promote_descriptive_slugs.sql (applied after this file).`,
   ``,
 ]
 
@@ -107,7 +109,7 @@ for (const m of matched) {
     setParts.push(`logo_url = ${esc(`${BASE}/_uni/${m.theirs.univLogo}`)}`)
     logoFixes++
   }
-  lines.push(`UPDATE universities SET ${setParts.join(',\n  ')} WHERE slug = ${esc(canonical)};`)
+  lines.push(`UPDATE universities SET ${setParts.join(',\n  ')} WHERE slug = ${esc(canonical)} OR ${esc(canonical)} = ANY(slug_aliases);`)
 
   if (aliasSeen.has(m.theirs.univUp) && aliasSeen.get(m.theirs.univUp) !== canonical)
     console.warn(`ALIAS COLLISION: ${m.theirs.univUp} claimed by ${aliasSeen.get(m.theirs.univUp)} and ${canonical}`)
@@ -115,16 +117,20 @@ for (const m of matched) {
 }
 
 // collapse duplicate rows (guarded — no-op in envs where only one side exists)
+// survivor refs are alias-aware (safe after slug promotion); loser refs and
+// the DELETE stay exact-slug — an alias-aware DELETE would remove the survivor.
 for (const d of dupes) {
   lines.push(`
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM universities WHERE slug = '${d.canonical}')
+  IF EXISTS (SELECT 1 FROM universities WHERE slug = '${d.canonical}' OR '${d.canonical}' = ANY(slug_aliases))
      AND EXISTS (SELECT 1 FROM universities WHERE slug = '${d.alias}') THEN
     UPDATE universities
-      SET slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{${d.alias}}')) x)
-      WHERE slug = '${d.canonical}';
-    UPDATE reviews SET university_id = (SELECT id FROM universities WHERE slug = '${d.canonical}')
+      SET slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{${d.alias}}')) x),
+          logo_url = CASE WHEN logo_url ~ '^https://www\\.shanghairanking\\.cn/' THEN logo_url
+                          ELSE COALESCE(NULLIF((SELECT l.logo_url FROM universities l WHERE l.slug = '${d.alias}'), ''), logo_url) END
+      WHERE slug = '${d.canonical}' OR '${d.canonical}' = ANY(slug_aliases);
+    UPDATE reviews SET university_id = (SELECT id FROM universities WHERE slug = '${d.canonical}' OR '${d.canonical}' = ANY(slug_aliases))
       WHERE university_id = (SELECT id FROM universities WHERE slug = '${d.alias}');
     DELETE FROM universities WHERE slug = '${d.alias}';
   END IF;

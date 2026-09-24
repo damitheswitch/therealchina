@@ -1,0 +1,9 @@
+# SEO-sensitive files require owner review — see AGENTS.md → SEO Guardrails.
+frontend/src/lib/seo/          @damitheswitch
+frontend/src/routes.generated.ts @damitheswitch
+frontend/scripts/              @damitheswitch
+netlify.toml                   @damitheswitch
+frontend/vite.config.js        @damitheswitch
+frontend/index.html            @damitheswitch
+supabase/migrations/           @damitheswitch
+.github/workflows/seo.yml      @damitheswitch

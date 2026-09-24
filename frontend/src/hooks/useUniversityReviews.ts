@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { usePrerenderData } from '../lib/prerenderData'
+import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
 type ReviewRow = Tables<'reviews'>
@@ -10,15 +12,25 @@ const REVIEW_COLUMNS =
   'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
 
 export const useUniversityReviews = (universityId: string) => {
-  const [reviews, setReviews] = useState<ReviewRow[]>([])
-  const [authors, setAuthors] = useState<Record<string, AuthorProfile>>({})
-  const [loading, setLoading] = useState<boolean>(false)
+  const pd = usePrerenderData<UniversityPageData>('universityPage')
+  const seeded = pd?.university?.id === universityId ? pd : null
+  const [reviews, setReviews] = useState<ReviewRow[]>(seeded?.reviews ?? [])
+  const [authors, setAuthors] = useState<Record<string, AuthorProfile>>(seeded?.authors ?? {})
+  const [loading, setLoading] = useState<boolean>(!!universityId && !seeded)
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!universityId) {
       setReviews([])
       setAuthors({})
+      setLoading(false)
+      return
+    }
+    // Hydration: reviews + author profiles came baked into the page.
+    if (seeded) {
+      setReviews(seeded.reviews ?? [])
+      setAuthors(seeded.authors ?? {})
+      setError(null)
       setLoading(false)
       return
     }
@@ -70,7 +82,7 @@ export const useUniversityReviews = (universityId: string) => {
 
     run()
     return () => controller.abort()
-  }, [universityId])
+  }, [universityId, seeded])
 
   return { reviews, authors, loading, error }
 }

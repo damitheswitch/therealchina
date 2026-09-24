@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 031_block_disposable_email_signups.sql
+-- as of migration 033_rate_limit_retention_cron.sql
 -- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
@@ -13,6 +13,11 @@
 -- 1. Extensions
 -- ---------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Enabled by migration 033 for the daily rate-limit cleanup job.
+CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+GRANT USAGE ON SCHEMA cron TO postgres;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA cron TO postgres;
 
 -- ---------------------------------------------------------
 -- 2. Tables
@@ -48,6 +53,13 @@ CREATE TABLE IF NOT EXISTS public.universities (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- URL-safe slugs only (migration 032). NOT VALID: existing rows unscanned,
+-- all new writes checked.
+ALTER TABLE public.universities
+  DROP CONSTRAINT IF EXISTS universities_slug_format,
+  ADD CONSTRAINT universities_slug_format
+    CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$') NOT VALID;
 
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -607,6 +619,28 @@ BEGIN
 END;
 $$;
 
+-- Slug permanence (migration 032): when slug changes, the old slug is kept in
+-- slug_aliases so the site can 301 the old URL. Also normalizes slug_aliases
+-- on every write (dedupe, no empties, never contains the canonical slug).
+CREATE OR REPLACE FUNCTION public.track_university_slug_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  NEW.slug_aliases := COALESCE((
+    SELECT array_agg(DISTINCT a ORDER BY a)
+    FROM unnest(
+      CASE WHEN TG_OP = 'UPDATE' AND NEW.slug IS DISTINCT FROM OLD.slug
+           THEN array_append(COALESCE(NEW.slug_aliases, '{}'), OLD.slug)
+           ELSE COALESCE(NEW.slug_aliases, '{}') END
+    ) AS a
+    WHERE a IS NOT NULL AND a <> '' AND a <> NEW.slug
+  ), '{}');
+  RETURN NEW;
+END;
+$$;
+
 -- ---------------------------------------------------------
 -- 5. Triggers
 -- ---------------------------------------------------------
@@ -616,6 +650,18 @@ CREATE TRIGGER update_universities_updated_at_trigger
   BEFORE UPDATE ON public.universities
   FOR EACH ROW
   EXECUTE FUNCTION public.update_universities_updated_at();
+
+DROP TRIGGER IF EXISTS university_slug_history_ins ON public.universities;
+CREATE TRIGGER university_slug_history_ins
+  BEFORE INSERT ON public.universities
+  FOR EACH ROW
+  EXECUTE FUNCTION public.track_university_slug_change();
+
+DROP TRIGGER IF EXISTS university_slug_history_upd ON public.universities;
+CREATE TRIGGER university_slug_history_upd
+  BEFORE UPDATE OF slug, slug_aliases ON public.universities
+  FOR EACH ROW
+  EXECUTE FUNCTION public.track_university_slug_change();
 
 DROP TRIGGER IF EXISTS update_reviews_updated_at_trigger ON public.reviews;
 CREATE TRIGGER update_reviews_updated_at_trigger
@@ -1103,13 +1149,21 @@ SECURITY DEFINER
 SET search_path TO ''
 AS $$
 BEGIN
-  DELETE FROM public.upload_rate_limits WHERE window_start < NOW() - INTERVAL '24 hours';
-  DELETE FROM public.upload_sessions WHERE expires_at < NOW() - INTERVAL '24 hours';
+  DELETE FROM public.upload_rate_limits WHERE window_start < NOW() - INTERVAL '7 days';
+  DELETE FROM public.upload_sessions WHERE expires_at < NOW() - INTERVAL '7 days';
 END;
 $$;
 
 REVOKE ALL ON FUNCTION public.cleanup_upload_rate_limits() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.cleanup_upload_rate_limits() TO service_role;
+
+-- Scheduled daily at 03:17 UTC by migration 033 (job name is stable —
+-- cron.schedule upserts by name, so re-running migrations is safe).
+SELECT cron.schedule(
+  'cleanup-upload-rate-limits',
+  '17 3 * * *',
+  $$SELECT public.cleanup_upload_rate_limits();$$
+);
 
 ALTER TABLE public.upload_rate_limits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.upload_sessions ENABLE ROW LEVEL SECURITY;

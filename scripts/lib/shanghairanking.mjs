@@ -6,7 +6,7 @@ import { join } from 'node:path'
 
 export const BASE = 'https://www.shanghairanking.cn'
 
-const HEADERS = {
+export const HEADERS = {
   'user-agent':
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
   'accept-language': 'zh-CN,zh;q=0.9',

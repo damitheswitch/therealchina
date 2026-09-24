@@ -117,6 +117,71 @@ Do not claim a task is complete until the relevant checks above pass.
 - Do not leave staged-but-uncommitted files when finishing a task.
 - Work on feature branches → PR into `staging` → then `master`.
 
+## SEO Guardrails
+
+The site is prerendered + indexed. These rules keep that intact. `docs/seo-ops.md`
+has the runbook; this section is the law.
+
+### Single sources of truth (never duplicate these decisions)
+
+| Decision | File |
+|---|---|
+| Which routes may be indexed | `frontend/src/lib/seo/policy.ts` |
+| Site name, URL, contact, IndexNow key | `frontend/src/lib/seo/site.ts` |
+| Titles/descriptions/canonical assembly | `frontend/src/lib/seo/meta.ts` (+ `<Seo>` component) |
+| JSON-LD builders | `frontend/src/lib/seo/jsonld.ts` |
+| Indexability thresholds (reviews/cities) | `frontend/src/lib/seo/indexable.ts` |
+| Program/degree hub taxonomy | `frontend/src/lib/seo/programs.ts`, `degrees.ts` |
+| Prerendered route registry (generated) | `frontend/src/routes.generated.ts` |
+| Redirects, robots.txt, sitemap (generated) | `scripts/generate_static.ts` → `dist/` |
+
+### Never rules (enforced by validator/tests — do not bypass)
+
+1. **Never** hardcode a `<title>`, meta description, canonical, or JSON-LD
+   block in a page/component — declare via `<Seo>` only.
+2. **Never** change a university's canonical slug without preserving the old
+   one in `slug_aliases` (the DB trigger does this — never disable it or
+   delete alias rows).
+3. **Never** serve fabricated data on production. Demo reviews/media live in
+   `seed.sql`/`seed_demo.sql` only — never in migrations.
+4. **Never** emit aggregateRating/review markup for numbers not visible on
+   the page. `universitySchema` enforces count≥2 — don't loosen it.
+5. **Never** hotlink external media (logos, photos, fonts) in prerendered
+   pages — mirror to `public/` first.
+6. **Never** let the service worker precache `.html` or add a navigation
+   fallback — prerendered pages must stay fresh, unknown URLs must 404.
+7. **Never** add an indexable route without registering it in `policy.ts`
+   AND letting `generate_static` emit it. Unknown routes default to
+   noindex — that is intentional.
+8. **Never** commit `select('*')` payloads, auth tokens, emails, or profile
+   data into `__PRERENDERED_DATA__` — it's public HTML.
+9. **Never** "fix" a 404 by rewriting to `/index.html` — real 404s are
+   required for dead slugs (`_redirects` splat rules).
+10. **Never** auto-open the auth modal or run browser-only APIs during render
+    — they break `renderToString` and hydration.
+
+### Build pipeline (required steps — don't reorder)
+
+`npm run build` = `vite build` → `export:data` → `generate:static` →
+`prerender`. Then run `node scripts/validate_build.mjs` — it fails the build
+on SEO regressions. `TRC_EXPORT_FIXTURE=1` builds from the committed fixture
+(no DB). After any deploy, run `node scripts/smoke_live.mjs <url>` (+`--preview`).
+
+### Indexability model
+
+- University/city/hub pages earn indexing with real review substance
+  (`src/lib/seo/indexable.ts`). Thin-but-valid pages are served via
+  `app.html` with `noindex` — they are NOT bugs and NOT 404s.
+- Alias slugs always 301 to the canonical slug. Old links never die.
+- Staging, deploy previews, and local builds are always `noindex` +
+  `Disallow: /` — production is the only indexable deploy.
+
+### When changing SEO-sensitive files
+
+Files under `src/lib/seo/`, `scripts/`, `routes.generated.ts`, `netlify.toml`,
+`vite.config.js` (workbox), `supabase/migrations/*slug*`: fill in the "SEO
+impact" section of the PR template and expect a required review.
+
 ## When in doubt
 
 - Prefer the safer / more explicit option.

@@ -10,1778 +10,1778 @@ UPDATE universities SET name = 'Tsinghua University',
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tsinghua-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'tsinghua';
+  uni_category = 'comprehensive' WHERE slug = 'tsinghua' OR 'tsinghua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Peking University',
   name_zh = '北京大学',
   rankings = rankings || '{"shanghai_national":2,"shanghai_url":"https://www.shanghairanking.cn/institution/peking-university","shanghai_score":1036.3,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":35,"discipline":86.2,"resources":29.9,"faculty":54.4,"talent_training":330.5,"research":116.8,"social_service":22.4,"top_talent":149.8,"major_projects":101.4,"international":109.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{peking-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'peking';
+  uni_category = 'comprehensive' WHERE slug = 'peking' OR 'peking' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang University',
   name_zh = '浙江大学',
   rankings = rankings || '{"shanghai_national":3,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-university","shanghai_score":895.6,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":34.9,"discipline":77.1,"resources":34.9,"faculty":52.1,"talent_training":299.2,"research":116.8,"social_service":33.5,"top_talent":104.7,"major_projects":67.3,"international":75.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'zju';
+  uni_category = 'comprehensive' WHERE slug = 'zju' OR 'zju' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Jiao Tong University',
   name_zh = '上海交通大学',
   rankings = rankings || '{"shanghai_national":4,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university","shanghai_score":894.2,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":35.7,"discipline":71,"resources":31.6,"faculty":54.5,"talent_training":283.6,"research":132.9,"social_service":22.1,"top_talent":102.3,"major_projects":92.1,"international":68.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-jiao-tong-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'sjtu';
+  uni_category = 'comprehensive' WHERE slug = 'sjtu' OR 'sjtu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fudan University',
   name_zh = '复旦大学',
   rankings = rankings || '{"shanghai_national":5,"shanghai_url":"https://www.shanghairanking.cn/institution/fudan-university","shanghai_score":792.4,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":36.8,"discipline":75.2,"resources":19.7,"faculty":52.5,"talent_training":267,"research":94.7,"social_service":16.6,"top_talent":101.8,"major_projects":75.6,"international":52.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fudan-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'fudan';
+  uni_category = 'comprehensive' WHERE slug = 'fudan' OR 'fudan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing University',
   name_zh = '南京大学',
   rankings = rankings || '{"shanghai_national":6,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-university","shanghai_score":708.5,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":36.8,"discipline":64,"resources":12.4,"faculty":50.7,"talent_training":274.7,"research":73.1,"social_service":14.7,"top_talent":85.3,"major_projects":51.9,"international":44.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'nju';
+  uni_category = 'comprehensive' WHERE slug = 'nju' OR 'nju' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of Science and Technology of China',
   name_zh = '中国科学技术大学',
   rankings = rankings || '{"shanghai_national":7,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-science-and-technology-of-china","shanghai_score":653.1,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":40,"discipline":50.3,"resources":16.1,"faculty":52.6,"talent_training":238.6,"research":82.3,"social_service":11.5,"top_talent":78.2,"major_projects":29.6,"international":53.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-science-and-technology-of-china}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ustc';
+  uni_category = 'stem' WHERE slug = 'ustc' OR 'ustc' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuhan University',
   name_zh = '武汉大学',
   rankings = rankings || '{"shanghai_national":8,"shanghai_url":"https://www.shanghairanking.cn/institution/wuhan-university","shanghai_score":638.7,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.3,"discipline":52.7,"resources":13,"faculty":53.7,"talent_training":275.1,"research":64.8,"social_service":9.8,"top_talent":55.5,"major_projects":45.7,"international":35.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'whu';
+  uni_category = 'comprehensive' WHERE slug = 'whu' OR 'whu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huazhong University of Science and Technology',
   name_zh = '华中科技大学',
   rankings = rankings || '{"shanghai_national":9,"shanghai_url":"https://www.shanghairanking.cn/institution/huazhong-university-of-science-and-technology","shanghai_score":638,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.6,"discipline":48,"resources":14.4,"faculty":50.7,"talent_training":255.7,"research":78.1,"social_service":17.1,"top_talent":53.6,"major_projects":54.7,"international":33.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huazhong-university-of-science-and-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hust';
+  uni_category = 'comprehensive' WHERE slug = 'hust' OR 'hust' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an Jiaotong University',
   name_zh = '西安交通大学',
   rankings = rankings || '{"shanghai_national":10,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-jiaotong-university","shanghai_score":620.8,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":33.2,"discipline":45.6,"resources":15.9,"faculty":52.3,"talent_training":270.5,"research":73.4,"social_service":20.1,"top_talent":46.8,"major_projects":32.9,"international":30.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-jiaotong-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xjtu';
+  uni_category = 'comprehensive' WHERE slug = 'xjtu' OR 'xjtu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beihang University',
   name_zh = '北京航空航天大学',
   rankings = rankings || '{"shanghai_national":11,"shanghai_url":"https://www.shanghairanking.cn/institution/beihang-university","shanghai_score":612.8,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":33.8,"discipline":43.9,"resources":16.6,"faculty":51.5,"talent_training":250.5,"research":66.9,"social_service":16.6,"top_talent":59.5,"major_projects":46.6,"international":26.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beihang-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'buaa';
+  uni_category = 'stem' WHERE slug = 'buaa' OR 'buaa' = ANY(slug_aliases);
 UPDATE universities SET name = 'Harbin Institute of Technology',
   name_zh = '哈尔滨工业大学',
   rankings = rankings || '{"shanghai_national":12,"shanghai_url":"https://www.shanghairanking.cn/institution/harbin-institute-of-technology","shanghai_score":607.7,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.4,"discipline":43.7,"resources":21.2,"faculty":50.8,"talent_training":254.2,"research":70.5,"social_service":21.9,"top_talent":44.2,"major_projects":41.5,"international":27.4}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{harbin-institute-of-technology}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hit';
+  uni_category = 'stem' WHERE slug = 'hit' OR 'hit' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sun Yat-sen University',
   name_zh = '中山大学',
   rankings = rankings || '{"shanghai_national":13,"shanghai_url":"https://www.shanghairanking.cn/institution/sun-yat-sen-university","shanghai_score":597.6,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":31.5,"discipline":54,"resources":14.9,"faculty":52.8,"talent_training":212.8,"research":91,"social_service":14.8,"top_talent":59.8,"major_projects":30.5,"international":35.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sun-yat-sen-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'sysu';
+  uni_category = 'comprehensive' WHERE slug = 'sysu' OR 'sysu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Institute of Technology',
   name_zh = '北京理工大学',
   rankings = rankings || '{"shanghai_national":14,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-institute-of-technology","shanghai_score":595.4,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":33.3,"discipline":35.8,"resources":18.3,"faculty":50.3,"talent_training":232.5,"research":67.8,"social_service":18.7,"top_talent":50.1,"major_projects":54.6,"international":33.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-institute-of-technology}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'bit';
+  uni_category = 'stem' WHERE slug = 'bit' OR 'bit' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southeast University',
   name_zh = '东南大学',
   rankings = rankings || '{"shanghai_national":15,"shanghai_url":"https://www.shanghairanking.cn/institution/southeast-university","shanghai_score":592.3,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":35,"discipline":51.9,"resources":16.3,"faculty":51.6,"talent_training":240.4,"research":68.9,"social_service":19.7,"top_talent":42.5,"major_projects":35.7,"international":30.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southeast-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'seu';
+  uni_category = 'comprehensive' WHERE slug = 'seu' OR 'seu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan University',
   name_zh = '四川大学',
   rankings = rankings || '{"shanghai_national":16,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-university","shanghai_score":581.3,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.5,"discipline":42.6,"resources":11.3,"faculty":50.1,"talent_training":245.9,"research":77.1,"social_service":14.6,"top_talent":46.6,"major_projects":32.2,"international":28.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'scu';
+  uni_category = 'comprehensive' WHERE slug = 'scu' OR 'scu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Renmin University of China',
   name_zh = '中国人民大学',
   rankings = rankings || '{"shanghai_national":17,"shanghai_url":"https://www.shanghairanking.cn/institution/renmin-university-of-china","shanghai_score":558.1,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":33,"discipline":59.1,"resources":14,"faculty":50.7,"talent_training":241.6,"research":44.9,"social_service":2.4,"top_talent":45.1,"major_projects":52.1,"international":15.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{renmin-university-of-china}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ruc';
+  uni_category = 'comprehensive' WHERE slug = 'ruc' OR 'ruc' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tongji University',
   name_zh = '同济大学',
   rankings = rankings || '{"shanghai_national":18,"shanghai_url":"https://www.shanghairanking.cn/institution/tongji-university","shanghai_score":556.6,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":34.9,"discipline":42.8,"resources":13.9,"faculty":48,"talent_training":232.3,"research":69.2,"social_service":13.9,"top_talent":50.5,"major_projects":23.1,"international":28}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tongji-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'tongji';
+  uni_category = 'comprehensive' WHERE slug = 'tongji' OR 'tongji' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Normal University',
   name_zh = '北京师范大学',
   rankings = rankings || '{"shanghai_national":19,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-normal-university","shanghai_score":553.2,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.6,"discipline":53.6,"resources":13.5,"faculty":47.8,"talent_training":220.4,"research":53.7,"social_service":3.9,"top_talent":46.1,"major_projects":30.4,"international":51.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-normal-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'bnu';
+  uni_category = 'normal' WHERE slug = 'bnu' OR 'bnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianjin University',
   name_zh = '天津大学',
   rankings = rankings || '{"shanghai_national":20,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-university","shanghai_score":544.2,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":33.4,"discipline":35.3,"resources":10.1,"faculty":51.5,"talent_training":250.1,"research":51.5,"social_service":18,"top_talent":38.6,"major_projects":27.4,"international":28.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-university}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'tju';
+  uni_category = 'stem' WHERE slug = 'tju' OR 'tju' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nankai University',
   name_zh = '南开大学',
   rankings = rankings || '{"shanghai_national":21,"shanghai_url":"https://www.shanghairanking.cn/institution/nankai-university","shanghai_score":528.8,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.5,"discipline":37.8,"resources":8.7,"faculty":49.8,"talent_training":238.7,"research":49.3,"social_service":6,"top_talent":44.7,"major_projects":32.7,"international":28.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nankai-university}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'nankai';
+  uni_category = 'comprehensive' WHERE slug = 'nankai' OR 'nankai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong University',
   name_zh = '山东大学',
   rankings = rankings || '{"shanghai_national":22,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-university","shanghai_score":527.1,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":29.9,"discipline":38.8,"resources":11.8,"faculty":53.2,"talent_training":230.8,"research":63.9,"social_service":16.5,"top_talent":38.7,"major_projects":21.2,"international":22.3}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shandong';
+  uni_category = 'comprehensive' WHERE slug = 'shandong' OR 'shandong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northwestern Polytechnical University',
   name_zh = '西北工业大学',
   rankings = rankings || '{"shanghai_national":23,"shanghai_url":"https://www.shanghairanking.cn/institution/northwestern-polytechnical-university","shanghai_score":519.2,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.9,"discipline":28,"resources":14.5,"faculty":53.3,"talent_training":228.5,"research":61.3,"social_service":10.5,"top_talent":27.9,"major_projects":41.7,"international":20.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northwestern-polytechnical-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nwpu';
+  uni_category = 'stem' WHERE slug = 'nwpu' OR 'nwpu' = ANY(slug_aliases);
 UPDATE universities SET name = 'China Agricultural University',
   name_zh = '中国农业大学',
   rankings = rankings || '{"shanghai_national":24,"shanghai_url":"https://www.shanghairanking.cn/institution/china-agricultural-university","shanghai_score":519.1,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":31.5,"discipline":41.1,"resources":12.4,"faculty":48.2,"talent_training":206.8,"research":55.6,"social_service":12.3,"top_talent":42.2,"major_projects":40.8,"international":28.3}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-agricultural-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'cau';
+  uni_category = 'agriculture' WHERE slug = 'cau' OR 'cau' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xiamen University',
   name_zh = '厦门大学',
   rankings = rankings || '{"shanghai_national":25,"shanghai_url":"https://www.shanghairanking.cn/institution/xiamen-university","shanghai_score":512.5,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.7,"discipline":38,"resources":15.3,"faculty":48.6,"talent_training":206.1,"research":61.7,"social_service":9,"top_talent":47.2,"major_projects":24.8,"international":29.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xiamen-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xmu';
+  uni_category = 'comprehensive' WHERE slug = 'xmu' OR 'xmu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin University',
   name_zh = '吉林大学',
   rankings = rankings || '{"shanghai_national":26,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-university","shanghai_score":498.2,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":30.6,"discipline":40.5,"resources":9.4,"faculty":51.7,"talent_training":228.3,"research":55.6,"social_service":8.2,"top_talent":29.7,"major_projects":24.5,"international":19.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jlu';
+  uni_category = 'comprehensive' WHERE slug = 'jlu' OR 'jlu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Central South University',
   name_zh = '中南大学',
   rankings = rankings || '{"shanghai_national":27,"shanghai_url":"https://www.shanghairanking.cn/institution/central-south-university","shanghai_score":497,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":30.6,"discipline":36.6,"resources":9.9,"faculty":47.2,"talent_training":205.4,"research":66.2,"social_service":13.9,"top_talent":34.6,"major_projects":23.7,"international":29}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{central-south-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'csu';
+  uni_category = 'comprehensive' WHERE slug = 'csu' OR 'csu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dalian University of Technology',
   name_zh = '大连理工大学',
   rankings = rankings || '{"shanghai_national":28,"shanghai_url":"https://www.shanghairanking.cn/institution/dalian-university-of-technology","shanghai_score":495.4,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":31.5,"discipline":28.1,"resources":10,"faculty":48.8,"talent_training":220.5,"research":48.3,"social_service":19.9,"top_talent":32,"major_projects":35,"international":21.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dalian-university-of-technology}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'dlut';
+  uni_category = 'stem' WHERE slug = 'dlut' OR 'dlut' = ANY(slug_aliases);
 UPDATE universities SET name = 'East China Normal University',
   name_zh = '华东师范大学',
   rankings = rankings || '{"shanghai_national":29,"shanghai_url":"https://www.shanghairanking.cn/institution/east-china-normal-university","shanghai_score":469.1,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.8,"discipline":31.7,"resources":11.1,"faculty":48.6,"talent_training":214.8,"research":44.9,"social_service":4.8,"top_talent":34.7,"major_projects":23.7,"international":22}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{east-china-normal-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'ecnu';
+  uni_category = 'normal' WHERE slug = 'ecnu' OR 'ecnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southern University of Science and Technology',
   name_zh = '南方科技大学',
   rankings = rankings || '{"shanghai_national":30,"shanghai_url":"https://www.shanghairanking.cn/institution/southern-university-of-science-and-technology","shanghai_score":466.9,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":33.8,"discipline":16.8,"resources":25.5,"faculty":49.1,"talent_training":151.2,"research":45,"social_service":10.5,"top_talent":63.2,"major_projects":13.6,"international":58.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southern-university-of-science-and-technology}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'sustech';
+  uni_category = 'comprehensive' WHERE slug = 'sustech' OR 'sustech' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan University',
   name_zh = '湖南大学',
   rankings = rankings || '{"shanghai_national":31,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-university","shanghai_score":464.1,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":30.7,"discipline":28.2,"resources":9.2,"faculty":47.5,"talent_training":197.1,"research":44.9,"social_service":11.4,"top_talent":28,"major_projects":45.1,"international":22}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hnu';
+  uni_category = 'comprehensive' WHERE slug = 'hnu' OR 'hnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'South China University of Technology',
   name_zh = '华南理工大学',
   rankings = rankings || '{"shanghai_national":32,"shanghai_url":"https://www.shanghairanking.cn/institution/south-china-university-of-technology","shanghai_score":456.4,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":30.6,"discipline":31.5,"resources":10.1,"faculty":44.8,"talent_training":194.1,"research":47.1,"social_service":26.1,"top_talent":29.3,"major_projects":13.3,"international":29.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{south-china-university-of-technology}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'scut';
+  uni_category = 'stem' WHERE slug = 'scut' OR 'scut' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of Electronic Science and Technology of China',
   name_zh = '电子科技大学',
   rankings = rankings || '{"shanghai_national":33,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-electronic-science-and-technology-of-china","shanghai_score":453.6,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.5,"discipline":23.3,"resources":10.5,"faculty":47.3,"talent_training":213.5,"research":42.2,"social_service":13.2,"top_talent":28.6,"major_projects":18.9,"international":23.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-electronic-science-and-technology-of-china}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'uestc';
+  uni_category = 'stem' WHERE slug = 'uestc' OR 'uestc' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing University',
   name_zh = '重庆大学',
   rankings = rankings || '{"shanghai_national":34,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-university","shanghai_score":436,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":31.3,"discipline":28.7,"resources":9,"faculty":46.7,"talent_training":210.8,"research":45.6,"social_service":9.2,"top_talent":23.9,"major_projects":12.4,"international":18.4}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-university}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'cqu';
+  uni_category = 'comprehensive' WHERE slug = 'cqu' OR 'cqu' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of Science and Technology Beijing',
   name_zh = '北京科技大学',
   rankings = rankings || '{"shanghai_national":35,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-science-and-technology-beijing","shanghai_score":429.3,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":32.4,"discipline":25.5,"resources":9,"faculty":48.2,"talent_training":199.6,"research":40,"social_service":9,"top_talent":28.9,"major_projects":17.2,"international":19.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-science-and-technology-beijing}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ustb';
+  uni_category = 'stem' WHERE slug = 'ustb' OR 'ustb' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing University of Science & Technology',
   name_zh = '南京理工大学',
   rankings = rankings || '{"shanghai_national":36,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-university-of-science-and-technology","shanghai_score":419.3,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":31.8,"discipline":19.2,"resources":9.3,"faculty":47,"talent_training":203.4,"research":42.4,"social_service":12.9,"top_talent":19,"major_projects":18.5,"international":15.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-university-of-science-and-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'njust';
+  uni_category = 'stem' WHERE slug = 'njust' OR 'njust' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing University of Aeronautics and Astronautics',
   name_zh = '南京航空航天大学',
   rankings = rankings || '{"shanghai_national":37,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-university-of-aeronautics-and-astronautics","shanghai_score":417.4,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.4,"discipline":23.9,"resources":9,"faculty":44.6,"talent_training":206.5,"research":44.4,"social_service":12.7,"top_talent":21.1,"major_projects":10.7,"international":14.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-university-of-aeronautics-and-astronautics}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nuaa';
+  uni_category = 'stem' WHERE slug = 'nuaa' OR 'nuaa' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northeastern University',
   name_zh = '东北大学',
   rankings = rankings || '{"shanghai_national":38,"shanghai_url":"https://www.shanghairanking.cn/institution/northeastern-university","shanghai_score":398.7,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":29.5,"discipline":22.3,"resources":7.5,"faculty":43.1,"talent_training":193.8,"research":36.4,"social_service":13.1,"top_talent":17.3,"major_projects":22.8,"international":12.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northeastern-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'neu';
+  uni_category = 'stem' WHERE slug = 'neu' OR 'neu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xidian University',
   name_zh = '西安电子科技大学',
   rankings = rankings || '{"shanghai_national":39,"shanghai_url":"https://www.shanghairanking.cn/institution/xidian-university","shanghai_score":391.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.8,"discipline":21,"resources":8.2,"faculty":45.7,"talent_training":185.7,"research":34,"social_service":12.6,"top_talent":15.9,"major_projects":24.2,"international":13.4}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xidian-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xidian';
+  uni_category = 'stem' WHERE slug = 'xidian' OR 'xidian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lanzhou University',
   name_zh = '兰州大学',
   rankings = rankings || '{"shanghai_national":40,"shanghai_url":"https://www.shanghairanking.cn/institution/lanzhou-university","shanghai_score":388.4,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":32.2,"discipline":28,"resources":9.5,"faculty":46.5,"talent_training":183.8,"research":42.4,"social_service":4.7,"top_talent":19.4,"major_projects":6.9,"international":14.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lanzhou-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'lzu';
+  uni_category = 'comprehensive' WHERE slug = 'lzu' OR 'lzu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Jiaotong University',
   name_zh = '北京交通大学',
   rankings = rankings || '{"shanghai_national":41,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-jiaotong-university","shanghai_score":381.1,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.5,"discipline":18,"resources":9.1,"faculty":46.2,"talent_training":195,"research":31.3,"social_service":9.8,"top_talent":16.1,"major_projects":13.4,"international":11.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-jiaotong-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-jiaotong';
+  uni_category = 'stem' WHERE slug = 'beijing-jiaotong' OR 'beijing-jiaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'East China University of Science and Technology',
   name_zh = '华东理工大学',
   rankings = rankings || '{"shanghai_national":42,"shanghai_url":"https://www.shanghairanking.cn/institution/east-china-university-of-science-and-technology","shanghai_score":380.4,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":31,"discipline":22.4,"resources":7.3,"faculty":43.6,"talent_training":171.9,"research":34.9,"social_service":13.1,"top_talent":23,"major_projects":16.2,"international":17.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{east-china-university-of-science-and-technology}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ecust';
+  uni_category = 'stem' WHERE slug = 'ecust' OR 'ecust' = ANY(slug_aliases);
 UPDATE universities SET name = 'Harbin Engineering University',
   name_zh = '哈尔滨工程大学',
   rankings = rankings || '{"shanghai_national":43,"shanghai_url":"https://www.shanghairanking.cn/institution/harbin-engineering-university","shanghai_score":380.1,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":33,"discipline":16.2,"resources":8.6,"faculty":43.3,"talent_training":194.7,"research":40.5,"social_service":12.6,"top_talent":14.1,"major_projects":7.5,"international":9.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{harbin-engineering-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'heu';
+  uni_category = 'stem' WHERE slug = 'heu' OR 'heu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhengzhou University',
   name_zh = '郑州大学',
   rankings = rankings || '{"shanghai_national":44,"shanghai_url":"https://www.shanghairanking.cn/institution/zhengzhou-university","shanghai_score":380,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.7,"discipline":28.9,"resources":7.4,"faculty":44.3,"talent_training":174.8,"research":48.1,"social_service":7,"top_talent":14.3,"major_projects":6.2,"international":19.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhengzhou-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'zhengzhou';
+  uni_category = 'comprehensive' WHERE slug = 'zhengzhou' OR 'zhengzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huazhong Agricultural University',
   name_zh = '华中农业大学',
   rankings = rankings || '{"shanghai_national":45,"shanghai_url":"https://www.shanghairanking.cn/institution/huazhong-agricultural-university","shanghai_score":375.6,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.4,"discipline":30.8,"resources":8.3,"faculty":44.2,"talent_training":160.5,"research":39.7,"social_service":8.8,"top_talent":22,"major_projects":12.4,"international":18.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huazhong-agricultural-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'hzau';
+  uni_category = 'agriculture' WHERE slug = 'hzau' OR 'hzau' = ANY(slug_aliases);
 UPDATE universities SET name = 'ShanghaiTech University',
   name_zh = '上海科技大学',
   rankings = rankings || '{"shanghai_national":47,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghaitech-university","shanghai_score":373.4,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":37.7,"discipline":13.1,"resources":19.4,"faculty":48.4,"talent_training":145.8,"research":25.6,"social_service":7,"top_talent":28.8,"major_projects":6.8,"international":40.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghaitech-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shanghaitech';
+  uni_category = 'comprehensive' WHERE slug = 'shanghaitech' OR 'shanghaitech' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northeast Normal University',
   name_zh = '东北师范大学',
   rankings = rankings || '{"shanghai_national":48,"shanghai_url":"https://www.shanghairanking.cn/institution/northeast-normal-university","shanghai_score":372.4,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":31.2,"discipline":32,"resources":5.5,"faculty":43.1,"talent_training":192.3,"research":25.4,"social_service":1.6,"top_talent":14.3,"major_projects":15.1,"international":12}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northeast-normal-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'northeast';
+  uni_category = 'normal' WHERE slug = 'northeast' OR 'northeast' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southwest Jiaotong University',
   name_zh = '西南交通大学',
   rankings = rankings || '{"shanghai_national":49,"shanghai_url":"https://www.shanghairanking.cn/institution/southwest-jiaotong-university","shanghai_score":366.3,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.3,"discipline":18.8,"resources":7.8,"faculty":45.5,"talent_training":179.2,"research":34.3,"social_service":11,"top_talent":17.5,"major_projects":11.9,"international":11}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southwest-jiaotong-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'swjtu';
+  uni_category = 'stem' WHERE slug = 'swjtu' OR 'swjtu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing University of Posts and Telecommunications',
   name_zh = '北京邮电大学',
   rankings = rankings || '{"shanghai_national":50,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-university-of-posts-and-telecommunications","shanghai_score":360.3,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":31,"discipline":19.2,"resources":7.9,"faculty":41.4,"talent_training":172.8,"research":27,"social_service":12.5,"top_talent":18.3,"major_projects":19.9,"international":10.4}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-university-of-posts-and-telecommunications}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing';
+  uni_category = 'stem' WHERE slug = 'beijing' OR 'beijing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ocean University of China',
   name_zh = '中国海洋大学',
   rankings = rankings || '{"shanghai_national":51,"shanghai_url":"https://www.shanghairanking.cn/institution/ocean-university-of-china","shanghai_score":359.2,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":31.7,"discipline":20.2,"resources":8.1,"faculty":46.3,"talent_training":162.6,"research":34.1,"social_service":6,"top_talent":20.9,"major_projects":11.1,"international":18.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ocean-university-of-china}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ocean';
+  uni_category = 'comprehensive' WHERE slug = 'ocean' OR 'ocean' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangnan University',
   name_zh = '江南大学',
   rankings = rankings || '{"shanghai_national":52,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangnan-university","shanghai_score":355.8,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.6,"discipline":19.5,"resources":6.3,"faculty":43.7,"talent_training":156.4,"research":30.1,"social_service":24.1,"top_talent":16.4,"major_projects":15.6,"international":14.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangnan-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jiangnan';
+  uni_category = 'comprehensive' WHERE slug = 'jiangnan' OR 'jiangnan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Central China Normal University',
   name_zh = '华中师范大学',
   rankings = rankings || '{"shanghai_national":53,"shanghai_url":"https://www.shanghairanking.cn/institution/central-china-normal-university","shanghai_score":355.1,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.6,"discipline":25.5,"resources":5.8,"faculty":43.8,"talent_training":166.5,"research":32.4,"social_service":3.2,"top_talent":19.2,"major_projects":14.6,"international":13.4}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{central-china-normal-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'ccnu';
+  uni_category = 'normal' WHERE slug = 'ccnu' OR 'ccnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuhan University of Technology',
   name_zh = '武汉理工大学',
   rankings = rankings || '{"shanghai_national":54,"shanghai_url":"https://www.shanghairanking.cn/institution/wuhan-university-of-technology","shanghai_score":351.9,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":28.9,"discipline":18.7,"resources":7.3,"faculty":44.2,"talent_training":168,"research":31.4,"social_service":8.1,"top_talent":12.1,"major_projects":15.8,"international":17.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan-university-of-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'wuhan-2';
+  uni_category = 'stem' WHERE slug = 'wuhan-2' OR 'wuhan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing Agricultural University',
   name_zh = '南京农业大学',
   rankings = rankings || '{"shanghai_national":55,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-agricultural-university","shanghai_score":350.9,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.4,"discipline":21.1,"resources":7.6,"faculty":45,"talent_training":153.3,"research":35.8,"social_service":8.1,"top_talent":20.6,"major_projects":9.3,"international":20.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-agricultural-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'nanjing-2';
+  uni_category = 'agriculture' WHERE slug = 'nanjing-2' OR 'nanjing-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing University of Chemical Technology',
   name_zh = '北京化工大学',
   rankings = rankings || '{"shanghai_national":57,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-university-of-chemical-technology","shanghai_score":345,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.3,"discipline":13.7,"resources":6,"faculty":42.4,"talent_training":155.6,"research":27.3,"social_service":15.5,"top_talent":17.9,"major_projects":15.4,"international":22.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-university-of-chemical-technology}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-chemical';
+  uni_category = 'stem' WHERE slug = 'beijing-chemical' OR 'beijing-chemical' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing Normal University',
   name_zh = '南京师范大学',
   rankings = rankings || '{"shanghai_national":58,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-normal-university","shanghai_score":344.4,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.7,"discipline":21,"resources":5.5,"faculty":45.6,"talent_training":165.8,"research":29.6,"social_service":4.2,"top_talent":14,"major_projects":12.9,"international":15.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-normal-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'nanjing';
+  uni_category = 'normal' WHERE slug = 'nanjing' OR 'nanjing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jinan University',
   name_zh = '暨南大学',
   rankings = rankings || '{"shanghai_national":59,"shanghai_url":"https://www.shanghairanking.cn/institution/jinan-university","shanghai_score":343.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29,"discipline":22.6,"resources":7.4,"faculty":45.7,"talent_training":145.2,"research":35.5,"social_service":7.2,"top_talent":21.8,"major_projects":11.4,"international":17.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jinan-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jinan';
+  uni_category = 'comprehensive' WHERE slug = 'jinan' OR 'jinan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai University',
   name_zh = '上海大学',
   rankings = rankings || '{"shanghai_national":60,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-university","shanghai_score":343.3,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":32.2,"discipline":21.1,"resources":9.2,"faculty":46.2,"talent_training":152.2,"research":32,"social_service":5.8,"top_talent":17.3,"major_projects":8.6,"international":18.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shu';
+  uni_category = 'comprehensive' WHERE slug = 'shu' OR 'shu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southwest University',
   name_zh = '西南大学',
   rankings = rankings || '{"shanghai_national":61,"shanghai_url":"https://www.shanghairanking.cn/institution/southwest-university","shanghai_score":343,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":27.5,"discipline":23.3,"resources":6.8,"faculty":44.1,"talent_training":176.2,"research":32.3,"social_service":4.2,"top_talent":11.2,"major_projects":7,"international":10.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southwest-university}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'southwest';
+  uni_category = 'comprehensive' WHERE slug = 'southwest' OR 'southwest' = ANY(slug_aliases);
 UPDATE universities SET name = 'China University of Petroleum, Beijing',
   name_zh = '中国石油大学（北京）',
   rankings = rankings || '{"shanghai_national":62,"shanghai_url":"https://www.shanghairanking.cn/institution/china-university-of-petroleum-beijing","shanghai_score":342.7,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.4,"discipline":15.9,"resources":6.4,"faculty":39.8,"talent_training":159.2,"research":30,"social_service":13.7,"top_talent":20.1,"major_projects":13.4,"international":14.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-university-of-petroleum-beijing}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-2';
+  uni_category = 'stem' WHERE slug = 'beijing-2' OR 'beijing-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hohai University',
   name_zh = '河海大学',
   rankings = rankings || '{"shanghai_national":63,"shanghai_url":"https://www.shanghairanking.cn/institution/hohai-university","shanghai_score":342,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":32.5,"discipline":19.5,"resources":5.5,"faculty":42.1,"talent_training":165.6,"research":31.9,"social_service":7.2,"top_talent":12.5,"major_projects":10.2,"international":15}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hohai-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hohai';
+  uni_category = 'stem' WHERE slug = 'hohai' OR 'hohai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaanxi Normal University',
   name_zh = '陕西师范大学',
   rankings = rankings || '{"shanghai_national":63,"shanghai_url":"https://www.shanghairanking.cn/institution/shaanxi-normal-university","shanghai_score":342,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.9,"discipline":18.2,"resources":5.6,"faculty":46.7,"talent_training":179.7,"research":25.5,"social_service":1.4,"top_talent":15.2,"major_projects":9.2,"international":10.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaanxi-normal-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'snnu';
+  uni_category = 'normal' WHERE slug = 'snnu' OR 'snnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing University of Technology',
   name_zh = '北京工业大学',
   rankings = rankings || '{"shanghai_national":65,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-university-of-technology","shanghai_score":341.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":31.9,"discipline":17.8,"resources":8,"faculty":45.7,"talent_training":163.7,"research":28.6,"social_service":9.5,"top_talent":14.4,"major_projects":7.3,"international":14.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-university-of-technology}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-3';
+  uni_category = 'stem' WHERE slug = 'beijing-3' OR 'beijing-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenzhen University',
   name_zh = '深圳大学',
   rankings = rankings || '{"shanghai_national":66,"shanghai_url":"https://www.shanghairanking.cn/institution/shenzhen-university","shanghai_score":341.4,"shanghai_indicators":{"school_level":28.6,"discipline":19.2,"resources":13,"faculty":42.7,"talent_training":131.8,"research":39.6,"social_service":11.9,"top_talent":24.6,"major_projects":6.1,"international":23.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenzhen-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shenzhen';
+  uni_category = 'comprehensive' WHERE slug = 'shenzhen' OR 'shenzhen' = ANY(slug_aliases);
 UPDATE universities SET name = 'China University of Mining and Technology',
   name_zh = '中国矿业大学',
   rankings = rankings || '{"shanghai_national":67,"shanghai_url":"https://www.shanghairanking.cn/institution/china-university-of-mining-and-technology-xuzhou","shanghai_score":335.7,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":27.9,"discipline":20.3,"resources":6.4,"faculty":43.5,"talent_training":156,"research":31.6,"social_service":18.3,"top_talent":12.3,"major_projects":8.8,"international":10.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-university-of-mining-and-technology-xuzhou}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'mining-xuzhou';
+  uni_category = 'stem' WHERE slug = 'mining-xuzhou' OR 'mining-xuzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang University of Technology',
   name_zh = '浙江工业大学',
   rankings = rankings || '{"shanghai_national":68,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-university-of-technology","shanghai_score":334.4,"shanghai_indicators":{"school_level":30,"discipline":14.6,"resources":6.2,"faculty":41,"talent_training":168,"research":27.7,"social_service":11.3,"top_talent":9.2,"major_projects":11.3,"international":15.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-university-of-technology}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zjut';
+  uni_category = 'stem' WHERE slug = 'zjut' OR 'zjut' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northwest A&F University',
   name_zh = '西北农林科技大学',
   rankings = rankings || '{"shanghai_national":69,"shanghai_url":"https://www.shanghairanking.cn/institution/northwest-a-f-university","shanghai_score":330.7,"shanghai_tags":["双一流","985","211"],"shanghai_indicators":{"school_level":30,"discipline":21.3,"resources":8.8,"faculty":46,"talent_training":155.2,"research":32.9,"social_service":4.4,"top_talent":11.6,"major_projects":5.8,"international":14.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northwest-a-f-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'northwest-f';
+  uni_category = 'agriculture' WHERE slug = 'northwest-f' OR 'northwest-f' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northwest University',
   name_zh = '西北大学',
   rankings = rankings || '{"shanghai_national":70,"shanghai_url":"https://www.shanghairanking.cn/institution/northwest-university","shanghai_score":329.7,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":32.5,"discipline":21.1,"resources":6,"faculty":45.1,"talent_training":158,"research":28,"social_service":2.6,"top_talent":16,"major_projects":7.9,"international":12.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northwest-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'northwest';
+  uni_category = 'comprehensive' WHERE slug = 'northwest' OR 'northwest' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yunnan University',
   name_zh = '云南大学',
   rankings = rankings || '{"shanghai_national":71,"shanghai_url":"https://www.shanghairanking.cn/institution/yunnan-university","shanghai_score":325.8,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":32.1,"discipline":21.3,"resources":6.2,"faculty":40.9,"talent_training":155.6,"research":29.4,"social_service":3.3,"top_talent":12.8,"major_projects":11.2,"international":13}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yunnan-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yunnan';
+  uni_category = 'comprehensive' WHERE slug = 'yunnan' OR 'yunnan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Donghua University',
   name_zh = '东华大学',
   rankings = rankings || '{"shanghai_national":72,"shanghai_url":"https://www.shanghairanking.cn/institution/donghua-university","shanghai_score":317.4,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.6,"discipline":17.2,"resources":5.1,"faculty":41,"talent_training":153.8,"research":23.1,"social_service":7.9,"top_talent":13.7,"major_projects":10.9,"international":14.1}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{donghua-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'donghua';
+  uni_category = 'stem' WHERE slug = 'donghua' OR 'donghua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanchang University',
   name_zh = '南昌大学',
   rankings = rankings || '{"shanghai_national":74,"shanghai_url":"https://www.shanghairanking.cn/institution/nanchang-university","shanghai_score":314.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":27.9,"discipline":19.7,"resources":6.3,"faculty":37.4,"talent_training":159.8,"research":30.2,"social_service":7.2,"top_talent":9.8,"major_projects":4.2,"international":11.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanchang-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'nanchang';
+  uni_category = 'comprehensive' WHERE slug = 'nanchang' OR 'nanchang' = ANY(slug_aliases);
 UPDATE universities SET name = 'China University of Mining and Technology-Beijing',
   name_zh = '中国矿业大学（北京）',
   rankings = rankings || '{"shanghai_national":76,"shanghai_url":"https://www.shanghairanking.cn/institution/china-university-of-mining-and-technology-beijing","shanghai_score":313.7,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":26.9,"discipline":14.6,"resources":4,"faculty":38.5,"talent_training":134.4,"research":23.6,"social_service":10.4,"top_talent":20.9,"major_projects":30.8,"international":9.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-university-of-mining-and-technology-beijing}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'mining-beijing';
+  uni_category = 'stem' WHERE slug = 'mining-beijing' OR 'mining-beijing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fuzhou University',
   name_zh = '福州大学',
   rankings = rankings || '{"shanghai_national":77,"shanghai_url":"https://www.shanghairanking.cn/institution/fuzhou-university","shanghai_score":310.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":29.7,"discipline":16.1,"resources":5.2,"faculty":40.4,"talent_training":157.2,"research":23.6,"social_service":10.1,"top_talent":9.4,"major_projects":5.1,"international":13.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fuzhou-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'fuzhou';
+  uni_category = 'stem' WHERE slug = 'fuzhou' OR 'fuzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ningbo University',
   name_zh = '宁波大学',
   rankings = rankings || '{"shanghai_national":78,"shanghai_url":"https://www.shanghairanking.cn/institution/ningbo-university","shanghai_score":310.3,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":28.6,"discipline":15.3,"resources":7.1,"faculty":40.8,"talent_training":160.7,"research":25.4,"social_service":4.2,"top_talent":12.9,"major_projects":3.7,"international":11.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ningbo-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ningbo';
+  uni_category = 'comprehensive' WHERE slug = 'ningbo' OR 'ningbo' = ANY(slug_aliases);
 UPDATE universities SET name = 'South China Normal University',
   name_zh = '华南师范大学',
   rankings = rankings || '{"shanghai_national":79,"shanghai_url":"https://www.shanghairanking.cn/institution/south-china-normal-university","shanghai_score":306.6,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":28.9,"discipline":18.6,"resources":6.7,"faculty":40,"talent_training":151.1,"research":24.2,"social_service":3.9,"top_talent":12.8,"major_projects":7.9,"international":12.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{south-china-normal-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'scnu';
+  uni_category = 'normal' WHERE slug = 'scnu' OR 'scnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hefei University of Technology',
   name_zh = '合肥工业大学',
   rankings = rankings || '{"shanghai_national":80,"shanghai_url":"https://www.shanghairanking.cn/institution/hefei-university-of-technology","shanghai_score":304.8,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":27.1,"discipline":18.3,"resources":5,"faculty":42.5,"talent_training":155.7,"research":24.7,"social_service":9.7,"top_talent":9.7,"major_projects":2.9,"international":9.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hefei-university-of-technology}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hefei';
+  uni_category = 'stem' WHERE slug = 'hefei' OR 'hefei' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangsu University',
   name_zh = '江苏大学',
   rankings = rankings || '{"shanghai_national":81,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangsu-university","shanghai_score":301.3,"shanghai_indicators":{"school_level":27.2,"discipline":13.6,"resources":4.6,"faculty":44.7,"talent_training":142.4,"research":22.7,"social_service":17.1,"top_talent":5.8,"major_projects":6.6,"international":16.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangsu-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jiangsu';
+  uni_category = 'comprehensive' WHERE slug = 'jiangsu' OR 'jiangsu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing University of Posts and Telecommunications',
   name_zh = '南京邮电大学',
   rankings = rankings || '{"shanghai_national":82,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-university-of-posts-and-telecommunications","shanghai_score":297.9,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":26.7,"discipline":14.2,"resources":4,"faculty":40.8,"talent_training":164.4,"research":18.1,"social_service":10.7,"top_talent":5.3,"major_projects":1.3,"international":12.3}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-university-of-posts-and-telecommunications}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanjing-4';
+  uni_category = 'stem' WHERE slug = 'nanjing-4' OR 'nanjing-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Forestry University',
   name_zh = '北京林业大学',
   rankings = rankings || '{"shanghai_national":83,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-forestry-university","shanghai_score":294.9,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30,"discipline":17.4,"resources":5.8,"faculty":44,"talent_training":145.9,"research":23.4,"social_service":2.5,"top_talent":12.4,"major_projects":3.1,"international":10.4}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-forestry-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'forestry' WHERE slug = 'bjfu';
+  uni_category = 'forestry' WHERE slug = 'bjfu' OR 'bjfu' = ANY(slug_aliases);
 UPDATE universities SET name = 'North China Electric Power University',
   name_zh = '华北电力大学',
   rankings = rankings || '{"shanghai_national":84,"shanghai_url":"https://www.shanghairanking.cn/institution/north-china-electric-power-university","shanghai_score":293.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":28.6,"discipline":12.2,"resources":6.1,"faculty":40.6,"talent_training":145.7,"research":25.6,"social_service":11,"top_talent":8.8,"major_projects":4.2,"international":10.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-china-electric-power-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'electric-power';
+  uni_category = 'stem' WHERE slug = 'electric-power' OR 'electric-power' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guizhou University',
   name_zh = '贵州大学',
   rankings = rankings || '{"shanghai_national":85,"shanghai_url":"https://www.shanghairanking.cn/institution/guizhou-university","shanghai_score":291.1,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":27.3,"discipline":18.7,"resources":5,"faculty":38.7,"talent_training":156.8,"research":24.9,"social_service":4.3,"top_talent":4.5,"major_projects":2.7,"international":8.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guizhou-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'guizhou';
+  uni_category = 'comprehensive' WHERE slug = 'guizhou' OR 'guizhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangxi University',
   name_zh = '广西大学',
   rankings = rankings || '{"shanghai_national":86,"shanghai_url":"https://www.shanghairanking.cn/institution/guangxi-university","shanghai_score":288.9,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":30.2,"discipline":16.4,"resources":4.4,"faculty":38.7,"talent_training":145.8,"research":24.7,"social_service":4.5,"top_talent":6.8,"major_projects":5.9,"international":11.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangxi-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'guangxi';
+  uni_category = 'comprehensive' WHERE slug = 'guangxi' OR 'guangxi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hainan University',
   name_zh = '海南大学',
   rankings = rankings || '{"shanghai_national":87,"shanghai_url":"https://www.shanghairanking.cn/institution/hainan-university","shanghai_score":286.9,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":26.4,"discipline":16.7,"resources":7.7,"faculty":41.2,"talent_training":134.8,"research":26.5,"social_service":6.8,"top_talent":9.4,"major_projects":3.3,"international":14.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hainan-university}')) x),
   province = 'Hainan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hainan';
+  uni_category = 'comprehensive' WHERE slug = 'hainan' OR 'hainan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing Tech University',
   name_zh = '南京工业大学',
   rankings = rankings || '{"shanghai_national":88,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-tech-university","shanghai_score":285.2,"shanghai_indicators":{"school_level":28,"discipline":11.3,"resources":4.9,"faculty":42,"talent_training":130,"research":21.5,"social_service":13,"top_talent":10.3,"major_projects":6.7,"international":17.5}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-tech-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanjing-tech';
+  uni_category = 'stem' WHERE slug = 'nanjing-tech' OR 'nanjing-tech' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chang''an University',
   name_zh = '长安大学',
   rankings = rankings || '{"shanghai_national":89,"shanghai_url":"https://www.shanghairanking.cn/institution/changan-university","shanghai_score":282.7,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":28.7,"discipline":13.9,"resources":5.2,"faculty":40.8,"talent_training":144.6,"research":20.3,"social_service":6,"top_talent":6.6,"major_projects":5.1,"international":11.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changan-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chang';
+  uni_category = 'stem' WHERE slug = 'chang' OR 'chang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fujian Normal University',
   name_zh = '福建师范大学',
   rankings = rankings || '{"shanghai_national":90,"shanghai_url":"https://www.shanghairanking.cn/institution/fujian-normal-university","shanghai_score":282.5,"shanghai_indicators":{"school_level":27.3,"discipline":14,"resources":4.2,"faculty":39.8,"talent_training":149.9,"research":20.3,"social_service":1.4,"top_talent":8.5,"major_projects":5.1,"international":11.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fujian-normal-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'fujian';
+  uni_category = 'normal' WHERE slug = 'fujian' OR 'fujian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang Normal University',
   name_zh = '浙江师范大学',
   rankings = rankings || '{"shanghai_national":91,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-normal-university","shanghai_score":282.2,"shanghai_indicators":{"school_level":27.2,"discipline":12.6,"resources":5,"faculty":38.1,"talent_training":148.1,"research":18.4,"social_service":4.9,"top_talent":8.6,"major_projects":4.5,"international":14.9}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-normal-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'zhejiang-2';
+  uni_category = 'normal' WHERE slug = 'zhejiang-2' OR 'zhejiang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan Normal University',
   name_zh = '湖南师范大学',
   rankings = rankings || '{"shanghai_national":92,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-normal-university","shanghai_score":280.5,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":28.9,"discipline":17,"resources":4.2,"faculty":39.7,"talent_training":141.7,"research":20.3,"social_service":1.7,"top_talent":12.3,"major_projects":7,"international":7.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-normal-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hunan';
+  uni_category = 'normal' WHERE slug = 'hunan' OR 'hunan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing Forestry University',
   name_zh = '南京林业大学',
   rankings = rankings || '{"shanghai_national":93,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-forestry-university","shanghai_score":280.3,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":27.4,"discipline":14.6,"resources":4.5,"faculty":41.4,"talent_training":147.7,"research":18.8,"social_service":5.1,"top_talent":5.1,"major_projects":4.1,"international":11.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-forestry-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'forestry' WHERE slug = 'nanjing-forestry';
+  uni_category = 'forestry' WHERE slug = 'nanjing-forestry' OR 'nanjing-forestry' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yangzhou University',
   name_zh = '扬州大学',
   rankings = rankings || '{"shanghai_national":93,"shanghai_url":"https://www.shanghairanking.cn/institution/yangzhou-university","shanghai_score":280.3,"shanghai_indicators":{"school_level":26.8,"discipline":15.5,"resources":5,"faculty":42.3,"talent_training":135,"research":24.4,"social_service":4.2,"top_talent":7.8,"major_projects":5.5,"international":13.8}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yangzhou-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yangzhou';
+  uni_category = 'comprehensive' WHERE slug = 'yangzhou' OR 'yangzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan University',
   name_zh = '河南大学',
   rankings = rankings || '{"shanghai_national":95,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-university","shanghai_score":279.1,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":27.9,"discipline":18.6,"resources":6.8,"faculty":43,"talent_training":125.7,"research":23.6,"social_service":2.3,"top_talent":11,"major_projects":7.5,"international":12.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'henan';
+  uni_category = 'comprehensive' WHERE slug = 'henan' OR 'henan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangdong University of Technology',
   name_zh = '广东工业大学',
   rankings = rankings || '{"shanghai_national":96,"shanghai_url":"https://www.shanghairanking.cn/institution/guangdong-university-of-technology","shanghai_score":276.1,"shanghai_indicators":{"school_level":25.9,"discipline":12.9,"resources":5.9,"faculty":36.4,"talent_training":128.2,"research":21.4,"social_service":12.1,"top_talent":9.3,"major_projects":8.3,"international":15.6}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangdong-university-of-technology}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guangdong';
+  uni_category = 'stem' WHERE slug = 'guangdong' OR 'guangdong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taiyuan University of Technology',
   name_zh = '太原理工大学',
   rankings = rankings || '{"shanghai_national":97,"shanghai_url":"https://www.shanghairanking.cn/institution/taiyuan-university-of-technology","shanghai_score":275.7,"shanghai_tags":["双一流","211"],"shanghai_indicators":{"school_level":26.7,"discipline":15.2,"resources":6.2,"faculty":38.3,"talent_training":148.2,"research":20.9,"social_service":6.3,"top_talent":6.2,"major_projects":null,"international":7.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{taiyuan-university-of-technology}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'taiyuan';
+  uni_category = 'stem' WHERE slug = 'taiyuan' OR 'taiyuan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing University of Information Science & Technology',
   name_zh = '南京信息工程大学',
   rankings = rankings || '{"shanghai_national":98,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-university-of-information-science-technology","shanghai_score":275.1,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":25.6,"discipline":14.6,"resources":4,"faculty":42.3,"talent_training":138.4,"research":19.5,"social_service":3.5,"top_talent":8.8,"major_projects":2.3,"international":16.2}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-university-of-information-science-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanjing-3';
+  uni_category = 'stem' WHERE slug = 'nanjing-3' OR 'nanjing-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hangzhou Dianzi University',
   name_zh = '杭州电子科技大学',
   rankings = rankings || '{"shanghai_national":99,"shanghai_url":"https://www.shanghairanking.cn/institution/hangzhou-dianzi-university","shanghai_score":274.6,"shanghai_indicators":{"school_level":28.1,"discipline":10.6,"resources":4.5,"faculty":39.5,"talent_training":142,"research":20.1,"social_service":7.3,"top_talent":5.9,"major_projects":5,"international":11.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hangzhou-dianzi-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hangzhou-dianzi';
+  uni_category = 'stem' WHERE slug = 'hangzhou-dianzi' OR 'hangzhou-dianzi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Capital Normal University',
   name_zh = '首都师范大学',
   rankings = rankings || '{"shanghai_national":100,"shanghai_url":"https://www.shanghairanking.cn/institution/capital-normal-university","shanghai_score":273.4,"shanghai_tags":["双一流"],"shanghai_indicators":{"school_level":30.6,"discipline":15.2,"resources":5.4,"faculty":40.3,"talent_training":128.6,"research":16.5,"social_service":3.8,"top_talent":12.8,"major_projects":7.6,"international":12.7}}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{capital-normal-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'capital';
+  uni_category = 'normal' WHERE slug = 'capital' OR 'capital' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui University',
   name_zh = '安徽大学',
   rankings = rankings || '{"shanghai_national":101,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-university","shanghai_score":273.3,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'anhui';
+  uni_category = 'comprehensive' WHERE slug = 'anhui' OR 'anhui' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanxi University',
   name_zh = '山西大学',
   rankings = rankings || '{"shanghai_national":102,"shanghai_url":"https://www.shanghairanking.cn/institution/shanxi-university","shanghai_score":272.4,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanxi-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shanxi';
+  uni_category = 'comprehensive' WHERE slug = 'shanxi' OR 'shanxi' = ANY(slug_aliases);
 UPDATE universities SET name = 'South China Agricultural University',
   name_zh = '华南农业大学',
   rankings = rankings || '{"shanghai_national":103,"shanghai_url":"https://www.shanghairanking.cn/institution/south-china-agricultural-university","shanghai_score":270.1,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{south-china-agricultural-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'south-china-agricultural-university';
+  uni_category = 'agriculture' WHERE slug = 'south-china-agricultural-university' OR 'south-china-agricultural-university' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Normal University',
   name_zh = '山东师范大学',
   rankings = rankings || '{"shanghai_national":104,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-normal-university","shanghai_score":268.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-normal-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shandong-2';
+  uni_category = 'normal' WHERE slug = 'shandong-2' OR 'shandong-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangzhou University',
   name_zh = '广州大学',
   rankings = rankings || '{"shanghai_national":105,"shanghai_url":"https://www.shanghairanking.cn/institution/guangzhou-university","shanghai_score":267.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangzhou-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'guangzhou';
+  uni_category = 'comprehensive' WHERE slug = 'guangzhou' OR 'guangzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of Shanghai for Science and Technology',
   name_zh = '上海理工大学',
   rankings = rankings || '{"shanghai_national":106,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-shanghai-for-science-and-technology","shanghai_score":266.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-shanghai-for-science-and-technology}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanghai';
+  uni_category = 'stem' WHERE slug = 'shanghai' OR 'shanghai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei University of Technology',
   name_zh = '河北工业大学',
   rankings = rankings || '{"shanghai_national":107,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-university-of-technology","shanghai_score":266.5,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-university-of-technology}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hebei';
+  uni_category = 'stem' WHERE slug = 'hebei' OR 'hebei' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qingdao University',
   name_zh = '青岛大学',
   rankings = rankings || '{"shanghai_national":108,"shanghai_url":"https://www.shanghairanking.cn/institution/qingdao-university","shanghai_score":263.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qingdao-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'qingdao';
+  uni_category = 'comprehensive' WHERE slug = 'qingdao' OR 'qingdao' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yanshan University',
   name_zh = '燕山大学',
   rankings = rankings || '{"shanghai_national":109,"shanghai_url":"https://www.shanghairanking.cn/institution/yanshan-university","shanghai_score":261.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yanshan-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'yanshan';
+  uni_category = 'stem' WHERE slug = 'yanshan' OR 'yanshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Kunming University of Science and Technology',
   name_zh = '昆明理工大学',
   rankings = rankings || '{"shanghai_national":110,"shanghai_url":"https://www.shanghairanking.cn/institution/kunming-university-of-science-and-technology","shanghai_score":260.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{kunming-university-of-science-and-technology}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'kunming';
+  uni_category = 'stem' WHERE slug = 'kunming' OR 'kunming' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an University of Technology',
   name_zh = '西安理工大学',
   rankings = rankings || '{"shanghai_national":111,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-university-of-technology","shanghai_score":259.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-university-of-technology}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi';
+  uni_category = 'stem' WHERE slug = 'xi' OR 'xi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang Sci-Tech University',
   name_zh = '浙江理工大学',
   rankings = rankings || '{"shanghai_national":112,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-sci-tech-university","shanghai_score":259.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-sci-tech-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhejiang-sci-tech';
+  uni_category = 'stem' WHERE slug = 'zhejiang-sci-tech' OR 'zhejiang-sci-tech' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dalian Maritime University',
   name_zh = '大连海事大学',
   rankings = rankings || '{"shanghai_national":113,"shanghai_url":"https://www.shanghairanking.cn/institution/dalian-maritime-university","shanghai_score":257.2,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dalian-maritime-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'dalian-maritime';
+  uni_category = 'comprehensive' WHERE slug = 'dalian-maritime' OR 'dalian-maritime' = ANY(slug_aliases);
 UPDATE universities SET name = 'Inner Mongolia University',
   name_zh = '内蒙古大学',
   rankings = rankings || '{"shanghai_national":114,"shanghai_url":"https://www.shanghairanking.cn/institution/inner-mongolia-university","shanghai_score":256.8,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{inner-mongolia-university}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'inner-mongolia';
+  uni_category = 'comprehensive' WHERE slug = 'inner-mongolia' OR 'inner-mongolia' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northeast Forestry University',
   name_zh = '东北林业大学',
   rankings = rankings || '{"shanghai_national":115,"shanghai_url":"https://www.shanghairanking.cn/institution/northeast-forestry-university-china","shanghai_score":255.4,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northeast-forestry-university-china}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'forestry' WHERE slug = 'northeast-forestry';
+  uni_category = 'forestry' WHERE slug = 'northeast-forestry' OR 'northeast-forestry' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hangzhou Normal University',
   name_zh = '杭州师范大学',
   rankings = rankings || '{"shanghai_national":116,"shanghai_url":"https://www.shanghairanking.cn/institution/hangzhou-normal-university","shanghai_score":254}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hangzhou-normal-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hangzhou';
+  uni_category = 'normal' WHERE slug = 'hangzhou' OR 'hangzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xiangtan University',
   name_zh = '湘潭大学',
   rankings = rankings || '{"shanghai_national":117,"shanghai_url":"https://www.shanghairanking.cn/institution/xiangtan-university","shanghai_score":253.7,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xiangtan-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xiangtan';
+  uni_category = 'comprehensive' WHERE slug = 'xiangtan' OR 'xiangtan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an University of Architecture and Technology',
   name_zh = '西安建筑科技大学',
   rankings = rankings || '{"shanghai_national":118,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-university-of-architecture-and-technology","shanghai_score":251.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-university-of-architecture-and-technology}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-architecture';
+  uni_category = 'stem' WHERE slug = 'xi-architecture' OR 'xi-architecture' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southwest Petroleum University',
   name_zh = '西南石油大学',
   rankings = rankings || '{"shanghai_national":119,"shanghai_url":"https://www.shanghairanking.cn/institution/southwest-petroleum-university","shanghai_score":248.3,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southwest-petroleum-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'southwest-2';
+  uni_category = 'stem' WHERE slug = 'southwest-2' OR 'southwest-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northeast Agricultural University',
   name_zh = '东北农业大学',
   rankings = rankings || '{"shanghai_national":120,"shanghai_url":"https://www.shanghairanking.cn/institution/northeast-agricultural-university-china","shanghai_score":245.7,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northeast-agricultural-university-china}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'northeast-2';
+  uni_category = 'agriculture' WHERE slug = 'northeast-2' OR 'northeast-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei University',
   name_zh = '湖北大学',
   rankings = rankings || '{"shanghai_national":121,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-university","shanghai_score":243.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hubei';
+  uni_category = 'comprehensive' WHERE slug = 'hubei' OR 'hubei' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fujian Agriculture and Forestry University',
   name_zh = '福建农林大学',
   rankings = rankings || '{"shanghai_national":122,"shanghai_url":"https://www.shanghairanking.cn/institution/fujian-agriculture-and-forestry-university","shanghai_score":243.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fujian-agriculture-and-forestry-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'fafu';
+  uni_category = 'agriculture' WHERE slug = 'fafu' OR 'fafu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Normal University',
   name_zh = '上海师范大学',
   rankings = rankings || '{"shanghai_national":123,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-normal-university","shanghai_score":238.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-normal-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shanghai-2';
+  uni_category = 'normal' WHERE slug = 'shanghai-2' OR 'shanghai-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuhan University of Science and Technology',
   name_zh = '武汉科技大学',
   rankings = rankings || '{"shanghai_national":123,"shanghai_url":"https://www.shanghairanking.cn/institution/wuhan-university-of-science-and-technology","shanghai_score":238.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan-university-of-science-and-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'wuhan-3';
+  uni_category = 'stem' WHERE slug = 'wuhan-3' OR 'wuhan-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaoning University',
   name_zh = '辽宁大学',
   rankings = rankings || '{"shanghai_national":125,"shanghai_url":"https://www.shanghairanking.cn/institution/liaoning-university","shanghai_score":238.1,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaoning-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'liaoning';
+  uni_category = 'comprehensive' WHERE slug = 'liaoning' OR 'liaoning' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangxi Normal University',
   name_zh = '江西师范大学',
   rankings = rankings || '{"shanghai_national":126,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangxi-normal-university","shanghai_score":238}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangxi-normal-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jiangxi';
+  uni_category = 'normal' WHERE slug = 'jiangxi' OR 'jiangxi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chengdu University of Technology',
   name_zh = '成都理工大学',
   rankings = rankings || '{"shanghai_national":127,"shanghai_url":"https://www.shanghairanking.cn/institution/chengdu-university-of-technology","shanghai_score":237.7,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chengdu-university-of-technology}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chengdu';
+  uni_category = 'stem' WHERE slug = 'chengdu' OR 'chengdu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Agricultural University',
   name_zh = '山东农业大学',
   rankings = rankings || '{"shanghai_national":128,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-agricultural-university","shanghai_score":234.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-agricultural-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'shandong-4';
+  uni_category = 'agriculture' WHERE slug = 'shandong-4' OR 'shandong-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wenzhou University',
   name_zh = '温州大学',
   rankings = rankings || '{"shanghai_national":129,"shanghai_url":"https://www.shanghairanking.cn/institution/wenzhou-university","shanghai_score":234.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wenzhou-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'wenzhou';
+  uni_category = 'comprehensive' WHERE slug = 'wenzhou' OR 'wenzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei University',
   name_zh = '河北大学',
   rankings = rankings || '{"shanghai_national":130,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-university","shanghai_score":233.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hebei-2';
+  uni_category = 'comprehensive' WHERE slug = 'hebei-2' OR 'hebei-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinjiang University',
   name_zh = '新疆大学',
   rankings = rankings || '{"shanghai_national":131,"shanghai_url":"https://www.shanghairanking.cn/institution/xinjiang-university","shanghai_score":233.6,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinjiang-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xinjiang';
+  uni_category = 'comprehensive' WHERE slug = 'xinjiang' OR 'xinjiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaanxi University of Science & Technology',
   name_zh = '陕西科技大学',
   rankings = rankings || '{"shanghai_national":132,"shanghai_url":"https://www.shanghairanking.cn/institution/shaanxi-university-of-science-and-technology","shanghai_score":232.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaanxi-university-of-science-and-technology}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shaanxi';
+  uni_category = 'stem' WHERE slug = 'shaanxi' OR 'shaanxi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tiangong University',
   name_zh = '天津工业大学',
   rankings = rankings || '{"shanghai_national":133,"shanghai_url":"https://www.shanghairanking.cn/institution/tiangong-university","shanghai_score":231.9,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tiangong-university}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'tiangong';
+  uni_category = 'stem' WHERE slug = 'tiangong' OR 'tiangong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan Agricultural University',
   name_zh = '四川农业大学',
   rankings = rankings || '{"shanghai_national":134,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-agricultural-university","shanghai_score":231.7,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-agricultural-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'sichuan';
+  uni_category = 'agriculture' WHERE slug = 'sichuan' OR 'sichuan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changsha University of Science & Technology',
   name_zh = '长沙理工大学',
   rankings = rankings || '{"shanghai_national":135,"shanghai_url":"https://www.shanghairanking.cn/institution/changsha-university-of-science-and-technology","shanghai_score":231.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changsha-university-of-science-and-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changsha';
+  uni_category = 'stem' WHERE slug = 'changsha' OR 'changsha' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shihezi University',
   name_zh = '石河子大学',
   rankings = rankings || '{"shanghai_national":135,"shanghai_url":"https://www.shanghairanking.cn/institution/shihezi-university","shanghai_score":231.6,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shihezi-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shihezi';
+  uni_category = 'comprehensive' WHERE slug = 'shihezi' OR 'shihezi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ningxia University',
   name_zh = '宁夏大学',
   rankings = rankings || '{"shanghai_national":137,"shanghai_url":"https://www.shanghairanking.cn/institution/ningxia-university","shanghai_score":230.9,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ningxia-university}')) x),
   province = 'Ningxia',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ningxia';
+  uni_category = 'comprehensive' WHERE slug = 'ningxia' OR 'ningxia' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changchun University of Science and Technology',
   name_zh = '长春理工大学',
   rankings = rankings || '{"shanghai_national":138,"shanghai_url":"https://www.shanghairanking.cn/institution/changchun-university-of-science-and-technology","shanghai_score":230.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changchun-university-of-science-and-technology}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changchun';
+  uni_category = 'stem' WHERE slug = 'changchun' OR 'changchun' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huaqiao University',
   name_zh = '华侨大学',
   rankings = rankings || '{"shanghai_national":139,"shanghai_url":"https://www.shanghairanking.cn/institution/huaqiao-university","shanghai_score":229.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huaqiao-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'huaqiao';
+  uni_category = 'comprehensive' WHERE slug = 'huaqiao' OR 'huaqiao' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong University of Science and Technology',
   name_zh = '山东科技大学',
   rankings = rankings || '{"shanghai_national":140,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-university-of-science-and-technology","shanghai_score":226.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-university-of-science-and-technology}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shandong-3';
+  uni_category = 'stem' WHERE slug = 'shandong-3' OR 'shandong-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangsu University of Science and Technology',
   name_zh = '江苏科技大学',
   rankings = rankings || '{"shanghai_national":141,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangsu-university-of-science-and-technology","shanghai_score":224.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangsu-university-of-science-and-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jiangsu-3';
+  uni_category = 'stem' WHERE slug = 'jiangsu-3' OR 'jiangsu-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Ocean University',
   name_zh = '上海海洋大学',
   rankings = rankings || '{"shanghai_national":142,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-ocean-university","shanghai_score":222.5,"shanghai_tags":["双一流"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-ocean-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'shanghai-ocean';
+  uni_category = 'agriculture' WHERE slug = 'shanghai-ocean' OR 'shanghai-ocean' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui Agricultural University',
   name_zh = '安徽农业大学',
   rankings = rankings || '{"shanghai_national":143,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-agricultural-university","shanghai_score":222}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-agricultural-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'anhui-3';
+  uni_category = 'agriculture' WHERE slug = 'anhui-3' OR 'anhui-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'North University of China',
   name_zh = '中北大学',
   rankings = rankings || '{"shanghai_national":144,"shanghai_url":"https://www.shanghairanking.cn/institution/north-university-of-china","shanghai_score":221.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-university-of-china}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nuc';
+  uni_category = 'stem' WHERE slug = 'nuc' OR 'nuc' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui Normal University',
   name_zh = '安徽师范大学',
   rankings = rankings || '{"shanghai_national":145,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-normal-university","shanghai_score":220.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-normal-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'anhui-2';
+  uni_category = 'normal' WHERE slug = 'anhui-2' OR 'anhui-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan Agricultural University',
   name_zh = '河南农业大学',
   rankings = rankings || '{"shanghai_national":145,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-agricultural-university","shanghai_score":220.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-agricultural-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'henan-3';
+  uni_category = 'agriculture' WHERE slug = 'henan-3' OR 'henan-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing University of Posts and Telecommunications',
   name_zh = '重庆邮电大学',
   rankings = rankings || '{"shanghai_national":147,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-university-of-posts-and-telecommunications","shanghai_score":219.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-university-of-posts-and-telecommunications}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chongqing';
+  uni_category = 'stem' WHERE slug = 'chongqing' OR 'chongqing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nantong University',
   name_zh = '南通大学',
   rankings = rankings || '{"shanghai_national":147,"shanghai_url":"https://www.shanghairanking.cn/institution/nantong-university","shanghai_score":219.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nantong-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'nantong';
+  uni_category = 'comprehensive' WHERE slug = 'nantong' OR 'nantong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangxi Normal University',
   name_zh = '广西师范大学',
   rankings = rankings || '{"shanghai_national":149,"shanghai_url":"https://www.shanghairanking.cn/institution/guangxi-normal-university","shanghai_score":217.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangxi-normal-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guangxi-2';
+  uni_category = 'normal' WHERE slug = 'guangxi-2' OR 'guangxi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang A&F University',
   name_zh = '浙江农林大学',
   rankings = rankings || '{"shanghai_national":149,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-a-f-university","shanghai_score":217.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-a-f-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'forestry' WHERE slug = 'zhejiang-f';
+  uni_category = 'forestry' WHERE slug = 'zhejiang-f' OR 'zhejiang-f' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qilu University of Technology',
   name_zh = '齐鲁工业大学',
   rankings = rankings || '{"shanghai_national":151,"shanghai_url":"https://www.shanghairanking.cn/institution/qilu-university-of-technology","shanghai_score":217.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qilu-university-of-technology}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'qilu';
+  uni_category = 'stem' WHERE slug = 'qilu' OR 'qilu' = ANY(slug_aliases);
 UPDATE universities SET name = 'China Jiliang University',
   name_zh = '中国计量大学',
   rankings = rankings || '{"shanghai_national":151,"shanghai_url":"https://www.shanghairanking.cn/institution/china-jiliang-university","shanghai_score":217.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-jiliang-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jiliang';
+  uni_category = 'stem' WHERE slug = 'jiliang' OR 'jiliang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang Agricultural University',
   name_zh = '沈阳农业大学',
   rankings = rankings || '{"shanghai_national":153,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-agricultural-university","shanghai_score":216.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-agricultural-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'shenyang';
+  uni_category = 'agriculture' WHERE slug = 'shenyang' OR 'shenyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northwest Normal University',
   name_zh = '西北师范大学',
   rankings = rankings || '{"shanghai_national":154,"shanghai_url":"https://www.shanghairanking.cn/institution/northwest-normal-university-china","shanghai_score":216}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northwest-normal-university-china}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'northwest-2';
+  uni_category = 'normal' WHERE slug = 'northwest-2' OR 'northwest-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heilongjiang University',
   name_zh = '黑龙江大学',
   rankings = rankings || '{"shanghai_national":155,"shanghai_url":"https://www.shanghairanking.cn/institution/heilongjiang-university","shanghai_score":215.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{heilongjiang-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'heilongjiang';
+  uni_category = 'comprehensive' WHERE slug = 'heilongjiang' OR 'heilongjiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jimei University',
   name_zh = '集美大学',
   rankings = rankings || '{"shanghai_national":156,"shanghai_url":"https://www.shanghairanking.cn/institution/jimei-university","shanghai_score":215}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jimei-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jimei';
+  uni_category = 'comprehensive' WHERE slug = 'jimei' OR 'jimei' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yanbian University',
   name_zh = '延边大学',
   rankings = rankings || '{"shanghai_national":157,"shanghai_url":"https://www.shanghairanking.cn/institution/yanbian-university","shanghai_score":214.9,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yanbian-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yanbian';
+  uni_category = 'comprehensive' WHERE slug = 'yanbian' OR 'yanbian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianjin University of Science and Technology',
   name_zh = '天津科技大学',
   rankings = rankings || '{"shanghai_national":158,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-university-of-science-and-technology","shanghai_score":214.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-university-of-science-and-technology}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'tianjin-3';
+  uni_category = 'stem' WHERE slug = 'tianjin-3' OR 'tianjin-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuhan Textile University',
   name_zh = '武汉纺织大学',
   rankings = rankings || '{"shanghai_national":159,"shanghai_url":"https://www.shanghairanking.cn/institution/wuhan-textile-university","shanghai_score":214}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan-textile-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'wuhan-textile';
+  uni_category = 'stem' WHERE slug = 'wuhan-textile' OR 'wuhan-textile' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianjin Normal University',
   name_zh = '天津师范大学',
   rankings = rankings || '{"shanghai_national":160,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-normal-university","shanghai_score":213.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-normal-university}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'tianjin';
+  uni_category = 'normal' WHERE slug = 'tianjin' OR 'tianjin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin Agricultural University',
   name_zh = '吉林农业大学',
   rankings = rankings || '{"shanghai_national":161,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-agricultural-university","shanghai_score":212.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-agricultural-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'jilin';
+  uni_category = 'agriculture' WHERE slug = 'jilin' OR 'jilin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei University of Technology',
   name_zh = '湖北工业大学',
   rankings = rankings || '{"shanghai_national":162,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-university-of-technology","shanghai_score":211.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-university-of-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hubei-2';
+  uni_category = 'stem' WHERE slug = 'hubei-2' OR 'hubei-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaoning Normal University',
   name_zh = '辽宁师范大学',
   rankings = rankings || '{"shanghai_national":162,"shanghai_url":"https://www.shanghairanking.cn/institution/liaoning-normal-university","shanghai_score":211.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaoning-normal-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'liaoning-2';
+  uni_category = 'normal' WHERE slug = 'liaoning-2' OR 'liaoning-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qufu Normal University',
   name_zh = '曲阜师范大学',
   rankings = rankings || '{"shanghai_national":164,"shanghai_url":"https://www.shanghairanking.cn/institution/qufu-normal-university","shanghai_score":210.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qufu-normal-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'qufu';
+  uni_category = 'normal' WHERE slug = 'qufu' OR 'qufu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changzhou University',
   name_zh = '常州大学',
   rankings = rankings || '{"shanghai_national":165,"shanghai_url":"https://www.shanghairanking.cn/institution/changzhou-university","shanghai_score":210.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changzhou-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changzhou';
+  uni_category = 'stem' WHERE slug = 'changzhou' OR 'changzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan Agricultural University',
   name_zh = '湖南农业大学',
   rankings = rankings || '{"shanghai_national":166,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-agricultural-university","shanghai_score":209.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-agricultural-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'hunan-2';
+  uni_category = 'agriculture' WHERE slug = 'hunan-2' OR 'hunan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qingdao University of Science & Technology',
   name_zh = '青岛科技大学',
   rankings = rankings || '{"shanghai_national":167,"shanghai_url":"https://www.shanghairanking.cn/institution/qingdao-university-of-science-and-technology","shanghai_score":209.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qingdao-university-of-science-and-technology}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'qingdao-2';
+  uni_category = 'stem' WHERE slug = 'qingdao-2' OR 'qingdao-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan Normal University',
   name_zh = '河南师范大学',
   rankings = rankings || '{"shanghai_national":168,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-normal-university","shanghai_score":209.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'henan-2';
+  uni_category = 'normal' WHERE slug = 'henan-2' OR 'henan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuhan Institute of Technology',
   name_zh = '武汉工程大学',
   rankings = rankings || '{"shanghai_national":169,"shanghai_url":"https://www.shanghairanking.cn/institution/wuhan-institute-of-technology","shanghai_score":209}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan-institute-of-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'wuhan-4';
+  uni_category = 'stem' WHERE slug = 'wuhan-4' OR 'wuhan-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianjin University of Technology',
   name_zh = '天津理工大学',
   rankings = rankings || '{"shanghai_national":170,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-university-of-technology","shanghai_score":208.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-university-of-technology}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'tianjin-2';
+  uni_category = 'stem' WHERE slug = 'tianjin-2' OR 'tianjin-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Maritime University',
   name_zh = '上海海事大学',
   rankings = rankings || '{"shanghai_national":171,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-maritime-university","shanghai_score":207.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-maritime-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shanghai-maritime';
+  uni_category = 'comprehensive' WHERE slug = 'shanghai-maritime' OR 'shanghai-maritime' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangsu Normal University',
   name_zh = '江苏师范大学',
   rankings = rankings || '{"shanghai_national":172,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangsu-normal-university","shanghai_score":207.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangsu-normal-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jiangsu-2';
+  uni_category = 'normal' WHERE slug = 'jiangsu-2' OR 'jiangsu-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shantou University',
   name_zh = '汕头大学',
   rankings = rankings || '{"shanghai_national":173,"shanghai_url":"https://www.shanghairanking.cn/institution/shantou-university","shanghai_score":206.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shantou-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shantou';
+  uni_category = 'comprehensive' WHERE slug = 'shantou' OR 'shantou' = ANY(slug_aliases);
 UPDATE universities SET name = 'China Three Gorges University',
   name_zh = '三峡大学',
   rankings = rankings || '{"shanghai_national":174,"shanghai_url":"https://www.shanghairanking.cn/institution/china-three-gorges-university","shanghai_score":205.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-three-gorges-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'three-gorges';
+  uni_category = 'comprehensive' WHERE slug = 'three-gorges' OR 'three-gorges' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of Jinan',
   name_zh = '济南大学',
   rankings = rankings || '{"shanghai_national":175,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-jinan","shanghai_score":205}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-jinan}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jinan-2';
+  uni_category = 'comprehensive' WHERE slug = 'jinan-2' OR 'jinan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan University of Science and Technology',
   name_zh = '河南科技大学',
   rankings = rankings || '{"shanghai_national":176,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-university-of-science-and-technology","shanghai_score":204.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-university-of-science-and-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'henan-5';
+  uni_category = 'comprehensive' WHERE slug = 'henan-5' OR 'henan-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei Normal University',
   name_zh = '河北师范大学',
   rankings = rankings || '{"shanghai_national":177,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-normal-university","shanghai_score":204.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-normal-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hebei-3';
+  uni_category = 'normal' WHERE slug = 'hebei-3' OR 'hebei-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing University of Civil Engineering and Architecture',
   name_zh = '北京建筑大学',
   rankings = rankings || '{"shanghai_national":178,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-university-of-civil-engineering-and-architecture","shanghai_score":204.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-university-of-civil-engineering-and-architecture}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-architecture';
+  uni_category = 'stem' WHERE slug = 'beijing-architecture' OR 'beijing-architecture' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang Aerospace University',
   name_zh = '沈阳航空航天大学',
   rankings = rankings || '{"shanghai_national":179,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-aerospace-university","shanghai_score":202.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-aerospace-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shenyang-aerospace';
+  uni_category = 'stem' WHERE slug = 'shenyang-aerospace' OR 'shenyang-aerospace' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui University of Science & Technology',
   name_zh = '安徽理工大学',
   rankings = rankings || '{"shanghai_national":180,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-university-of-science-and-technology","shanghai_score":201.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-university-of-science-and-technology}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'anhui-5';
+  uni_category = 'stem' WHERE slug = 'anhui-5' OR 'anhui-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanchang Hangkong University',
   name_zh = '南昌航空大学',
   rankings = rankings || '{"shanghai_national":181,"shanghai_url":"https://www.shanghairanking.cn/institution/nanchang-hangkong-university","shanghai_score":200.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanchang-hangkong-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanchang-hangkong';
+  uni_category = 'stem' WHERE slug = 'nanchang-hangkong' OR 'nanchang-hangkong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Information Science & Technology University',
   name_zh = '北京信息科技大学',
   rankings = rankings || '{"shanghai_national":182,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-information-science-technology-university","shanghai_score":199.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-information-science-technology-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-4';
+  uni_category = 'stem' WHERE slug = 'beijing-4' OR 'beijing-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guilin University of Electronic Technology',
   name_zh = '桂林电子科技大学',
   rankings = rankings || '{"shanghai_national":183,"shanghai_url":"https://www.shanghairanking.cn/institution/guilin-university-of-electronic-technology","shanghai_score":199.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guilin-university-of-electronic-technology}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guilin';
+  uni_category = 'stem' WHERE slug = 'guilin' OR 'guilin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yangtze University',
   name_zh = '长江大学',
   rankings = rankings || '{"shanghai_national":184,"shanghai_url":"https://www.shanghairanking.cn/institution/yangtze-university","shanghai_score":199.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yangtze-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yangtze';
+  uni_category = 'comprehensive' WHERE slug = 'yangtze' OR 'yangtze' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of International Relations',
   name_zh = '国际关系学院',
   rankings = rankings || '{"shanghai_national":185,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-international-relations","shanghai_score":198.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-international-relations}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'relations';
+  uni_category = 'comprehensive' WHERE slug = 'relations' OR 'relations' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an University of Science and Technology',
   name_zh = '西安科技大学',
   rankings = rankings || '{"shanghai_national":186,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-university-of-science-and-technology","shanghai_score":197.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-university-of-science-and-technology}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-2';
+  uni_category = 'stem' WHERE slug = 'xi-2' OR 'xi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qingdao University of Technology',
   name_zh = '青岛理工大学',
   rankings = rankings || '{"shanghai_national":187,"shanghai_url":"https://www.shanghairanking.cn/institution/qingdao-university-of-technology","shanghai_score":197.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qingdao-university-of-technology}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'qingdao-4';
+  uni_category = 'stem' WHERE slug = 'qingdao-4' OR 'qingdao-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai University of Electric Power',
   name_zh = '上海电力大学',
   rankings = rankings || '{"shanghai_national":188,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-university-of-electric-power","shanghai_score":196.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-university-of-electric-power}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanghai-electric-power';
+  uni_category = 'stem' WHERE slug = 'shanghai-electric-power' OR 'shanghai-electric-power' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei Agricultural University',
   name_zh = '河北农业大学',
   rankings = rankings || '{"shanghai_national":189,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-agricultural-university","shanghai_score":196.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-agricultural-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'hebei-4';
+  uni_category = 'agriculture' WHERE slug = 'hebei-4' OR 'hebei-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan University of Science and Technology',
   name_zh = '湖南科技大学',
   rankings = rankings || '{"shanghai_national":189,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-university-of-science-and-technology","shanghai_score":196.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-university-of-science-and-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hunan-3';
+  uni_category = 'comprehensive' WHERE slug = 'hunan-3' OR 'hunan-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing Jiaotong University',
   name_zh = '重庆交通大学',
   rankings = rankings || '{"shanghai_national":191,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-jiaotong-university","shanghai_score":195.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-jiaotong-university}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chongqing-jiaotong';
+  uni_category = 'stem' WHERE slug = 'chongqing-jiaotong' OR 'chongqing-jiaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lanzhou Jiaotong University',
   name_zh = '兰州交通大学',
   rankings = rankings || '{"shanghai_national":192,"shanghai_url":"https://www.shanghairanking.cn/institution/lanzhou-jiaotong-university","shanghai_score":195.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lanzhou-jiaotong-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'lanzhou-jiaotong';
+  uni_category = 'stem' WHERE slug = 'lanzhou-jiaotong' OR 'lanzhou-jiaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui University of Technology',
   name_zh = '安徽工业大学',
   rankings = rankings || '{"shanghai_national":193,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-university-of-technology","shanghai_score":195.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-university-of-technology}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'anhui-4';
+  uni_category = 'stem' WHERE slug = 'anhui-4' OR 'anhui-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan Polytechnic University',
   name_zh = '河南理工大学',
   rankings = rankings || '{"shanghai_national":194,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-polytechnic-university","shanghai_score":195.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-polytechnic-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'henan-4';
+  uni_category = 'stem' WHERE slug = 'henan-4' OR 'henan-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'East China Jiaotong University',
   name_zh = '华东交通大学',
   rankings = rankings || '{"shanghai_national":194,"shanghai_url":"https://www.shanghairanking.cn/institution/east-china-jiaotong-university","shanghai_score":195.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{east-china-jiaotong-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jiaotong';
+  uni_category = 'stem' WHERE slug = 'jiaotong' OR 'jiaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an University of Posts and Telecommunications',
   name_zh = '西安邮电大学',
   rankings = rankings || '{"shanghai_national":196,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-university-of-posts-and-telecommunications","shanghai_score":195}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-university-of-posts-and-telecommunications}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-3';
+  uni_category = 'stem' WHERE slug = 'xi-3' OR 'xi-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong University of Technology',
   name_zh = '山东理工大学',
   rankings = rankings || '{"shanghai_national":197,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-university-of-technology","shanghai_score":194.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-university-of-technology}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shandong-5';
+  uni_category = 'stem' WHERE slug = 'shandong-5' OR 'shandong-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of South China',
   name_zh = '南华大学',
   rankings = rankings || '{"shanghai_national":198,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-south-china","shanghai_score":194.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-south-china}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'usc';
+  uni_category = 'comprehensive' WHERE slug = 'usc' OR 'usc' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang University of Technology',
   name_zh = '沈阳工业大学',
   rankings = rankings || '{"shanghai_national":198,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-university-of-technology","shanghai_score":194.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-university-of-technology}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shenyang-3';
+  uni_category = 'stem' WHERE slug = 'shenyang-3' OR 'shenyang-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yunnan Normal University',
   name_zh = '云南师范大学',
   rankings = rankings || '{"shanghai_national":198,"shanghai_url":"https://www.shanghairanking.cn/institution/yunnan-normal-university","shanghai_score":194.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yunnan-normal-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yunnan-2';
+  uni_category = 'normal' WHERE slug = 'yunnan-2' OR 'yunnan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tibet University',
   name_zh = '西藏大学',
   rankings = rankings || '{"shanghai_national":201,"shanghai_url":"https://www.shanghairanking.cn/institution/tibet-university","shanghai_score":194.3,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tibet-university}')) x),
   province = 'Tibet',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'tibet';
+  uni_category = 'comprehensive' WHERE slug = 'tibet' OR 'tibet' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangxi University of Science and Technology',
   name_zh = '江西理工大学',
   rankings = rankings || '{"shanghai_national":202,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangxi-university-of-science-and-technology","shanghai_score":193.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangxi-university-of-science-and-technology}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jiangxi-2';
+  uni_category = 'stem' WHERE slug = 'jiangxi-2' OR 'jiangxi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qinghai University',
   name_zh = '青海大学',
   rankings = rankings || '{"shanghai_national":203,"shanghai_url":"https://www.shanghairanking.cn/institution/qinghai-university","shanghai_score":193.6,"shanghai_tags":["双一流","211"]}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qinghai-university}')) x),
   province = 'Qinghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'qinghai';
+  uni_category = 'comprehensive' WHERE slug = 'qinghai' OR 'qinghai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lanzhou University of Technology',
   name_zh = '兰州理工大学',
   rankings = rankings || '{"shanghai_national":204,"shanghai_url":"https://www.shanghairanking.cn/institution/lanzhou-university-of-technology","shanghai_score":193}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lanzhou-university-of-technology}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'lanzhou';
+  uni_category = 'stem' WHERE slug = 'lanzhou' OR 'lanzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southwest University of Science and Technology',
   name_zh = '西南科技大学',
   rankings = rankings || '{"shanghai_national":205,"shanghai_url":"https://www.shanghairanking.cn/institution/southwest-university-of-science-and-technology","shanghai_score":192.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southwest-university-of-science-and-technology}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'southwest-3';
+  uni_category = 'stem' WHERE slug = 'southwest-3' OR 'southwest-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an Technological University',
   name_zh = '西安工业大学',
   rankings = rankings || '{"shanghai_national":206,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-technological-university","shanghai_score":191.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-technological-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-technological';
+  uni_category = 'stem' WHERE slug = 'xi-technological' OR 'xi-technological' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangxi Agricultural University',
   name_zh = '江西农业大学',
   rankings = rankings || '{"shanghai_national":207,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangxi-agricultural-university","shanghai_score":190.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangxi-agricultural-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'jiangxi-3';
+  uni_category = 'agriculture' WHERE slug = 'jiangxi-3' OR 'jiangxi-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northeast Electric Power University',
   name_zh = '东北电力大学',
   rankings = rankings || '{"shanghai_national":208,"shanghai_url":"https://www.shanghairanking.cn/institution/northeast-electric-power-university","shanghai_score":189.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northeast-electric-power-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'northeast-electric-power';
+  uni_category = 'stem' WHERE slug = 'northeast-electric-power' OR 'northeast-electric-power' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan Normal University',
   name_zh = '四川师范大学',
   rankings = rankings || '{"shanghai_national":209,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-normal-university","shanghai_score":188.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-normal-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'sichuan-2';
+  uni_category = 'normal' WHERE slug = 'sichuan-2' OR 'sichuan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan University of Technology',
   name_zh = '河南工业大学',
   rankings = rankings || '{"shanghai_national":210,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-university-of-technology","shanghai_score":187.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-university-of-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'henan-6';
+  uni_category = 'stem' WHERE slug = 'henan-6' OR 'henan-6' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dalian Polytechnic University',
   name_zh = '大连工业大学',
   rankings = rankings || '{"shanghai_national":211,"shanghai_url":"https://www.shanghairanking.cn/institution/dalian-polytechnic-university","shanghai_score":187}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dalian-polytechnic-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'dalian';
+  uni_category = 'stem' WHERE slug = 'dalian' OR 'dalian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Inner Mongolia Agricultural University',
   name_zh = '内蒙古农业大学',
   rankings = rankings || '{"shanghai_national":212,"shanghai_url":"https://www.shanghairanking.cn/institution/inner-mongolia-agricultural-university","shanghai_score":185.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{inner-mongolia-agricultural-university}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'inner-mongolia-2';
+  uni_category = 'agriculture' WHERE slug = 'inner-mongolia-2' OR 'inner-mongolia-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Northeast Petroleum University',
   name_zh = '东北石油大学',
   rankings = rankings || '{"shanghai_national":213,"shanghai_url":"https://www.shanghairanking.cn/institution/northeast-petroleum-university","shanghai_score":185.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{northeast-petroleum-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'northeast-3';
+  uni_category = 'stem' WHERE slug = 'northeast-3' OR 'northeast-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Harbin University of Science and Technology',
   name_zh = '哈尔滨理工大学',
   rankings = rankings || '{"shanghai_national":214,"shanghai_url":"https://www.shanghairanking.cn/institution/harbin-university-of-science-and-technology","shanghai_score":185}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{harbin-university-of-science-and-technology}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'harbin';
+  uni_category = 'stem' WHERE slug = 'harbin' OR 'harbin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing Normal University',
   name_zh = '重庆师范大学',
   rankings = rankings || '{"shanghai_national":215,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-normal-university","shanghai_score":184.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-normal-university}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'chongqing-2';
+  uni_category = 'normal' WHERE slug = 'chongqing-2' OR 'chongqing-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiaxing University',
   name_zh = '嘉兴大学',
   rankings = rankings || '{"shanghai_national":216,"shanghai_url":"https://www.shanghairanking.cn/institution/jiaxing-university","shanghai_score":184.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiaxing-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jiaxing';
+  uni_category = 'comprehensive' WHERE slug = 'jiaxing' OR 'jiaxing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Suzhou University of Science and Technology',
   name_zh = '苏州科技大学',
   rankings = rankings || '{"shanghai_national":217,"shanghai_url":"https://www.shanghairanking.cn/institution/suzhou-university-of-science-and-technology","shanghai_score":183.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{suzhou-university-of-science-and-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'suzhou';
+  uni_category = 'stem' WHERE slug = 'suzhou' OR 'suzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hangzhou City University',
   name_zh = '浙大城市学院',
   rankings = rankings || '{"shanghai_national":218,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-university-city-college","shanghai_score":183.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-university-city-college}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhejiang-city';
+  uni_category = 'stem' WHERE slug = 'zhejiang-city' OR 'zhejiang-city' = ANY(slug_aliases);
 UPDATE universities SET name = 'Central South University of Forestry & Technology',
   name_zh = '中南林业科技大学',
   rankings = rankings || '{"shanghai_national":219,"shanghai_url":"https://www.shanghairanking.cn/institution/central-south-university-of-forestry-technology","shanghai_score":183.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{central-south-university-of-forestry-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'forestry' WHERE slug = 'forestry';
+  uni_category = 'forestry' WHERE slug = 'forestry' OR 'forestry' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guizhou Normal University',
   name_zh = '贵州师范大学',
   rankings = rankings || '{"shanghai_national":220,"shanghai_url":"https://www.shanghairanking.cn/institution/guizhou-normal-university","shanghai_score":183.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guizhou-normal-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guizhou-2';
+  uni_category = 'normal' WHERE slug = 'guizhou-2' OR 'guizhou-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Inner Mongolia Normal University',
   name_zh = '内蒙古师范大学',
   rankings = rankings || '{"shanghai_national":220,"shanghai_url":"https://www.shanghairanking.cn/institution/inner-mongolia-normal-university","shanghai_score":183.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{inner-mongolia-normal-university}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'inner-mongolia-3';
+  uni_category = 'normal' WHERE slug = 'inner-mongolia-3' OR 'inner-mongolia-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang Jianzhu University',
   name_zh = '沈阳建筑大学',
   rankings = rankings || '{"shanghai_national":222,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-jianzhu-university","shanghai_score":182.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-jianzhu-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shenyang-jianzhu';
+  uni_category = 'stem' WHERE slug = 'shenyang-jianzhu' OR 'shenyang-jianzhu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Harbin Normal University',
   name_zh = '哈尔滨师范大学',
   rankings = rankings || '{"shanghai_national":223,"shanghai_url":"https://www.shanghairanking.cn/institution/harbin-normal-university","shanghai_score":182.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{harbin-normal-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'harbin-2';
+  uni_category = 'normal' WHERE slug = 'harbin-2' OR 'harbin-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yantai University',
   name_zh = '烟台大学',
   rankings = rankings || '{"shanghai_national":224,"shanghai_url":"https://www.shanghairanking.cn/institution/yantai-university","shanghai_score":181.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yantai-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yantai';
+  uni_category = 'comprehensive' WHERE slug = 'yantai' OR 'yantai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanxi Agricultural University',
   name_zh = '山西农业大学',
   rankings = rankings || '{"shanghai_national":225,"shanghai_url":"https://www.shanghairanking.cn/institution/shanxi-agricultural-university","shanghai_score":181.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanxi-agricultural-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'shanxi-2';
+  uni_category = 'agriculture' WHERE slug = 'shanxi-2' OR 'shanxi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Civil Aviation University of China',
   name_zh = '中国民航大学',
   rankings = rankings || '{"shanghai_national":226,"shanghai_url":"https://www.shanghairanking.cn/institution/civil-aviation-university-of-china","shanghai_score":180.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{civil-aviation-university-of-china}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'aviation';
+  uni_category = 'stem' WHERE slug = 'aviation' OR 'aviation' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hainan Normal University',
   name_zh = '海南师范大学',
   rankings = rankings || '{"shanghai_national":227,"shanghai_url":"https://www.shanghairanking.cn/institution/hainan-normal-university","shanghai_score":180.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hainan-normal-university}')) x),
   province = 'Hainan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hainan-2';
+  uni_category = 'normal' WHERE slug = 'hainan-2' OR 'hainan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qingdao Agricultural University',
   name_zh = '青岛农业大学',
   rankings = rankings || '{"shanghai_national":228,"shanghai_url":"https://www.shanghairanking.cn/institution/qingdao-agricultural-university","shanghai_score":180.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qingdao-agricultural-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'qingdao-3';
+  uni_category = 'agriculture' WHERE slug = 'qingdao-3' OR 'qingdao-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'East China University of Technology',
   name_zh = '东华理工大学',
   rankings = rankings || '{"shanghai_national":229,"shanghai_url":"https://www.shanghairanking.cn/institution/east-china-university-of-technology","shanghai_score":180.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{east-china-university-of-technology}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'east-china-university-of-technology';
+  uni_category = 'stem' WHERE slug = 'east-china-university-of-technology' OR 'east-china-university-of-technology' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an Shiyou University',
   name_zh = '西安石油大学',
   rankings = rankings || '{"shanghai_national":230,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-shiyou-university","shanghai_score":179.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-shiyou-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-shiyou';
+  uni_category = 'stem' WHERE slug = 'xi-shiyou' OR 'xi-shiyou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shijiazhuang Tiedao University',
   name_zh = '石家庄铁道大学',
   rankings = rankings || '{"shanghai_national":231,"shanghai_url":"https://www.shanghairanking.cn/institution/shijiazhuang-tiedao-university","shanghai_score":179.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shijiazhuang-tiedao-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shijiazhuang-tiedao';
+  uni_category = 'stem' WHERE slug = 'shijiazhuang-tiedao' OR 'shijiazhuang-tiedao' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang University of Science & Technology',
   name_zh = '浙江科技大学',
   rankings = rankings || '{"shanghai_national":232,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-university-of-science-and-technology","shanghai_score":178.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-university-of-science-and-technology}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhejiang-3';
+  uni_category = 'stem' WHERE slug = 'zhejiang-3' OR 'zhejiang-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Electronic Science and Technology Institute',
   name_zh = '北京电子科技学院',
   rankings = rankings || '{"shanghai_national":233,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-electronic-science-and-technology-institute","shanghai_score":178.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-electronic-science-and-technology-institute}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-5';
+  uni_category = 'stem' WHERE slug = 'beijing-5' OR 'beijing-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huzhou University',
   name_zh = '湖州师范学院',
   rankings = rankings || '{"shanghai_national":234,"shanghai_url":"https://www.shanghairanking.cn/institution/huzhou-university","shanghai_score":178.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huzhou-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huzhou';
+  uni_category = 'normal' WHERE slug = 'huzhou' OR 'huzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Gansu Agricultural University',
   name_zh = '甘肃农业大学',
   rankings = rankings || '{"shanghai_national":235,"shanghai_url":"https://www.shanghairanking.cn/institution/gansu-agricultural-university","shanghai_score":178.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{gansu-agricultural-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'gansu';
+  uni_category = 'agriculture' WHERE slug = 'gansu' OR 'gansu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang Ocean University',
   name_zh = '浙江海洋大学',
   rankings = rankings || '{"shanghai_national":236,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-ocean-university","shanghai_score":178.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-ocean-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'zhejiang-ocean';
+  uni_category = 'agriculture' WHERE slug = 'zhejiang-ocean' OR 'zhejiang-ocean' = ANY(slug_aliases);
 UPDATE universities SET name = 'Foshan University',
   name_zh = '佛山大学',
   rankings = rankings || '{"shanghai_national":237,"shanghai_url":"https://www.shanghairanking.cn/institution/foshan-university","shanghai_score":177.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{foshan-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'foshan';
+  uni_category = 'stem' WHERE slug = 'foshan' OR 'foshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai University of Engineering Science',
   name_zh = '上海工程技术大学',
   rankings = rankings || '{"shanghai_national":237,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-university-of-engineering-science","shanghai_score":177.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-university-of-engineering-science}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanghai-3';
+  uni_category = 'stem' WHERE slug = 'shanghai-3' OR 'shanghai-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'North China University of Technology',
   name_zh = '北方工业大学',
   rankings = rankings || '{"shanghai_national":239,"shanghai_url":"https://www.shanghairanking.cn/institution/north-china-university-of-technology","shanghai_score":177.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-china-university-of-technology}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ncut';
+  uni_category = 'stem' WHERE slug = 'ncut' OR 'ncut' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ludong University',
   name_zh = '鲁东大学',
   rankings = rankings || '{"shanghai_national":240,"shanghai_url":"https://www.shanghairanking.cn/institution/ludong-university","shanghai_score":176.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ludong-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ludong';
+  uni_category = 'comprehensive' WHERE slug = 'ludong' OR 'ludong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chengdu University',
   name_zh = '成都大学',
   rankings = rankings || '{"shanghai_national":241,"shanghai_url":"https://www.shanghairanking.cn/institution/chengdu-university","shanghai_score":175.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chengdu-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'chengdu-3';
+  uni_category = 'comprehensive' WHERE slug = 'chengdu-3' OR 'chengdu-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Institute of Technology',
   name_zh = '上海应用技术大学',
   rankings = rankings || '{"shanghai_national":242,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-institute-of-technology","shanghai_score":175.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-institute-of-technology}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanghai-4';
+  uni_category = 'stem' WHERE slug = 'shanghai-4' OR 'shanghai-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing University of Technology',
   name_zh = '重庆理工大学',
   rankings = rankings || '{"shanghai_national":243,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-university-of-technology","shanghai_score":174.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-university-of-technology}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chongqing-3';
+  uni_category = 'stem' WHERE slug = 'chongqing-3' OR 'chongqing-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang University of Chemical Technology',
   name_zh = '沈阳化工大学',
   rankings = rankings || '{"shanghai_national":244,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-university-of-chemical-technology","shanghai_score":172.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-university-of-chemical-technology}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shenyang-chemical';
+  uni_category = 'stem' WHERE slug = 'shenyang-chemical' OR 'shenyang-chemical' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changchun University of Technology',
   name_zh = '长春工业大学',
   rankings = rankings || '{"shanghai_national":245,"shanghai_url":"https://www.shanghairanking.cn/institution/changchun-university-of-technology","shanghai_score":172.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changchun-university-of-technology}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changchun-2';
+  uni_category = 'stem' WHERE slug = 'changchun-2' OR 'changchun-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xiamen University of Technology',
   name_zh = '厦门理工学院',
   rankings = rankings || '{"shanghai_national":246,"shanghai_url":"https://www.shanghairanking.cn/institution/xiamen-university-of-technology","shanghai_score":172.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xiamen-university-of-technology}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xiamen';
+  uni_category = 'stem' WHERE slug = 'xiamen' OR 'xiamen' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dongguan University of Technology',
   name_zh = '东莞理工学院',
   rankings = rankings || '{"shanghai_national":247,"shanghai_url":"https://www.shanghairanking.cn/institution/dongguan-university-of-technology","shanghai_score":172}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dongguan-university-of-technology}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'dongguan';
+  uni_category = 'stem' WHERE slug = 'dongguan' OR 'dongguan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yan''an University',
   name_zh = '延安大学',
   rankings = rankings || '{"shanghai_national":248,"shanghai_url":"https://www.shanghairanking.cn/institution/yanan-university","shanghai_score":171.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yanan-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yan';
+  uni_category = 'comprehensive' WHERE slug = 'yan' OR 'yan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dalian Jiaotong University',
   name_zh = '大连交通大学',
   rankings = rankings || '{"shanghai_national":249,"shanghai_url":"https://www.shanghairanking.cn/institution/dalian-jiaotong-university","shanghai_score":171.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dalian-jiaotong-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'dalian-jiaotong';
+  uni_category = 'stem' WHERE slug = 'dalian-jiaotong' OR 'dalian-jiaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'North China University of Water Resources and Electric Power',
   name_zh = '华北水利水电大学',
   rankings = rankings || '{"shanghai_national":249,"shanghai_url":"https://www.shanghairanking.cn/institution/north-china-university-of-water-resources-and-electric-power","shanghai_score":171.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-china-university-of-water-resources-and-electric-power}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'water-resources-electric-power';
+  uni_category = 'stem' WHERE slug = 'water-resources-electric-power' OR 'water-resources-electric-power' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Jianzhu University',
   name_zh = '山东建筑大学',
   rankings = rankings || '{"shanghai_national":251,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-jianzhu-university","shanghai_score":171.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-jianzhu-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shandong-jianzhu';
+  uni_category = 'stem' WHERE slug = 'shandong-jianzhu' OR 'shandong-jianzhu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Gannan Normal University',
   name_zh = '赣南师范大学',
   rankings = rankings || '{"shanghai_national":252,"shanghai_url":"https://www.shanghairanking.cn/institution/gannan-normal-university","shanghai_score":171}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{gannan-normal-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'gannan';
+  uni_category = 'normal' WHERE slug = 'gannan' OR 'gannan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an Polytechnic University',
   name_zh = '西安工程大学',
   rankings = rankings || '{"shanghai_national":253,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-polytechnic-university","shanghai_score":170.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-polytechnic-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-4';
+  uni_category = 'stem' WHERE slug = 'xi-4' OR 'xi-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei University of Science and Technology',
   name_zh = '河北科技大学',
   rankings = rankings || '{"shanghai_national":254,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-university-of-science-and-technology","shanghai_score":170.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-university-of-science-and-technology}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hebei-5';
+  uni_category = 'stem' WHERE slug = 'hebei-5' OR 'hebei-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang Ligong University',
   name_zh = '沈阳理工大学',
   rankings = rankings || '{"shanghai_national":254,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-ligong-university","shanghai_score":170.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-ligong-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shenyang-ligong';
+  uni_category = 'stem' WHERE slug = 'shenyang-ligong' OR 'shenyang-ligong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qinghai Normal University',
   name_zh = '青海师范大学',
   rankings = rankings || '{"shanghai_national":256,"shanghai_url":"https://www.shanghairanking.cn/institution/qinghai-normal-university","shanghai_score":169.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qinghai-normal-university}')) x),
   province = 'Qinghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'qinghai-2';
+  uni_category = 'normal' WHERE slug = 'qinghai-2' OR 'qinghai-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuhan Polytechnic University',
   name_zh = '武汉轻工大学',
   rankings = rankings || '{"shanghai_national":257,"shanghai_url":"https://www.shanghairanking.cn/institution/wuhan-polytechnic-university","shanghai_score":169.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan-polytechnic-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'wuhan-5';
+  uni_category = 'stem' WHERE slug = 'wuhan-5' OR 'wuhan-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guilin University of Technology',
   name_zh = '桂林理工大学',
   rankings = rankings || '{"shanghai_national":258,"shanghai_url":"https://www.shanghairanking.cn/institution/guilin-university-of-technology","shanghai_score":169.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guilin-university-of-technology}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guilin-2';
+  uni_category = 'stem' WHERE slug = 'guilin-2' OR 'guilin-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhengzhou University of Light Industry',
   name_zh = '郑州轻工业大学',
   rankings = rankings || '{"shanghai_national":258,"shanghai_url":"https://www.shanghairanking.cn/institution/zhengzhou-university-of-light-industry","shanghai_score":169.2}'::jsonb,
@@ -1789,119 +1789,119 @@ UPDATE universities SET name = 'Zhengzhou University of Light Industry',
   province = 'Henan',
   country = COALESCE(country, 'China'),
   uni_category = 'stem',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/34928000.png' WHERE slug = 'zhengzhou-light-industry';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/34928000.png' WHERE slug = 'zhengzhou-light-industry' OR 'zhengzhou-light-industry' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chengdu University of Information Technology',
   name_zh = '成都信息工程大学',
   rankings = rankings || '{"shanghai_national":260,"shanghai_url":"https://www.shanghairanking.cn/institution/chengdu-university-of-information-technology","shanghai_score":169}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chengdu-university-of-information-technology}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chengdu-2';
+  uni_category = 'stem' WHERE slug = 'chengdu-2' OR 'chengdu-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Inner Mongolia University of Technology',
   name_zh = '内蒙古工业大学',
   rankings = rankings || '{"shanghai_national":261,"shanghai_url":"https://www.shanghairanking.cn/institution/inner-mongolia-university-of-technology","shanghai_score":168.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{inner-mongolia-university-of-technology}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'inner-mongolia-4';
+  uni_category = 'stem' WHERE slug = 'inner-mongolia-4' OR 'inner-mongolia-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xihua University',
   name_zh = '西华大学',
   rankings = rankings || '{"shanghai_national":262,"shanghai_url":"https://www.shanghairanking.cn/institution/xihua-university","shanghai_score":168}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xihua-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xihua';
+  uni_category = 'comprehensive' WHERE slug = 'xihua' OR 'xihua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaoning Petrochemical University',
   name_zh = '辽宁石油化工大学',
   rankings = rankings || '{"shanghai_national":263,"shanghai_url":"https://www.shanghairanking.cn/institution/liaoning-shihua-university","shanghai_score":167.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaoning-shihua-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'liaoning-shihua';
+  uni_category = 'stem' WHERE slug = 'liaoning-shihua' OR 'liaoning-shihua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaoxing University',
   name_zh = '绍兴文理学院',
   rankings = rankings || '{"shanghai_national":264,"shanghai_url":"https://www.shanghairanking.cn/institution/shaoxing-university","shanghai_score":167.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaoxing-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shaoxing';
+  uni_category = 'normal' WHERE slug = 'shaoxing' OR 'shaoxing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jianghan University',
   name_zh = '江汉大学',
   rankings = rankings || '{"shanghai_national":265,"shanghai_url":"https://www.shanghairanking.cn/institution/jianghan-university","shanghai_score":167.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jianghan-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jianghan';
+  uni_category = 'comprehensive' WHERE slug = 'jianghan' OR 'jianghan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang University',
   name_zh = '沈阳大学',
   rankings = rankings || '{"shanghai_national":266,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-university","shanghai_score":166.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shenyang-4';
+  uni_category = 'comprehensive' WHERE slug = 'shenyang-4' OR 'shenyang-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanxi Normal University',
   name_zh = '山西师范大学',
   rankings = rankings || '{"shanghai_national":267,"shanghai_url":"https://www.shanghairanking.cn/institution/shanxi-normal-university","shanghai_score":166.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanxi-normal-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shanxi-3';
+  uni_category = 'normal' WHERE slug = 'shanxi-3' OR 'shanxi-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaocheng University',
   name_zh = '聊城大学',
   rankings = rankings || '{"shanghai_national":268,"shanghai_url":"https://www.shanghairanking.cn/institution/liaocheng-university","shanghai_score":164.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaocheng-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'liaocheng';
+  uni_category = 'comprehensive' WHERE slug = 'liaocheng' OR 'liaocheng' = ANY(slug_aliases);
 UPDATE universities SET name = 'North China University of Science and Technology',
   name_zh = '华北理工大学',
   rankings = rankings || '{"shanghai_national":269,"shanghai_url":"https://www.shanghairanking.cn/institution/north-china-university-of-science-and-technology","shanghai_score":164.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-china-university-of-science-and-technology}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ncust';
+  uni_category = 'comprehensive' WHERE slug = 'ncust' OR 'ncust' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taiyuan University of Science and Technology',
   name_zh = '太原科技大学',
   rankings = rankings || '{"shanghai_national":270,"shanghai_url":"https://www.shanghairanking.cn/institution/taiyuan-university-of-science-and-technology","shanghai_score":164.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{taiyuan-university-of-science-and-technology}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'taiyuan-2';
+  uni_category = 'stem' WHERE slug = 'taiyuan-2' OR 'taiyuan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaoning Technical University',
   name_zh = '辽宁工程技术大学',
   rankings = rankings || '{"shanghai_national":271,"shanghai_url":"https://www.shanghairanking.cn/institution/liaoning-technical-university","shanghai_score":164.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaoning-technical-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'liaoning-technical';
+  uni_category = 'stem' WHERE slug = 'liaoning-technical' OR 'liaoning-technical' = ANY(slug_aliases);
 UPDATE universities SET name = 'China West Normal University',
   name_zh = '西华师范大学',
   rankings = rankings || '{"shanghai_national":271,"shanghai_url":"https://www.shanghairanking.cn/institution/china-west-normal-university","shanghai_score":164.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{china-west-normal-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'cwnu';
+  uni_category = 'normal' WHERE slug = 'cwnu' OR 'cwnu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing Institute of Technology',
   name_zh = '南京工程学院',
   rankings = rankings || '{"shanghai_national":273,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-institute-of-technology","shanghai_score":164}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanjing-5';
+  uni_category = 'stem' WHERE slug = 'nanjing-5' OR 'nanjing-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui Polytechnic University',
   name_zh = '安徽工程大学',
   rankings = rankings || '{"shanghai_national":274,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-polytechnic-university","shanghai_score":162.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-polytechnic-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'anhui-6';
+  uni_category = 'stem' WHERE slug = 'anhui-6' OR 'anhui-6' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fujian University of Technology',
   name_zh = '福建理工大学',
   rankings = rankings || '{"shanghai_national":275,"shanghai_url":"https://www.shanghairanking.cn/institution/fujian-university-of-technology","shanghai_score":162.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fujian-university-of-technology}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'fujian-2';
+  uni_category = 'stem' WHERE slug = 'fujian-2' OR 'fujian-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Customs University',
   name_zh = '上海海关学院',
   rankings = rankings || '{"shanghai_national":276,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-customs-college","shanghai_score":162.4}'::jsonb,
@@ -1909,14 +1909,14 @@ UPDATE universities SET name = 'Shanghai Customs University',
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/36783364.png' WHERE slug = 'shanghai-customs';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/36783364.png' WHERE slug = 'shanghai-customs' OR 'shanghai-customs' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang Normal University',
   name_zh = '沈阳师范大学',
   rankings = rankings || '{"shanghai_national":277,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-normal-university","shanghai_score":162}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-normal-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shenyang-2';
+  uni_category = 'normal' WHERE slug = 'shenyang-2' OR 'shenyang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taizhou University',
   name_zh = '台州学院',
   rankings = rankings || '{"shanghai_national":278,"shanghai_url":"https://www.shanghairanking.cn/institution/taizhou-university-tzc","shanghai_score":161}'::jsonb,
@@ -1924,567 +1924,567 @@ UPDATE universities SET name = 'Taizhou University',
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/85512127.png' WHERE slug = 'taizhou';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/85512127.png' WHERE slug = 'taizhou' OR 'taizhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing University of Science and Technology',
   name_zh = '重庆科技大学',
   rankings = rankings || '{"shanghai_national":279,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-university-of-science-and-technology","shanghai_score":159.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-university-of-science-and-technology}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chongqing-4';
+  uni_category = 'stem' WHERE slug = 'chongqing-4' OR 'chongqing-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaoning University of Technology',
   name_zh = '辽宁工业大学',
   rankings = rankings || '{"shanghai_national":279,"shanghai_url":"https://www.shanghairanking.cn/institution/liaoning-university-of-technology","shanghai_score":159.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaoning-university-of-technology}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'liaoning-3';
+  uni_category = 'stem' WHERE slug = 'liaoning-3' OR 'liaoning-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing University of Agriculture',
   name_zh = '北京农学院',
   rankings = rankings || '{"shanghai_national":281,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-university-of-agriculture","shanghai_score":159.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-university-of-agriculture}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'beijing-agriculture';
+  uni_category = 'agriculture' WHERE slug = 'beijing-agriculture' OR 'beijing-agriculture' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Institute of Graphic Communication',
   name_zh = '北京印刷学院',
   rankings = rankings || '{"shanghai_national":281,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-institute-of-graphic-communication","shanghai_score":159.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-institute-of-graphic-communication}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-graphic-communication';
+  uni_category = 'stem' WHERE slug = 'beijing-graphic-communication' OR 'beijing-graphic-communication' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui Jianzhu University',
   name_zh = '安徽建筑大学',
   rankings = rankings || '{"shanghai_national":283,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-jianzhu-university","shanghai_score":158.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-jianzhu-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'anhui-jianzhu';
+  uni_category = 'stem' WHERE slug = 'anhui-jianzhu' OR 'anhui-jianzhu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Bohai University',
   name_zh = '渤海大学',
   rankings = rankings || '{"shanghai_national":285,"shanghai_url":"https://www.shanghairanking.cn/institution/bohai-university","shanghai_score":158.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{bohai-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'bohai';
+  uni_category = 'comprehensive' WHERE slug = 'bohai' OR 'bohai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dali University',
   name_zh = '大理大学',
   rankings = rankings || '{"shanghai_national":285,"shanghai_url":"https://www.shanghairanking.cn/institution/dali-university","shanghai_score":158.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dali-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'dali';
+  uni_category = 'comprehensive' WHERE slug = 'dali' OR 'dali' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dalian University',
   name_zh = '大连大学',
   rankings = rankings || '{"shanghai_national":287,"shanghai_url":"https://www.shanghairanking.cn/institution/dalian-university","shanghai_score":158.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dalian-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'dalian-2';
+  uni_category = 'comprehensive' WHERE slug = 'dalian-2' OR 'dalian-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Suzhou University of Technology',
   name_zh = '苏州工学院',
   rankings = rankings || '{"shanghai_national":287,"shanghai_url":"https://www.shanghairanking.cn/institution/changshu-institute-of-technology","shanghai_score":158.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changshu-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changshu';
+  uni_category = 'stem' WHERE slug = 'changshu' OR 'changshu' = ANY(slug_aliases);
 UPDATE universities SET name = 'NingboTech University',
   name_zh = '浙大宁波理工学院',
   rankings = rankings || '{"shanghai_national":287,"shanghai_url":"https://www.shanghairanking.cn/institution/ningbotech-university","shanghai_score":158.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ningbotech-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ningbotech';
+  uni_category = 'stem' WHERE slug = 'ningbotech' OR 'ningbotech' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yunnan Agricultural University',
   name_zh = '云南农业大学',
   rankings = rankings || '{"shanghai_national":290,"shanghai_url":"https://www.shanghairanking.cn/institution/yunnan-agricultural-university","shanghai_score":156}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yunnan-agricultural-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'yunnan-3';
+  uni_category = 'agriculture' WHERE slug = 'yunnan-3' OR 'yunnan-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei University of Engineering',
   name_zh = '河北工程大学',
   rankings = rankings || '{"shanghai_national":291,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-university-of-engineering","shanghai_score":155.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-university-of-engineering}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hebei-6';
+  uni_category = 'stem' WHERE slug = 'hebei-6' OR 'hebei-6' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ningbo University of Technology',
   name_zh = '宁波工程学院',
   rankings = rankings || '{"shanghai_national":292,"shanghai_url":"https://www.shanghairanking.cn/institution/ningbo-university-of-technology","shanghai_score":155.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ningbo-university-of-technology}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ningbo-2';
+  uni_category = 'stem' WHERE slug = 'ningbo-2' OR 'ningbo-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan University of Technology',
   name_zh = '湖南工业大学',
   rankings = rankings || '{"shanghai_national":293,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-university-of-technology","shanghai_score":154.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-university-of-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hunan-4';
+  uni_category = 'stem' WHERE slug = 'hunan-4' OR 'hunan-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin Jianzhu University',
   name_zh = '吉林建筑大学',
   rankings = rankings || '{"shanghai_national":294,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-jianzhu-university","shanghai_score":154.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-jianzhu-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jilin-jianzhu';
+  uni_category = 'stem' WHERE slug = 'jilin-jianzhu' OR 'jilin-jianzhu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanning Normal University',
   name_zh = '南宁师范大学',
   rankings = rankings || '{"shanghai_national":295,"shanghai_url":"https://www.shanghairanking.cn/institution/guangxi-teachers-education-university","shanghai_score":153.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangxi-teachers-education-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guangxi-teachers-education';
+  uni_category = 'normal' WHERE slug = 'guangxi-teachers-education' OR 'guangxi-teachers-education' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dalian Ocean University',
   name_zh = '大连海洋大学',
   rankings = rankings || '{"shanghai_national":296,"shanghai_url":"https://www.shanghairanking.cn/institution/dalian-ocean-university","shanghai_score":153.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dalian-ocean-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'dalian-ocean';
+  uni_category = 'agriculture' WHERE slug = 'dalian-ocean' OR 'dalian-ocean' = ANY(slug_aliases);
 UPDATE universities SET name = 'Minjiang University',
   name_zh = '闽江学院',
   rankings = rankings || '{"shanghai_national":297,"shanghai_url":"https://www.shanghairanking.cn/institution/minjiang-university","shanghai_score":153.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{minjiang-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'minjiang';
+  uni_category = 'stem' WHERE slug = 'minjiang' OR 'minjiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangdong Ocean University',
   name_zh = '广东海洋大学',
   rankings = rankings || '{"shanghai_national":298,"shanghai_url":"https://www.shanghairanking.cn/institution/guangdong-ocean-university","shanghai_score":153}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangdong-ocean-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'guangdong-ocean';
+  uni_category = 'agriculture' WHERE slug = 'guangdong-ocean' OR 'guangdong-ocean' = ANY(slug_aliases);
 UPDATE universities SET name = 'Linyi University',
   name_zh = '临沂大学',
   rankings = rankings || '{"shanghai_national":299,"shanghai_url":"https://www.shanghairanking.cn/institution/linyi-university","shanghai_score":152.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{linyi-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'linyi';
+  uni_category = 'comprehensive' WHERE slug = 'linyi' OR 'linyi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Institute of Petrochemical Technology',
   name_zh = '北京石油化工学院',
   rankings = rankings || '{"shanghai_national":300,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-institute-of-petrochemical-technology","shanghai_score":152.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-institute-of-petrochemical-technology}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'beijing-petrochemical';
+  uni_category = 'stem' WHERE slug = 'beijing-petrochemical' OR 'beijing-petrochemical' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heilongjiang Bayi Agricultural University',
   name_zh = '黑龙江八一农垦大学',
   rankings = rankings || '{"shanghai_national":301,"shanghai_url":"https://www.shanghairanking.cn/institution/heilongjiang-bayi-agricultural-university","shanghai_score":152.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{heilongjiang-bayi-agricultural-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'heilongjiang-bayi';
+  uni_category = 'agriculture' WHERE slug = 'heilongjiang-bayi' OR 'heilongjiang-bayi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinjiang Normal University',
   name_zh = '新疆师范大学',
   rankings = rankings || '{"shanghai_national":302,"shanghai_url":"https://www.shanghairanking.cn/institution/xinjiang-normal-university","shanghai_score":152.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinjiang-normal-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xinjiang-2';
+  uni_category = 'normal' WHERE slug = 'xinjiang-2' OR 'xinjiang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Southwest Forestry University',
   name_zh = '西南林业大学',
   rankings = rankings || '{"shanghai_national":303,"shanghai_url":"https://www.shanghairanking.cn/institution/southwest-forestry-university","shanghai_score":152.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{southwest-forestry-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'forestry' WHERE slug = 'southwest-forestry';
+  uni_category = 'forestry' WHERE slug = 'southwest-forestry' OR 'southwest-forestry' = ANY(slug_aliases);
 UPDATE universities SET name = 'University of Science and Technology Liaoning',
   name_zh = '辽宁科技大学',
   rankings = rankings || '{"shanghai_national":304,"shanghai_url":"https://www.shanghairanking.cn/institution/university-of-science-and-technology-liaoning","shanghai_score":152}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{university-of-science-and-technology-liaoning}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'liaoning-4';
+  uni_category = 'stem' WHERE slug = 'liaoning-4' OR 'liaoning-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinjiang Agricultural University',
   name_zh = '新疆农业大学',
   rankings = rankings || '{"shanghai_national":305,"shanghai_url":"https://www.shanghairanking.cn/institution/xinjiang-agricultural-university","shanghai_score":151.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinjiang-agricultural-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'xinjiang-3';
+  uni_category = 'agriculture' WHERE slug = 'xinjiang-3' OR 'xinjiang-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beijing Union University',
   name_zh = '北京联合大学',
   rankings = rankings || '{"shanghai_national":306,"shanghai_url":"https://www.shanghairanking.cn/institution/beijing-union-university","shanghai_score":151.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beijing-union-university}')) x),
   province = 'Beijing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'beijing-union';
+  uni_category = 'comprehensive' WHERE slug = 'beijing-union' OR 'beijing-union' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing University of Arts and Sciences',
   name_zh = '重庆文理学院',
   rankings = rankings || '{"shanghai_national":307,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-university-of-arts-and-science","shanghai_score":151.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-university-of-arts-and-science}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'chongqing-arts';
+  uni_category = 'comprehensive' WHERE slug = 'chongqing-arts' OR 'chongqing-arts' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beihua University',
   name_zh = '北华大学',
   rankings = rankings || '{"shanghai_national":308,"shanghai_url":"https://www.shanghairanking.cn/institution/beihua-university","shanghai_score":150.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beihua-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'beihua';
+  uni_category = 'comprehensive' WHERE slug = 'beihua' OR 'beihua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Minnan Normal University',
   name_zh = '闽南师范大学',
   rankings = rankings || '{"shanghai_national":309,"shanghai_url":"https://www.shanghairanking.cn/institution/minnan-normal-university","shanghai_score":150.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{minnan-normal-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'minnan';
+  uni_category = 'normal' WHERE slug = 'minnan' OR 'minnan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan Institute of Science and Technology',
   name_zh = '湖南理工学院',
   rankings = rankings || '{"shanghai_national":310,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-institute-of-science-and-technology","shanghai_score":149.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-institute-of-science-and-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hunan-5';
+  uni_category = 'stem' WHERE slug = 'hunan-5' OR 'hunan-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuyi University',
   name_zh = '五邑大学',
   rankings = rankings || '{"shanghai_national":311,"shanghai_url":"https://www.shanghairanking.cn/institution/wuyi-university-wyu","shanghai_score":149.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuyi-university-wyu}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'wuyi';
+  uni_category = 'comprehensive' WHERE slug = 'wuyi' OR 'wuyi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei Normal University',
   name_zh = '湖北师范大学',
   rankings = rankings || '{"shanghai_national":312,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-normal-university","shanghai_score":149.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-normal-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hubei-3';
+  uni_category = 'normal' WHERE slug = 'hubei-3' OR 'hubei-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang Wanli University',
   name_zh = '浙江万里学院',
   rankings = rankings || '{"shanghai_national":312,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-wanli-university","shanghai_score":149.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-wanli-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhejiang-wanli';
+  uni_category = 'stem' WHERE slug = 'zhejiang-wanli' OR 'zhejiang-wanli' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangdong Polytechnic Normal University',
   name_zh = '广东技术师范大学',
   rankings = rankings || '{"shanghai_national":314,"shanghai_url":"https://www.shanghairanking.cn/institution/guangdong-polytechnic-normal-university","shanghai_score":149}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangdong-polytechnic-normal-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guangdong-2';
+  uni_category = 'normal' WHERE slug = 'guangdong-2' OR 'guangdong-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Inner Mongolia University of Science & Technology',
   name_zh = '内蒙古科技大学',
   rankings = rankings || '{"shanghai_national":314,"shanghai_url":"https://www.shanghairanking.cn/institution/inner-mongolia-university-of-science-technology","shanghai_score":149}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{inner-mongolia-university-of-science-technology}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'inner-mongolia-5';
+  uni_category = 'comprehensive' WHERE slug = 'inner-mongolia-5' OR 'inner-mongolia-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hefei University',
   name_zh = '合肥大学',
   rankings = rankings || '{"shanghai_national":316,"shanghai_url":"https://www.shanghairanking.cn/institution/hefei-university","shanghai_score":147.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hefei-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hefei-2';
+  uni_category = 'stem' WHERE slug = 'hefei-2' OR 'hefei-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huaiyin Institute of Technology',
   name_zh = '淮阴工学院',
   rankings = rankings || '{"shanghai_national":317,"shanghai_url":"https://www.shanghairanking.cn/institution/huaiyin-institute-of-technology","shanghai_score":147.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huaiyin-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'huaiyin-2';
+  uni_category = 'stem' WHERE slug = 'huaiyin-2' OR 'huaiyin-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianjin Chengjian University',
   name_zh = '天津城建大学',
   rankings = rankings || '{"shanghai_national":318,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-chengjian-university","shanghai_score":147.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-chengjian-university}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'tianjin-chengjian';
+  uni_category = 'stem' WHERE slug = 'tianjin-chengjian' OR 'tianjin-chengjian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuxi University',
   name_zh = '无锡学院',
   rankings = rankings || '{"shanghai_national":319,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-university-of-information-science-and-technology-binjiang-college","shanghai_score":147.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-university-of-information-science-and-technology-binjiang-college}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'nanjing-binjiang';
+  uni_category = 'comprehensive' WHERE slug = 'nanjing-binjiang' OR 'nanjing-binjiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhongyuan University of Technology',
   name_zh = '中原工学院',
   rankings = rankings || '{"shanghai_national":320,"shanghai_url":"https://www.shanghairanking.cn/institution/zhongyuan-university-of-technology","shanghai_score":146.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhongyuan-university-of-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhongyuan';
+  uni_category = 'stem' WHERE slug = 'zhongyuan' OR 'zhongyuan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jingdezhen Ceramic University',
   name_zh = '景德镇陶瓷大学',
   rankings = rankings || '{"shanghai_national":321,"shanghai_url":"https://www.shanghairanking.cn/institution/jingdezhen-ceramic-institute","shanghai_score":146.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jingdezhen-ceramic-institute}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jingdezhen-ceramic';
+  uni_category = 'stem' WHERE slug = 'jingdezhen-ceramic' OR 'jingdezhen-ceramic' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin Normal University',
   name_zh = '吉林师范大学',
   rankings = rankings || '{"shanghai_national":322,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-normal-university","shanghai_score":146.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-normal-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jilin-2';
+  uni_category = 'normal' WHERE slug = 'jilin-2' OR 'jilin-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jishou University',
   name_zh = '吉首大学',
   rankings = rankings || '{"shanghai_national":323,"shanghai_url":"https://www.shanghairanking.cn/institution/jishou-university","shanghai_score":146.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jishou-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jishou';
+  uni_category = 'comprehensive' WHERE slug = 'jishou' OR 'jishou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangxi Science and Technology Normal University',
   name_zh = '江西科技师范大学',
   rankings = rankings || '{"shanghai_national":324,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangxi-science-and-technology-normal-university","shanghai_score":145.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangxi-science-and-technology-normal-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jiangxi-4';
+  uni_category = 'normal' WHERE slug = 'jiangxi-4' OR 'jiangxi-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangsu Ocean University',
   name_zh = '江苏海洋大学',
   rankings = rankings || '{"shanghai_national":325,"shanghai_url":"https://www.shanghairanking.cn/institution/huaihai-institute-of-technology","shanghai_score":145.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huaihai-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'huaihai';
+  uni_category = 'stem' WHERE slug = 'huaihai' OR 'huaihai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan University of Science and Engineering',
   name_zh = '四川轻化工大学',
   rankings = rankings || '{"shanghai_national":326,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-university-of-science-and-engineering","shanghai_score":145.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-university-of-science-and-engineering}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'sichuan-3';
+  uni_category = 'stem' WHERE slug = 'sichuan-3' OR 'sichuan-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Polytechnic University',
   name_zh = '上海第二工业大学',
   rankings = rankings || '{"shanghai_national":327,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-second-polytechnic-university","shanghai_score":145.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-second-polytechnic-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanghai-second';
+  uni_category = 'stem' WHERE slug = 'shanghai-second' OR 'shanghai-second' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changsha University',
   name_zh = '长沙学院',
   rankings = rankings || '{"shanghai_national":328,"shanghai_url":"https://www.shanghairanking.cn/institution/changsha-university","shanghai_score":145}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changsha-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changsha-2';
+  uni_category = 'stem' WHERE slug = 'changsha-2' OR 'changsha-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangxi University of Science and Technology',
   name_zh = '广西科技大学',
   rankings = rankings || '{"shanghai_national":329,"shanghai_url":"https://www.shanghairanking.cn/institution/guangxi-university-of-science-and-technology","shanghai_score":144.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangxi-university-of-science-and-technology}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guangxi-3';
+  uni_category = 'stem' WHERE slug = 'guangxi-3' OR 'guangxi-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huaibei Normal University',
   name_zh = '淮北师范大学',
   rankings = rankings || '{"shanghai_national":330,"shanghai_url":"https://www.shanghairanking.cn/institution/huaibei-normal-university","shanghai_score":144.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huaibei-normal-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huaibei';
+  uni_category = 'normal' WHERE slug = 'huaibei' OR 'huaibei' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huaiyin Normal University',
   name_zh = '淮阴师范学院',
   rankings = rankings || '{"shanghai_national":331,"shanghai_url":"https://www.shanghairanking.cn/institution/huaiyin-normal-university","shanghai_score":144.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huaiyin-normal-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huaiyin';
+  uni_category = 'normal' WHERE slug = 'huaiyin' OR 'huaiyin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanghai Dianji University',
   name_zh = '上海电机学院',
   rankings = rankings || '{"shanghai_national":332,"shanghai_url":"https://www.shanghairanking.cn/institution/shanghai-dianji-university","shanghai_score":144}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanghai-dianji-university}')) x),
   province = 'Shanghai',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanghai-dianji';
+  uni_category = 'stem' WHERE slug = 'shanghai-dianji' OR 'shanghai-dianji' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing XiaoZhuang University',
   name_zh = '南京晓庄学院',
   rankings = rankings || '{"shanghai_national":333,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-xiaozhuang-university","shanghai_score":143.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-xiaozhuang-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'nanjing-xiaozhuang';
+  uni_category = 'normal' WHERE slug = 'nanjing-xiaozhuang' OR 'nanjing-xiaozhuang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yancheng Institute of Technology',
   name_zh = '盐城工学院',
   rankings = rankings || '{"shanghai_national":334,"shanghai_url":"https://www.shanghairanking.cn/institution/yancheng-institute-of-technology","shanghai_score":143.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yancheng-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'yancheng';
+  uni_category = 'stem' WHERE slug = 'yancheng' OR 'yancheng' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guizhou Education University',
   name_zh = '贵州师范学院',
   rankings = rankings || '{"shanghai_national":335,"shanghai_url":"https://www.shanghairanking.cn/institution/guizhou-normal-college","shanghai_score":143}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guizhou-normal-college}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guizhou-3';
+  uni_category = 'normal' WHERE slug = 'guizhou-3' OR 'guizhou-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changzhou Institute of Technology',
   name_zh = '常州工学院',
   rankings = rankings || '{"shanghai_national":336,"shanghai_url":"https://www.shanghairanking.cn/institution/changzhou-institute-of-technology","shanghai_score":142}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changzhou-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changzhou-2';
+  uni_category = 'stem' WHERE slug = 'changzhou-2' OR 'changzhou-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changchun Normal University',
   name_zh = '长春师范大学',
   rankings = rankings || '{"shanghai_national":337,"shanghai_url":"https://www.shanghairanking.cn/institution/changchun-normal-university","shanghai_score":141.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changchun-normal-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'changchun-3';
+  uni_category = 'normal' WHERE slug = 'changchun-3' OR 'changchun-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinyang Normal University',
   name_zh = '信阳师范大学',
   rankings = rankings || '{"shanghai_national":337,"shanghai_url":"https://www.shanghairanking.cn/institution/xinyang-normal-university","shanghai_score":141.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinyang-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xinyang';
+  uni_category = 'normal' WHERE slug = 'xinyang' OR 'xinyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yulin University',
   name_zh = '榆林学院',
   rankings = rankings || '{"shanghai_national":339,"shanghai_url":"https://www.shanghairanking.cn/institution/yulin-university","shanghai_score":141.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yulin-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yulin';
+  uni_category = 'normal' WHERE slug = 'yulin' OR 'yulin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anqing Normal University',
   name_zh = '安庆师范大学',
   rankings = rankings || '{"shanghai_national":340,"shanghai_url":"https://www.shanghairanking.cn/institution/anqing-normal-university","shanghai_score":141.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anqing-normal-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'anqing';
+  uni_category = 'normal' WHERE slug = 'anqing' OR 'anqing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei University of Automotive Technology',
   name_zh = '湖北汽车工业学院',
   rankings = rankings || '{"shanghai_national":341,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-university-of-automotive-technology","shanghai_score":141}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-university-of-automotive-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hubei-automotive';
+  uni_category = 'stem' WHERE slug = 'hubei-automotive' OR 'hubei-automotive' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaanxi University of Technology',
   name_zh = '陕西理工大学',
   rankings = rankings || '{"shanghai_national":342,"shanghai_url":"https://www.shanghairanking.cn/institution/shaanxi-university-of-technology","shanghai_score":140.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaanxi-university-of-technology}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shaanxi-2';
+  uni_category = 'stem' WHERE slug = 'shaanxi-2' OR 'shaanxi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tarim University',
   name_zh = '塔里木大学',
   rankings = rankings || '{"shanghai_national":343,"shanghai_url":"https://www.shanghairanking.cn/institution/tarim-university","shanghai_score":140.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tarim-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'tarim';
+  uni_category = 'comprehensive' WHERE slug = 'tarim' OR 'tarim' = ANY(slug_aliases);
 UPDATE universities SET name = 'TianJin University of Technology and Education',
   name_zh = '天津职业技术师范大学',
   rankings = rankings || '{"shanghai_national":343,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-university-of-technology-and-education","shanghai_score":140.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-university-of-technology-and-education}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'tianjin-education';
+  uni_category = 'normal' WHERE slug = 'tianjin-education' OR 'tianjin-education' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yangtze Normal University',
   name_zh = '长江师范学院',
   rankings = rankings || '{"shanghai_national":345,"shanghai_url":"https://www.shanghairanking.cn/institution/yangtze-normal-university","shanghai_score":140.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yangtze-normal-university}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yangtze-2';
+  uni_category = 'normal' WHERE slug = 'yangtze-2' OR 'yangtze-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan First Normal University',
   name_zh = '湖南第一师范学院',
   rankings = rankings || '{"shanghai_national":346,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-first-normal-university","shanghai_score":140}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-first-normal-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hunan-first';
+  uni_category = 'normal' WHERE slug = 'hunan-first' OR 'hunan-first' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangsu University of Technology',
   name_zh = '江苏理工学院',
   rankings = rankings || '{"shanghai_national":347,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangsu-university-of-technology","shanghai_score":139.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangsu-university-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jiangsu-4';
+  uni_category = 'stem' WHERE slug = 'jiangsu-4' OR 'jiangsu-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangxi University of Water Resources and Electric Power',
   name_zh = '江西水利电力大学',
   rankings = rankings || '{"shanghai_national":348,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangxi-university-of-water-resources-and-electric-power","shanghai_score":139.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangxi-university-of-water-resources-and-electric-power}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanchang-2';
+  uni_category = 'stem' WHERE slug = 'nanchang-2' OR 'nanchang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changchun Institute of Technology',
   name_zh = '长春工程学院',
   rankings = rankings || '{"shanghai_national":349,"shanghai_url":"https://www.shanghairanking.cn/institution/changchun-institute-of-technology","shanghai_score":139.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changchun-institute-of-technology}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'changchun-5';
+  uni_category = 'stem' WHERE slug = 'changchun-5' OR 'changchun-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yancheng Teachers University',
   name_zh = '盐城师范学院',
   rankings = rankings || '{"shanghai_national":350,"shanghai_url":"https://www.shanghairanking.cn/institution/yancheng-teachers-university","shanghai_score":139.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yancheng-teachers-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yancheng-teachers';
+  uni_category = 'normal' WHERE slug = 'yancheng-teachers' OR 'yancheng-teachers' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jinggangshan University',
   name_zh = '井冈山大学',
   rankings = rankings || '{"shanghai_national":351,"shanghai_url":"https://www.shanghairanking.cn/institution/jinggangshan-university","shanghai_score":138.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jinggangshan-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jinggangshan';
+  uni_category = 'comprehensive' WHERE slug = 'jinggangshan' OR 'jinggangshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jinling Institute of Technology',
   name_zh = '金陵科技学院',
   rankings = rankings || '{"shanghai_national":351,"shanghai_url":"https://www.shanghairanking.cn/institution/jinling-institute-of-technology","shanghai_score":138.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jinling-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jinling';
+  uni_category = 'stem' WHERE slug = 'jinling' OR 'jinling' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianjin Agricultural University',
   name_zh = '天津农学院',
   rankings = rankings || '{"shanghai_national":353,"shanghai_url":"https://www.shanghairanking.cn/institution/tianjin-agricultural-university","shanghai_score":138.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianjin-agricultural-university}')) x),
   province = 'Tianjin',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'tianjin-4';
+  uni_category = 'agriculture' WHERE slug = 'tianjin-4' OR 'tianjin-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhongkai University of Agriculture and Engineering',
   name_zh = '仲恺农业工程学院',
   rankings = rankings || '{"shanghai_national":353,"shanghai_url":"https://www.shanghairanking.cn/institution/zhongkai-university-of-agriculture-and-engineering","shanghai_score":138.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhongkai-university-of-agriculture-and-engineering}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'zhongkai-agriculture';
+  uni_category = 'agriculture' WHERE slug = 'zhongkai-agriculture' OR 'zhongkai-agriculture' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tongren University',
   name_zh = '铜仁学院',
   rankings = rankings || '{"shanghai_national":355,"shanghai_url":"https://www.shanghairanking.cn/institution/tongren-university","shanghai_score":138.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tongren-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'tongren';
+  uni_category = 'comprehensive' WHERE slug = 'tongren' OR 'tongren' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Jiaotong University',
   name_zh = '山东交通学院',
   rankings = rankings || '{"shanghai_national":356,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-jiaotong-university","shanghai_score":137.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-jiaotong-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shandong-jiaotong';
+  uni_category = 'stem' WHERE slug = 'shandong-jiaotong' OR 'shandong-jiaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huanggang Normal University',
   name_zh = '黄冈师范学院',
   rankings = rankings || '{"shanghai_national":357,"shanghai_url":"https://www.shanghairanking.cn/institution/huanggang-normal-university","shanghai_score":137.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huanggang-normal-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huanggang';
+  uni_category = 'normal' WHERE slug = 'huanggang' OR 'huanggang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Quanzhou Normal University',
   name_zh = '泉州师范学院',
   rankings = rankings || '{"shanghai_national":357,"shanghai_url":"https://www.shanghairanking.cn/institution/quanzhou-normal-university","shanghai_score":137.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{quanzhou-normal-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'quanzhou';
+  uni_category = 'normal' WHERE slug = 'quanzhou' OR 'quanzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan Institute of Science and Technology',
   name_zh = '河南科技学院',
   rankings = rankings || '{"shanghai_national":359,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-institute-of-science-and-technology","shanghai_score":137.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-institute-of-science-and-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'henan-7';
+  uni_category = 'normal' WHERE slug = 'henan-7' OR 'henan-7' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wenzhou University of Technology',
   name_zh = '温州理工学院',
   rankings = rankings || '{"shanghai_national":360,"shanghai_url":"https://www.shanghairanking.cn/institution/wenzhou-university-oujiang-college","shanghai_score":136.9}'::jsonb,
@@ -2492,98 +2492,98 @@ UPDATE universities SET name = 'Wenzhou University of Technology',
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
   uni_category = 'stem',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/34293161.png' WHERE slug = 'wenzhou-oujiang';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/34293161.png' WHERE slug = 'wenzhou-oujiang' OR 'wenzhou-oujiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anhui Science and Technology University',
   name_zh = '安徽科技学院',
   rankings = rankings || '{"shanghai_national":361,"shanghai_url":"https://www.shanghairanking.cn/institution/anhui-science-and-technology-university","shanghai_score":136.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anhui-science-and-technology-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'anhui-7';
+  uni_category = 'normal' WHERE slug = 'anhui-7' OR 'anhui-7' = ANY(slug_aliases);
 UPDATE universities SET name = 'Luoyang Normal University',
   name_zh = '洛阳师范学院',
   rankings = rankings || '{"shanghai_national":361,"shanghai_url":"https://www.shanghairanking.cn/institution/luoyang-normal-university","shanghai_score":136.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{luoyang-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'luoyang';
+  uni_category = 'normal' WHERE slug = 'luoyang' OR 'luoyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xuzhou University of Technology',
   name_zh = '徐州工程学院',
   rankings = rankings || '{"shanghai_national":363,"shanghai_url":"https://www.shanghairanking.cn/institution/xuzhou-institute-of-technology","shanghai_score":136.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xuzhou-institute-of-technology}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xuzhou';
+  uni_category = 'stem' WHERE slug = 'xuzhou' OR 'xuzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei University of Education',
   name_zh = '湖北第二师范学院',
   rankings = rankings || '{"shanghai_national":364,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-university-of-education","shanghai_score":136}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-university-of-education}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hubei-education';
+  uni_category = 'normal' WHERE slug = 'hubei-education' OR 'hubei-education' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lishui University',
   name_zh = '丽水学院',
   rankings = rankings || '{"shanghai_national":365,"shanghai_url":"https://www.shanghairanking.cn/institution/lishui-university","shanghai_score":135.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lishui-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'lishui';
+  uni_category = 'normal' WHERE slug = 'lishui' OR 'lishui' = ANY(slug_aliases);
 UPDATE universities SET name = 'Civil Aviation Flight University of China',
   name_zh = '中国民用航空飞行学院',
   rankings = rankings || '{"shanghai_national":365,"shanghai_url":"https://www.shanghairanking.cn/institution/civil-aviation-flight-university-of-china","shanghai_score":135.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{civil-aviation-flight-university-of-china}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'aviation-flight';
+  uni_category = 'stem' WHERE slug = 'aviation-flight' OR 'aviation-flight' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huizhou University',
   name_zh = '惠州学院',
   rankings = rankings || '{"shanghai_national":367,"shanghai_url":"https://www.shanghairanking.cn/institution/huizhou-university","shanghai_score":134.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huizhou-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'huizhou';
+  uni_category = 'comprehensive' WHERE slug = 'huizhou' OR 'huizhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changchun University',
   name_zh = '长春大学',
   rankings = rankings || '{"shanghai_national":368,"shanghai_url":"https://www.shanghairanking.cn/institution/changchun-university","shanghai_score":134.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changchun-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'changchun-4';
+  uni_category = 'comprehensive' WHERE slug = 'changchun-4' OR 'changchun-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guiyang University',
   name_zh = '贵阳学院',
   rankings = rankings || '{"shanghai_national":369,"shanghai_url":"https://www.shanghairanking.cn/institution/guiyang-university","shanghai_score":134}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guiyang-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'guiyang';
+  uni_category = 'comprehensive' WHERE slug = 'guiyang' OR 'guiyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huzhou College',
   name_zh = '湖州学院',
   rankings = rankings || '{"shanghai_national":370,"shanghai_url":"https://www.shanghairanking.cn/institution/huzhou-university-qiuzhen-college","shanghai_score":133.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huzhou-university-qiuzhen-college}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huzhou-qiuzhen';
+  uni_category = 'normal' WHERE slug = 'huzhou-qiuzhen' OR 'huzhou-qiuzhen' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shenyang Institute of Engineering',
   name_zh = '沈阳工程学院',
   rankings = rankings || '{"shanghai_national":371,"shanghai_url":"https://www.shanghairanking.cn/institution/shenyang-institute-of-engineering","shanghai_score":133}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shenyang-institute-of-engineering}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shenyang-5';
+  uni_category = 'stem' WHERE slug = 'shenyang-5' OR 'shenyang-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei University of Science and Technology',
   name_zh = '湖北科技学院',
   rankings = rankings || '{"shanghai_national":372,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-university-of-science-and-technology","shanghai_score":132.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-university-of-science-and-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hubei-4';
+  uni_category = 'comprehensive' WHERE slug = 'hubei-4' OR 'hubei-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei University of Arts and Science',
   name_zh = '湖北文理学院',
   rankings = rankings || '{"shanghai_national":372,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-university-of-arts-and-science","shanghai_score":132.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-university-of-arts-and-science}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hubei-arts';
+  uni_category = 'comprehensive' WHERE slug = 'hubei-arts' OR 'hubei-arts' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qiannan Normal University for Nationalities',
   name_zh = '黔南民族师范学院',
   rankings = rankings || '{"shanghai_national":372,"shanghai_url":"https://www.shanghairanking.cn/institution/qiannan-normal-college-for-nationalities","shanghai_score":132.8}'::jsonb,
@@ -2591,574 +2591,574 @@ UPDATE universities SET name = 'Qiannan Normal University for Nationalities',
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
   uni_category = 'normal',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/22743614.png' WHERE slug = 'qiannan-nationalities';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/22743614.png' WHERE slug = 'qiannan-nationalities' OR 'qiannan-nationalities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Institute of Disaster Prevention',
   name_zh = '防灾科技学院',
   rankings = rankings || '{"shanghai_national":375,"shanghai_url":"https://www.shanghairanking.cn/institution/institute-of-disaster-prevention","shanghai_score":132.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{institute-of-disaster-prevention}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'disaster-prevention';
+  uni_category = 'stem' WHERE slug = 'disaster-prevention' OR 'disaster-prevention' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangdong University of Petrochemical Technology',
   name_zh = '广东石油化工学院',
   rankings = rankings || '{"shanghai_national":376,"shanghai_url":"https://www.shanghairanking.cn/institution/guangdong-university-of-petrochemical-technology","shanghai_score":132.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangdong-university-of-petrochemical-technology}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'guangdong-petrochemical';
+  uni_category = 'comprehensive' WHERE slug = 'guangdong-petrochemical' OR 'guangdong-petrochemical' = ANY(slug_aliases);
 UPDATE universities SET name = 'Luoyang Institute of Science and Technology',
   name_zh = '洛阳理工学院',
   rankings = rankings || '{"shanghai_national":377,"shanghai_url":"https://www.shanghairanking.cn/institution/luoyang-institute-of-science-and-technology","shanghai_score":132.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{luoyang-institute-of-science-and-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'luoyang-2';
+  uni_category = 'comprehensive' WHERE slug = 'luoyang-2' OR 'luoyang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zunyi Normal University',
   name_zh = '遵义师范学院',
   rankings = rankings || '{"shanghai_national":378,"shanghai_url":"https://www.shanghairanking.cn/institution/zunyi-normal-university","shanghai_score":132.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zunyi-normal-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'zunyi';
+  uni_category = 'normal' WHERE slug = 'zunyi' OR 'zunyi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Quzhou University',
   name_zh = '衢州学院',
   rankings = rankings || '{"shanghai_national":379,"shanghai_url":"https://www.shanghairanking.cn/institution/quzhou-university","shanghai_score":132}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{quzhou-university}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'quzhou';
+  uni_category = 'stem' WHERE slug = 'quzhou' OR 'quzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing Three Gorges University',
   name_zh = '重庆三峡学院',
   rankings = rankings || '{"shanghai_national":380,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-three-gorges-university","shanghai_score":131.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-three-gorges-university}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'chongqing-three-gorges';
+  uni_category = 'comprehensive' WHERE slug = 'chongqing-three-gorges' OR 'chongqing-three-gorges' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qiqihar University',
   name_zh = '齐齐哈尔大学',
   rankings = rankings || '{"shanghai_national":381,"shanghai_url":"https://www.shanghairanking.cn/institution/qiqihar-university","shanghai_score":131.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qiqihar-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'qiqihar';
+  uni_category = 'comprehensive' WHERE slug = 'qiqihar' OR 'qiqihar' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sanming University',
   name_zh = '三明学院',
   rankings = rankings || '{"shanghai_national":381,"shanghai_url":"https://www.shanghairanking.cn/institution/sanming-university","shanghai_score":131.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sanming-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'sanming';
+  uni_category = 'comprehensive' WHERE slug = 'sanming' OR 'sanming' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taiyuan Normal University',
   name_zh = '太原师范学院',
   rankings = rankings || '{"shanghai_national":383,"shanghai_url":"https://www.shanghairanking.cn/institution/taiyuan-normal-university","shanghai_score":131.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{taiyuan-normal-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'taiyuan-3';
+  uni_category = 'normal' WHERE slug = 'taiyuan-3' OR 'taiyuan-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fuyang Normal University',
   name_zh = '阜阳师范大学',
   rankings = rankings || '{"shanghai_national":384,"shanghai_url":"https://www.shanghairanking.cn/institution/fuyang-normal-university","shanghai_score":131.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fuyang-normal-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'fuyang';
+  uni_category = 'normal' WHERE slug = 'fuyang' OR 'fuyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'North China Institute of Aerospace Engineering',
   name_zh = '北华航天工业学院',
   rankings = rankings || '{"shanghai_national":385,"shanghai_url":"https://www.shanghairanking.cn/institution/north-china-institute-of-aerospace-engineering","shanghai_score":131}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-china-institute-of-aerospace-engineering}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'aerospace';
+  uni_category = 'stem' WHERE slug = 'aerospace' OR 'aerospace' = ANY(slug_aliases);
 UPDATE universities SET name = 'Mianyang Teachers'' College',
   name_zh = '绵阳师范学院',
   rankings = rankings || '{"shanghai_national":386,"shanghai_url":"https://www.shanghairanking.cn/institution/mianyang-teachers-college","shanghai_score":130.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{mianyang-teachers-college}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'mianyang-teachers';
+  uni_category = 'normal' WHERE slug = 'mianyang-teachers' OR 'mianyang-teachers' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiamusi University',
   name_zh = '佳木斯大学',
   rankings = rankings || '{"shanghai_national":387,"shanghai_url":"https://www.shanghairanking.cn/institution/jiamusi-university","shanghai_score":130.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiamusi-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jiamusi';
+  uni_category = 'comprehensive' WHERE slug = 'jiamusi' OR 'jiamusi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chengdu Normal University',
   name_zh = '成都师范学院',
   rankings = rankings || '{"shanghai_national":388,"shanghai_url":"https://www.shanghairanking.cn/institution/chengdu-normal-university","shanghai_score":130.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chengdu-normal-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'chengdu-4';
+  uni_category = 'normal' WHERE slug = 'chengdu-4' OR 'chengdu-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Kunming University',
   name_zh = '昆明学院',
   rankings = rankings || '{"shanghai_national":389,"shanghai_url":"https://www.shanghairanking.cn/institution/kunming-university","shanghai_score":129.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{kunming-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'kunming-2';
+  uni_category = 'comprehensive' WHERE slug = 'kunming-2' OR 'kunming-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhoukou Normal University',
   name_zh = '周口师范学院',
   rankings = rankings || '{"shanghai_national":389,"shanghai_url":"https://www.shanghairanking.cn/institution/zhoukou-normal-university","shanghai_score":129.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhoukou-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'zhoukou';
+  uni_category = 'normal' WHERE slug = 'zhoukou' OR 'zhoukou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lingnan Normal University',
   name_zh = '岭南师范学院',
   rankings = rankings || '{"shanghai_national":391,"shanghai_url":"https://www.shanghairanking.cn/institution/lingnan-normal-university","shanghai_score":129.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lingnan-normal-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'lingnan';
+  uni_category = 'normal' WHERE slug = 'lingnan' OR 'lingnan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Putian University',
   name_zh = '莆田学院',
   rankings = rankings || '{"shanghai_national":391,"shanghai_url":"https://www.shanghairanking.cn/institution/putian-university","shanghai_score":129.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{putian-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'putian';
+  uni_category = 'comprehensive' WHERE slug = 'putian' OR 'putian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Dezhou University',
   name_zh = '德州学院',
   rankings = rankings || '{"shanghai_national":393,"shanghai_url":"https://www.shanghairanking.cn/institution/dezhou-university","shanghai_score":129.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{dezhou-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'dezhou';
+  uni_category = 'comprehensive' WHERE slug = 'dezhou' OR 'dezhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heilongjiang University of Science and Technology',
   name_zh = '黑龙江科技大学',
   rankings = rankings || '{"shanghai_national":394,"shanghai_url":"https://www.shanghairanking.cn/institution/heilongjiang-university-of-science-and-technology","shanghai_score":129.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{heilongjiang-university-of-science-and-technology}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'heilongjiang-2';
+  uni_category = 'stem' WHERE slug = 'heilongjiang-2' OR 'heilongjiang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Panzhihua University',
   name_zh = '攀枝花学院',
   rankings = rankings || '{"shanghai_national":394,"shanghai_url":"https://www.shanghairanking.cn/institution/panzhihua-university","shanghai_score":129.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{panzhihua-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'panzhihua';
+  uni_category = 'comprehensive' WHERE slug = 'panzhihua' OR 'panzhihua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong University of Aeronautics',
   name_zh = '山东航空学院',
   rankings = rankings || '{"shanghai_national":394,"shanghai_url":"https://www.shanghairanking.cn/institution/binzhou-university","shanghai_score":129.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{binzhou-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'binzhou';
+  uni_category = 'stem' WHERE slug = 'binzhou' OR 'binzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhejiang University of Water Resources and Electric Power',
   name_zh = '浙江水利水电学院',
   rankings = rankings || '{"shanghai_national":394,"shanghai_url":"https://www.shanghairanking.cn/institution/zhejiang-university-of-water-resources-and-electric-power","shanghai_score":129.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang-university-of-water-resources-and-electric-power}')) x),
   province = 'Zhejiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhejiang-water-resources-electric-power';
+  uni_category = 'stem' WHERE slug = 'zhejiang-water-resources-electric-power' OR 'zhejiang-water-resources-electric-power' = ANY(slug_aliases);
 UPDATE universities SET name = 'Longyan University',
   name_zh = '龙岩学院',
   rankings = rankings || '{"shanghai_national":398,"shanghai_url":"https://www.shanghairanking.cn/institution/longyan-university","shanghai_score":129.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{longyan-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'longyan';
+  uni_category = 'comprehensive' WHERE slug = 'longyan' OR 'longyan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qujing Normal University',
   name_zh = '曲靖师范学院',
   rankings = rankings || '{"shanghai_national":400,"shanghai_url":"https://www.shanghairanking.cn/institution/qujing-normal-university","shanghai_score":128.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qujing-normal-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'qujing';
+  uni_category = 'normal' WHERE slug = 'qujing' OR 'qujing' = ANY(slug_aliases);
 UPDATE universities SET name = 'North China Institute of Science & Technology',
   name_zh = '华北科技学院',
   rankings = rankings || '{"shanghai_national":401,"shanghai_url":"https://www.shanghairanking.cn/institution/north-china-institute-of-science-and-technology","shanghai_score":128.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{north-china-institute-of-science-and-technology}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'ncist';
+  uni_category = 'stem' WHERE slug = 'ncist' OR 'ncist' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taishan University',
   name_zh = '泰山学院',
   rankings = rankings || '{"shanghai_national":402,"shanghai_url":"https://www.shanghairanking.cn/institution/taishan-university","shanghai_score":128.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{taishan-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'taishan';
+  uni_category = 'comprehensive' WHERE slug = 'taishan' OR 'taishan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Weifang University',
   name_zh = '潍坊学院',
   rankings = rankings || '{"shanghai_national":403,"shanghai_url":"https://www.shanghairanking.cn/institution/weifang-university","shanghai_score":128.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{weifang-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'weifang';
+  uni_category = 'comprehensive' WHERE slug = 'weifang' OR 'weifang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei Normal University of Science and Technology',
   name_zh = '河北科技师范学院',
   rankings = rankings || '{"shanghai_national":404,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-normal-university-of-science-and-technology","shanghai_score":127.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-normal-university-of-science-and-technology}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hebei-7';
+  uni_category = 'normal' WHERE slug = 'hebei-7' OR 'hebei-7' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xiangnan University',
   name_zh = '湘南学院',
   rankings = rankings || '{"shanghai_national":405,"shanghai_url":"https://www.shanghairanking.cn/institution/xiangnan-university","shanghai_score":127.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xiangnan-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xiangnan';
+  uni_category = 'stem' WHERE slug = 'xiangnan' OR 'xiangnan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hengyang Normal University',
   name_zh = '衡阳师范学院',
   rankings = rankings || '{"shanghai_national":406,"shanghai_url":"https://www.shanghairanking.cn/institution/hengyang-normal-university","shanghai_score":127.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hengyang-normal-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hengyang';
+  uni_category = 'normal' WHERE slug = 'hengyang' OR 'hengyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan Institute of Engineering',
   name_zh = '湖南工程学院',
   rankings = rankings || '{"shanghai_national":406,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-institute-of-engineering","shanghai_score":127.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-institute-of-engineering}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hunan-6';
+  uni_category = 'stem' WHERE slug = 'hunan-6' OR 'hunan-6' = ANY(slug_aliases);
 UPDATE universities SET name = 'Neijiang Normal University',
   name_zh = '内江师范学院',
   rankings = rankings || '{"shanghai_national":408,"shanghai_url":"https://www.shanghairanking.cn/institution/neijiang-normal-university","shanghai_score":127.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{neijiang-normal-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'neijiang';
+  uni_category = 'normal' WHERE slug = 'neijiang' OR 'neijiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xuchang University',
   name_zh = '许昌学院',
   rankings = rankings || '{"shanghai_national":409,"shanghai_url":"https://www.shanghairanking.cn/institution/xuchang-university","shanghai_score":126.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xuchang-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xuchang';
+  uni_category = 'stem' WHERE slug = 'xuchang' OR 'xuchang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yibin University',
   name_zh = '宜宾学院',
   rankings = rankings || '{"shanghai_national":409,"shanghai_url":"https://www.shanghairanking.cn/institution/yibin-university","shanghai_score":126.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yibin-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yibin';
+  uni_category = 'comprehensive' WHERE slug = 'yibin' OR 'yibin' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guizhou Institute of Technology',
   name_zh = '贵州理工学院',
   rankings = rankings || '{"shanghai_national":411,"shanghai_url":"https://www.shanghairanking.cn/institution/guizhou-institute-of-technology","shanghai_score":126.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guizhou-institute-of-technology}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guizhou-4';
+  uni_category = 'stem' WHERE slug = 'guizhou-4' OR 'guizhou-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin University of Chemical Technology',
   name_zh = '吉林化工大学',
   rankings = rankings || '{"shanghai_national":412,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-university-of-chemical-technology","shanghai_score":126.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-university-of-chemical-technology}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jilin-chemical';
+  uni_category = 'stem' WHERE slug = 'jilin-chemical' OR 'jilin-chemical' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ningxia Normal University',
   name_zh = '宁夏师范大学',
   rankings = rankings || '{"shanghai_national":413,"shanghai_url":"https://www.shanghairanking.cn/institution/ningxia-normal-university","shanghai_score":126.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ningxia-normal-university}')) x),
   province = 'Ningxia',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'ningxia-2';
+  uni_category = 'normal' WHERE slug = 'ningxia-2' OR 'ningxia-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hefei Normal University',
   name_zh = '合肥师范学院',
   rankings = rankings || '{"shanghai_national":414,"shanghai_url":"https://www.shanghairanking.cn/institution/hefei-normal-university","shanghai_score":126.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hefei-normal-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hefei-3';
+  uni_category = 'normal' WHERE slug = 'hefei-3' OR 'hefei-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei Polytechnic University',
   name_zh = '湖北理工学院',
   rankings = rankings || '{"shanghai_national":414,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-polytechnic-university","shanghai_score":126.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-polytechnic-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hubei-6';
+  uni_category = 'stem' WHERE slug = 'hubei-6' OR 'hubei-6' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiangsu Second Normal University',
   name_zh = '江苏第二师范学院',
   rankings = rankings || '{"shanghai_national":414,"shanghai_url":"https://www.shanghairanking.cn/institution/jiangsu-second-normal-university","shanghai_score":126.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiangsu-second-normal-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jiangsu-second';
+  uni_category = 'normal' WHERE slug = 'jiangsu-second' OR 'jiangsu-second' = ANY(slug_aliases);
 UPDATE universities SET name = 'West Anhui University',
   name_zh = '皖西学院',
   rankings = rankings || '{"shanghai_national":417,"shanghai_url":"https://www.shanghairanking.cn/institution/west-anhui-university","shanghai_score":125.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{west-anhui-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'anhui-8';
+  uni_category = 'normal' WHERE slug = 'anhui-8' OR 'anhui-8' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anyang Normal University',
   name_zh = '安阳师范学院',
   rankings = rankings || '{"shanghai_national":418,"shanghai_url":"https://www.shanghairanking.cn/institution/anyang-normal-university","shanghai_score":125.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anyang-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'anyang';
+  uni_category = 'normal' WHERE slug = 'anyang' OR 'anyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hubei Engineering University',
   name_zh = '湖北工程学院',
   rankings = rankings || '{"shanghai_national":419,"shanghai_url":"https://www.shanghairanking.cn/institution/hubei-engineering-university","shanghai_score":125.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hubei-engineering-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hubei-5';
+  uni_category = 'comprehensive' WHERE slug = 'hubei-5' OR 'hubei-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanyang Normal University',
   name_zh = '南阳师范学院',
   rankings = rankings || '{"shanghai_national":419,"shanghai_url":"https://www.shanghairanking.cn/institution/nanyang-normal-university","shanghai_score":125.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanyang-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'nanyang';
+  uni_category = 'normal' WHERE slug = 'nanyang' OR 'nanyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Suzhou City University',
   name_zh = '苏州城市学院',
   rankings = rankings || '{"shanghai_national":419,"shanghai_url":"https://www.shanghairanking.cn/institution/wenzheng-college-of-soochow-university","shanghai_score":125.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wenzheng-college-of-soochow-university}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'wenzheng-soochow';
+  uni_category = 'comprehensive' WHERE slug = 'wenzheng-soochow' OR 'wenzheng-soochow' = ANY(slug_aliases);
 UPDATE universities SET name = 'Beibu Gulf University',
   name_zh = '北部湾大学',
   rankings = rankings || '{"shanghai_national":422,"shanghai_url":"https://www.shanghairanking.cn/institution/beibu-gulf-university","shanghai_score":125.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{beibu-gulf-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'beibu-gulf';
+  uni_category = 'comprehensive' WHERE slug = 'beibu-gulf' OR 'beibu-gulf' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xi''an University',
   name_zh = '西安文理学院',
   rankings = rankings || '{"shanghai_national":422,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-university","shanghai_score":125.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xi-5';
+  uni_category = 'normal' WHERE slug = 'xi-5' OR 'xi-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangdong University of Education',
   name_zh = '广东第二师范学院',
   rankings = rankings || '{"shanghai_national":424,"shanghai_url":"https://www.shanghairanking.cn/institution/guangdong-university-of-education","shanghai_score":124.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangdong-university-of-education}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guangdong-education';
+  uni_category = 'normal' WHERE slug = 'guangdong-education' OR 'guangdong-education' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaoguan University',
   name_zh = '韶关学院',
   rankings = rankings || '{"shanghai_national":425,"shanghai_url":"https://www.shanghairanking.cn/institution/shaoguan-university","shanghai_score":124.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaoguan-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shaoguan';
+  uni_category = 'comprehensive' WHERE slug = 'shaoguan' OR 'shaoguan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Leshan Normal University',
   name_zh = '乐山师范学院',
   rankings = rankings || '{"shanghai_national":426,"shanghai_url":"https://www.shanghairanking.cn/institution/leshan-normal-university","shanghai_score":124.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{leshan-normal-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'leshan';
+  uni_category = 'normal' WHERE slug = 'leshan' OR 'leshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuyi University',
   name_zh = '武夷学院',
   rankings = rankings || '{"shanghai_national":426,"shanghai_url":"https://www.shanghairanking.cn/institution/wuyi-university-wuyiu","shanghai_score":124.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuyi-university-wuyiu}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'wuyi-2';
+  uni_category = 'comprehensive' WHERE slug = 'wuyi-2' OR 'wuyi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liupanshui Normal University',
   name_zh = '六盘水师范学院',
   rankings = rankings || '{"shanghai_national":428,"shanghai_url":"https://www.shanghairanking.cn/institution/liupanshui-normal-university","shanghai_score":124}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liupanshui-normal-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'liupanshui';
+  uni_category = 'normal' WHERE slug = 'liupanshui' OR 'liupanshui' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shangqiu Normal University',
   name_zh = '商丘师范学院',
   rankings = rankings || '{"shanghai_national":429,"shanghai_url":"https://www.shanghairanking.cn/institution/shangqiu-normal-university","shanghai_score":123.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shangqiu-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shangqiu';
+  uni_category = 'normal' WHERE slug = 'shangqiu' OR 'shangqiu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shijiazhuang University',
   name_zh = '石家庄学院',
   rankings = rankings || '{"shanghai_national":429,"shanghai_url":"https://www.shanghairanking.cn/institution/shijiazhuang-university","shanghai_score":123.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shijiazhuang-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shijiazhuang';
+  uni_category = 'normal' WHERE slug = 'shijiazhuang' OR 'shijiazhuang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yichun University',
   name_zh = '宜春学院',
   rankings = rankings || '{"shanghai_national":431,"shanghai_url":"https://www.shanghairanking.cn/institution/yichun-university","shanghai_score":123.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yichun-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yichun';
+  uni_category = 'comprehensive' WHERE slug = 'yichun' OR 'yichun' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zaozhuang University',
   name_zh = '枣庄学院',
   rankings = rankings || '{"shanghai_national":432,"shanghai_url":"https://www.shanghairanking.cn/institution/zaozhuang-university","shanghai_score":122.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zaozhuang-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'zaozhuang';
+  uni_category = 'comprehensive' WHERE slug = 'zaozhuang' OR 'zaozhuang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chongqing University of Education',
   name_zh = '重庆第二师范学院',
   rankings = rankings || '{"shanghai_national":433,"shanghai_url":"https://www.shanghairanking.cn/institution/chongqing-university-of-education","shanghai_score":122.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chongqing-university-of-education}')) x),
   province = 'Chongqing',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'chongqing-education';
+  uni_category = 'normal' WHERE slug = 'chongqing-education' OR 'chongqing-education' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huanghuai University',
   name_zh = '黄淮学院',
   rankings = rankings || '{"shanghai_national":434,"shanghai_url":"https://www.shanghairanking.cn/institution/huanghuai-university","shanghai_score":122.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huanghuai-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huanghuai';
+  uni_category = 'normal' WHERE slug = 'huanghuai' OR 'huanghuai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chuzhou University',
   name_zh = '滁州学院',
   rankings = rankings || '{"shanghai_national":435,"shanghai_url":"https://www.shanghairanking.cn/institution/chuzhou-university","shanghai_score":122.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chuzhou-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'chuzhou';
+  uni_category = 'comprehensive' WHERE slug = 'chuzhou' OR 'chuzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huaihua University',
   name_zh = '怀化学院',
   rankings = rankings || '{"shanghai_national":436,"shanghai_url":"https://www.shanghairanking.cn/institution/huaihua-university","shanghai_score":122.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huaihua-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'huaihua';
+  uni_category = 'comprehensive' WHERE slug = 'huaihua' OR 'huaihua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yulin Normal University',
   name_zh = '玉林师范学院',
   rankings = rankings || '{"shanghai_national":436,"shanghai_url":"https://www.shanghairanking.cn/institution/yulin-normal-university","shanghai_score":122.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yulin-normal-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yulin-2';
+  uni_category = 'normal' WHERE slug = 'yulin-2' OR 'yulin-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaoyang University',
   name_zh = '邵阳学院',
   rankings = rankings || '{"shanghai_national":438,"shanghai_url":"https://www.shanghairanking.cn/institution/shaoyang-university","shanghai_score":122.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaoyang-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shaoyang';
+  uni_category = 'stem' WHERE slug = 'shaoyang' OR 'shaoyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tangshan Normal University',
   name_zh = '唐山师范学院',
   rankings = rankings || '{"shanghai_national":438,"shanghai_url":"https://www.shanghairanking.cn/institution/tangshan-normal-university","shanghai_score":122.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tangshan-normal-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'tangshan';
+  uni_category = 'normal' WHERE slug = 'tangshan' OR 'tangshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanchang Normal University',
   name_zh = '南昌师范学院',
   rankings = rankings || '{"shanghai_national":440,"shanghai_url":"https://www.shanghairanking.cn/institution/nanchang-normal-university","shanghai_score":122.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanchang-normal-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'nanchang-3';
+  uni_category = 'normal' WHERE slug = 'nanchang-3' OR 'nanchang-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhaoqing University',
   name_zh = '肇庆学院',
   rankings = rankings || '{"shanghai_national":440,"shanghai_url":"https://www.shanghairanking.cn/institution/zhaoqing-university","shanghai_score":122.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhaoqing-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'zhaoqing';
+  uni_category = 'comprehensive' WHERE slug = 'zhaoqing' OR 'zhaoqing' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangzhou Maritime University',
   name_zh = '广州航海学院',
   rankings = rankings || '{"shanghai_national":442,"shanghai_url":"https://www.shanghairanking.cn/institution/guangzhou-maritime-university","shanghai_score":122}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangzhou-maritime-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guangzhou-maritime';
+  uni_category = 'stem' WHERE slug = 'guangzhou-maritime' OR 'guangzhou-maritime' = ANY(slug_aliases);
 UPDATE universities SET name = 'Pingdingshan University',
   name_zh = '平顶山学院',
   rankings = rankings || '{"shanghai_national":442,"shanghai_url":"https://www.shanghairanking.cn/institution/pingdingshan-university","shanghai_score":122}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{pingdingshan-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'pingdingshan';
+  uni_category = 'normal' WHERE slug = 'pingdingshan' OR 'pingdingshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan University Of Engineering',
   name_zh = '河南工程学院',
   rankings = rankings || '{"shanghai_national":444,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-university-of-engineering","shanghai_score":121.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-university-of-engineering}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'henan-8';
+  uni_category = 'stem' WHERE slug = 'henan-8' OR 'henan-8' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xihang University',
   name_zh = '西安航空学院',
   rankings = rankings || '{"shanghai_national":444,"shanghai_url":"https://www.shanghairanking.cn/institution/xian-aeronautical-university","shanghai_score":121.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xian-aeronautical-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xi-aeronautical';
+  uni_category = 'stem' WHERE slug = 'xi-aeronautical' OR 'xi-aeronautical' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chengdu Technological University',
   name_zh = '成都工业学院',
   rankings = rankings || '{"shanghai_national":446,"shanghai_url":"https://www.shanghairanking.cn/institution/chengdu-technological-university","shanghai_score":121.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chengdu-technological-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'chengdu-technological';
+  uni_category = 'stem' WHERE slug = 'chengdu-technological' OR 'chengdu-technological' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tianshui Normal University',
   name_zh = '天水师范大学',
   rankings = rankings || '{"shanghai_national":446,"shanghai_url":"https://www.shanghairanking.cn/institution/tianshui-normal-university","shanghai_score":121.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tianshui-normal-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'tianshui';
+  uni_category = 'normal' WHERE slug = 'tianshui' OR 'tianshui' = ANY(slug_aliases);
 UPDATE universities SET name = 'HeXi University',
   name_zh = '河西学院',
   rankings = rankings || '{"shanghai_national":448,"shanghai_url":"https://www.shanghairanking.cn/institution/hexi-university","shanghai_score":121.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hexi-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hexi';
+  uni_category = 'comprehensive' WHERE slug = 'hexi' OR 'hexi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanjing Normal University of Special Education',
   name_zh = '南京特殊教育师范学院',
   rankings = rankings || '{"shanghai_national":448,"shanghai_url":"https://www.shanghairanking.cn/institution/nanjing-normal-university-of-special-education","shanghai_score":121.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanjing-normal-university-of-special-education}')) x),
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'nanjing-special-education';
+  uni_category = 'normal' WHERE slug = 'nanjing-special-education' OR 'nanjing-special-education' = ANY(slug_aliases);
 UPDATE universities SET name = 'Baoji University of Arts and Sciences',
   name_zh = '宝鸡文理学院',
   rankings = rankings || '{"shanghai_national":450,"shanghai_url":"https://www.shanghairanking.cn/institution/baoji-university-of-arts-and-sciences","shanghai_score":121.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{baoji-university-of-arts-and-sciences}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'baoji-arts-sciences';
+  uni_category = 'normal' WHERE slug = 'baoji-arts-sciences' OR 'baoji-arts-sciences' = ANY(slug_aliases);
 UPDATE universities SET name = 'Nanyang Institute Of Technology',
   name_zh = '南阳理工学院',
   rankings = rankings || '{"shanghai_national":450,"shanghai_url":"https://www.shanghairanking.cn/institution/nanyang-institute-of-technology","shanghai_score":121.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{nanyang-institute-of-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'nanyang-2';
+  uni_category = 'stem' WHERE slug = 'nanyang-2' OR 'nanyang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ningde Normal University',
   name_zh = '宁德师范学院',
   rankings = rankings || '{"shanghai_national":450,"shanghai_url":"https://www.shanghairanking.cn/institution/ningde-normal-university","shanghai_score":121.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ningde-normal-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'ningde';
+  uni_category = 'normal' WHERE slug = 'ningde' OR 'ningde' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xichang University',
   name_zh = '西昌学院',
   rankings = rankings || '{"shanghai_national":450,"shanghai_url":"https://www.shanghairanking.cn/institution/xichang-college","shanghai_score":121.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xichang-college}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xichang';
+  uni_category = 'comprehensive' WHERE slug = 'xichang' OR 'xichang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan University of Urban Construction',
   name_zh = '河南城建学院',
   rankings = rankings || '{"shanghai_national":454,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-university-of-urban-construction","shanghai_score":120.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-university-of-urban-construction}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'henan-urban-construction';
+  uni_category = 'stem' WHERE slug = 'henan-urban-construction' OR 'henan-urban-construction' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heilongjiang Institute of Technology',
   name_zh = '黑龙江工程学院',
   rankings = rankings || '{"shanghai_national":455,"shanghai_url":"https://www.shanghairanking.cn/institution/heilongjiang-institute-of-technology","shanghai_score":120.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{heilongjiang-institute-of-technology}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'heilongjiang-3';
+  uni_category = 'stem' WHERE slug = 'heilongjiang-3' OR 'heilongjiang-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan University of Arts and Science',
   name_zh = '湖南文理学院',
   rankings = rankings || '{"shanghai_national":455,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-university-of-arts-and-science","shanghai_score":120.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-university-of-arts-and-science}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hunan-arts';
+  uni_category = 'comprehensive' WHERE slug = 'hunan-arts' OR 'hunan-arts' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shangrao Normal University',
   name_zh = '上饶师范学院',
   rankings = rankings || '{"shanghai_national":457,"shanghai_url":"https://www.shanghairanking.cn/institution/shangrao-normal-university","shanghai_score":120.5}'::jsonb,
@@ -3166,420 +3166,420 @@ UPDATE universities SET name = 'Shangrao Normal University',
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
   uni_category = 'normal',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/71974327.png' WHERE slug = 'shangrao';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/71974327.png' WHERE slug = 'shangrao' OR 'shangrao' = ANY(slug_aliases);
 UPDATE universities SET name = 'Baotou Teachers'' College',
   name_zh = '内蒙古科技大学包头师范学院',
   rankings = rankings || '{"shanghai_national":458,"shanghai_url":"https://www.shanghairanking.cn/institution/baotou-teachers-college","shanghai_score":120.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{baotou-teachers-college}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'baotou-teachers';
+  uni_category = 'comprehensive' WHERE slug = 'baotou-teachers' OR 'baotou-teachers' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tonghua Normal University',
   name_zh = '通化师范学院',
   rankings = rankings || '{"shanghai_national":459,"shanghai_url":"https://www.shanghairanking.cn/institution/tonghua-normal-university","shanghai_score":120.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tonghua-normal-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'tonghua';
+  uni_category = 'normal' WHERE slug = 'tonghua' OR 'tonghua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jining University',
   name_zh = '济宁学院',
   rankings = rankings || '{"shanghai_national":460,"shanghai_url":"https://www.shanghairanking.cn/institution/jining-university","shanghai_score":120.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jining-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jining';
+  uni_category = 'normal' WHERE slug = 'jining' OR 'jining' = ANY(slug_aliases);
 UPDATE universities SET name = 'Weinan Normal University',
   name_zh = '渭南师范学院',
   rankings = rankings || '{"shanghai_national":460,"shanghai_url":"https://www.shanghairanking.cn/institution/weinan-normal-university","shanghai_score":120.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{weinan-normal-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'weinan';
+  uni_category = 'normal' WHERE slug = 'weinan' OR 'weinan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan University of Science and Engineering',
   name_zh = '湖南科技学院',
   rankings = rankings || '{"shanghai_national":462,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-university-of-science-and-engineering","shanghai_score":120.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-university-of-science-and-engineering}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hunan-7';
+  uni_category = 'comprehensive' WHERE slug = 'hunan-7' OR 'hunan-7' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hainan Tropical Ocean University',
   name_zh = '海南热带海洋学院',
   rankings = rankings || '{"shanghai_national":463,"shanghai_url":"https://www.shanghairanking.cn/institution/hainan-tropical-ocean-university","shanghai_score":119.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hainan-tropical-ocean-university}')) x),
   province = 'Hainan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hainan-tropical-ocean';
+  uni_category = 'comprehensive' WHERE slug = 'hainan-tropical-ocean' OR 'hainan-tropical-ocean' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan City University',
   name_zh = '湖南城市学院',
   rankings = rankings || '{"shanghai_national":463,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-city-university","shanghai_score":119.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-city-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hunan-city';
+  uni_category = 'comprehensive' WHERE slug = 'hunan-city' OR 'hunan-city' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qilu Normal University',
   name_zh = '齐鲁师范学院',
   rankings = rankings || '{"shanghai_national":465,"shanghai_url":"https://www.shanghairanking.cn/institution/qilu-normal-university","shanghai_score":119.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qilu-normal-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'qilu-2';
+  uni_category = 'normal' WHERE slug = 'qilu-2' OR 'qilu-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Langfang Normal University',
   name_zh = '廊坊师范学院',
   rankings = rankings || '{"shanghai_national":466,"shanghai_url":"https://www.shanghairanking.cn/institution/langfang-teachers-university","shanghai_score":119.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{langfang-teachers-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'langfang-teachers';
+  uni_category = 'normal' WHERE slug = 'langfang-teachers' OR 'langfang-teachers' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yuxi Normal University',
   name_zh = '玉溪师范学院',
   rankings = rankings || '{"shanghai_national":467,"shanghai_url":"https://www.shanghairanking.cn/institution/yuxi-normal-university","shanghai_score":119.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yuxi-normal-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yuxi';
+  uni_category = 'normal' WHERE slug = 'yuxi' OR 'yuxi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Mudanjiang Normal University',
   name_zh = '牡丹江师范学院',
   rankings = rankings || '{"shanghai_national":468,"shanghai_url":"https://www.shanghairanking.cn/institution/mudanjiang-normal-university","shanghai_score":119}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{mudanjiang-normal-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'mudanjiang';
+  uni_category = 'normal' WHERE slug = 'mudanjiang' OR 'mudanjiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Harbin University',
   name_zh = '哈尔滨学院',
   rankings = rankings || '{"shanghai_national":469,"shanghai_url":"https://www.shanghairanking.cn/institution/harbin-university","shanghai_score":118.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{harbin-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'harbin-3';
+  uni_category = 'comprehensive' WHERE slug = 'harbin-3' OR 'harbin-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanxi Datong University',
   name_zh = '山西大同大学',
   rankings = rankings || '{"shanghai_national":470,"shanghai_url":"https://www.shanghairanking.cn/institution/shanxi-datong-university","shanghai_score":118.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanxi-datong-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shanxi-datong';
+  uni_category = 'comprehensive' WHERE slug = 'shanxi-datong' OR 'shanxi-datong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan Institute of Technology',
   name_zh = '湖南工学院',
   rankings = rankings || '{"shanghai_national":471,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-institute-of-technology","shanghai_score":118.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-institute-of-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'hunan-8';
+  uni_category = 'stem' WHERE slug = 'hunan-8' OR 'hunan-8' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hanshan Normal University',
   name_zh = '韩山师范学院',
   rankings = rankings || '{"shanghai_national":472,"shanghai_url":"https://www.shanghairanking.cn/institution/hanshan-normal-university","shanghai_score":118.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hanshan-normal-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hanshan';
+  uni_category = 'normal' WHERE slug = 'hanshan' OR 'hanshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiujiang University',
   name_zh = '九江学院',
   rankings = rankings || '{"shanghai_national":473,"shanghai_url":"https://www.shanghairanking.cn/institution/jiujiang-university","shanghai_score":118.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiujiang-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jiujiang';
+  uni_category = 'comprehensive' WHERE slug = 'jiujiang' OR 'jiujiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taiyuan Institute of Technology',
   name_zh = '太原工业学院',
   rankings = rankings || '{"shanghai_national":474,"shanghai_url":"https://www.shanghairanking.cn/institution/taiyuan-institute-of-technology","shanghai_score":118}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{taiyuan-institute-of-technology}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'taiyuan-4';
+  uni_category = 'stem' WHERE slug = 'taiyuan-4' OR 'taiyuan-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Longdong University',
   name_zh = '陇东学院',
   rankings = rankings || '{"shanghai_national":476,"shanghai_url":"https://www.shanghairanking.cn/institution/long-dong-university","shanghai_score":117.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{long-dong-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'long-dong';
+  uni_category = 'normal' WHERE slug = 'long-dong' OR 'long-dong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Fujian Polytechnic Normal University',
   name_zh = '福建技术师范学院',
   rankings = rankings || '{"shanghai_national":477,"shanghai_url":"https://www.shanghairanking.cn/institution/fujian-polytechnic-normal-university","shanghai_score":117.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{fujian-polytechnic-normal-university}')) x),
   province = 'Fujian',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'fujian-3';
+  uni_category = 'normal' WHERE slug = 'fujian-3' OR 'fujian-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anshan Normal University',
   name_zh = '鞍山师范学院',
   rankings = rankings || '{"shanghai_national":478,"shanghai_url":"https://www.shanghairanking.cn/institution/anshan-normal-university-liaoning-china","shanghai_score":117.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anshan-normal-university-liaoning-china}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'anshan-liaoning';
+  uni_category = 'normal' WHERE slug = 'anshan-liaoning' OR 'anshan-liaoning' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chaohu University',
   name_zh = '巢湖学院',
   rankings = rankings || '{"shanghai_national":479,"shanghai_url":"https://www.shanghairanking.cn/institution/chaohu-university","shanghai_score":117.2}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chaohu-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'chaohu';
+  uni_category = 'normal' WHERE slug = 'chaohu' OR 'chaohu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Youth University of Political Science',
   name_zh = '山东青年政治学院',
   rankings = rankings || '{"shanghai_national":480,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-youth-university-of-political-science","shanghai_score":117.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-youth-university-of-political-science}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shandong-youth-political';
+  uni_category = 'comprehensive' WHERE slug = 'shandong-youth-political' OR 'shandong-youth-political' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huangshan University',
   name_zh = '黄山学院',
   rankings = rankings || '{"shanghai_national":481,"shanghai_url":"https://www.shanghairanking.cn/institution/huangshan-university","shanghai_score":117}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huangshan-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huangshan';
+  uni_category = 'normal' WHERE slug = 'huangshan' OR 'huangshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin Engineering Normal University',
   name_zh = '吉林工程技术师范学院',
   rankings = rankings || '{"shanghai_national":482,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-engineering-normal-university","shanghai_score":116.8}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-engineering-normal-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jilin-3';
+  uni_category = 'normal' WHERE slug = 'jilin-3' OR 'jilin-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei Minzu Normal University',
   name_zh = '河北民族师范学院',
   rankings = rankings || '{"shanghai_national":483,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-normal-university-for-nationalities","shanghai_score":116.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-normal-university-for-nationalities}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hebei-nationalities';
+  uni_category = 'normal' WHERE slug = 'hebei-nationalities' OR 'hebei-nationalities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan Tourism University',
   name_zh = '四川旅游学院',
   rankings = rankings || '{"shanghai_national":483,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-tourism-university","shanghai_score":116.4}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-tourism-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'sichuan-tourism';
+  uni_category = 'comprehensive' WHERE slug = 'sichuan-tourism' OR 'sichuan-tourism' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Women''s University',
   name_zh = '山东女子学院',
   rankings = rankings || '{"shanghai_national":485,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-womens-university","shanghai_score":116.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-womens-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shandong-women-s';
+  uni_category = 'comprehensive' WHERE slug = 'shandong-women-s' OR 'shandong-women-s' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Management University',
   name_zh = '山东管理学院',
   rankings = rankings || '{"shanghai_national":486,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-management-university","shanghai_score":116}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shandong-management-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shandong-management';
+  uni_category = 'comprehensive' WHERE slug = 'shandong-management' OR 'shandong-management' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xianyang Normal University',
   name_zh = '咸阳师范学院',
   rankings = rankings || '{"shanghai_national":486,"shanghai_url":"https://www.shanghairanking.cn/institution/xianyang-normal-university","shanghai_score":116}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xianyang-normal-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xianyang';
+  uni_category = 'normal' WHERE slug = 'xianyang' OR 'xianyang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jilin Agricultural Science and Technology University',
   name_zh = '吉林农业科技学院',
   rankings = rankings || '{"shanghai_national":488,"shanghai_url":"https://www.shanghairanking.cn/institution/jilin-agricultural-science-and-technology-university","shanghai_score":115.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jilin-agricultural-science-and-technology-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'jilin-4';
+  uni_category = 'agriculture' WHERE slug = 'jilin-4' OR 'jilin-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lanzhou City University',
   name_zh = '兰州城市学院',
   rankings = rankings || '{"shanghai_national":489,"shanghai_url":"https://www.shanghairanking.cn/institution/lanzhou-city-university","shanghai_score":115.6}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lanzhou-city-university}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'lanzhou-city';
+  uni_category = 'comprehensive' WHERE slug = 'lanzhou-city' OR 'lanzhou-city' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hunan University of Humanities, Science and Technology',
   name_zh = '湖南人文科技学院',
   rankings = rankings || '{"shanghai_national":490,"shanghai_url":"https://www.shanghairanking.cn/institution/hunan-university-of-humanities-science-and-technology","shanghai_score":115.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hunan-university-of-humanities-science-and-technology}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hunan-humanities';
+  uni_category = 'normal' WHERE slug = 'hunan-humanities' OR 'hunan-humanities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Suzhou University',
   name_zh = '宿州学院',
   rankings = rankings || '{"shanghai_national":490,"shanghai_url":"https://www.shanghairanking.cn/institution/suzhou-university","shanghai_score":115.5}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{suzhou-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'suzhou-2';
+  uni_category = 'normal' WHERE slug = 'suzhou-2' OR 'suzhou-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anyang Institute of Technology',
   name_zh = '安阳工学院',
   rankings = rankings || '{"shanghai_national":492,"shanghai_url":"https://www.shanghairanking.cn/institution/anyang-institute-of-technology","shanghai_score":115.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anyang-institute-of-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'anyang-2';
+  uni_category = 'stem' WHERE slug = 'anyang-2' OR 'anyang-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Kaili University',
   name_zh = '凯里学院',
   rankings = rankings || '{"shanghai_national":493,"shanghai_url":"https://www.shanghairanking.cn/institution/kaili-university","shanghai_score":115.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{kaili-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'kaili';
+  uni_category = 'comprehensive' WHERE slug = 'kaili' OR 'kaili' = ANY(slug_aliases);
 UPDATE universities SET name = 'Anshun University',
   name_zh = '安顺学院',
   rankings = rankings || '{"shanghai_national":494,"shanghai_url":"https://www.shanghairanking.cn/institution/anshun-university","shanghai_score":114.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{anshun-university}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'anshun';
+  uni_category = 'comprehensive' WHERE slug = 'anshun' OR 'anshun' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changzhi University',
   name_zh = '长治学院',
   rankings = rankings || '{"shanghai_national":494,"shanghai_url":"https://www.shanghairanking.cn/institution/changzhi-university","shanghai_score":114.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changzhi-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'changzhi';
+  uni_category = 'normal' WHERE slug = 'changzhi' OR 'changzhi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Huainan Normal University',
   name_zh = '淮南师范学院',
   rankings = rankings || '{"shanghai_national":496,"shanghai_url":"https://www.shanghairanking.cn/institution/huainan-normal-university","shanghai_score":114.1}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{huainan-normal-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'huainan';
+  uni_category = 'normal' WHERE slug = 'huainan' OR 'huainan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hezhou University',
   name_zh = '贺州学院',
   rankings = rankings || '{"shanghai_national":497,"shanghai_url":"https://www.shanghairanking.cn/institution/hezhou-university","shanghai_score":114}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hezhou-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hezhou';
+  uni_category = 'comprehensive' WHERE slug = 'hezhou' OR 'hezhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinxiang University',
   name_zh = '新乡学院',
   rankings = rankings || '{"shanghai_national":498,"shanghai_url":"https://www.shanghairanking.cn/institution/xinxiang-university","shanghai_score":113.9}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinxiang-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xinxiang';
+  uni_category = 'stem' WHERE slug = 'xinxiang' OR 'xinxiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jiaying University',
   name_zh = '嘉应学院',
   rankings = rankings || '{"shanghai_national":499,"shanghai_url":"https://www.shanghairanking.cn/institution/jiaying-university","shanghai_score":113.7}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jiaying-university}')) x),
   province = 'Guangdong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'jiaying';
+  uni_category = 'comprehensive' WHERE slug = 'jiaying' OR 'jiaying' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yili Normal University',
   name_zh = '伊犁师范大学',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/yili-normal-university","shanghai_score":113.3}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yili-normal-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yili';
+  uni_category = 'normal' WHERE slug = 'yili' OR 'yili' = ANY(slug_aliases);
 UPDATE universities SET name = 'ABA TEACHERS COLLEGE',
   name_zh = '阿坝师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/aba-teachers-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{aba-teachers-university}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'aba-teachers';
+  uni_category = 'normal' WHERE slug = 'aba-teachers' OR 'aba-teachers' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ankang University',
   name_zh = '安康学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/ankang-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ankang-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ankang';
+  uni_category = 'comprehensive' WHERE slug = 'ankang' OR 'ankang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Baicheng Normal University',
   name_zh = '白城师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/baicheng-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{baicheng-normal-university}')) x),
   province = 'Jilin',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'baicheng';
+  uni_category = 'normal' WHERE slug = 'baicheng' OR 'baicheng' = ANY(slug_aliases);
 UPDATE universities SET name = 'Baise University',
   name_zh = '百色学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/baise-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{baise-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'baise';
+  uni_category = 'comprehensive' WHERE slug = 'baise' OR 'baise' = ANY(slug_aliases);
 UPDATE universities SET name = 'Baoding University',
   name_zh = '保定学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/baoding-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{baoding-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'baoding';
+  uni_category = 'normal' WHERE slug = 'baoding' OR 'baoding' = ANY(slug_aliases);
 UPDATE universities SET name = 'Baoshan University',
   name_zh = '保山学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/baoshan-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{baoshan-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'baoshan';
+  uni_category = 'normal' WHERE slug = 'baoshan' OR 'baoshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Bengbu University',
   name_zh = '蚌埠学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/bengbu-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{bengbu-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'bengbu';
+  uni_category = 'stem' WHERE slug = 'bengbu' OR 'bengbu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Bozhou University',
   name_zh = '亳州学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/bozhou-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{bozhou-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'bozhou';
+  uni_category = 'normal' WHERE slug = 'bozhou' OR 'bozhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Cangzhou Normal University',
   name_zh = '沧州师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/cangzhou-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{cangzhou-normal-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'cangzhou';
+  uni_category = 'normal' WHERE slug = 'cangzhou' OR 'cangzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changji University',
   name_zh = '昌吉学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/changji-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changji-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'changji';
+  uni_category = 'normal' WHERE slug = 'changji' OR 'changji' = ANY(slug_aliases);
 UPDATE universities SET name = 'Changsha Normal University',
   name_zh = '长沙师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/changsha-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{changsha-normal-university}')) x),
   province = 'Hunan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'changsha-3';
+  uni_category = 'normal' WHERE slug = 'changsha-3' OR 'changsha-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chifeng University',
   name_zh = '赤峰学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/chifeng-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chifeng-university}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'chifeng';
+  uni_category = 'comprehensive' WHERE slug = 'chifeng' OR 'chifeng' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chizhou University',
   name_zh = '池州学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/chizhou-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chizhou-university}')) x),
   province = 'Anhui',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'chizhou';
+  uni_category = 'normal' WHERE slug = 'chizhou' OR 'chizhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Chuxiong Normal University',
   name_zh = '楚雄师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/chuxiong-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{chuxiong-normal-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'chuxiong';
+  uni_category = 'normal' WHERE slug = 'chuxiong' OR 'chuxiong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Daqing Normal University',
   name_zh = '大庆师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/daqing-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{daqing-normal-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'daqing';
+  uni_category = 'comprehensive' WHERE slug = 'daqing' OR 'daqing' = ANY(slug_aliases);
 UPDATE universities SET name = 'West Yunnan University',
   name_zh = '滇西科技师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/west-yunnan-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{west-yunnan-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'yunnan-4';
+  uni_category = 'normal' WHERE slug = 'yunnan-4' OR 'yunnan-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Ordos Institute of Technology',
   name_zh = '鄂尔多斯应用技术学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/ordos-institute-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{ordos-institute-of-technology}')) x),
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'ordos';
+  uni_category = 'comprehensive' WHERE slug = 'ordos' OR 'ordos' = ANY(slug_aliases);
 UPDATE universities SET name = 'Gandong University',
   name_zh = '赣东学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/east-china-institute-of-technology-yangtze-river-college"}'::jsonb,
@@ -3587,70 +3587,70 @@ UPDATE universities SET name = 'Gandong University',
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
   uni_category = 'stem',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/44067122.png' WHERE slug = 'yangtze-river';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/44067122.png' WHERE slug = 'yangtze-river' OR 'yangtze-river' = ANY(slug_aliases);
 UPDATE universities SET name = 'Gannan University of Science and Technology',
   name_zh = '赣南科技学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/college-of-applied-science-jiangxi-university-of-science-and-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{college-of-applied-science-jiangxi-university-of-science-and-technology}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'applied-jiangxi';
+  uni_category = 'stem' WHERE slug = 'applied-jiangxi' OR 'applied-jiangxi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Gansu Minzu Normal University',
   name_zh = '甘肃民族师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/gansu-normal-university-for-nationalities"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{gansu-normal-university-for-nationalities}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'gansu-nationalities';
+  uni_category = 'normal' WHERE slug = 'gansu-nationalities' OR 'gansu-nationalities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangxi Science & Technology Normal University',
   name_zh = '广西科技师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/guangxi-science-and-technology-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangxi-science-and-technology-normal-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guangxi-4';
+  uni_category = 'normal' WHERE slug = 'guangxi-4' OR 'guangxi-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guangxi Minzu Normal University',
   name_zh = '广西民族师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/guangxi-normal-university-for-nationalities"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guangxi-normal-university-for-nationalities}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guangxi-nationalities';
+  uni_category = 'normal' WHERE slug = 'guangxi-nationalities' OR 'guangxi-nationalities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guilin University of Aerospace Technology',
   name_zh = '桂林航天工业学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/guilin-university-of-aerospace-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guilin-university-of-aerospace-technology}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'guilin-aerospace';
+  uni_category = 'stem' WHERE slug = 'guilin-aerospace' OR 'guilin-aerospace' = ANY(slug_aliases);
 UPDATE universities SET name = 'Guizhou University of Engineering Science',
   name_zh = '贵州工程应用技术学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/guizhou-university-of-engineering-science"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{guizhou-university-of-engineering-science}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'guizhou-5';
+  uni_category = 'normal' WHERE slug = 'guizhou-5' OR 'guizhou-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Handan University',
   name_zh = '邯郸学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/handan-college"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{handan-college}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'handan';
+  uni_category = 'normal' WHERE slug = 'handan' OR 'handan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hanjiang Normal University',
   name_zh = '汉江师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hanjiang-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hanjiang-normal-university}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hanjiang';
+  uni_category = 'normal' WHERE slug = 'hanjiang' OR 'hanjiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei University of Environmental Engineering',
   name_zh = '河北环境工程学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-university-of-environmental-engineering"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hebei-university-of-environmental-engineering}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hebei-environmental';
+  uni_category = 'comprehensive' WHERE slug = 'hebei-environmental' OR 'hebei-environmental' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hebei University of Architecture',
   name_zh = '河北建筑工程学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hebei-university-of-architecture"}'::jsonb,
@@ -3658,14 +3658,14 @@ UPDATE universities SET name = 'Hebei University of Architecture',
   province = 'Hebei',
   country = COALESCE(country, 'China'),
   uni_category = 'stem',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/67868196.png' WHERE slug = 'hebei-architecture';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/67868196.png' WHERE slug = 'hebei-architecture' OR 'hebei-architecture' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hechi University',
   name_zh = '河池学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hechi-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hechi-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'hechi';
+  uni_category = 'comprehensive' WHERE slug = 'hechi' OR 'hechi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heihe University',
   name_zh = '黑河学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/heihe-university"}'::jsonb,
@@ -3673,7 +3673,7 @@ UPDATE universities SET name = 'Heihe University',
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/61084866.png' WHERE slug = 'heihe';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/61084866.png' WHERE slug = 'heihe' OR 'heihe' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heilongjiang University of Technology',
   name_zh = '黑龙江工业学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/heilongjiang-university-of-technology"}'::jsonb,
@@ -3681,28 +3681,28 @@ UPDATE universities SET name = 'Heilongjiang University of Technology',
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
   uni_category = 'stem',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/43586437.png' WHERE slug = 'heilongjiang-4';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/43586437.png' WHERE slug = 'heilongjiang-4' OR 'heilongjiang-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan Institute of Technology',
   name_zh = '河南工学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-institute-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-institute-of-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'henan-9';
+  uni_category = 'stem' WHERE slug = 'henan-9' OR 'henan-9' = ANY(slug_aliases);
 UPDATE universities SET name = 'Henan University of Animal Husbandry and Economy',
   name_zh = '河南牧业经济学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/henan-university-of-animal-husbandry-and-economy"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{henan-university-of-animal-husbandry-and-economy}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'henan-animal-husbandry-economy';
+  uni_category = 'agriculture' WHERE slug = 'henan-animal-husbandry-economy' OR 'henan-animal-husbandry-economy' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hengshui University',
   name_zh = '衡水学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hengshui-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{hengshui-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'hengshui';
+  uni_category = 'normal' WHERE slug = 'hengshui' OR 'hengshui' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hetao college',
   name_zh = '河套学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hetao-college"}'::jsonb,
@@ -3710,21 +3710,21 @@ UPDATE universities SET name = 'Hetao college',
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/63522868.png' WHERE slug = 'hetao';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/63522868.png' WHERE slug = 'hetao' OR 'hetao' = ANY(slug_aliases);
 UPDATE universities SET name = 'Heze University',
   name_zh = '菏泽学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/heze-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{heze-university}')) x),
   province = 'Shandong',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'heze';
+  uni_category = 'comprehensive' WHERE slug = 'heze' OR 'heze' = ANY(slug_aliases);
 UPDATE universities SET name = 'Honghe University',
   name_zh = '红河学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/honghe-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{honghe-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'honghe';
+  uni_category = 'comprehensive' WHERE slug = 'honghe' OR 'honghe' = ANY(slug_aliases);
 UPDATE universities SET name = 'Hulunbuir University',
   name_zh = '呼伦贝尔学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/hulunbuir-university"}'::jsonb,
@@ -3732,14 +3732,14 @@ UPDATE universities SET name = 'Hulunbuir University',
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/37984077.png' WHERE slug = 'hulunbuir';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/37984077.png' WHERE slug = 'hulunbuir' OR 'hulunbuir' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jingchu University of Technology',
   name_zh = '荆楚理工学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/jingchu-university-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jingchu-university-of-technology}')) x),
   province = 'Hubei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'jingchu';
+  uni_category = 'stem' WHERE slug = 'jingchu' OR 'jingchu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jingdezhen University',
   name_zh = '景德镇学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/jingdezhen-university"}'::jsonb,
@@ -3747,7 +3747,7 @@ UPDATE universities SET name = 'Jingdezhen University',
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/87006671.png' WHERE slug = 'jingdezhen';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/87006671.png' WHERE slug = 'jingdezhen' OR 'jingdezhen' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jining Normal University',
   name_zh = '集宁师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/jining-normal-university"}'::jsonb,
@@ -3755,28 +3755,28 @@ UPDATE universities SET name = 'Jining Normal University',
   province = 'Inner Mongolia',
   country = COALESCE(country, 'China'),
   uni_category = 'normal',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/15924443.png' WHERE slug = 'jining-2';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/15924443.png' WHERE slug = 'jining-2' OR 'jining-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Jinzhong University',
   name_zh = '晋中学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/jinzhong-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{jinzhong-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'jinzhong';
+  uni_category = 'normal' WHERE slug = 'jinzhong' OR 'jinzhong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Kashi University',
   name_zh = '喀什大学',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/kashi-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{kashi-university}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'kashi';
+  uni_category = 'normal' WHERE slug = 'kashi' OR 'kashi' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lanzhou Institute of Technology',
   name_zh = '兰州工业学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/lanzhou-institute-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{lanzhou-institute-of-technology}')) x),
   province = 'Gansu',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'lanzhou-2';
+  uni_category = 'stem' WHERE slug = 'lanzhou-2' OR 'lanzhou-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lanzhou University of Arts and Science',
   name_zh = '兰州文理学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/lanzhou-university-of-arts-and-science"}'::jsonb,
@@ -3784,28 +3784,28 @@ UPDATE universities SET name = 'Lanzhou University of Arts and Science',
   province = 'Gansu',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/34544153.png' WHERE slug = 'lanzhou-arts';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/34544153.png' WHERE slug = 'lanzhou-arts' OR 'lanzhou-arts' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaodong University',
   name_zh = '辽东学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/eastern-liaoning-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{eastern-liaoning-university}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'eastern-liaoning';
+  uni_category = 'comprehensive' WHERE slug = 'eastern-liaoning' OR 'eastern-liaoning' = ANY(slug_aliases);
 UPDATE universities SET name = 'Liaoning Institute of Science and Technology',
   name_zh = '辽宁科技学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/liaoning-institute-of-science-and-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{liaoning-institute-of-science-and-technology}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'liaoning-5';
+  uni_category = 'stem' WHERE slug = 'liaoning-5' OR 'liaoning-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Lyuliang University',
   name_zh = '吕梁学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/luliang-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{luliang-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'luliang';
+  uni_category = 'normal' WHERE slug = 'luliang' OR 'luliang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Pingxiang University',
   name_zh = '萍乡学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/pingxiang-university"}'::jsonb,
@@ -3813,21 +3813,21 @@ UPDATE universities SET name = 'Pingxiang University',
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/24745412.png' WHERE slug = 'pingxiang';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/24745412.png' WHERE slug = 'pingxiang' OR 'pingxiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Pu''er University',
   name_zh = '普洱学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/puer-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{puer-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'puer';
+  uni_category = 'normal' WHERE slug = 'puer' OR 'puer' = ANY(slug_aliases);
 UPDATE universities SET name = 'Qiongtai Normal University',
   name_zh = '琼台师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/qiongtai-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{qiongtai-normal-university}')) x),
   province = 'Hainan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'qiongtai';
+  uni_category = 'normal' WHERE slug = 'qiongtai' OR 'qiongtai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shandong Agriculture and Engineering University',
   name_zh = '山东农业工程学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/shandong-agriculture-and-engineering-university"}'::jsonb,
@@ -3835,7 +3835,7 @@ UPDATE universities SET name = 'Shandong Agriculture and Engineering University'
   province = 'Shandong',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/72581679.png' WHERE slug = 'shandong-agriculture';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/72581679.png' WHERE slug = 'shandong-agriculture' OR 'shandong-agriculture' = ANY(slug_aliases);
 UPDATE universities SET name = 'SHANDONG INSTITUTE OF PETROLEUM AND CHEMICAL TECHNOLOGY',
   name_zh = '山东石油化工学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/shengli-college-china-university-of-petroleum"}'::jsonb,
@@ -3843,63 +3843,63 @@ UPDATE universities SET name = 'SHANDONG INSTITUTE OF PETROLEUM AND CHEMICAL TEC
   province = 'Shandong',
   country = COALESCE(country, 'China'),
   uni_category = 'stem',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/14620125.png' WHERE slug = 'shengli';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/14620125.png' WHERE slug = 'shengli' OR 'shengli' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shangluo University',
   name_zh = '商洛学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/shangluo-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shangluo-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shangluo';
+  uni_category = 'comprehensive' WHERE slug = 'shangluo' OR 'shangluo' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanxi Institute of Technology',
   name_zh = '山西工程技术学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/shanxi-institute-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanxi-institute-of-technology}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'shanxi-4';
+  uni_category = 'stem' WHERE slug = 'shanxi-4' OR 'shanxi-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shanxi Institute of Energy',
   name_zh = '山西能源学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/shanxi-institute-of-energy"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shanxi-institute-of-energy}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'shanxi-energy';
+  uni_category = 'comprehensive' WHERE slug = 'shanxi-energy' OR 'shanxi-energy' = ANY(slug_aliases);
 UPDATE universities SET name = 'Shaanxi Xueqian Normal University',
   name_zh = '陕西学前师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/shaanxi-xueqian-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{shaanxi-xueqian-normal-university}')) x),
   province = 'Shaanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'shaanxi-xueqian';
+  uni_category = 'normal' WHERE slug = 'shaanxi-xueqian' OR 'shaanxi-xueqian' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan Minzu College',
   name_zh = '四川民族学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-university-for-nationalities"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-university-for-nationalities}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'sichuan-nationalities';
+  uni_category = 'normal' WHERE slug = 'sichuan-nationalities' OR 'sichuan-nationalities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Sichuan University of Arts and Science',
   name_zh = '四川文理学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/sichuan-university-of-arts-and-science"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{sichuan-university-of-arts-and-science}')) x),
   province = 'Sichuan',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'sichuan-arts';
+  uni_category = 'comprehensive' WHERE slug = 'sichuan-arts' OR 'sichuan-arts' = ANY(slug_aliases);
 UPDATE universities SET name = 'Suihua University',
   name_zh = '绥化学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/suihua-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{suihua-university}')) x),
   province = 'Heilongjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'suihua';
+  uni_category = 'comprehensive' WHERE slug = 'suihua' OR 'suihua' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taiyuan University',
   name_zh = '太原学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/taiyuan-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{taiyuan-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'taiyuan-5';
+  uni_category = 'stem' WHERE slug = 'taiyuan-5' OR 'taiyuan-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Taizhou University',
   name_zh = '泰州学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/taizhou-university-tzu"}'::jsonb,
@@ -3907,49 +3907,49 @@ UPDATE universities SET name = 'Taizhou University',
   province = 'Jiangsu',
   country = COALESCE(country, 'China'),
   uni_category = 'normal',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/46820207.png' WHERE slug = 'taizhou-2';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/46820207.png' WHERE slug = 'taizhou-2' OR 'taizhou-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Tangshan University',
   name_zh = '唐山学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/tangshan-college"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{tangshan-college}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'tangshan-2';
+  uni_category = 'stem' WHERE slug = 'tangshan-2' OR 'tangshan-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wenshan University',
   name_zh = '文山学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/wenshan-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wenshan-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'wenshan';
+  uni_category = 'normal' WHERE slug = 'wenshan' OR 'wenshan' = ANY(slug_aliases);
 UPDATE universities SET name = 'Wuzhou University',
   name_zh = '梧州学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/wuzhou-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuzhou-university}')) x),
   province = 'Guangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'wuzhou';
+  uni_category = 'comprehensive' WHERE slug = 'wuzhou' OR 'wuzhou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xingtai University',
   name_zh = '邢台学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xingtai-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xingtai-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xingtai';
+  uni_category = 'normal' WHERE slug = 'xingtai' OR 'xingtai' = ANY(slug_aliases);
 UPDATE universities SET name = 'Minzu Normal University of Xingyi',
   name_zh = '兴义民族师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xingyi-normal-university-for-nationalities"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xingyi-normal-university-for-nationalities}')) x),
   province = 'Guizhou',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xingyi-nationalities';
+  uni_category = 'normal' WHERE slug = 'xingyi-nationalities' OR 'xingyi-nationalities' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinjiang Institute of Engineering',
   name_zh = '新疆工程学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xinjiang-institute-of-engineering"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinjiang-institute-of-engineering}')) x),
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'xinjiang-4';
+  uni_category = 'stem' WHERE slug = 'xinjiang-4' OR 'xinjiang-4' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinjiang Institute of Technology',
   name_zh = '新疆理工学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xinjiang-institute-of-technology"}'::jsonb,
@@ -3957,7 +3957,7 @@ UPDATE universities SET name = 'Xinjiang Institute of Technology',
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/80391865.png' WHERE slug = 'xinjiang-5';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/80391865.png' WHERE slug = 'xinjiang-5' OR 'xinjiang-5' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinjiang University of Political Science And Law',
   name_zh = '新疆政法学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/college-of-science-technology-shihezi-university"}'::jsonb,
@@ -3965,42 +3965,42 @@ UPDATE universities SET name = 'Xinjiang University of Political Science And Law
   province = 'Xinjiang',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/54885562.png' WHERE slug = 'shihezi-2';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/54885562.png' WHERE slug = 'shihezi-2' OR 'shihezi-2' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinyang Agriculture and Forestry University',
   name_zh = '信阳农林学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xinyang-agriculture-and-forestry-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinyang-agriculture-and-forestry-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'agriculture' WHERE slug = 'xinyang-agriculture-forestry';
+  uni_category = 'agriculture' WHERE slug = 'xinyang-agriculture-forestry' OR 'xinyang-agriculture-forestry' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinyu University',
   name_zh = '新余学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xinyu-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinyu-university}')) x),
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'xinyu';
+  uni_category = 'comprehensive' WHERE slug = 'xinyu' OR 'xinyu' = ANY(slug_aliases);
 UPDATE universities SET name = 'Xinzhou Teachers University',
   name_zh = '忻州师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/xinzhou-teachers-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{xinzhou-teachers-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'xinzhou-teachers';
+  uni_category = 'normal' WHERE slug = 'xinzhou-teachers' OR 'xinzhou-teachers' = ANY(slug_aliases);
 UPDATE universities SET name = 'YingKou Institute of Technology',
   name_zh = '营口理工学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/yingkou-institute-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yingkou-institute-of-technology}')) x),
   province = 'Liaoning',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'yingkou';
+  uni_category = 'stem' WHERE slug = 'yingkou' OR 'yingkou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yuncheng University',
   name_zh = '运城学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/yuncheng-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{yuncheng-university}')) x),
   province = 'Shanxi',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'yuncheng';
+  uni_category = 'comprehensive' WHERE slug = 'yuncheng' OR 'yuncheng' = ANY(slug_aliases);
 UPDATE universities SET name = 'Yuzhang Normal University',
   name_zh = '豫章师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/yuzhang-normal-university"}'::jsonb,
@@ -4008,44 +4008,50 @@ UPDATE universities SET name = 'Yuzhang Normal University',
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
   uni_category = 'normal',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/95302268.png' WHERE slug = 'yuzhang';
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo/95302268.png' WHERE slug = 'yuzhang' OR 'yuzhang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhangjiakou University',
   name_zh = '张家口学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/zhangjiakou-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhangjiakou-university}')) x),
   province = 'Hebei',
   country = COALESCE(country, 'China'),
-  uni_category = 'comprehensive' WHERE slug = 'zhangjiakou';
+  uni_category = 'comprehensive' WHERE slug = 'zhangjiakou' OR 'zhangjiakou' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhaotong University',
   name_zh = '昭通学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/zhaotong-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhaotong-university}')) x),
   province = 'Yunnan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'zhaotong';
+  uni_category = 'normal' WHERE slug = 'zhaotong' OR 'zhaotong' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhengzhou University of Technology',
   name_zh = '郑州工程技术学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/zhengzhou-institute-of-technology"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhengzhou-institute-of-technology}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'stem' WHERE slug = 'zhengzhou-3';
+  uni_category = 'stem' WHERE slug = 'zhengzhou-3' OR 'zhengzhou-3' = ANY(slug_aliases);
 UPDATE universities SET name = 'Zhengzhou Normal University',
   name_zh = '郑州师范学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/zhengzhou-normal-university"}'::jsonb,
   slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhengzhou-normal-university}')) x),
   province = 'Henan',
   country = COALESCE(country, 'China'),
-  uni_category = 'normal' WHERE slug = 'zhengzhou-2';
+  uni_category = 'normal' WHERE slug = 'zhengzhou-2' OR 'zhengzhou-2' = ANY(slug_aliases);
 
+-- Dedup: keep 'zju'/'whu' (the richer seed rows), fold 'zhejiang'/'wuhan' into
+-- them as aliases, re-point reviews, then delete the losers. Survivor refs are
+-- alias-aware (safe to replay after slug promotion); loser refs and the DELETE
+-- must stay exact-slug — an alias-aware DELETE would remove the survivor too.
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM universities WHERE slug = 'zju')
+  IF EXISTS (SELECT 1 FROM universities WHERE slug = 'zju' OR 'zju' = ANY(slug_aliases))
      AND EXISTS (SELECT 1 FROM universities WHERE slug = 'zhejiang') THEN
     UPDATE universities
-      SET slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang}')) x)
-      WHERE slug = 'zju';
-    UPDATE reviews SET university_id = (SELECT id FROM universities WHERE slug = 'zju')
+      SET slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zhejiang}')) x),
+          logo_url = CASE WHEN logo_url ~ '^https://www\.shanghairanking\.cn/' THEN logo_url
+                          ELSE COALESCE(NULLIF((SELECT l.logo_url FROM universities l WHERE l.slug = 'zhejiang'), ''), logo_url) END
+      WHERE slug = 'zju' OR 'zju' = ANY(slug_aliases);
+    UPDATE reviews SET university_id = (SELECT id FROM universities WHERE slug = 'zju' OR 'zju' = ANY(slug_aliases))
       WHERE university_id = (SELECT id FROM universities WHERE slug = 'zhejiang');
     DELETE FROM universities WHERE slug = 'zhejiang';
   END IF;
@@ -4053,12 +4059,14 @@ END $$;
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM universities WHERE slug = 'whu')
+  IF EXISTS (SELECT 1 FROM universities WHERE slug = 'whu' OR 'whu' = ANY(slug_aliases))
      AND EXISTS (SELECT 1 FROM universities WHERE slug = 'wuhan') THEN
     UPDATE universities
-      SET slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan}')) x)
-      WHERE slug = 'whu';
-    UPDATE reviews SET university_id = (SELECT id FROM universities WHERE slug = 'whu')
+      SET slug_aliases = (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{wuhan}')) x),
+          logo_url = CASE WHEN logo_url ~ '^https://www\.shanghairanking\.cn/' THEN logo_url
+                          ELSE COALESCE(NULLIF((SELECT l.logo_url FROM universities l WHERE l.slug = 'wuhan'), ''), logo_url) END
+      WHERE slug = 'whu' OR 'whu' = ANY(slug_aliases);
+    UPDATE reviews SET university_id = (SELECT id FROM universities WHERE slug = 'whu' OR 'whu' = ANY(slug_aliases))
       WHERE university_id = (SELECT id FROM universities WHERE slug = 'wuhan');
     DELETE FROM universities WHERE slug = 'wuhan';
   END IF;

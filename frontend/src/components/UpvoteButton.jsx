@@ -3,40 +3,54 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 
-// UpvoteButton component - calls toggle_upvote RPC
-export const UpvoteButton = ({ reviewId }) => {
+// UpvoteButton component - calls toggle_upvote RPC. Pages that already
+// batch-fetched upvotes pass initialCount/initialUpvoted so cards don't
+// issue a query each (N+1 on review lists).
+export const UpvoteButton = ({ reviewId, initialCount, initialUpvoted }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
-  const [upvoted, setUpvoted] = useState(false)
-  const [count, setCount] = useState(0)
+  const seeded = initialCount !== undefined
+  const [upvoted, setUpvoted] = useState(!!initialUpvoted)
+  const [count, setCount] = useState(initialCount ?? 0)
   const [loading, setLoading] = useState(false)
 
+  // Seeded values can arrive async (payload counts / viewer's own votes) —
+  // sync state when the props land.
   useEffect(() => {
-    // Fetch initial upvote state
+    if (initialUpvoted !== undefined) setUpvoted(initialUpvoted)
+  }, [initialUpvoted])
+  useEffect(() => {
+    if (initialCount !== undefined) setCount(initialCount)
+  }, [initialCount])
+
+  useEffect(() => {
+    const controller = new AbortController()
     const fetchUpvotes = async () => {
-      // Get count
-      const { count: upvoteCount } = await supabase
-        .from('upvotes')
-        .select('*', { count: 'exact', head: true })
-        .eq('review_id', reviewId)
+      if (!seeded) {
+        const { count: upvoteCount } = await supabase
+          .from('upvotes')
+          .select('*', { count: 'exact', head: true })
+          .eq('review_id', reviewId)
+          .abortSignal(controller.signal)
+        if (!controller.signal.aborted) setCount(upvoteCount || 0)
+      }
 
-      setCount(upvoteCount || 0)
-
-      // Check if current user has upvoted
-      if (user) {
+      if (user && initialUpvoted === undefined) {
         const { data } = await supabase
           .from('upvotes')
           .select('id')
           .eq('review_id', reviewId)
           .eq('user_id', user.id)
           .maybeSingle()
+          .abortSignal(controller.signal)
 
-        setUpvoted(!!data)
+        if (!controller.signal.aborted) setUpvoted(!!data)
       }
     }
 
     fetchUpvotes()
-  }, [reviewId, user])
+    return () => controller.abort()
+  }, [reviewId, user, seeded, initialUpvoted])
 
   const handleToggle = async () => {
     if (!user) {

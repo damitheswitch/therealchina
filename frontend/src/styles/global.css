@@ -1,5 +1,6 @@
 /* ===== Fonts ===== */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Inter + Noto Serif SC are self-hosted via @fontsource (imported in main.jsx)
+   — no Google Fonts request, which also fixes mainland-China reachability. */
 
 /* ===== Brand Tokens ===== */
 :root {
@@ -448,6 +449,14 @@ h3 {
   height: 160px;
   object-fit: cover;
   background: var(--rice-deep);
+}
+.uni-logo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--seal-red);
+  background: var(--seal-red-tint);
 }
 .uni-card-body {
   padding: var(--sp-2);

@@ -21,6 +21,7 @@ const ProfileReviewCard = ({ review }) => {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 
   return (
@@ -165,7 +166,7 @@ export const ProfileView = ({ userId }) => {
                 <div key={review.id} className="profile-review-item">
                   {review.universities && (
                     <Link
-                      to={`/university/${review.universities.slug}`}
+                      to={`/university/${review.universities.slug}/`}
                       className="profile-review-university"
                     >
                       <Icons.Book /> {review.universities.name} — {review.universities.city}

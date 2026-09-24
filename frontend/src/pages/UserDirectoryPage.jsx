@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Seo } from '../components/Seo'
 import { useDebounce } from '../hooks/useDebounce'
 import { useMemberDirectory } from '../hooks/useMemberDirectory'
 import { Link } from 'react-router-dom'
@@ -76,6 +77,7 @@ export const UserDirectoryPage = () => {
 
   return (
     <div className="container" style={{ paddingTop: 'var(--sp-4)' }}>
+      <Seo path="/users" title="Community members" index={false} />
       <div className="section">
         <div className="section-header">
           <h1 className="section-title">User Directory</h1>

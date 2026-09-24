@@ -4,10 +4,9 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_ANON_KEY,VITE_SUPABASE_URL,VITE_TURNSTILE_SITE_KEY"
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# SPA fallback + all routing lives in the generated frontend/dist/_redirects
+# (single source: scripts/generate_static.ts) — no [[redirects]] here, it
+# would silently duplicate/shadow those rules.

@@ -16,6 +16,12 @@ import {
   RankingBreakdown,
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
+import { UniversityLogo } from '../components/UniversityLogo'
+import { Seo } from '../components/Seo'
+import { firstPartyLogo } from '../lib/logo'
+import { indexableByReviews } from '../lib/seo/indexable'
+import { cityPath } from '../lib/seo/slugify'
+import { stringify, universitySchema, breadcrumbSchema } from '../lib/seo/jsonld'
 import { Icons } from '../components/Icons'
 
 // ShanghaiRanking 软科 category tokens → display labels
@@ -66,6 +72,7 @@ export const UniversityPage = () => {
   if (!university) {
     return (
       <div className="container">
+        <Seo path={`/university/${slug}`} title="University not found" index={false} />
         <div className="empty-state" style={{ paddingTop: '6rem' }}>
           <h1>University not found</h1>
           <p>This university doesn&apos;t exist in our database.</p>
@@ -131,25 +138,75 @@ export const UniversityPage = () => {
       </div>
     )
 
+  const seoTitle = `${university.name} Reviews`
+  const seoDescription =
+    reviewCount > 0
+      ? `${university.name} in ${location}: rated ${avgRating.toFixed(1)}/5 by ${reviewCount} international student${reviewCount !== 1 ? 's' : ''}. Honest reviews on academics, costs, campus life and support.`
+      : `${university.name} in ${location}. Honest reviews by international students — academics, costs, campus life and support.`
+
   return (
     <div className="container">
-      <Link to="/" className="btn btn-outline mt-3" style={{ marginBottom: 0 }}>
+      <Seo
+        path={`/university/${university.slug}`}
+        title={seoTitle}
+        description={seoDescription}
+        image={firstPartyLogo(university.logo_url) ?? undefined}
+        index={indexableByReviews(reviews)}
+        jsonLd={[
+          stringify(
+            universitySchema({
+              name: university.name,
+              slug: university.slug,
+              city: university.city,
+              logo: firstPartyLogo(university.logo_url),
+              website: university.website,
+              rating: reviewCount >= 2 ? { value: avgRating, count: reviewCount } : null,
+              // Embed the first substantive reviews — only text visible on
+              // this page may become Review markup.
+              reviews: reviews
+                .filter((r) => (r.text?.trim().length ?? 0) >= 200)
+                .slice(0, 5)
+                .map((r) => ({
+                  author: authors[r.user_id]?.display_name ?? 'Anonymous',
+                  rating: r.rating,
+                  text: (r.text ?? '').slice(0, 500),
+                  date: (r.created_at ?? '').slice(0, 10),
+                })),
+            })
+          ),
+          stringify(
+            breadcrumbSchema([
+              { name: 'Home', url: '/' },
+              { name: 'Universities', url: '/universities' },
+              { name: university.name, url: `/university/${university.slug}` },
+            ])
+          ),
+        ]}
+      />
+      <Link to="/universities/" className="btn btn-outline mt-3" style={{ marginBottom: 0 }}>
         <Icons.ArrowLeft /> All universities
       </Link>
 
       <div className="uni-profile-header">
         <div className="uni-profile-top">
           <div className="uni-profile-identity">
-            {university.logo_url && (
-              <img
-                src={university.logo_url}
-                alt={`${university.name} campus`}
-                className="uni-profile-logo"
-              />
-            )}
+            <UniversityLogo
+              name={university.name}
+              logoUrl={university.logo_url}
+              size={84}
+              className="uni-profile-logo"
+              eager
+            />
             <div className="uni-profile-name-block">
               <div className="uni-profile-city">
-                <Icons.MapPin /> {location}
+                <Icons.MapPin />{' '}
+                {university.city ? (
+                  <Link to={cityPath(university.city)} className="review-author-link">
+                    {location}
+                  </Link>
+                ) : (
+                  location
+                )}
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>

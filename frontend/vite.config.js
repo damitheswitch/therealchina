@@ -7,7 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: [
+        'favicon.svg',
+        'favicon.ico',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+      ],
       manifest: {
         name: 'The Real China',
         short_name: 'TRC',
@@ -30,7 +36,15 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,woff2}'],
+        // No html: prerendered pages must be fetched fresh so metadata and
+        // content never go stale behind the service worker.
+        globPatterns: ['**/*.{js,css,svg,png,jpg,jpeg,webp,woff2}'],
+        // Logos/OG/data payloads and CJK font slices are fetched on demand —
+        // precaching hundreds of them would balloon install size.
+        globIgnores: ['logos/**', 'og/**', 'data/**', 'media/**', 'assets/noto-serif-sc-*'],
+        // No navigation fallback: unknown URLs must reach the server so real
+        // 404s and generated redirects work.
+        navigateFallback: null,
       },
       devOptions: {
         // Off by default: an active service worker in dev causes stale-cache
@@ -39,6 +53,11 @@ export default defineConfig({
       },
     }),
   ],
+  // Prerender (vite-node): keep router packages in-process so StaticRouter
+  // and the app's hooks share one module instance / context.
+  ssr: {
+    noExternal: ['react-router-dom', 'react-router', '@remix-run/router'],
+  },
   server: {
     port: 5173,
     proxy: {

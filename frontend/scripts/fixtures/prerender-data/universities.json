@@ -1,0 +1,254 @@
+[
+  {
+    "id": "eef9ff77-314f-40e8-b121-d2c609aa472f",
+    "name": "Tsinghua University",
+    "name_zh": "清华大学",
+    "city": "Beijing",
+    "country": "China",
+    "province": "Beijing",
+    "uni_category": "comprehensive",
+    "slug": "tsinghua-university",
+    "slug_aliases": ["tsinghua"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/27532357.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://www.tsinghua.edu.cn/en/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/tsinghua-university",
+      "shanghai_national": 1
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+    "name": "Peking University",
+    "name_zh": "北京大学",
+    "city": "Beijing",
+    "country": "China",
+    "province": "Beijing",
+    "uni_category": "comprehensive",
+    "slug": "peking-university",
+    "slug_aliases": ["peking"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/86350223.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://english.pku.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/peking-university",
+      "shanghai_national": 2
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "45808a80-001c-47d8-a726-83a07fdde5ce",
+    "name": "Fudan University",
+    "name_zh": "复旦大学",
+    "city": "Shanghai",
+    "country": "China",
+    "province": "Shanghai",
+    "uni_category": "comprehensive",
+    "slug": "fudan-university",
+    "slug_aliases": ["fudan"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/28312850.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://www.fudan.edu.cn/en/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/fudan-university",
+      "shanghai_national": 5
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+    "name": "Shanghai Jiao Tong University",
+    "name_zh": "上海交通大学",
+    "city": "Shanghai",
+    "country": "China",
+    "province": "Shanghai",
+    "uni_category": "comprehensive",
+    "slug": "shanghai-jiao-tong-university",
+    "slug_aliases": ["sjtu"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/27403919.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://en.sjtu.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university",
+      "shanghai_national": 4
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "1bf99127-d308-43e4-8629-9cab5981a12a",
+    "name": "Zhejiang University",
+    "name_zh": "浙江大学",
+    "city": "Hangzhou",
+    "country": "China",
+    "province": "Zhejiang",
+    "uni_category": "comprehensive",
+    "slug": "zhejiang-university",
+    "slug_aliases": ["zhejiang", "zju"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/88311656.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://www.zju.edu.cn/english/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/zhejiang-university",
+      "shanghai_national": 3
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+    "name": "Wuhan University",
+    "name_zh": "武汉大学",
+    "city": "Wuhan",
+    "country": "China",
+    "province": "Hubei",
+    "uni_category": "comprehensive",
+    "slug": "wuhan-university",
+    "slug_aliases": ["whu", "wuhan"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/46182017.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://en.whu.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/wuhan-university",
+      "shanghai_national": 8
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+    "name": "Sichuan University",
+    "name_zh": "四川大学",
+    "city": "Chengdu",
+    "country": "China",
+    "province": "Sichuan",
+    "uni_category": "comprehensive",
+    "slug": "sichuan-university",
+    "slug_aliases": ["scu"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/75651370.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese"],
+    "website": "https://en.scu.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/sichuan-university",
+      "shanghai_national": 15
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "292593e2-4346-4a33-8d83-b8658aa7066e",
+    "name": "Xiamen University",
+    "name_zh": "厦门大学",
+    "city": "Xiamen",
+    "country": "China",
+    "province": "Fujian",
+    "uni_category": "comprehensive",
+    "slug": "xiamen-university",
+    "slug_aliases": ["xmu"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/14008229.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://en.xmu.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/xiamen-university",
+      "shanghai_national": 24
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "f702bbe4-db0f-43be-a63f-04623f006f26",
+    "name": "Nanjing University",
+    "name_zh": "南京大学",
+    "city": "Nanjing",
+    "country": "China",
+    "province": "Jiangsu",
+    "uni_category": "comprehensive",
+    "slug": "nanjing-university",
+    "slug_aliases": ["nju"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/44696062.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://www.nju.edu.cn/en/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/nanjing-university",
+      "shanghai_national": 6
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "edff55bf-bcd7-4d99-b4f8-d5baccb0c8c6",
+    "name": "Hunan University",
+    "name_zh": "湖南大学",
+    "city": "Changsha",
+    "country": "China",
+    "province": "Hunan",
+    "uni_category": "comprehensive",
+    "slug": "hunan-university",
+    "slug_aliases": ["hnu"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/79015808.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese"],
+    "website": "https://www.hnu.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/hunan-university",
+      "shanghai_national": 29
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "ea22d114-513d-4702-8e9f-4c188a87b083",
+    "name": "Tianjin University",
+    "name_zh": "天津大学",
+    "city": "Tianjin",
+    "country": "China",
+    "province": "Tianjin",
+    "uni_category": "comprehensive",
+    "slug": "tianjin-university",
+    "slug_aliases": ["tju"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/74813674.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://www.tju.edu.cn/english/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/tianjin-university",
+      "shanghai_national": 20
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  },
+  {
+    "id": "51e91a8b-085e-43e0-b08f-60314582b3f0",
+    "name": "Beihang University",
+    "name_zh": "北京航空航天大学",
+    "city": "Beijing",
+    "country": "China",
+    "province": "Beijing",
+    "uni_category": "stem",
+    "slug": "beihang-university",
+    "slug_aliases": ["buaa"],
+    "logo_url": "https://www.shanghairanking.cn/_uni/logo/22403670.png",
+    "is_verified": false,
+    "uni_type": "public",
+    "languages_of_instruction": ["Chinese", "English"],
+    "website": "https://ev.buaa.edu.cn/",
+    "rankings": {
+      "shanghai_url": "https://www.shanghairanking.cn/institution/beihang-university",
+      "shanghai_national": 11
+    },
+    "created_at": "2026-09-24T13:53:48.160506+00:00"
+  }
+]
