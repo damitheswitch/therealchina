@@ -33,6 +33,7 @@ Three tiers: local → staging → prod. Never skip tiers.
 - Risky schema changes use expand/contract: add → backfill → switch reads → drop old in a later migration. Every intermediate state stays compatible.
 - Local stack commands: `supabase start` / `stop` / `status` (prints local URL + keys), `supabase db reset` rebuilds from migrations + `seed.sql`.
 - Local Turnstile uses Cloudflare test keys (sitekey + secret `1x0000000000000000000000000000000AA`), set in `frontend/.env.local` and `supabase/.env.local`.
+- Fake/demo data is allowed on local, feat branches, and staging — **never prod**. It lives in `seed.sql` (auto on `db reset`) and `supabase/seed_demo.sql` (manual reseed via `supabase db query --linked --file`). Never put demo inserts in migrations — they reach prod via `db push`.
 
 ## Remote ops playbook (verified paths)
 
