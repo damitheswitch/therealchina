@@ -10,7 +10,8 @@ export const Header = () => {
   const isActive = (path) => location.pathname === path
 
   const navLinks = [
-    { to: '/', label: 'Universities', icon: <Icons.Book /> },
+    { to: '/universities', label: 'Universities', icon: <Icons.Book /> },
+    { to: '/reviews', label: 'Reviews', icon: <Icons.Pen /> },
     { to: '/flights', label: 'Flights', icon: <Icons.Plane /> },
     { to: '/users', label: 'Users', icon: <Icons.Users /> },
   ]

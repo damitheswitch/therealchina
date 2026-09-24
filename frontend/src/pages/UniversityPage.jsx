@@ -20,6 +20,7 @@ import { UniversityLogo } from '../components/UniversityLogo'
 import { Seo } from '../components/Seo'
 import { firstPartyLogo } from '../lib/logo'
 import { hasSubstantiveReview } from '../lib/seo/indexable'
+import { slugify } from '../lib/seo/slugify'
 import { stringify, universitySchema, breadcrumbSchema } from '../lib/seo/jsonld'
 import { Icons } from '../components/Icons'
 
@@ -187,7 +188,14 @@ export const UniversityPage = () => {
             />
             <div className="uni-profile-name-block">
               <div className="uni-profile-city">
-                <Icons.MapPin /> {location}
+                <Icons.MapPin />{' '}
+                {university.city ? (
+                  <Link to={`/city/${slugify(university.city)}`} className="review-author-link">
+                    {location}
+                  </Link>
+                ) : (
+                  location
+                )}
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>

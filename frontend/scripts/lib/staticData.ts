@@ -155,6 +155,100 @@ export const universityPageData = (
   return { university: uni, reviews: rows, authors: authorMap, stats: stat }
 }
 
+// ── Hub/index payload builders ──────────────────────────────────────────────
+import { normalizeProgram, PROGRAM_HUBS, type HubDef } from '../../src/lib/seo/programs'
+import { normalizeDegree, DEGREE_HUBS } from '../../src/lib/seo/degrees'
+import { hasSubstantiveReview } from '../../src/lib/seo/indexable'
+
+const REVIEW_PAGE_SIZE = 50
+
+export const reviewsPageData = (reviews: ReviewRow[], unis: UniRow[], authors: AuthorRow[]) => {
+  const rows = [...reviews]
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, REVIEW_PAGE_SIZE)
+  const uniIds = new Set(rows.map((r) => r.university_id))
+  const authorIds = new Set(rows.map((r) => r.user_id).filter(Boolean))
+  return {
+    reviews: rows,
+    universities: Object.fromEntries(
+      unis.filter((u) => uniIds.has(u.id)).map((u) => [u.id, { id: u.id, name: u.name, slug: u.slug }])
+    ),
+    authors: Object.fromEntries(authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])),
+  }
+}
+
+export interface CityEntry {
+  city: string
+  slug: string
+  universities: UniRow[]
+  reviewCount: number
+  indexable: boolean
+}
+
+export const allCities = (unis: UniRow[], reviews: ReviewRow[]): CityEntry[] => {
+  const reviewCountByUni = new Map<string, number>()
+  for (const r of reviews) reviewCountByUni.set(r.university_id, (reviewCountByUni.get(r.university_id) ?? 0) + 1)
+  const byCity = new Map<string, UniRow[]>()
+  for (const u of unis) {
+    const c = u.city ?? ''
+    if (!c) continue
+    if (!byCity.has(c)) byCity.set(c, [])
+    byCity.get(c)!.push(u)
+  }
+  return [...byCity.entries()].map(([city, list]) => {
+    const reviewCount = list.reduce((n, u) => n + (reviewCountByUni.get(u.id) ?? 0), 0)
+    return {
+      city,
+      slug: slugify(city),
+      universities: list.sort((a, b) => a.name.localeCompare(b.name)),
+      reviewCount,
+      // Same rule the page applies — ≥3 unis or ≥3 reviews earns indexing.
+      indexable: list.length >= 3 || reviewCount >= 3,
+    }
+  })
+}
+
+export interface HubEntry {
+  kind: 'program' | 'degree'
+  hub: HubDef
+  universities: UniRow[]
+  reviews: ReviewRow[]
+  indexable: boolean
+}
+
+export const allHubs = (unis: UniRow[], reviews: ReviewRow[]): HubEntry[] => {
+  const build = (kind: 'program' | 'degree', hubs: HubDef[], norm: (r: ReviewRow) => string | null) =>
+    hubs.map((hub): HubEntry => {
+      const rows = reviews.filter((r) => norm(r) === hub.slug)
+      const uniIds = new Set(rows.map((r) => r.university_id))
+      return {
+        kind,
+        hub,
+        universities: unis.filter((u) => uniIds.has(u.id)).sort((a, b) => a.name.localeCompare(b.name)),
+        reviews: rows,
+        indexable: hasSubstantiveReview(rows),
+      }
+    })
+  return [
+    ...build('program', PROGRAM_HUBS, (r) => normalizeProgram(r.program)),
+    ...build('degree', DEGREE_HUBS, (r) => normalizeDegree(r.degree_level)),
+  ]
+}
+
+export const hubPageData = (
+  entry: HubEntry,
+  authors: AuthorRow[]
+) => {
+  const authorIds = new Set(entry.reviews.map((r) => r.user_id).filter(Boolean))
+  return {
+    kind: entry.kind,
+    hub: entry.hub,
+    universities: entry.universities,
+    reviews: entry.reviews,
+    authors: Object.fromEntries(authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])),
+  }
+}
+
 // ── URL sets ────────────────────────────────────────────────────────────────
 // alias → canonical 301 map. Aliases that collide with any canonical slug are
 // dropped (and reported) — a canonical always wins over an alias.

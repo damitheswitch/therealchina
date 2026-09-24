@@ -17,6 +17,11 @@ const UniversityPage = lazy(() =>
 const UniversitiesPage = lazy(() =>
   import('./pages/UniversitiesPage').then((m) => ({ default: m.UniversitiesPage }))
 )
+const ReviewsPage = lazy(() => import('./pages/ReviewsPage').then((m) => ({ default: m.ReviewsPage })))
+const CityPage = lazy(() => import('./pages/CityPage').then((m) => ({ default: m.CityPage })))
+const ProgramHubPage = lazy(() => import('./pages/HubPage').then((m) => ({ default: m.ProgramHubPage })))
+const DegreeHubPage = lazy(() => import('./pages/HubPage').then((m) => ({ default: m.DegreeHubPage })))
+const TrustPage = lazy(() => import('./pages/TrustPage').then((m) => ({ default: m.TrustPage })))
 const ReviewPage = lazy(() => import('./pages/ReviewPage').then((m) => ({ default: m.ReviewPage })))
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -75,6 +80,24 @@ function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/universities" element={<UniversitiesPage />} />
               <Route path="/university/:slug" element={<UniversityPage />} />
+              <Route path="/reviews" element={<ReviewsPage />} />
+              <Route path="/city/:slug" element={<CityPage />} />
+              <Route path="/program/:slug" element={<ProgramHubPage />} />
+              <Route path="/degree/:slug" element={<DegreeHubPage />} />
+              {[
+                'about',
+                'contact',
+                'editorial-policy',
+                'how-we-verify',
+                'review-guidelines',
+                'data-sources',
+                'privacy',
+                'terms',
+                'disclaimer',
+                'report',
+              ].map((p) => (
+                <Route key={p} path={`/${p}`} element={<TrustPage slug={p} />} />
+              ))}
               <Route path="/review" element={<ReviewPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/profile/:userId" element={<ProfilePage />} />
