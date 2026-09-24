@@ -2,3 +2,6 @@ dist
 dev-dist
 node_modules
 package-lock.json
+.prerender-data
+src/routes.generated.ts
+scripts/fixtures/prerender-data
