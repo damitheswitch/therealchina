@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useUniversity } from '../hooks/useUniversity'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
@@ -136,7 +136,7 @@ export const UniversityPage = () => {
             {university.logo_url && (
               <img
                 src={university.logo_url}
-                alt={`${university.name} campus`}
+                alt={`${university.name} logo`}
                 className="uni-profile-logo"
               />
             )}
@@ -178,7 +178,9 @@ export const UniversityPage = () => {
                           >
                             <span>Ranking score</span>
                             <strong>{shanghaiScore}</strong>
-                            <span className="uni-profile-score-hint">View breakdown</span>
+                            <span className="uni-profile-score-hint">
+                              {rankingDetailsOpen ? 'Hide breakdown' : 'View breakdown'}
+                            </span>
                             <span className="uni-profile-score-icon" aria-hidden="true">
                               <Icons.Chevron />
                             </span>
@@ -195,10 +197,24 @@ export const UniversityPage = () => {
                     <div className="uni-profile-fact">
                       <span className="uni-profile-fact-label">National distinctions</span>
                       <div className="uni-profile-distinctions">
-                        {prestigeTags.map((tag) => (
-                          <span key={tag} className="uni-profile-distinction">
-                            {tag === '双一流' ? 'Double First-Class' : tag}
-                          </span>
+                        {prestigeTags.map((tag, index) => (
+                          <Fragment key={tag}>
+                            {index > 0 && (
+                              <span className="uni-profile-distinction-sep" aria-hidden="true">
+                                ·
+                              </span>
+                            )}
+                            <span
+                              className="uni-profile-distinction"
+                              title={
+                                tag === '双一流'
+                                  ? 'Double First-Class initiative'
+                                  : `Project ${tag}`
+                              }
+                            >
+                              {tag === '双一流' ? 'Double First-Class' : tag}
+                            </span>
+                          </Fragment>
                         ))}
                       </div>
                     </div>

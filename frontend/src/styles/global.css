@@ -1558,7 +1558,7 @@ h3 {
   padding: 0.4rem 0 var(--sp-2);
 }
 .uni-profile-header.has-logo .uni-profile-rating-block {
-  padding-left: 100px;
+  padding-left: calc(var(--profile-logo-size) + var(--profile-identity-gap));
 }
 .rating-number {
   font-family: var(--font-display);
@@ -1920,9 +1920,7 @@ h3 {
   font-weight: 600;
   white-space: nowrap;
 }
-.uni-profile-distinction + .uni-profile-distinction::before {
-  content: '·';
-  margin-right: 0.55rem;
+.uni-profile-distinction-sep {
   color: var(--gold-dark);
 }
 .uni-profile-links {
@@ -2227,7 +2225,7 @@ h3 {
 }
 @media (max-width: 560px) {
   .uni-profile-header {
-    --profile-logo-size: clamp(72px, 20vw, 84px);
+    --profile-logo-size: clamp(72px, 20vw, 78px);
     --profile-identity-gap: 0.8rem;
   }
   .uni-profile-logo {
