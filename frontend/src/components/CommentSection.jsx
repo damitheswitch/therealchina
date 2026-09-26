@@ -1,13 +1,16 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useComments } from '../hooks/useComments'
 import { SealAvatar } from './SealAvatar'
+import { Icons } from './Icons'
 
-// CommentSection component
-export const CommentSection = ({ reviewId }) => {
+// CommentSection component — a segmented pill: "Comments (n)" toggles the
+// thread, "Write" opens the composer. `initialCount` comes from the parent's
+// batched count query so the pill shows the count without lazy-loading.
+export const CommentSection = ({ reviewId, initialCount }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
   const [newComment, setNewComment] = useState('')
@@ -16,6 +19,7 @@ export const CommentSection = ({ reviewId }) => {
   // Comments are fetched lazily: nothing is queried until the section is
   // expanded, so a page of review cards doesn't fire one query per card.
   const [expanded, setExpanded] = useState(false)
+  const composerRef = useRef(null)
 
   const {
     comments,
@@ -24,8 +28,17 @@ export const CommentSection = ({ reviewId }) => {
     refetch: refetchComments,
   } = useComments(reviewId, { enabled: expanded })
 
+  const commentCount = commentsLoaded ? comments.length : (initialCount ?? 0)
+
   const toggleExpanded = () => {
     setExpanded((prev) => !prev)
+  }
+
+  const openComposer = () => {
+    if (!expanded) setExpanded(true)
+    // Let the composer mount before focusing — focus() also scrolls it into
+    // view on its own, no extra scroll handling needed.
+    requestAnimationFrame(() => composerRef.current?.focus())
   }
 
   const handleSubmit = async (e) => {
@@ -75,22 +88,27 @@ export const CommentSection = ({ reviewId }) => {
   }, {})
 
   return (
-    <div style={{ marginTop: 'var(--sp-3)' }}>
-      <button
-        type="button"
-        onClick={toggleExpanded}
-        className="btn btn-outline"
-        style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}
-        aria-expanded={expanded}
-        aria-controls={`comments-${reviewId}`}
-      >
-        {expanded
-          ? `Hide comments${commentsLoaded ? ` (${comments.length})` : ''}`
-          : `Show comments${commentsLoaded ? ` (${comments.length})` : ''}`}
-      </button>
+    <>
+      <div className="comment-controls">
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          className={`comment-toggle${expanded ? ' open' : ''}`}
+          aria-expanded={expanded}
+          aria-controls={expanded ? `comments-${reviewId}` : undefined}
+        >
+          <Icons.Chat />
+          <span>Comments{commentCount > 0 ? ` (${commentCount})` : ''}</span>
+          <Icons.Chevron />
+        </button>
+        <button type="button" onClick={openComposer} className="comment-add">
+          <Icons.Pen />
+          <span>Write</span>
+        </button>
+      </div>
 
       {!expanded ? null : (
-        <div id={`comments-${reviewId}`} style={{ marginTop: 'var(--sp-2)' }}>
+        <div id={`comments-${reviewId}`} className="comment-expanded">
           {/* Comment list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
             {topLevelComments.map((comment) => (
@@ -232,6 +250,7 @@ export const CommentSection = ({ reviewId }) => {
           {!replyTo && (
             <form onSubmit={handleSubmit} style={{ marginTop: 'var(--sp-2)' }}>
               <textarea
+                ref={composerRef}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={user ? 'Write a comment...' : 'Sign in to leave a comment'}
@@ -251,6 +270,6 @@ export const CommentSection = ({ reviewId }) => {
           )}
         </div>
       )}
-    </div>
+    </>
   )
 }

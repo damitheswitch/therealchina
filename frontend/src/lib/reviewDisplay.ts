@@ -1,4 +1,4 @@
-import type { Tables } from '../types/database.types'
+import type { Json, Tables } from '../types/database.types'
 
 // The review columns needed to render the rich wizard data (migration 022).
 // Callers may pass a full reviews row or any superset of this Pick.
@@ -154,3 +154,82 @@ export const formatEnrollmentLabel = (status: string, count: number): string => 
 // rendered as a separate stepped scale — this formats enrollment only.
 export const formatReviewerMix = (enrollment: { status: string; count: number }[]): string =>
   enrollment.map(({ status, count }) => formatEnrollmentLabel(status, count)).join(' · ')
+
+/* ===== Collapsible review cards ===== */
+
+// The review card needs `media` on top of ReviewDisplayData (which only covers
+// the wizard fields) to count photos/videos for the teaser chips.
+export type ReviewCardData = ReviewDisplayData & Pick<Tables<'reviews'>, 'media'>
+
+export interface MediaItem {
+  url: string
+  type: string
+  name: string
+}
+
+// Media arrives as Json: either bare URL strings (legacy uploads) or
+// { url, type, name } objects. Strings get type inferred from the extension;
+// anything without a usable url is dropped. Shared by MediaGallery and the
+// teaser-chip counter so both agree on what "media" means.
+export const normalizeMediaItems = (media: Json | null | undefined): MediaItem[] => {
+  if (!Array.isArray(media)) return []
+  const items: MediaItem[] = []
+  for (const item of media) {
+    if (typeof item === 'string') {
+      const isVideo = /\.(mp4|webm|mov)$/i.test(item)
+      items.push({ url: item, type: isVideo ? 'video' : 'image', name: '' })
+    } else if (item && typeof item === 'object' && !Array.isArray(item)) {
+      const candidate = item as { url?: unknown; type?: unknown; name?: unknown }
+      if (typeof candidate.url === 'string' && candidate.url) {
+        items.push({
+          url: candidate.url,
+          type: typeof candidate.type === 'string' ? candidate.type : 'image',
+          name: typeof candidate.name === 'string' ? candidate.name : '',
+        })
+      }
+    }
+  }
+  return items
+}
+
+// Whether a review hides content behind its "Read full review" affordance:
+// pros/cons, category sub-scores, tags, or media. Long text is handled
+// separately — it's measured against the 3-line clamp in the component.
+export const hasReviewExtras = (review: ReviewCardData): boolean =>
+  Boolean(review.pros) ||
+  Boolean(review.cons) ||
+  getSubScores(review).length > 0 ||
+  (review.tags ?? []).filter(Boolean).length > 0 ||
+  normalizeMediaItems(review.media).length > 0
+
+// "What's inside" labels for the collapsed teaser strip — honest clickbait:
+// each chip names real hidden content so the expand button promises value.
+// Order is fixed (pros/cons → ratings → media → tags) so strips read the same
+// across cards. Returns [] when nothing is hidden.
+export const getReviewTeaserItems = (review: ReviewCardData): string[] => {
+  const items: string[] = []
+
+  const hasPros = Boolean(review.pros)
+  const hasCons = Boolean(review.cons)
+  if (hasPros && hasCons) items.push('Pros & cons')
+  else if (hasPros) items.push('Pros')
+  else if (hasCons) items.push('Cons')
+
+  const subscores = getSubScores(review).length
+  if (subscores > 0) items.push(`${subscores} category rating${subscores === 1 ? '' : 's'}`)
+
+  const media = normalizeMediaItems(review.media)
+  if (media.length > 0) {
+    const plural = media.length === 1 ? '' : 's'
+    items.push(
+      media.some((m) => m.type === 'video')
+        ? `${media.length} media item${plural}`
+        : `${media.length} photo${plural}`
+    )
+  }
+
+  const tags = (review.tags ?? []).filter(Boolean).length
+  if (tags > 0) items.push(`${tags} tag${tags === 1 ? '' : 's'}`)
+
+  return items
+}

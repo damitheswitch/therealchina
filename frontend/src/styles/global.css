@@ -659,6 +659,180 @@ h3 {
   font-size: 0.82rem;
   color: var(--ink-soft);
 }
+
+/* Collapsed review preview: the text clamps to 3 lines and a bottom fade
+   hints that more is written. The fade sits over the card's white surface. */
+.review-text-wrap {
+  position: relative;
+}
+.review-text.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.review-text-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2.5rem;
+  background: linear-gradient(transparent, #fff);
+  pointer-events: none;
+}
+
+/* Teaser + expand affordance share one row: chips left, pill anchored right
+   (margin-left:auto keeps it right even when no chips render). */
+.review-disclosure-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+.review-teaser {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex: 1 1 auto;
+}
+.teaser-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.6rem;
+  border-radius: var(--r-full);
+  background: var(--gold-tint);
+  color: var(--gold-dark);
+  white-space: nowrap;
+}
+
+/* Revealed on expand: pros/cons, category ratings, tags, media. Reuses the
+   shared fadeInUp keyframes — no max-height hack (the .collapse-content cap
+   would clip long reviews). */
+.review-expanded-region {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  animation: fadeInUp 0.3s ease both;
+}
+
+/* Compact expand pill — seal-red tint on white, fills to solid seal on
+   hover. Deliberately small: it hints at hidden depth without owning a row
+   of the card. margin-left:auto pins it to the right of the teaser row. */
+.review-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  gap: 0.3rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--r-full);
+  border: 1px solid transparent;
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all var(--t-fast);
+}
+.review-expand-btn:hover {
+  background: var(--seal-red);
+  color: #fff;
+  box-shadow: var(--shadow-seal);
+}
+.review-expand-btn .chevron {
+  width: 15px;
+  height: 15px;
+  transition: transform var(--t-mid);
+}
+.review-expand-btn.open .chevron {
+  transform: rotate(180deg);
+}
+
+/* Engagement row: compact vote + comment pills side by side. */
+.review-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.upvote-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--ink-line);
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: all var(--t-fast);
+}
+.upvote-btn:hover {
+  border-color: var(--seal-red);
+  color: var(--seal-red);
+}
+.upvote-btn.active {
+  background: var(--seal-red);
+  border-color: var(--seal-red);
+  color: #fff;
+}
+.upvote-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Segmented comments pill: "Comments (n)" toggles the thread, "Write" opens
+   the composer. One outline, one divider — reads as a single control. */
+.comment-controls {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--ink-line);
+  border-radius: var(--r-full);
+  background: #fff;
+  overflow: hidden;
+}
+.comment-toggle,
+.comment-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  transition: all var(--t-fast);
+}
+.comment-toggle:hover,
+.comment-add:hover {
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+}
+.comment-add {
+  border-left: 1.5px solid var(--ink-line);
+  color: var(--seal-red);
+}
+.comment-toggle .chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--t-mid);
+}
+.comment-toggle.open .chevron {
+  transform: rotate(180deg);
+}
+
+/* Inside the wrap-enabled .review-actions row, the expanded thread takes
+   its own full-width line under the pills. */
+.comment-expanded {
+  flex-basis: 100%;
+  margin-top: var(--sp-1);
+}
+
+/* Page-change scrollIntoView target: clears the sticky site header. */
+.uni-reviews {
+  scroll-margin-top: 72px;
+}
+
 .review-promo {
   display: flex;
   align-items: center;

@@ -82,8 +82,7 @@ export const UpvoteButton = ({ reviewId, initialCount, initialUpvoted }) => {
     <button
       onClick={handleToggle}
       disabled={loading}
-      className={`btn btn-outline ${upvoted ? 'btn-primary' : ''}`}
-      style={{ marginTop: 'var(--sp-2)' }}
+      className={`upvote-btn${upvoted ? ' active' : ''}`}
     >
       {upvoted ? '👍 Upvoted' : '👍 Upvote'} ({count})
     </button>

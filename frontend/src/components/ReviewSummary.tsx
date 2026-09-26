@@ -44,7 +44,8 @@ const CostScale = ({
 
 // Aggregate "student verdict" card shown on the university page under the
 // rating strip. Purely presentational — every number arrives pre-computed
-// from buildReviewSummary(), so it always matches the review list below.
+// from buildReviewSummary() over ALL of the university's reviews, so it
+// stays correct even though the review list below is paginated.
 export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
   if (summary.reviewCount === 0) return null
 

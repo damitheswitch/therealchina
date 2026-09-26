@@ -1,17 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Icons } from './Icons'
+import { normalizeMediaItems } from '../lib/reviewDisplay'
 
 export const MediaGallery = ({ media, maxVisible = 0 }) => {
   const [activeMediaIndex, setActiveMediaIndex] = useState(null)
 
   // Normalize media items (support array of objects or strings)
-  const items = (media || []).map((item) => {
-    if (typeof item === 'string') {
-      const isVideo = item.match(/\.(mp4|webm|mov)$/i)
-      return { url: item, type: isVideo ? 'video' : 'image', name: '' }
-    }
-    return item
-  })
+  const items = normalizeMediaItems(media)
 
   // Optional cap on rendered tiles — the last visible tile carries a
   // "+N more" overlay and opens the lightbox on the first hidden item.
