@@ -1,14 +1,15 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useUniversity } from '../hooks/useUniversity'
-import { useUniversityReviews } from '../hooks/useUniversityReviews'
+import { useUniversityReviewSummary } from '../hooks/useUniversityReviewSummary'
+import { REVIEW_PAGE_SIZE } from '../hooks/useUniversityReviews'
 import { useUniversityStats } from '../hooks/useUniversityStats'
 import { buildReviewSummary } from '../lib/reviewSummary'
 import { buildUniversityExtras } from '../lib/universityExtras'
 import { StarRating } from '../components/StarRating'
 import { SealBadge } from '../components/SealBadge'
-import { ReviewCard } from '../components/ReviewCard'
 import { ReviewSummary } from '../components/ReviewSummary'
+import { UniversityReviews } from '../components/UniversityReviews'
 import {
   UniversityPrograms,
   UniversityFunding,
@@ -29,22 +30,26 @@ export const UniversityPage = () => {
   const { slug } = useParams()
   const { university, loading: uniLoading } = useUniversity(slug)
   const universityId = university?.id
-  const { reviews, authors, loading: reviewsLoading } = useUniversityReviews(universityId)
+  const { summaryRows, loadedUniversityId, hydratedReviews, hydratedAuthors } =
+    useUniversityReviewSummary(universityId)
   const { stats, loading: statsLoading } = useUniversityStats(universityId)
-  // Hooks must sit before the early returns below; reviews defaults to [] so
-  // both builders are safe no-ops during loading.
-  const summary = useMemo(() => buildReviewSummary(reviews), [reviews])
-  const extras = useMemo(() => buildUniversityExtras(reviews), [reviews])
+  // Hooks must sit before the early returns below; summaryRows defaults to []
+  // so both builders are safe no-ops during loading.
+  const summary = useMemo(() => buildReviewSummary(summaryRows), [summaryRows])
+  const extras = useMemo(() => buildUniversityExtras(summaryRows), [summaryRows])
   const [rankingDetailsOpen, setRankingDetailsOpen] = useState(false)
 
   useEffect(() => {
     setRankingDetailsOpen(false)
   }, [slug])
 
-  // Reviews and stats only fire after the university row resolves, so the
-  // page is considered loading until the university is done AND (if it was
-  // found) the dependent queries are done too.
-  const loading = uniLoading || (university ? reviewsLoading || statsLoading : false)
+  // The verdict/extras aggregates are only "ready" once the hook reports rows
+  // fetched for THIS university — that flag flips on every terminal path
+  // (success, error, empty), so the gate clears even when the fetch fails.
+  // The review list itself lives in its own keyed section below, so a review
+  // page change can never blank the whole page.
+  const summaryReady = loadedUniversityId === universityId
+  const loading = uniLoading || (university ? statsLoading || !summaryReady : false)
 
   if (loading) {
     return (
@@ -137,6 +142,24 @@ export const UniversityPage = () => {
       ? `${university.name} in ${location}: rated ${avgRating.toFixed(1)}/5 by ${reviewCount} international student${reviewCount !== 1 ? 's' : ''}. Honest reviews on academics, costs, campus life and support.`
       : `${university.name} in ${location}. Honest reviews by international students — academics, costs, campus life and support.`
 
+  // SEO sources: hydrated pages carry every review (with text) in the
+  // prerender payload, so schema markup + the indexable rule stay exact there.
+  // On client-side navigations there is no payload — the count-based half of
+  // indexableByReviews still works off the slim aggregate rows, and review
+  // markup is simply omitted rather than fabricated.
+  const indexable = indexableByReviews(hydratedReviews ?? summaryRows)
+  // Only reviews that actually render (page 1 = newest first) may become
+  // Review markup — schema must match visible content.
+  const schemaReviews = (hydratedReviews ?? [])
+    .slice(0, REVIEW_PAGE_SIZE)
+    .filter((r) => (r.text?.trim().length ?? 0) >= 200)
+    .map((r) => ({
+      author: (r.user_id ? hydratedAuthors[r.user_id]?.display_name : null) ?? 'Anonymous',
+      rating: r.rating,
+      text: (r.text ?? '').slice(0, 500),
+      date: (r.created_at ?? '').slice(0, 10),
+    }))
+
   return (
     <div className="container">
       <Seo
@@ -144,7 +167,7 @@ export const UniversityPage = () => {
         title={seoTitle}
         description={seoDescription}
         image={firstPartyLogo(university.logo_url) ?? undefined}
-        index={indexableByReviews(reviews)}
+        index={indexable}
         jsonLd={[
           stringify(
             universitySchema({
@@ -156,15 +179,7 @@ export const UniversityPage = () => {
               rating: reviewCount >= 2 ? { value: avgRating, count: reviewCount } : null,
               // Embed the first substantive reviews — only text visible on
               // this page may become Review markup.
-              reviews: reviews
-                .filter((r) => (r.text?.trim().length ?? 0) >= 200)
-                .slice(0, 5)
-                .map((r) => ({
-                  author: authors[r.user_id]?.display_name ?? 'Anonymous',
-                  rating: r.rating,
-                  text: (r.text ?? '').slice(0, 500),
-                  date: (r.created_at ?? '').slice(0, 10),
-                })),
+              reviews: schemaReviews,
             })
           ),
           stringify(
@@ -345,28 +360,7 @@ export const UniversityPage = () => {
           <UniversityPrograms extras={extras} />
         </aside>
         <div className="uni-reviews-cell">
-          <div className="section" style={{ paddingTop: 'var(--sp-1)' }}>
-            <h2 className="section-title">Student Reviews</h2>
-            <div className="review-list">
-              {reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <ReviewCard
-                    key={review.id}
-                    review={review}
-                    author={authors[review.user_id] ?? null}
-                  />
-                ))
-              ) : (
-                <div className="empty-state">
-                  <h3>No reviews yet</h3>
-                  <p>Be the first to share your experience at {university.name}.</p>
-                  <Link to={`/review?uni=${university.slug}`} className="btn btn-primary mt-2">
-                    <Icons.Pen /> Leave a Review
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
+          <UniversityReviews key={university.id} university={university} />
         </div>
       </div>
 

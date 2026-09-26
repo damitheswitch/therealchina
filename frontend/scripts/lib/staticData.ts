@@ -161,7 +161,9 @@ export const universityPageData = (
 ) => {
   const rows = reviews
     .filter((r) => r.university_id === uni.id)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    // Same ordering as useUniversityReviews — created_at desc, id desc — so
+    // hydrated slices match runtime pages at same-timestamp boundaries.
+    .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id))
   const authorIds = new Set(rows.map((r) => r.user_id).filter(Boolean))
   const authorMap = Object.fromEntries(
     authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])

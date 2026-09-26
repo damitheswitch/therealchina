@@ -1,4 +1,5 @@
-import { FUNDING_LABELS, type ReviewDisplayData } from './reviewDisplay'
+import { FUNDING_LABELS } from './reviewDisplay'
+import type { Tables } from '../types/database.types'
 
 // Aggregate profile facts derived from the review rows themselves — no extra
 // fetches or schema needed. Powers the university page sidebar cards (facts,
@@ -70,9 +71,19 @@ const toMediaItem = (item: unknown): MediaItem | null => {
   return null
 }
 
-type ReviewInput = ReviewDisplayData & { media?: unknown }
+// Exactly the columns buildUniversityExtras reads — the university page
+// fetches this slim row set for ALL reviews to feed the sidebar and photo
+// strip, while the review list itself is paginated with full rows. Any
+// superset (e.g. a full reviews row) stays assignable.
+export type UniversityExtrasInput = Pick<
+  Tables<'reviews'>,
+  'program' | 'degree_level' | 'funding_type' | 'funding_coverage' | 'language_of_instruction'
+> & {
+  /** Json column — items self-normalize inside the builder (strings or {url,type,name}). */
+  media?: unknown
+}
 
-export const buildUniversityExtras = (reviews: ReviewInput[]): UniversityExtras => {
+export const buildUniversityExtras = (reviews: UniversityExtrasInput[]): UniversityExtras => {
   const programCounts = countBy(reviews.map((r) => r.program))
   const levelByProgram = new Map<string, Set<string>>()
   for (const r of reviews) {
