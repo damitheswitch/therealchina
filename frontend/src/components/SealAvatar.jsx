@@ -42,3 +42,23 @@ export const SealAvatar = ({ displayName, size = 40, className = '' }) => {
     </div>
   )
 }
+
+// GuestSeal component - outlined "unclaimed" seal for logged-out visitors.
+// Pairs with the filled member SealAvatar: guests see a seal-tinted square with
+// 我 ("me"), members get the solid red seal with their initials.
+export const GuestSeal = ({ size = 40, className = '' }) => {
+  const combinedClassName = `guest-seal ${className}`.trim()
+
+  const sealStyle = {
+    width: `${size}px`,
+    height: `${size}px`,
+    borderRadius: `${Math.round(size * 0.22)}px`,
+    fontSize: `${size * 0.42}px`,
+  }
+
+  return (
+    <div className={combinedClassName} style={sealStyle} aria-hidden="true">
+      我
+    </div>
+  )
+}
