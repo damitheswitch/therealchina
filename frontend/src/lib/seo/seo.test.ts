@@ -16,7 +16,7 @@ describe('policy: indexability', () => {
       '/degree/masters',
       '/reviews',
       '/about',
-      '/how-we-verify',
+      '/editorial-policy',
       '/guide/visa-application',
     ]) {
       expect(getPolicy(p).index, p).toBe(true)

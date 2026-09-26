@@ -22,7 +22,7 @@ import {
   allHubs,
   hubPageData,
 } from './lib/staticData'
-import { TRUST_PAGES } from '../src/lib/trustContent'
+import { TRUST_PAGES, TRUST_REDIRECTS } from '../src/lib/trustContent'
 import { buildEnv } from './lib/env'
 import { SITE, PROD_ORIGIN, siteUrl } from '../src/lib/seo/site'
 import { escapeAttr } from '../src/lib/seo/escape'
@@ -125,6 +125,12 @@ const redirects = [
   ...aliasRedirects(universities).flatMap((r) => [
     `${r.from} ${r.to}/ 301!`,
     `${r.from}/ ${r.to}/ 301!`,
+  ]),
+  '',
+  '# Retired trust pages → merged sections (permanent, forced). Both slash forms.',
+  ...Object.entries(TRUST_REDIRECTS).flatMap(([from, to]) => [
+    `/${from} ${to} 301!`,
+    `/${from}/ ${to} 301!`,
   ]),
   '',
   '# Valid-but-thin pages → SPA shell (client-rendered, noindex). Both slash forms',

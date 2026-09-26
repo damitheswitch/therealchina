@@ -15,13 +15,13 @@ export const Footer = () => (
         <Link to="/reviews/">Reviews</Link>
         <Link to="/review">Leave a Review</Link>
         <Link to="/about">About</Link>
-        <Link to="/how-we-verify">How we verify</Link>
-        <Link to="/review-guidelines">Review guidelines</Link>
+        <Link to="/editorial-policy#how-we-verify">How we verify</Link>
+        <Link to="/editorial-policy#review-guidelines">Review guidelines</Link>
         <Link to="/editorial-policy">Editorial policy</Link>
-        <Link to="/data-sources">Data sources</Link>
+        <Link to="/editorial-policy#data-sources">Data sources</Link>
         <Link to="/privacy">Privacy</Link>
         <Link to="/terms">Terms</Link>
-        <Link to="/contact">Contact</Link>
+        <Link to="/about#contact">Contact</Link>
       </div>
       <p className="footer-copy">
         The Real China — Authentic student reviews. Built by the community, for the community.

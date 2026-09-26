@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 // LandingPage stays in the entry chunk: it is what most visits load first.
@@ -8,6 +8,7 @@ import { OnboardingGuard } from './components/OnboardingGuard'
 import { AuthModal } from './components/AuthModal'
 import { useAuthModal } from './contexts/AuthModalContext'
 import { useAuth } from './contexts/AuthContext'
+import { TRUST_REDIRECTS } from './lib/trustContent'
 
 // Route-level code splitting: each page becomes its own chunk, fetched on
 // first navigation. Pages use named exports, hence the default-mapping.
@@ -90,19 +91,13 @@ function App() {
               <Route path="/city/:slug" element={<CityPage />} />
               <Route path="/program/:slug" element={<ProgramHubPage />} />
               <Route path="/degree/:slug" element={<DegreeHubPage />} />
-              {[
-                'about',
-                'contact',
-                'editorial-policy',
-                'how-we-verify',
-                'review-guidelines',
-                'data-sources',
-                'privacy',
-                'terms',
-                'disclaimer',
-                'report',
-              ].map((p) => (
+              {['about', 'editorial-policy', 'privacy', 'terms'].map((p) => (
                 <Route key={p} path={`/${p}`} element={<TrustPage slug={p} />} />
+              ))}
+              {/* Retired trust slugs → merged sections (Netlify 301s cover
+                  direct hits; these catch in-app navigation). */}
+              {Object.entries(TRUST_REDIRECTS).map(([from, to]) => (
+                <Route key={from} path={`/${from}`} element={<Navigate to={to} replace />} />
               ))}
               <Route path="/review" element={<ReviewPage />} />
               <Route path="/profile" element={<ProfilePage />} />

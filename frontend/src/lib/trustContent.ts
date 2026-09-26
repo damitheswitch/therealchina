@@ -3,6 +3,7 @@
 // `updated` — the date renders on the page and in sitemap lastmod.
 export interface TrustSection {
   h: string
+  id: string // anchor target — retired standalone slugs 301 to these
   body: string[] // paragraphs
 }
 export interface TrustDoc {
@@ -17,52 +18,45 @@ export const TRUST_PAGES: TrustDoc[] = [
   {
     slug: 'about',
     title: 'About The Real China',
-    description: 'Why The Real China exists and who it is for.',
-    updated: '2026-09-24',
+    description: 'What The Real China is, who runs it, and how to reach us.',
+    updated: '2026-09-26',
     sections: [
       {
         h: 'What this is',
+        id: 'what-this-is',
         body: [
-          'The Real China (TRC) is a review platform built for international students choosing universities in China. Every review comes from someone who studied — or is studying — at the university they describe.',
-          'University brochures tell you about rankings and campus photos. Our reviews tell you about dorm heating, canteen prices, whether the international office answers emails, and what CSC funding actually covers.',
+          'The Real China (TRC) is a review site built for international students picking a university in China. Every review comes from someone who studied, or is studying, at the school they write about.',
+          'University brochures give you rankings and campus photos. Our reviews tell you about dorm heating, canteen prices, whether the international office answers emails, and what CSC funding actually covers.',
         ],
       },
       {
         h: 'Why it exists',
+        id: 'why-it-exists',
         body: [
-          'Choosing a Chinese university from abroad is a leap of faith. Agency sites earn commissions for steering students to partner schools. Ranking tables say nothing about daily life. TRC exists so students can hear from students — no sponsorships, no partner placements, no reviews-for-sale.',
+          'Choosing a Chinese university from abroad is a leap of faith. Agencies earn commissions for steering students to partner schools, and ranking tables say nothing about daily life. TRC exists so students can hear from other students. No sponsorships, no partner placements, no reviews for sale.',
         ],
       },
       {
         h: 'Who runs it',
+        id: 'who-runs-it',
         body: [
-          'TRC is an independent, community-run project. It is not affiliated with any university, agency, or the Chinese government. Universities cannot pay to influence ratings or remove negative reviews.',
-        ],
-      },
-    ],
-  },
-  {
-    slug: 'contact',
-    title: 'Contact',
-    description: 'How to reach The Real China.',
-    updated: '2026-09-24',
-    sections: [
-      {
-        h: 'General',
-        body: [
-          'Email: nihao@therealchina.net — we read everything, though replies may take a few days.',
+          "TRC is an independent, community-run project. We're not affiliated with any university, agency, or the Chinese government, and universities can't pay to influence ratings or remove negative reviews.",
         ],
       },
       {
-        h: 'Report a review or a safety issue',
+        h: 'Contact',
+        id: 'contact',
         body: [
-          'Use the /report page or email nihao@therealchina.net with the review URL. Safety issues are prioritized.',
+          'Email nihao@therealchina.net. We read everything, though replies can take a few days.',
+          "If your university's details are wrong (name, city, ranking, website), send us the source and we'll fix it. We don't remove reviews at a university's request — the editorial policy explains why.",
         ],
       },
       {
-        h: 'Universities and data corrections',
+        h: 'Report content',
+        id: 'report',
         body: [
-          'If your university information is wrong (name, city, ranking, website), email us with a source and we will fix it. We do not remove reviews at university request — see our editorial policy.',
+          'Report fake reviews, spam, harassment, hate speech, private information, impersonation, or anything posted by someone who never attended the university.',
+          'Email nihao@therealchina.net with the page URL and what is wrong. Screenshots or links help. A human reads every report, and safety issues go first. Content that breaks policy comes down, and the reporter is never identified to the author. Universities emailing us about negative reviews get pointed to our editorial policy.',
         ],
       },
     ],
@@ -70,108 +64,57 @@ export const TRUST_PAGES: TrustDoc[] = [
   {
     slug: 'editorial-policy',
     title: 'Editorial Policy',
-    description: 'How The Real China handles reviews, moderation and removals.',
-    updated: '2026-09-24',
+    description: 'How The Real China verifies, moderates and sources everything on the site.',
+    updated: '2026-09-26',
     sections: [
       {
         h: 'Reviews are user content',
+        id: 'user-content',
         body: [
-          'Reviews reflect the personal experience of their authors. TRC does not verify every claim and does not endorse opinions. We do verify authenticity signals — see How We Verify.',
+          'Reviews reflect the personal experience of whoever wrote them. We do not verify every claim and we do not endorse opinions. What we do check is covered below.',
+        ],
+      },
+      {
+        h: 'How we verify reviews',
+        id: 'how-we-verify',
+        body: [
+          'A review counts as verified when its author was signed in when they posted. That proves they registered. It does not prove they studied at the university. Anonymous reviews are equally welcome, and enrollment status (current student, alumni, exchange, applicant) is self-reported and shown as written.',
+          'Submissions pass through rate limits, bot detection (Cloudflare Turnstile), and disposable-email blocking. Reported reviews are read by a human and removed if they break the guidelines below.',
+          "We don't check student IDs, admission letters, or enrollment documents, and we don't verify that a reviewer attended the school they describe. Treat every review as one person's claimed experience. Weigh the specifics, not the stars.",
+        ],
+      },
+      {
+        h: 'Review guidelines',
+        id: 'review-guidelines',
+        body: [
+          "Write about your own experience: teaching quality, dorms, canteens, city life, admin support, costs. Specific beats general — 'the international office took three weeks to issue my JW202' helps people more than 'admin is slow'.",
+          "Be honest and fair. Include what worked and what didn't. No review needs to be balanced, but honest nuance is more useful than a rant or an ad.",
+          "Don't post content about people who aren't you, personal data, or hate speech. Don't review a university you never attended. One review per person per university.",
         ],
       },
       {
         h: 'What gets removed',
+        id: 'removals',
         body: [
-          'We remove content that is fake, duplicated, spam, hateful, harassing, doxxing, or reveals private information about identifiable people. We also remove reviews where the author demonstrably never attended the university.',
+          'Fake, duplicated or spam content. Hate speech, harassment, doxxing, private information about identifiable people. Reviews by someone who demonstrably never attended the university.',
+          "What never gets removed: negative reviews a university dislikes, balanced criticism, low ratings on their own. Universities cannot pay for removal or placement. That product doesn't exist here.",
         ],
       },
       {
-        h: 'What never gets removed',
+        h: 'Moderation',
+        id: 'moderation',
         body: [
-          'Negative reviews a university dislikes. Balanced criticism. Low ratings on their own. Universities cannot pay for removal or placement — we do not offer that product to anyone.',
+          'Reports are reviewed by a human. Authors are told when their content is removed and can appeal by replying to the notice. Repeated fake submissions are rate-limited or blocked.',
         ],
       },
       {
-        h: 'Moderation process',
+        h: 'Where the data comes from',
+        id: 'data-sources',
         body: [
-          'Reports are reviewed by a human. Authors are notified when their content is removed and can appeal by replying to the notice. Repeated fake submissions are rate-limited or blocked.',
+          'University names, cities, rankings and logos are compiled from public ranking publications (including ShanghaiRanking) and university websites. Data is refreshed periodically, and each university page shows the ranking year.',
+          "Ratings, review counts, cost ranges and recommend percentages are computed from user reviews only. Never imported, purchased, or seeded. A university with no reviews shows 'no reviews yet', not an estimate.",
+          'Found an error? Email nihao@therealchina.net with the page URL and a source.',
         ],
-      },
-    ],
-  },
-  {
-    slug: 'how-we-verify',
-    title: 'How We Verify Reviews',
-    description: 'What "verified" means here — and what it does not.',
-    updated: '2026-09-24',
-    sections: [
-      {
-        h: 'What "verified" means',
-        body: [
-          'A review counts as verified when its author was signed into an account when posting. That proves they registered — it does not prove they studied at the university. Anonymous reviews are equally welcome; enrollment status (current student, alumni, exchange, applicant) is self-reported and shown as written.',
-        ],
-      },
-      {
-        h: 'What we actually check',
-        body: [
-          'Submissions pass through rate limits, bot detection (Cloudflare Turnstile), and disposable-email blocking. Reported reviews are read by a human and removed if they break the review guidelines.',
-        ],
-      },
-      {
-        h: 'What we do not do — read this',
-        body: [
-          'We do not check student IDs, admission letters, or enrollment documents. We do not verify that a reviewer attended the university they describe. Treat every review as one person&apos;s claimed experience — weigh specifics, not stars.',
-        ],
-      },
-    ],
-  },
-  {
-    slug: 'review-guidelines',
-    title: 'Review Guidelines',
-    description: 'What makes a helpful review on The Real China.',
-    updated: '2026-09-24',
-    sections: [
-      {
-        h: 'Write about your own experience',
-        body: [
-          'Describe what you lived: teaching quality, dorms, canteens, city life, admin support, costs. Specific beats general — "the intl office took 3 weeks to issue my JW202" helps people more than "admin is slow".',
-        ],
-      },
-      {
-        h: 'Be honest and fair',
-        body: [
-          'Include what worked AND what did not. No review needs to be balanced, but honest nuance is more useful to readers than a rant or an ad.',
-        ],
-      },
-      {
-        h: 'Do not post',
-        body: [
-          'Content about people who are not you, personal data, hate speech, or reviews written by someone who never attended. One review per person per university.',
-        ],
-      },
-    ],
-  },
-  {
-    slug: 'data-sources',
-    title: 'Data Sources',
-    description: 'Where university data on The Real China comes from.',
-    updated: '2026-09-24',
-    sections: [
-      {
-        h: 'University directory',
-        body: [
-          'Names, cities, rankings and logos are compiled from public ranking publications (including ShanghaiRanking) and university websites. Data is refreshed periodically; see each university page for the ranking year.',
-        ],
-      },
-      {
-        h: 'Reviews and stats',
-        body: [
-          'Ratings, review counts, cost ranges and recommend percentages are computed from user reviews only — never imported, purchased, or seeded. A university with no reviews shows "no reviews yet", not an estimate.',
-        ],
-      },
-      {
-        h: 'Corrections',
-        body: ['Found an error? Email nihao@therealchina.net with the page URL and a source.'],
       },
     ],
   },
@@ -179,30 +122,34 @@ export const TRUST_PAGES: TrustDoc[] = [
     slug: 'privacy',
     title: 'Privacy Policy',
     description: 'What data The Real China collects and why.',
-    updated: '2026-09-24',
+    updated: '2026-09-26',
     sections: [
       {
         h: 'What we collect',
+        id: 'collect',
         body: [
-          'Account data (email, display name), content you submit (reviews, photos, profile fields), and technical logs needed to run the service. Anonymous reviews are not linked to your account publicly.',
+          'Account data (email, display name), the content you submit (reviews, photos, profile fields), and the technical logs needed to keep the site running. Reviews marked anonymous are not linked to your account publicly.',
         ],
       },
       {
         h: 'What we never do',
+        id: 'never',
         body: [
-          'Sell personal data, share your email, publish your identity on reviews marked anonymous, or use your enrollment documents for anything other than verification (they are deleted afterward).',
+          "We don't sell personal data, share your email, or publish your identity on reviews marked anonymous.",
         ],
       },
       {
         h: 'Your controls',
+        id: 'controls',
         body: [
-          'You can edit or delete your reviews and profile at any time. To delete your account and all associated content, contact nihao@therealchina.net — deletion is permanent and irreversible.',
+          'You can edit or delete your reviews and profile at any time. To delete your account and everything attached to it, email nihao@therealchina.net. Deletion is permanent and we cannot undo it.',
         ],
       },
       {
         h: 'Processors',
+        id: 'processors',
         body: [
-          'Supabase (database + auth), Netlify (hosting), Cloudflare Turnstile (abuse protection), Resend (transactional email). Each only receives what it needs to function.',
+          'A handful of services keep TRC running: Supabase (database and auth), Netlify (hosting), Cloudflare Turnstile (abuse protection), and Resend (transactional email). Each only gets what it needs to do its job.',
         ],
       },
     ],
@@ -211,87 +158,59 @@ export const TRUST_PAGES: TrustDoc[] = [
     slug: 'terms',
     title: 'Terms of Service',
     description: 'The rules for using The Real China.',
-    updated: '2026-09-24',
+    updated: '2026-09-26',
     sections: [
       {
         h: 'The deal',
+        id: 'the-deal',
         body: [
-          'Use TRC to read honest reviews and share your own experience. Do not scrape the site, submit fake content, harass users, or misrepresent who you are.',
+          "Use TRC to read honest reviews and share your own experience. Don't scrape the site, submit fake content, harass users, or misrepresent who you are.",
         ],
       },
       {
         h: 'Your content',
+        id: 'your-content',
         body: [
-          'You keep ownership of your reviews. You grant TRC a license to display them on the site and in summaries/exports. You can delete them anytime.',
+          'You keep ownership of your reviews. You grant TRC a license to display them on the site and in summaries or exports. You can delete them anytime.',
         ],
       },
       {
         h: 'Our content',
+        id: 'our-content',
         body: [
-          'TRC provides information "as is" — we are not liable for decisions you make based on reviews. University data may contain errors; verify important details directly.',
+          "TRC is provided as is. We're not liable for decisions you make based on reviews. University data may contain errors, so verify important details directly with the school.",
         ],
       },
       {
         h: 'Enforcement',
+        id: 'enforcement',
         body: [
           'We may remove content or suspend accounts that violate these terms or the review guidelines. Serious abuse is blocked at the network level.',
         ],
       },
-    ],
-  },
-  {
-    slug: 'disclaimer',
-    title: 'Disclaimer',
-    description: 'The limits of what The Real China can promise.',
-    updated: '2026-09-24',
-    sections: [
       {
-        h: 'Reviews are opinions',
+        h: 'Disclaimer',
+        id: 'disclaimer',
         body: [
-          'Ratings and reviews reflect individual experiences at a point in time. They are not guarantees of your experience, endorsements, or professional advice.',
-        ],
-      },
-      {
-        h: 'University information',
-        body: [
-          'Program availability, tuition, entry requirements and policies change — always confirm with the university before applying.',
-        ],
-      },
-      {
-        h: 'External links',
-        body: [
-          'Links to university sites and other resources are provided for convenience; we do not control their content.',
-        ],
-      },
-    ],
-  },
-  {
-    slug: 'report',
-    title: 'Report Content',
-    description: 'How to report a review, profile, or listing.',
-    updated: '2026-09-24',
-    sections: [
-      {
-        h: 'What to report',
-        body: [
-          'Fake reviews, spam, harassment, hate speech, private information, impersonation, or content posted by someone who never attended the university.',
-        ],
-      },
-      {
-        h: 'How to report',
-        body: [
-          'Email nihao@therealchina.net with the page URL and what is wrong. Include evidence if you have it (screenshots, links). Safety issues are handled first.',
-        ],
-      },
-      {
-        h: 'What happens next',
-        body: [
-          'A human reviews every report. If content violates policy it is removed; the reporter is not identified to the author. Universities reporting negative reviews are directed to our editorial policy.',
+          "Ratings and reviews reflect individual experiences at a point in time. They're not guarantees of your experience, endorsements, or professional advice.",
+          'Program availability, tuition, entry requirements and policies change. Always confirm with the university before applying.',
+          "Links to university sites and other resources are provided for convenience. We don't control their content.",
         ],
       },
     ],
   },
 ]
+
+// Retired standalone slugs → their merged section. generate_static.ts turns
+// these into _redirects 301s; App.jsx mirrors them client-side.
+export const TRUST_REDIRECTS: Record<string, string> = {
+  contact: '/about#contact',
+  report: '/about#report',
+  'how-we-verify': '/editorial-policy#how-we-verify',
+  'review-guidelines': '/editorial-policy#review-guidelines',
+  'data-sources': '/editorial-policy#data-sources',
+  disclaimer: '/terms#disclaimer',
+}
 
 export const trustDocBySlug = (slug: string | undefined): TrustDoc | undefined =>
   TRUST_PAGES.find((d) => d.slug === slug)

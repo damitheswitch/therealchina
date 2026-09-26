@@ -3153,23 +3153,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
     data: {}
   },
   {
-    path: "/contact",
-    data: {}
-  },
-  {
     path: "/editorial-policy",
-    data: {}
-  },
-  {
-    path: "/how-we-verify",
-    data: {}
-  },
-  {
-    path: "/review-guidelines",
-    data: {}
-  },
-  {
-    path: "/data-sources",
     data: {}
   },
   {
@@ -3178,14 +3162,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
   },
   {
     path: "/terms",
-    data: {}
-  },
-  {
-    path: "/disclaimer",
-    data: {}
-  },
-  {
-    path: "/report",
     data: {}
   },
   {

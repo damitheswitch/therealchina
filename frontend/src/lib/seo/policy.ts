@@ -23,7 +23,7 @@ export const INDEXABLE_PATTERNS: RegExp[] = [
   /^\/degree\/[^/]+$/, // /degree/:slug
   /^\/guide\/[^/]+$/, // /guide/:slug
   /^\/authors\/[^/]+$/, // /authors/:slug
-  /^\/(about|contact|editorial-policy|privacy|terms|how-we-verify|review-guidelines|data-sources|report|disclaimer)$/, // trust/legal
+  /^\/(about|editorial-policy|privacy|terms)$/, // trust/legal (merged — retired slugs 301 via TRUST_REDIRECTS)
 ]
 
 export const NOINDEX_FOLLOW_PATTERNS: RegExp[] = [
