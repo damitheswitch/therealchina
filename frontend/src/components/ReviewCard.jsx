@@ -25,9 +25,20 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
 // Long/info-dense reviews collapse to a teaser: verdict header, context, a
 // 3-line text preview, and "what's inside" chips — expanding reveals the
 // full text plus pros/cons, category ratings, tags, and media.
+/**
+ * @param {object} props
+ * @param {object} props.review
+ * @param {object | null} [props.author]
+ * @param {{ count: number, upvoted?: boolean }} [props.upvote]
+ * @param {number | null} [props.commentCount]
+ */
 export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
   const { id, rating, text, media, created_at, user_id, recommend } = review
   const [expanded, setExpanded] = useState(false)
+  // Optimistically clamped: prerendered HTML ships every card clamped (a
+  // no-op visually on short text), so hydration never un-collapses a card —
+  // measure() only removes the clamp when the text actually fits.
+  const [clamped, setClamped] = useState(true)
   const [textOverflows, setTextOverflows] = useState(false)
   const textRef = useRef(null)
   const cardRef = useRef(null)
@@ -36,7 +47,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
   const hasExtras = hasReviewExtras(review)
   const teaserItems = getReviewTeaserItems(review)
   const isCollapsible = textOverflows || hasExtras
-  const clamped = isCollapsible && !expanded && textOverflows
+  const showClamped = clamped && !expanded
 
   // Measures the unclamped text height against the preview line count. Runs
   // inside useLayoutEffect so a needed clamp lands before the first paint —
@@ -48,7 +59,9 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
 
     const measure = () => {
       const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || LINE_HEIGHT_FALLBACK
-      setTextOverflows(el.scrollHeight > lineHeight * PREVIEW_LINES + 1)
+      const overflows = el.scrollHeight > lineHeight * PREVIEW_LINES + 1
+      setTextOverflows(overflows)
+      setClamped(overflows)
     }
 
     measure()
@@ -111,15 +124,15 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
       <ReviewContext review={review} />
 
       <div className="review-text-wrap">
-        <p ref={textRef} className={`review-text${clamped ? ' clamped' : ''}`}>
+        <p ref={textRef} className={`review-text${showClamped ? ' clamped' : ''}`}>
           {text}
         </p>
-        {clamped && <div className="review-text-fade" aria-hidden="true" />}
+        {showClamped && textOverflows && <div className="review-text-fade" aria-hidden="true" />}
       </div>
 
       {isCollapsible && (
         <div className="review-disclosure-row">
-          {teaserItems.length > 0 && (
+          {!expanded && teaserItems.length > 0 && (
             <div className="review-teaser">
               {teaserItems.map((item) => (
                 <span key={item} className="teaser-chip">

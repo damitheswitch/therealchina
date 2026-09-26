@@ -13,8 +13,17 @@ type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
 // flashing the previous university's reviews under the new header.
 export const UniversityReviews = ({ university }: { university: UniversityRef }) => {
   const [page, setPage] = useState(1)
-  const { reviews, authors, totalCount, pageCount, loading, error, refetch, commentCounts } =
-    useUniversityReviews(university.id, page)
+  const {
+    reviews,
+    authors,
+    totalCount,
+    pageCount,
+    loading,
+    error,
+    refetch,
+    commentCounts,
+    upvotes,
+  } = useUniversityReviews(university.id, page)
   const sectionRef = useRef<HTMLDivElement>(null)
 
   // The count can shrink while the user sits on a later page (e.g. a review
@@ -46,20 +55,27 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
             Try again
           </button>
         </div>
-      ) : reviews.length > 0 ? (
+      ) : totalCount > 0 ? (
         <>
-          <div className="review-list">
-            {reviews.map((review) => (
-              <ReviewCard
-                key={review.id}
-                review={review}
-                author={review.user_id ? (authors[review.user_id] ?? null) : null}
-                upvote={undefined}
-                commentCount={commentCounts[review.id]}
-              />
-            ))}
-          </div>
-
+          {reviews.length === 0 ? (
+            // Out-of-range page after a count shrink — the clamp effect is
+            // already refetching; don't flash the "no reviews" empty state.
+            <div className="empty-state">
+              <p>Loading reviews...</p>
+            </div>
+          ) : (
+            <div className="review-list">
+              {reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  author={review.user_id ? (authors[review.user_id] ?? null) : null}
+                  upvote={upvotes[review.id]}
+                  commentCount={commentCounts[review.id]}
+                />
+              ))}
+            </div>
+          )}
           {pageCount > 1 && (
             <div className="pagination">
               <button

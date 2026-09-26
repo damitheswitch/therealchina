@@ -38,8 +38,10 @@ const ProfileReviewCard = ({ review }) => {
       <p className="review-text">{text}</p>
       <ReviewExtras review={review} />
       {media && media.length > 0 && <MediaGallery media={media} />}
-      <UpvoteButton reviewId={id} />
-      <CommentSection reviewId={id} />
+      <div className="review-actions">
+        <UpvoteButton reviewId={id} />
+        <CommentSection reviewId={id} />
+      </div>
     </div>
   )
 }

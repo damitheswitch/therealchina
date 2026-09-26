@@ -108,7 +108,7 @@ const HubPage = ({
       {reviews.length > 0 && (
         <>
           <h2 style={{ marginTop: 'var(--sp-5)' }}>Reviews mentioning {hub?.label}</h2>
-          <div className="reviews-list" style={{ marginTop: 'var(--sp-3)' }}>
+          <div className="review-list" style={{ marginTop: 'var(--sp-3)' }}>
             {reviews.map((review) => (
               <ReviewCard
                 key={review.id}

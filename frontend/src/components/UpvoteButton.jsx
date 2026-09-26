@@ -29,7 +29,7 @@ export const UpvoteButton = ({ reviewId, initialCount, initialUpvoted }) => {
       if (!seeded) {
         const { count: upvoteCount } = await supabase
           .from('upvotes')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('review_id', reviewId)
           .abortSignal(controller.signal)
         if (!controller.signal.aborted) setCount(upvoteCount || 0)
@@ -83,6 +83,7 @@ export const UpvoteButton = ({ reviewId, initialCount, initialUpvoted }) => {
       onClick={handleToggle}
       disabled={loading}
       className={`upvote-btn${upvoted ? ' active' : ''}`}
+      aria-pressed={upvoted}
     >
       {upvoted ? '👍 Upvoted' : '👍 Upvote'} ({count})
     </button>

@@ -822,9 +822,10 @@ h3 {
 }
 
 /* Inside the wrap-enabled .review-actions row, the expanded thread takes
-   its own full-width line under the pills. */
+   its own full-width line under the pills; in a column-flex parent
+   (ProfileView) width:100% just behaves like the usual stretch. */
 .comment-expanded {
-  flex-basis: 100%;
+  width: 100%;
   margin-top: var(--sp-1);
 }
 
@@ -2893,6 +2894,63 @@ h3 {
 
 .user-dropdown-logout svg {
   color: var(--seal-red);
+}
+
+/* Guest variant: outlined "unclaimed" seal mark + chevron (no floating head) */
+.guest-seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--seal-red-tint);
+  border: 1.5px solid rgba(166, 25, 46, 0.7);
+  color: var(--seal-red);
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 1;
+  user-select: none;
+  transition: border-color var(--t-fast);
+}
+
+.user-dropdown-trigger--guest {
+  gap: 6px;
+  border-radius: var(--r-md);
+  box-shadow: none;
+}
+.user-dropdown-trigger--guest:hover {
+  box-shadow: none;
+}
+.user-dropdown-trigger--guest:hover .guest-seal {
+  border-color: var(--seal-red);
+}
+.user-dropdown-trigger--guest .chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-faint);
+  transition:
+    transform var(--t-fast),
+    color var(--t-fast);
+}
+.user-dropdown-trigger--guest:hover .chevron {
+  color: var(--seal-red);
+}
+.user-dropdown-trigger--guest[aria-expanded='true'] .chevron {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-header--guest {
+  border-bottom: none;
+  padding-bottom: var(--sp-1);
+}
+
+.user-dropdown-guest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-3) var(--sp-3);
+}
+.user-dropdown-guest-actions .btn {
+  justify-content: center;
 }
 
 @media (max-width: 640px) {

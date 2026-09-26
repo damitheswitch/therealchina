@@ -68,6 +68,7 @@ export const useUniversityReviewSummary = (universityId: string | undefined) => 
             .select(AGGREGATE_COLUMNS)
             .eq('university_id', universityId)
             .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
             .abortSignal(controller.signal)
             .range(offset, offset + SUMMARY_CHUNK - 1)
 

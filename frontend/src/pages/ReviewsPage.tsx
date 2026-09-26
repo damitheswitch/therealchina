@@ -57,7 +57,7 @@ export const ReviewsPage = () => {
           <p>Be the first to share your experience.</p>
         </div>
       ) : (
-        <div className="reviews-list" style={{ marginTop: 'var(--sp-4)' }}>
+        <div className="review-list" style={{ marginTop: 'var(--sp-4)' }}>
           {reviews.map((review) => {
             const uni = universities[review.university_id]
             return (

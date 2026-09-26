@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
+import { useAuth } from '../contexts/AuthContext'
 import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
 type ReviewRow = Tables<'reviews'>
 type AuthorProfile = Pick<Tables<'profile_public'>, 'id' | 'display_name' | 'avatar_url'>
+export type ReviewUpvote = { count: number; upvoted: boolean }
 
-const REVIEW_PAGE_SIZE = 5
+export const REVIEW_PAGE_SIZE = 5
 
 // Kept as one literal so supabase-js can infer the row shape from the select.
 const REVIEW_COLUMNS =
@@ -22,8 +24,10 @@ const REVIEW_COLUMNS =
 export const useUniversityReviews = (universityId: string, page: number) => {
   const pd = usePrerenderData<UniversityPageData>('universityPage')
   const seeded = pd?.university?.id === universityId ? pd : null
+  const { user } = useAuth()
+  const userId = user?.id ?? null
   const [reviews, setReviews] = useState<ReviewRow[]>(() =>
-    (seeded?.reviews ?? []).slice(0, REVIEW_PAGE_SIZE)
+    (seeded?.reviews ?? []).slice((page - 1) * REVIEW_PAGE_SIZE, page * REVIEW_PAGE_SIZE)
   )
   const [authors, setAuthors] = useState<Record<string, AuthorProfile>>(seeded?.authors ?? {})
   const [totalCount, setTotalCount] = useState<number>(seeded?.reviews?.length ?? 0)
@@ -34,6 +38,7 @@ export const useUniversityReviews = (universityId: string, page: number) => {
   const [error, setError] = useState<Error | null>(null)
   const [reloadTick, setReloadTick] = useState(0)
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
+  const [upvotes, setUpvotes] = useState<Record<string, ReviewUpvote>>({})
 
   useEffect(() => {
     if (!universityId) {
@@ -42,6 +47,7 @@ export const useUniversityReviews = (universityId: string, page: number) => {
       setTotalCount(0)
       setPageCount(1)
       setLoading(false)
+      setError(null)
       return
     }
     // Hydration: reviews + author profiles came baked into the page. Slice
@@ -121,35 +127,68 @@ export const useUniversityReviews = (universityId: string, page: number) => {
     return () => controller.abort()
   }, [universityId, page, seeded, reloadTick])
 
-  // Comment counts for the visible page — one batched `.in()` query so the
-  // cards can show "Comments (n)" without each fetching its own count.
+  // Engagement counts for the visible page — batched `.in()` queries so the
+  // cards show "Comments (n)" / "Upvote (n)" without each fetching per-row
+  // (same convention as useRecentReviews; cards must not query per-row).
   useEffect(() => {
     const ids = reviews.map((r) => r.id)
     if (ids.length === 0) {
       setCommentCounts({})
+      setUpvotes({})
       return
     }
     const controller = new AbortController()
     const run = async () => {
-      const { data, error } = await supabase
-        .from('comments')
-        .select('review_id')
-        .in('review_id', ids)
-        .abortSignal(controller.signal)
+      const [commentsRes, votesRes, mineRes] = await Promise.all([
+        supabase
+          .from('comments')
+          .select('review_id')
+          .in('review_id', ids)
+          .abortSignal(controller.signal),
+        supabase
+          .from('upvotes')
+          .select('review_id')
+          .in('review_id', ids)
+          .abortSignal(controller.signal),
+        userId
+          ? supabase
+              .from('upvotes')
+              .select('review_id')
+              .eq('user_id', userId)
+              .in('review_id', ids)
+              .abortSignal(controller.signal)
+          : Promise.resolve({ data: [] as { review_id: string }[], error: null }),
+      ])
       if (controller.signal.aborted) return
-      if (error) {
-        console.error('Error fetching comment counts:', error)
+      if (commentsRes.error || votesRes.error || mineRes.error) {
+        console.error(
+          'Error fetching engagement counts:',
+          commentsRes.error ?? votesRes.error ?? mineRes.error
+        )
         return
       }
-      const counts: Record<string, number> = {}
-      for (const row of (data as { review_id: string }[] | null) ?? []) {
-        counts[row.review_id] = (counts[row.review_id] ?? 0) + 1
+      const commentCountMap: Record<string, number> = {}
+      for (const row of (commentsRes.data as { review_id: string }[] | null) ?? []) {
+        commentCountMap[row.review_id] = (commentCountMap[row.review_id] ?? 0) + 1
       }
-      setCommentCounts(counts)
+      setCommentCounts(commentCountMap)
+
+      const voteCountMap: Record<string, number> = {}
+      for (const row of (votesRes.data as { review_id: string }[] | null) ?? []) {
+        voteCountMap[row.review_id] = (voteCountMap[row.review_id] ?? 0) + 1
+      }
+      const mine = new Set(
+        ((mineRes.data as { review_id: string }[] | null) ?? []).map((r) => r.review_id)
+      )
+      setUpvotes(
+        Object.fromEntries(
+          ids.map((id) => [id, { count: voteCountMap[id] ?? 0, upvoted: mine.has(id) }])
+        )
+      )
     }
     run()
     return () => controller.abort()
-  }, [reviews])
+  }, [reviews, userId])
 
   return {
     reviews,
@@ -159,6 +198,7 @@ export const useUniversityReviews = (universityId: string, page: number) => {
     loading,
     error,
     commentCounts,
+    upvotes,
     refetch: () => setReloadTick((tick) => tick + 1),
   }
 }

@@ -2,6 +2,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useUniversity } from '../hooks/useUniversity'
 import { useUniversityReviewSummary } from '../hooks/useUniversityReviewSummary'
+import { REVIEW_PAGE_SIZE } from '../hooks/useUniversityReviews'
 import { useUniversityStats } from '../hooks/useUniversityStats'
 import { buildReviewSummary } from '../lib/reviewSummary'
 import { buildUniversityExtras } from '../lib/universityExtras'
@@ -147,9 +148,11 @@ export const UniversityPage = () => {
   // indexableByReviews still works off the slim aggregate rows, and review
   // markup is simply omitted rather than fabricated.
   const indexable = indexableByReviews(hydratedReviews ?? summaryRows)
+  // Only reviews that actually render (page 1 = newest first) may become
+  // Review markup — schema must match visible content.
   const schemaReviews = (hydratedReviews ?? [])
+    .slice(0, REVIEW_PAGE_SIZE)
     .filter((r) => (r.text?.trim().length ?? 0) >= 200)
-    .slice(0, 5)
     .map((r) => ({
       author: (r.user_id ? hydratedAuthors[r.user_id]?.display_name : null) ?? 'Anonymous',
       rating: r.rating,

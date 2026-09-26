@@ -225,6 +225,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
                       placeholder="Write a reply..."
+                      aria-label="Write a reply"
                       className="form-textarea"
                       rows="3"
                     />
@@ -254,6 +255,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder={user ? 'Write a comment...' : 'Sign in to leave a comment'}
+                aria-label={user ? 'Write a comment' : 'Sign in to leave a comment'}
                 className="form-textarea"
                 rows="3"
                 disabled={!user}
