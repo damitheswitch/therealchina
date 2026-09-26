@@ -48,6 +48,10 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
   const teaserItems = getReviewTeaserItems(review)
   const isCollapsible = textOverflows || hasExtras
   const showClamped = clamped && !expanded
+  // "Rich" = reviewer filled almost everything (≥3 of the 4 teaser
+  // categories: pros&cons, category ratings, photos, tags). The expand pill
+  // gets a gold halo so the hidden value visibly advertises itself.
+  const isRich = teaserItems.length >= 3
 
   // Measures the unclamped text height against the preview line count. Runs
   // inside useLayoutEffect so a needed clamp lands before the first paint —
@@ -143,7 +147,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
           )}
           <button
             type="button"
-            className={`review-expand-btn${expanded ? ' open' : ''}`}
+            className={`review-expand-btn${expanded ? ' open' : ''}${isRich && !expanded ? ' rich' : ''}`}
             onClick={toggleExpanded}
             aria-expanded={expanded}
             aria-controls={expanded && hasExtras ? regionId : undefined}
