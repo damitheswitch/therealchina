@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useHubData, type HubPageData } from '../hooks/useHubData'
@@ -6,8 +7,10 @@ import { degreeHubBySlug, normalizeDegree } from '../lib/seo/degrees'
 import { indexableByReviews } from '../lib/seo/indexable'
 import { UniversityCard } from '../components/UniversityCard'
 import { ReviewCard } from '../components/ReviewCard'
+import { ReviewSortSelect } from '../components/ReviewSortSelect'
 import { Seo } from '../components/Seo'
 import { stringify, itemListSchema, breadcrumbSchema } from '../lib/seo/jsonld'
+import { sortReviews, DEFAULT_REVIEW_SORT, type ReviewSort } from '../lib/reviewSort'
 import type { Tables } from '../types/database.types'
 import type { HubDef } from '../lib/seo/programs'
 
@@ -25,6 +28,13 @@ const HubPage = ({
   const { user } = useAuth()
   const { hub, universities, reviews, authors, upvoteCounts, upvotedMine, loading, resolved } =
     useHubData(kind, slug, lookup, resolve, user?.id)
+  // Hub reviews are all loaded client-side already — sorting is a pure
+  // reorder of the same set, no extra fetch needed.
+  const [sort, setSort] = useState<ReviewSort>(DEFAULT_REVIEW_SORT)
+  const sortedReviews = useMemo(
+    () => sortReviews(reviews, sort, upvoteCounts),
+    [reviews, sort, upvoteCounts]
+  )
 
   if (loading) {
     return (
@@ -107,9 +117,12 @@ const HubPage = ({
 
       {reviews.length > 0 && (
         <>
-          <h2 style={{ marginTop: 'var(--sp-5)' }}>Reviews mentioning {hub?.label}</h2>
+          <div className="reviews-head" style={{ marginTop: 'var(--sp-5)', marginBottom: 0 }}>
+            <h2>Reviews mentioning {hub?.label}</h2>
+            {reviews.length > 1 && <ReviewSortSelect value={sort} onChange={setSort} />}
+          </div>
           <div className="review-list" style={{ marginTop: 'var(--sp-3)' }}>
-            {reviews.map((review) => (
+            {sortedReviews.map((review) => (
               <ReviewCard
                 key={review.id}
                 review={review}

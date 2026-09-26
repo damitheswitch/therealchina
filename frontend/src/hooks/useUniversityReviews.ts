@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { useAuth } from '../contexts/AuthContext'
+import {
+  countByReviewId,
+  sortReviews,
+  REVIEW_SERVER_ORDER,
+  type ReviewSort,
+  type ReviewSortable,
+} from '../lib/reviewSort'
 import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
@@ -15,13 +22,23 @@ export const REVIEW_PAGE_SIZE = 5
 const REVIEW_COLUMNS =
   'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
 
-// Paginated fetch of one university's reviews, newest first. `id` is a
-// secondary sort key so reviews sharing a created_at timestamp can't drift
-// across page boundaries. `refetch` re-runs the current page (error retry).
+// Light row shape for ranking 'helpful' — enough to order, cheap to fetch for
+// the full set before hydrating a single page of full rows.
+const REVIEW_HEAD_COLUMNS = 'id, rating, created_at'
+
+// Paginated fetch of one university's reviews. `sort` is the ReviewSort model
+// from lib/reviewSort: column-backed sorts run as server ORDER BYs with an
+// `id` desc tail so ties can't drift across page boundaries; 'helpful' is
+// ranked client-side in a two-phase fetch (PostgREST can't ORDER BY a
+// related-row count). `refetch` re-runs the current page (error retry).
 // Hydrated pages ship ALL reviews in the prerender payload, so the seeded
-// path just slices client-side — no extra request, and the prerendered HTML
-// keeps its full content for SEO.
-export const useUniversityReviews = (universityId: string, page: number) => {
+// path sorts/slices client-side — no extra request for column sorts, and the
+// prerendered HTML keeps its full content for SEO.
+export const useUniversityReviews = (
+  universityId: string,
+  page: number,
+  sort: ReviewSort = 'newest'
+) => {
   const pd = usePrerenderData<UniversityPageData>('universityPage')
   const seeded = pd?.university?.id === universityId ? pd : null
   const { user } = useAuth()
@@ -50,12 +67,17 @@ export const useUniversityReviews = (universityId: string, page: number) => {
       setError(null)
       return
     }
-    // Hydration: reviews + author profiles came baked into the page. Slice
-    // the requested page out of the seeded set — the payload holds them all.
-    if (seeded) {
-      const all = seeded.reviews ?? []
-      const start = (page - 1) * REVIEW_PAGE_SIZE
-      setReviews(all.slice(start, start + REVIEW_PAGE_SIZE))
+
+    const all = seeded?.reviews ?? []
+    const start = (page - 1) * REVIEW_PAGE_SIZE
+
+    // Hydration + a column-backed sort: reviews + author profiles came baked
+    // into the page and the payload holds them all — sort and slice purely
+    // client-side, no fetch. 'helpful' still needs an upvotes batch (the
+    // payload doesn't ship vote counts), so it falls through to run().
+    if (seeded && sort !== 'helpful') {
+      const sorted = sortReviews(all, sort)
+      setReviews(sorted.slice(start, start + REVIEW_PAGE_SIZE))
       setAuthors(seeded.authors ?? {})
       setTotalCount(all.length)
       setPageCount(Math.max(1, Math.ceil(all.length / REVIEW_PAGE_SIZE)))
@@ -66,22 +88,97 @@ export const useUniversityReviews = (universityId: string, page: number) => {
 
     const controller = new AbortController()
 
+    // Batched author-profile lookup for the resolved page rows (N+1 guard —
+    // same convention as before, shared by both fetch paths).
+    const loadAuthors = async (rows: ReviewRow[]) => {
+      const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[]
+      if (authorIds.length === 0) {
+        setAuthors({})
+        return
+      }
+      const { data, error: authorsError } = await supabase
+        .from('profile_public')
+        .select('id, display_name, avatar_url')
+        .in('id', authorIds)
+        .abortSignal(controller.signal)
+      if (authorsError) throw authorsError
+      setAuthors(Object.fromEntries(((data as AuthorProfile[] | null) || []).map((p) => [p.id, p])))
+    }
+
     const run = async () => {
       setLoading(true)
       setError(null)
       try {
-        const start = (page - 1) * REVIEW_PAGE_SIZE
+        if (sort === 'helpful') {
+          // Rank every review by upvotes, then hydrate only the page slice.
+          // Seeded pages reuse the payload rows as heads, so the single extra
+          // request is the upvotes batch for this university's reviews.
+          const heads: ReviewSortable[] = seeded
+            ? all
+            : await (async () => {
+                const { data, error: headError } = await supabase
+                  .from('reviews')
+                  .select(REVIEW_HEAD_COLUMNS)
+                  .eq('university_id', universityId)
+                  .abortSignal(controller.signal)
+                if (headError) throw headError
+                return (data as ReviewSortable[] | null) || []
+              })()
+
+          const headIds = heads.map((h) => h.id)
+          const { data: voteRows, error: voteError } = headIds.length
+            ? await supabase
+                .from('upvotes')
+                .select('review_id')
+                .in('review_id', headIds)
+                .abortSignal(controller.signal)
+            : { data: [] as { review_id: string }[], error: null }
+          if (voteError) throw voteError
+
+          const ordered = sortReviews(heads, 'helpful', countByReviewId(voteRows))
+          const pageIds = ordered.slice(start, start + REVIEW_PAGE_SIZE).map((h) => h.id)
+
+          let rows: ReviewRow[]
+          if (seeded) {
+            const byId = new Map(all.map((r) => [r.id, r]))
+            rows = pageIds.map((id) => byId.get(id)).filter((r): r is ReviewRow => !!r)
+            setAuthors(seeded.authors ?? {})
+          } else {
+            const { data, error: rowsError } = pageIds.length
+              ? await supabase
+                  .from('reviews')
+                  .select(REVIEW_COLUMNS)
+                  .in('id', pageIds)
+                  .abortSignal(controller.signal)
+              : { data: [] as ReviewRow[], error: null }
+            if (rowsError) throw rowsError
+            const byId = new Map(((data as ReviewRow[] | null) || []).map((r) => [r.id, r]))
+            rows = pageIds.map((id) => byId.get(id)).filter((r): r is ReviewRow => !!r)
+            await loadAuthors(rows)
+          }
+
+          setReviews(rows)
+          setTotalCount(ordered.length)
+          setPageCount(Math.max(1, Math.ceil(ordered.length / REVIEW_PAGE_SIZE)))
+          return
+        }
+
         const end = start + REVIEW_PAGE_SIZE - 1
+        const { column, ascending } = REVIEW_SERVER_ORDER[sort]
+        let query = supabase
+          .from('reviews')
+          .select(REVIEW_COLUMNS, { count: 'exact' })
+          .eq('university_id', universityId)
+          .order(column, { ascending })
+        // Recency tiebreak so equal-rating pages are deterministic — skipped
+        // when the primary column already is created_at.
+        if (column !== 'created_at') query = query.order('created_at', { ascending: false })
 
         const {
           data,
           error: fetchError,
           count,
-        } = await supabase
-          .from('reviews')
-          .select(REVIEW_COLUMNS, { count: 'exact' })
-          .eq('university_id', universityId)
-          .order('created_at', { ascending: false })
+        } = await query
           .order('id', { ascending: false })
           .abortSignal(controller.signal)
           .range(start, end)
@@ -91,24 +188,7 @@ export const useUniversityReviews = (universityId: string, page: number) => {
         setReviews(fetched)
         setTotalCount(count || 0)
         setPageCount(Math.max(1, Math.ceil((count || 0) / REVIEW_PAGE_SIZE)))
-
-        const authorIds = [...new Set(fetched.map((r) => r.user_id).filter(Boolean))] as string[]
-        if (authorIds.length > 0) {
-          const { data: authorsData, error: authorsError } = await supabase
-            .from('profile_public')
-            .select('id, display_name, avatar_url')
-            .in('id', authorIds)
-            .abortSignal(controller.signal)
-
-          if (authorsError) throw authorsError
-          setAuthors(
-            Object.fromEntries(
-              ((authorsData as AuthorProfile[] | null) || []).map((p) => [p.id, p])
-            )
-          )
-        } else {
-          setAuthors({})
-        }
+        await loadAuthors(fetched)
       } catch (err) {
         // supabase-js surfaces aborts as { message: 'AbortError: ...' } with no
         // .name — check both so StrictMode double-mounts stay quiet.
@@ -125,7 +205,7 @@ export const useUniversityReviews = (universityId: string, page: number) => {
 
     run()
     return () => controller.abort()
-  }, [universityId, page, seeded, reloadTick])
+  }, [universityId, page, sort, seeded, reloadTick])
 
   // Engagement counts for the visible page — batched `.in()` queries so the
   // cards show "Comments (n)" / "Upvote (n)" without each fetching per-row

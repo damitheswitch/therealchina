@@ -1,16 +1,21 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useRecentReviews } from '../hooks/useRecentReviews'
 import { ReviewCard } from '../components/ReviewCard'
+import { ReviewSortSelect } from '../components/ReviewSortSelect'
 import { Seo } from '../components/Seo'
 import { stringify, itemListSchema, breadcrumbSchema } from '../lib/seo/jsonld'
+import { DEFAULT_REVIEW_SORT, type ReviewSort } from '../lib/reviewSort'
 
-// /reviews — every review across all universities, newest first. The
-// collection page reviewers and crawlers use to see the corpus.
+// /reviews — every review across all universities. The collection page
+// reviewers and crawlers use to see the corpus.
 export const ReviewsPage = () => {
   const { user } = useAuth()
+  const [sort, setSort] = useState<ReviewSort>(DEFAULT_REVIEW_SORT)
   const { reviews, universities, authors, upvoteCounts, upvotedMine, loading } = useRecentReviews(
-    user?.id
+    user?.id,
+    sort
   )
 
   return (
@@ -57,30 +62,36 @@ export const ReviewsPage = () => {
           <p>Be the first to share your experience.</p>
         </div>
       ) : (
-        <div className="review-list" style={{ marginTop: 'var(--sp-4)' }}>
-          {reviews.map((review) => {
-            const uni = universities[review.university_id]
-            return (
-              <div key={review.id}>
-                {uni && (
-                  <p className="muted" style={{ marginBottom: 'var(--sp-1)' }}>
-                    <Link to={`/university/${uni.slug}/`} className="review-author-link">
-                      {uni.name}
-                    </Link>
-                  </p>
-                )}
-                <ReviewCard
-                  review={review}
-                  author={authors[review.user_id ?? '']}
-                  upvote={{
-                    count: upvoteCounts[review.id] ?? 0,
-                    upvoted: upvotedMine.has(review.id),
-                  }}
-                />
-              </div>
-            )
-          })}
-        </div>
+        <>
+          <div className="reviews-head" style={{ marginTop: 'var(--sp-3)', marginBottom: 0 }}>
+            <span className="muted">{reviews.length} reviews</span>
+            {reviews.length > 1 && <ReviewSortSelect value={sort} onChange={setSort} />}
+          </div>
+          <div className="review-list" style={{ marginTop: 'var(--sp-2)' }}>
+            {reviews.map((review) => {
+              const uni = universities[review.university_id]
+              return (
+                <div key={review.id}>
+                  {uni && (
+                    <p className="muted" style={{ marginBottom: 'var(--sp-1)' }}>
+                      <Link to={`/university/${uni.slug}/`} className="review-author-link">
+                        {uni.name}
+                      </Link>
+                    </p>
+                  )}
+                  <ReviewCard
+                    review={review}
+                    author={authors[review.user_id ?? '']}
+                    upvote={{
+                      count: upvoteCounts[review.id] ?? 0,
+                      upvoted: upvotedMine.has(review.id),
+                    }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
     </div>
   )

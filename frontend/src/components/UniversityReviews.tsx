@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { ReviewCard } from './ReviewCard'
+import { ReviewSortSelect } from './ReviewSortSelect'
 import { Icons } from './Icons'
+import { DEFAULT_REVIEW_SORT, type ReviewSort } from '../lib/reviewSort'
 import type { Tables } from '../types/database.types'
 
 type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
@@ -13,6 +15,7 @@ type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
 // flashing the previous university's reviews under the new header.
 export const UniversityReviews = ({ university }: { university: UniversityRef }) => {
   const [page, setPage] = useState(1)
+  const [sort, setSort] = useState<ReviewSort>(DEFAULT_REVIEW_SORT)
   const {
     reviews,
     authors,
@@ -23,7 +26,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
     refetch,
     commentCounts,
     upvotes,
-  } = useUniversityReviews(university.id, page)
+  } = useUniversityReviews(university.id, page, sort)
   const sectionRef = useRef<HTMLDivElement>(null)
 
   // The count can shrink while the user sits on a later page (e.g. a review
@@ -40,9 +43,19 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
     sectionRef.current?.scrollIntoView()
   }
 
+  const handleSortChange = (next: ReviewSort) => {
+    // Sort change reorders the whole corpus — the old page index is
+    // meaningless under the new order, so always restart at page 1.
+    setSort(next)
+    setPage(1)
+  }
+
   return (
     <div className="section uni-reviews" style={{ paddingTop: 'var(--sp-2)' }} ref={sectionRef}>
-      <h2 className="section-title">Student Reviews{totalCount > 0 ? ` (${totalCount})` : ''}</h2>
+      <div className="reviews-head">
+        <h2 className="section-title">Student Reviews{totalCount > 0 ? ` (${totalCount})` : ''}</h2>
+        {totalCount > 1 && <ReviewSortSelect value={sort} onChange={handleSortChange} />}
+      </div>
 
       {loading ? (
         <div className="empty-state">
