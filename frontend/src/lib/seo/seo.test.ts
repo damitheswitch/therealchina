@@ -17,6 +17,7 @@ describe('policy: indexability', () => {
       '/reviews',
       '/about',
       '/editorial-policy',
+      '/guides',
       '/guide/visa-application',
     ]) {
       expect(getPolicy(p).index, p).toBe(true)

@@ -3165,6 +3165,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
     data: {}
   },
   {
+    path: "/guides",
+    data: {}
+  },
+  {
+    path: "/guide/check-if-chinese-university-legit",
+    data: {}
+  },
+  {
+    path: "/guide/jw202-visa-forms",
+    data: {}
+  },
+  {
     path: "/university/tsinghua-university",
     data: {
       universityPage: {

@@ -21,6 +21,7 @@ export const INDEXABLE_PATTERNS: RegExp[] = [
   /^\/city\/[^/]+$/, // /city/:slug
   /^\/program\/[^/]+$/, // /program/:slug
   /^\/degree\/[^/]+$/, // /degree/:slug
+  /^\/guides$/, // /guides index
   /^\/guide\/[^/]+$/, // /guide/:slug
   /^\/authors\/[^/]+$/, // /authors/:slug
   /^\/(about|editorial-policy|privacy|terms)$/, // trust/legal (merged — retired slugs 301 via TRUST_REDIRECTS)
@@ -28,6 +29,7 @@ export const INDEXABLE_PATTERNS: RegExp[] = [
 
 export const NOINDEX_FOLLOW_PATTERNS: RegExp[] = [
   /^\/(onboarding|review|flights|users|settings)$/, // app pages & wizard
+  /^\/guide$/, // bare /guide only redirects to /guides — never a landing page
   /^\/profile/, // /profile, /profile/:id
   /^\/reset-password/, // auth flow
 ]

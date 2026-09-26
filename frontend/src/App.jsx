@@ -29,6 +29,8 @@ const DegreeHubPage = lazy(() =>
   import('./pages/HubPage').then((m) => ({ default: m.DegreeHubPage }))
 )
 const TrustPage = lazy(() => import('./pages/TrustPage').then((m) => ({ default: m.TrustPage })))
+const GuidesPage = lazy(() => import('./pages/GuidesPage').then((m) => ({ default: m.GuidesPage })))
+const GuidePage = lazy(() => import('./pages/GuidePage').then((m) => ({ default: m.GuidePage })))
 const ReviewPage = lazy(() => import('./pages/ReviewPage').then((m) => ({ default: m.ReviewPage })))
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -91,6 +93,9 @@ function App() {
               <Route path="/city/:slug" element={<CityPage />} />
               <Route path="/program/:slug" element={<ProgramHubPage />} />
               <Route path="/degree/:slug" element={<DegreeHubPage />} />
+              <Route path="/guides" element={<GuidesPage />} />
+              <Route path="/guide" element={<Navigate to="/guides" replace />} />
+              <Route path="/guide/:slug" element={<GuidePage />} />
               {['about', 'editorial-policy', 'privacy', 'terms'].map((p) => (
                 <Route key={p} path={`/${p}`} element={<TrustPage slug={p} />} />
               ))}

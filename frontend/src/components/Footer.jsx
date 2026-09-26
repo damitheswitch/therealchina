@@ -13,6 +13,7 @@ export const Footer = () => (
       <div className="footer-links">
         <Link to="/universities/">Universities</Link>
         <Link to="/reviews/">Reviews</Link>
+        <Link to="/guides">Guides</Link>
         <Link to="/review">Leave a Review</Link>
         <Link to="/about">About</Link>
         <Link to="/editorial-policy#how-we-verify">How we verify</Link>
