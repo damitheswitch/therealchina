@@ -21,6 +21,10 @@ dev-dist
 .env.local
 .env.production
 
+# Scratch files (agent/tooling temp output — bash and Windows tools both
+# resolve this path identically, unlike /tmp)
+.tmp/
+
 # Supabase
 supabase/.temp
 supabase/.branches

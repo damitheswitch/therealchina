@@ -61,6 +61,15 @@ No DB password needed anywhere — the Management API token covers all of it.
 - Never route git through third-party github proxies — credentials leak.
 - `webfetch` blocked or redirect loop → domain-scoped `web_search`, then fetch the result URL.
 - Docs-only commits: put `[skip netlify]` in the commit message to avoid burning build minutes.
+- **Pushing when git transport is down**: `node scripts/api_push.mjs --repo owner/name --branch <branch> --base <staging|master> --message "<msg>" <files...>` creates blobs → tree → commit → ref via `api.github.com` in one call — no shell quoting, no argv limits, no local git objects needed. Prefer it over hand-rolled `gh api` chains.
+
+### Shell quirks on this machine (Windows + Git Bash)
+
+- `/tmp` is a Git-Bash alias for `C:\Users\ASUS\AppData\Local\Temp` — but non-shell tools (node, the read tool, tsc) resolve it literally as `C:\tmp` and fail. Use the repo-local `./.tmp/` (gitignored) for scratch files; bash and Windows tools both resolve it correctly.
+- `jq` is installed via winget (`1.8.2`); shells started before the install need a restart to see it. `python` exists (`Python312` on PATH). Prefer `node`/`api_push.mjs` for JSON work anyway — `node -e` single-line only (multi-line template literals get mangled by shell quoting; write multi-line JSON to a file).
+- `gh api`: `-f` always sends a *string* — booleans/numbers/JSON literals need `-F` (e.g. `-F force=false`). Bodies over ~80 KB or containing backticks/spaces exceed the Windows argv limit — write JSON to a file and use `--input`, or use `api_push.mjs`.
+- For PR bodies / commit messages: `gh pr create --body-file` / `git commit -F` / `api_push.mjs --message-file` — never inline multi-line text inside `node -e` or eval-style contexts.
+- `base64 -w0` is available and is the reliable way to pass file contents to `gh api` blob uploads.
 
 ## Code Standards
 

@@ -747,6 +747,21 @@ h3 {
 .review-expand-btn.open .chevron {
   transform: rotate(180deg);
 }
+/* "Rich" reviews (≥3 teaser categories) get a glowing gold *border* — the
+   pill itself keeps the normal seal-red look; only the border + halo carry
+   the gold "value inside" signal. Collapsed state only. */
+.review-expand-btn.rich {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 3px rgba(201, 162, 39, 0.25),
+    0 0 10px rgba(201, 162, 39, 0.3);
+}
+.review-expand-btn.rich:hover {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 4px rgba(201, 162, 39, 0.32),
+    0 0 14px rgba(201, 162, 39, 0.4);
+}
 
 /* Engagement row: compact vote + comment pills side by side. */
 .review-actions {
