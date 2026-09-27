@@ -40,6 +40,12 @@ jobs:
       - name: Type-check and test Edge Functions
         run: |
           for dir in supabase/functions/*/; do
+            # Skip shared-module directories (e.g. _shared/) — they hold
+            # libraries imported by the functions, not deployable functions
+            # with their own index.ts.
+            if [ ! -f "${dir}deno.json" ] || [ ! -f "${dir}index.ts" ]; then
+              continue
+            fi
             deno check --config "${dir}deno.json" "${dir}index.ts"
             # Only run tests when the directory actually contains test files
             # (Deno convention: *_test.ts / *_test.tsx). Avoids "No test
@@ -49,3 +55,12 @@ jobs:
               deno test --config "${dir}deno.json" "$dir"
             fi
           done
+          # Shared modules still get type-checked and tested, against their
+          # own import map in _shared/deno.json.
+          if [ -d supabase/functions/_shared ]; then
+            deno check --config supabase/functions/_shared/deno.json supabase/functions/_shared/*.ts
+            tests=$(find supabase/functions/_shared -maxdepth 1 -type f \( -name '*_test.ts' -o -name '*_test.tsx' \) -print -quit)
+            if [ -n "$tests" ]; then
+              deno test --config supabase/functions/_shared/deno.json supabase/functions/_shared/
+            fi
+          fi
