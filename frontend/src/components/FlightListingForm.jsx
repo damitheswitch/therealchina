@@ -6,15 +6,23 @@ import { Icons } from './Icons'
 import { CountryAutocomplete, isCountryName } from './CountryAutocomplete'
 import { hasSocialHandles } from '../lib/socialHandles'
 
-export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles }) => {
+export const FlightListingForm = ({
+  listing = null,
+  onSuccess,
+  onCancel,
+  onRequiresSocialHandles,
+}) => {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const isEditing = Boolean(listing)
 
   const [saving, setSaving] = useState(false)
 
   // Form fields
   const [departureCountry, setDepartureCountry] = useState('')
   const [arrivalCountry, setArrivalCountry] = useState('')
+  const [departureCity, setDepartureCity] = useState('')
+  const [arrivalCity, setArrivalCity] = useState('')
   const [departureDate, setDepartureDate] = useState('')
   const [arrivalDate, setArrivalDate] = useState('')
   const [availableKgs, setAvailableKgs] = useState('')
@@ -31,11 +39,24 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
   }
 
   useEffect(() => {
-    // Set minimum date to today
-    const today = todayLocal()
-    setDepartureDate(today)
-    setArrivalDate(today)
-  }, [])
+    if (listing) {
+      setDepartureCountry(listing.departure_country || '')
+      setArrivalCountry(listing.arrival_country || '')
+      setDepartureCity(listing.departure_city || '')
+      setArrivalCity(listing.arrival_city || '')
+      setDepartureDate(listing.departure_date || '')
+      setArrivalDate(listing.arrival_date || '')
+      setAvailableKgs(listing.available_kgs != null ? String(listing.available_kgs) : '')
+      setPricePerKg(listing.price_per_kg != null ? String(listing.price_per_kg) : '')
+      setCurrency(listing.currency || 'CNY')
+      setNotes(listing.notes || '')
+    } else {
+      // Set minimum date to today
+      const today = todayLocal()
+      setDepartureDate(today)
+      setArrivalDate(today)
+    }
+  }, [listing])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -83,44 +104,60 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
         return
       }
 
-      // Verify the user has at least one social handle so travelers can contact them
-      const { data: freshProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('social_handles, social_handle, social_platform')
-        .eq('id', user.id)
-        .single()
+      // Verify the user has at least one social handle so travelers can contact
+      // them. Only enforced when posting — editing an existing listing must not
+      // be blocked by the current profile state.
+      if (!isEditing) {
+        const { data: freshProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('social_handles, social_handle, social_platform')
+          .eq('id', user.id)
+          .single()
 
-      if (profileError || !hasSocialHandles(freshProfile)) {
-        showToast('You must have at least one social handle set up to post a flight.', 'error')
-        onRequiresSocialHandles?.()
-        setSaving(false)
-        return
+        if (profileError || !hasSocialHandles(freshProfile)) {
+          showToast('You must have at least one social handle set up to post a flight.', 'error')
+          onRequiresSocialHandles?.()
+          setSaving(false)
+          return
+        }
       }
 
-      const { error } = await supabase.from('flight_listings').insert({
-        user_id: user.id,
+      const payload = {
         departure_country: departureCountry.trim(),
         arrival_country: arrivalCountry.trim(),
+        departure_city: departureCity.trim() || null,
+        arrival_city: arrivalCity.trim() || null,
         departure_date: departureDate,
         arrival_date: arrivalDate,
         available_kgs: kgs,
         price_per_kg: price,
         currency: currency.trim(),
         notes: notes.trim() || null,
-        is_active: true,
-      })
+      }
+
+      const { error } = isEditing
+        ? await supabase.from('flight_listings').update(payload).eq('id', listing.id)
+        : await supabase
+            .from('flight_listings')
+            .insert({ ...payload, user_id: user.id, is_active: true })
 
       if (error) throw error
 
-      showToast('Flight listing created successfully!', 'success')
+      showToast(
+        isEditing ? 'Flight listing updated successfully!' : 'Flight listing created successfully!',
+        'success'
+      )
       if (onSuccess) onSuccess()
     } catch (error) {
-      console.error('Error creating flight listing:', error)
+      console.error('Error saving flight listing:', error)
       const message = error?.message || ''
-      if (error?.code === '42501' || message.toLowerCase().includes('row-level security')) {
+      if (
+        !isEditing &&
+        (error?.code === '42501' || message.toLowerCase().includes('row-level security'))
+      ) {
         showToast('You must have at least one social handle set up to post a flight.', 'error')
       } else {
-        showToast(message || 'Failed to create flight listing', 'error')
+        showToast(message || `Failed to ${isEditing ? 'update' : 'create'} flight listing`, 'error')
       }
     } finally {
       setSaving(false)
@@ -130,8 +167,12 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
   return (
     <div className="flight-listing-form-container">
       <div className="form-header">
-        <h2>Post Your Flight</h2>
-        <p>Help others send packages by sharing your flight information</p>
+        <h2>{isEditing ? 'Edit Flight Listing' : 'Post Your Flight'}</h2>
+        <p>
+          {isEditing
+            ? 'Update your flight details below'
+            : 'Help others send packages by sharing your flight information'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flight-listing-form">
@@ -163,6 +204,36 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
 
         <div className="form-row">
           <div className="form-group">
+            <label className="form-label" htmlFor="departure-city">
+              From (City) <span className="text-muted">(optional)</span>
+            </label>
+            <input
+              id="departure-city"
+              type="text"
+              placeholder="e.g. Shanghai or Beijing"
+              value={departureCity}
+              onChange={(e) => setDepartureCity(e.target.value)}
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="arrival-city">
+              To (City) <span className="text-muted">(optional)</span>
+            </label>
+            <input
+              id="arrival-city"
+              type="text"
+              placeholder="e.g. Casablanca or Rabat"
+              value={arrivalCity}
+              onChange={(e) => setArrivalCity(e.target.value)}
+              className="form-input"
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
             <label className="form-label" htmlFor="departure-date">
               Departure Date *
             </label>
@@ -172,7 +243,7 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
               value={departureDate}
               onChange={(e) => setDepartureDate(e.target.value)}
               className="form-input"
-              min={todayLocal()}
+              min={isEditing ? undefined : todayLocal()}
               required
             />
           </div>
@@ -187,7 +258,7 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
               value={arrivalDate}
               onChange={(e) => setArrivalDate(e.target.value)}
               className="form-input"
-              min={departureDate || todayLocal()}
+              min={departureDate || (isEditing ? undefined : todayLocal())}
               required
             />
           </div>
@@ -273,7 +344,13 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
             </button>
           )}
           <button type="submit" disabled={saving} className="btn btn-primary">
-            {saving ? 'Creating...' : 'Post Flight Listing'}
+            {saving
+              ? isEditing
+                ? 'Saving...'
+                : 'Creating...'
+              : isEditing
+                ? 'Save Changes'
+                : 'Post Flight Listing'}
           </button>
         </div>
       </form>

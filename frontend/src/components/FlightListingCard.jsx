@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
 import { SocialChip } from './SocialChip'
+import { hasDeparted, todayLocal } from '../lib/flightListings'
 
 const MONTHS_SHORT = [
   'Jan',
@@ -40,11 +41,18 @@ const formatDateRange = (departure, arrival) => {
   return dep.year === arr.year ? `${dep.short} → ${arr.full}` : `${dep.full} → ${arr.full}`
 }
 
-export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
+export const FlightListingCard = ({
+  listing,
+  onDelete,
+  onEdit,
+  onToggleActive,
+  canDelete = false,
+}) => {
   const { user } = useAuth()
   const { showToast } = useToast()
   const [showContact, setShowContact] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [toggling, setToggling] = useState(false)
   const [notesExpanded, setNotesExpanded] = useState(false)
   const [notesTruncated, setNotesTruncated] = useState(false)
   const notesRef = useRef(null)
@@ -105,15 +113,45 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
 
   const primarySocialHandle = getPrimarySocialHandle()
 
+  const handleToggleActive = async () => {
+    if (!onToggleActive) return
+    setToggling(true)
+    try {
+      await onToggleActive(listing)
+    } finally {
+      setToggling(false)
+    }
+  }
+
   const dateRange = formatDateRange(listing.departure_date, listing.arrival_date)
+  const isDeparted = hasDeparted(listing, todayLocal())
+  const isClosed = listing.is_active !== true
 
   return (
-    <div className="flight-row">
+    <div
+      className={[
+        'flight-row',
+        isDeparted ? 'flight-row-departed' : '',
+        isClosed ? 'flight-row-closed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="flight-row-route">
         <Icons.Plane className="plane-icon" />
-        <span className="country">{listing.departure_country}</span>
+        <span className="country">
+          {listing.departure_country}
+          {listing.departure_city && (
+            <span className="flight-city"> ({listing.departure_city})</span>
+          )}
+        </span>
         <Icons.ArrowRight className="arrow-icon" />
-        <span className="country">{listing.arrival_country}</span>
+        <span className="country">
+          {listing.arrival_country}
+          {listing.arrival_city && <span className="flight-city"> ({listing.arrival_city})</span>}
+        </span>
+        {isDeparted && <span className="departed-badge">Departed</span>}
+        {isClosed && <span className="closed-badge">Full / Closed</span>}
         {canDelete && <span className="you-badge">You</span>}
       </div>
 
@@ -187,7 +225,11 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
           <span className="author-name">{listing.display_name || 'Anonymous'}</span>
         </div>
 
-        {user &&
+        {isClosed && !canDelete ? (
+          <span className="closed-status-text">Flight Full</span>
+        ) : (
+          !isClosed &&
+          user &&
           listing.show_social_handle &&
           primarySocialHandle &&
           (showContact ? (
@@ -214,7 +256,30 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
             >
               Show Contact
             </button>
-          ))}
+          ))
+        )}
+
+        {canDelete && onEdit && (
+          <button
+            onClick={() => onEdit(listing)}
+            className="btn btn-outline btn-sm edit-btn"
+            aria-label="Edit listing"
+            title="Edit listing"
+          >
+            <Icons.Pen />
+          </button>
+        )}
+
+        {canDelete && onToggleActive && (
+          <button
+            onClick={handleToggleActive}
+            disabled={toggling}
+            className="btn btn-outline btn-sm"
+            title={isClosed ? 'Reopen listing' : 'Mark as full'}
+          >
+            {toggling ? '...' : isClosed ? 'Reopen' : 'Mark Full'}
+          </button>
+        )}
 
         {canDelete && (
           <button

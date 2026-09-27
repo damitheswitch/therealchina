@@ -7,10 +7,10 @@ describe('SocialHandlesEditor', () => {
     const onChange = vi.fn()
     render(
       <SocialHandlesEditor
+        showHandles={true}
+        onShowChange={vi.fn()}
         value={[{ platform: 'wechat', handle: '' }]}
         onChange={onChange}
-        showHandles={true}
-        onShowChange={() => {}}
       />
     )
 
@@ -24,10 +24,10 @@ describe('SocialHandlesEditor', () => {
     const onChange = vi.fn()
     render(
       <SocialHandlesEditor
+        showHandles={true}
+        onShowChange={vi.fn()}
         value={[{ platform: 'wechat', handle: '' }]}
         onChange={onChange}
-        showHandles={true}
-        onShowChange={() => {}}
       />
     )
 
@@ -41,10 +41,10 @@ describe('SocialHandlesEditor', () => {
     const onChange = vi.fn()
     render(
       <SocialHandlesEditor
+        showHandles={true}
+        onShowChange={vi.fn()}
         value={[{ platform: 'wechat', handle: 'my_wx' }]}
         onChange={onChange}
-        showHandles={true}
-        onShowChange={() => {}}
       />
     )
 
@@ -61,10 +61,10 @@ describe('SocialHandlesEditor', () => {
     const onChange = vi.fn()
     render(
       <SocialHandlesEditor
+        showHandles={true}
+        onShowChange={vi.fn()}
         value={[{ platform: 'wechat', handle: '' }]}
         onChange={onChange}
-        showHandles={true}
-        onShowChange={() => {}}
       />
     )
 
@@ -80,10 +80,10 @@ describe('SocialHandlesEditor', () => {
     const onChange = vi.fn()
     render(
       <SocialHandlesEditor
+        showHandles={true}
+        onShowChange={vi.fn()}
         value={[{ platform: 'instagram', handle: '' }]}
         onChange={onChange}
-        showHandles={true}
-        onShowChange={() => {}}
       />
     )
 
@@ -99,13 +99,13 @@ describe('SocialHandlesEditor', () => {
     const onChange = vi.fn()
     render(
       <SocialHandlesEditor
+        showHandles={true}
+        onShowChange={vi.fn()}
         value={[
           { platform: 'wechat', handle: 'wx_1' },
           { platform: 'instagram', handle: 'ig_1' },
         ]}
         onChange={onChange}
-        showHandles={true}
-        onShowChange={() => {}}
       />
     )
 
