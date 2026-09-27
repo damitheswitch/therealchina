@@ -142,6 +142,72 @@ export const FlightListingsPage = () => {
     })
   }, [listings, departureCountry, arrivalCountry, month])
 
+  const handleTabChange = (newTab) => {
+    setViewTab(newTab)
+    if (newTab === 'past' && sortBy === 'departure_asc') {
+      setSortBy('departure_desc')
+    } else if (newTab === 'upcoming' && sortBy === 'departure_desc') {
+      setSortBy('departure_asc')
+    }
+  }
+
+  const counts = useMemo(() => {
+    const today = todayLocal()
+    let upcoming = 0
+    let past = 0
+    for (const listing of filteredListings) {
+      if (listing.departure_date && listing.departure_date < today) {
+        past++
+      } else {
+        upcoming++
+      }
+    }
+    return {
+      upcoming,
+      past,
+      all: filteredListings.length,
+    }
+  }, [filteredListings])
+
+  const displayedListings = useMemo(() => {
+    const today = todayLocal()
+    let list = filteredListings
+
+    if (viewTab === 'upcoming') {
+      list = list.filter((l) => !l.departure_date || l.departure_date >= today)
+    } else if (viewTab === 'past') {
+      list = list.filter((l) => l.departure_date && l.departure_date < today)
+    }
+
+    return [...list].sort((a, b) => {
+      const aDeparted = Boolean(a.departure_date && a.departure_date < today)
+      const bDeparted = Boolean(b.departure_date && b.departure_date < today)
+
+      if (sortBy === 'departure_asc') {
+        if (viewTab === 'all' && aDeparted !== bDeparted) {
+          return aDeparted ? 1 : -1
+        }
+        return (a.departure_date || '').localeCompare(b.departure_date || '')
+      }
+      if (sortBy === 'departure_desc') {
+        if (viewTab === 'all' && aDeparted !== bDeparted) {
+          return aDeparted ? 1 : -1
+        }
+        return (b.departure_date || '').localeCompare(a.departure_date || '')
+      }
+      if (sortBy === 'price_asc') {
+        return (Number(a.price_per_kg) || 0) - (Number(b.price_per_kg) || 0)
+      }
+      if (sortBy === 'kgs_desc') {
+        return (Number(b.available_kgs) || 0) - (Number(a.available_kgs) || 0)
+      }
+      if (sortBy === 'created_desc') {
+        return (b.created_at || '').localeCompare(a.created_at || '')
+      }
+      return 0
+    })
+  }, [filteredListings, viewTab, sortBy])
+
   const clearFilters = () => {
     setDepartureCountry('')
     setArrivalCountry('')
@@ -267,32 +333,96 @@ export const FlightListingsPage = () => {
       ) : (
         <>
           <div className="listings-header">
-            <h2>
-              {hasActiveFilters ? 'Filtered Results' : 'All Listings'}
-              <span className="count">({filteredListings.length})</span>
-            </h2>
+            <div className="flight-tabs" role="tablist" aria-label="Flight listing views">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'upcoming'}
+                className={`flight-tab-btn ${viewTab === 'upcoming' ? 'active' : ''}`}
+                onClick={() => handleTabChange('upcoming')}
+              >
+                Upcoming <span className="flight-tab-count">({counts.upcoming})</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'past'}
+                className={`flight-tab-btn ${viewTab === 'past' ? 'active' : ''}`}
+                onClick={() => handleTabChange('past')}
+              >
+                Past Flights <span className="flight-tab-count">({counts.past})</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'all'}
+                className={`flight-tab-btn ${viewTab === 'all' ? 'active' : ''}`}
+                onClick={() => handleTabChange('all')}
+              >
+                All <span className="flight-tab-count">({counts.all})</span>
+              </button>
+            </div>
+
+            <div className="flight-sort-wrapper">
+              <label htmlFor="flight-sort" className="flight-sort-label">
+                Sort by
+              </label>
+              <select
+                id="flight-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="form-select flight-sort-select"
+              >
+                <option value="departure_asc">Departure (Soonest first)</option>
+                <option value="departure_desc">Departure (Latest first)</option>
+                <option value="price_asc">Price (Lowest first)</option>
+                <option value="kgs_desc">Space (Most kg first)</option>
+                <option value="created_desc">Recently posted</option>
+              </select>
+            </div>
           </div>
 
           {loading ? (
             <div className="loading">Loading listings...</div>
-          ) : filteredListings.length === 0 ? (
+          ) : displayedListings.length === 0 ? (
             <div className="empty-state">
               <Icons.Plane />
-              <h3>No flight listings found</h3>
+              <h3>
+                {viewTab === 'past'
+                  ? 'No past flight listings found'
+                  : 'No upcoming flight listings found'}
+              </h3>
               <p>
                 {hasActiveFilters
                   ? 'Try adjusting your filters or clearing them to see more listings.'
-                  : 'Be the first to post a flight listing!'}
+                  : viewTab === 'past'
+                    ? 'No historical flight listings have been recorded yet.'
+                    : 'Be the first to post a flight listing!'}
               </p>
-              {user && !hasActiveFilters && (
-                <button onClick={handleStartPosting} className="btn btn-primary">
+              {viewTab === 'upcoming' && counts.past > 0 && !hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('past')}
+                  className="btn btn-outline btn-sm"
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  View past flights ({counts.past})
+                </button>
+              )}
+              {user && !hasActiveFilters && viewTab !== 'past' && (
+                <button
+                  type="button"
+                  onClick={handleStartPosting}
+                  className="btn btn-primary"
+                  style={{ marginTop: '0.75rem' }}
+                >
                   <Icons.Plus /> Post Your Flight
                 </button>
               )}
             </div>
           ) : (
             <div className="flight-rows">
-              {filteredListings.map((listing) => (
+              {displayedListings.map((listing) => (
                 <FlightListingCard
                   key={listing.id}
                   listing={listing}
