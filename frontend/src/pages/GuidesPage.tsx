@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
-import { GUIDES } from '../lib/guides'
+import { GUIDES, guideReadTime } from '../lib/guides'
 import { Seo } from '../components/Seo'
+import { Icons } from '../components/Icons'
 import { stringify, breadcrumbSchema, itemListSchema } from '../lib/seo/jsonld'
 
 // /guides — index of every editorial guide. Keeps guides out of orphan
 // territory: crawlers and users reach them from here and the footer.
 export const GuidesPage = () => (
-  <div className="container" style={{ maxWidth: '52rem' }}>
+  <div className="container guides-page">
     <Seo
       path="/guides"
       title="Guides"
@@ -26,22 +27,36 @@ export const GuidesPage = () => (
         ),
       ]}
     />
-    <div style={{ paddingTop: '2.5rem', paddingBottom: 'var(--sp-5)' }}>
+    <header className="guides-head">
+      <p className="guides-eyebrow">指南 · Field notes</p>
       <h1>Guides</h1>
-      <p className="muted">
-        Practical notes on studying in China — applications, visas, and checking schools before you
+      <p className="guides-sub">
+        Practical notes on studying in China: applications, visas, and checking schools before you
         commit.
       </p>
-      {GUIDES.map((g) => (
-        <section key={g.slug} style={{ marginTop: 'var(--sp-5)' }}>
-          <h2 style={{ marginBottom: '0.25rem' }}>
-            <Link to={`/guide/${g.slug}`}>{g.title}</Link>
-          </h2>
-          <p className="muted" style={{ marginTop: 0 }}>
-            {g.description}
-          </p>
-        </section>
+    </header>
+    <ol className="guide-card-list">
+      {GUIDES.map((g, i) => (
+        <li key={g.slug}>
+          <Link to={`/guide/${g.slug}`} className="guide-card">
+            <span className="guide-card-num" aria-hidden="true">
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <span className="guide-card-body">
+              {g.tag && <span className="guide-tag">{g.tag}</span>}
+              <span className="guide-card-title">{g.title}</span>
+              <span className="guide-card-desc">{g.description}</span>
+              <span className="guide-card-meta">
+                Updated {g.updated} · {guideReadTime(g)} min read
+              </span>
+            </span>
+            <span className="guide-card-arrow" aria-hidden="true">
+              <Icons.ArrowRight />
+            </span>
+          </Link>
+        </li>
       ))}
-    </div>
+    </ol>
+    <p className="guides-foot">More guides as we write them.</p>
   </div>
 )
