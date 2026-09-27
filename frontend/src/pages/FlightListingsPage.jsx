@@ -35,6 +35,14 @@ const monthOf = (dateString) => {
   return Number.isNaN(month) ? null : month
 }
 
+// Local calendar date (YYYY-MM-DD), unlike toISOString() which is UTC
+const todayLocal = () => {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
 // Case-insensitive exact match, tolerant of legacy rows stored before the
 // strict country dropdown existed
 const sameCountry = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
@@ -52,6 +60,10 @@ export const FlightListingsPage = () => {
   const [departureCountry, setDepartureCountry] = useState('')
   const [arrivalCountry, setArrivalCountry] = useState('')
   const [month, setMonth] = useState('')
+
+  // View & sorting states
+  const [viewTab, setViewTab] = useState('upcoming') // 'upcoming' | 'past' | 'all'
+  const [sortBy, setSortBy] = useState('departure_asc')
 
   // TODO(scale): when listings grow into the hundreds, filter and paginate
   // server-side instead of downloading every active row.

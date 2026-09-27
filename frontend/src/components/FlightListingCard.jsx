@@ -40,6 +40,14 @@ const formatDateRange = (departure, arrival) => {
   return dep.year === arr.year ? `${dep.short} → ${arr.full}` : `${dep.full} → ${arr.full}`
 }
 
+// Local calendar date (YYYY-MM-DD), unlike toISOString() which is UTC
+const todayLocal = () => {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${month}-${day}`
+}
+
 export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
@@ -109,14 +117,28 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
     : null
 
   const dateRange = formatDateRange(listing.departure_date, listing.arrival_date)
+  const isDeparted = Boolean(listing.departure_date && listing.departure_date < todayLocal())
 
   return (
-    <div className="flight-row">
+    <div
+      className={['flight-row', isDeparted ? 'flight-row-departed' : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="flight-row-route">
         <Icons.Plane className="plane-icon" />
-        <span className="country">{listing.departure_country}</span>
+        <span className="country">
+          {listing.departure_country}
+          {listing.departure_city && (
+            <span className="flight-city"> ({listing.departure_city})</span>
+          )}
+        </span>
         <Icons.ArrowRight className="arrow-icon" />
-        <span className="country">{listing.arrival_country}</span>
+        <span className="country">
+          {listing.arrival_country}
+          {listing.arrival_city && <span className="flight-city"> ({listing.arrival_city})</span>}
+        </span>
+        {isDeparted && <span className="departed-badge">Departed</span>}
         {canDelete && <span className="you-badge">You</span>}
       </div>
 

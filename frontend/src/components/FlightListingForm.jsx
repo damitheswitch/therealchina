@@ -15,6 +15,8 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
   // Form fields
   const [departureCountry, setDepartureCountry] = useState('')
   const [arrivalCountry, setArrivalCountry] = useState('')
+  const [departureCity, setDepartureCity] = useState('')
+  const [arrivalCity, setArrivalCity] = useState('')
   const [departureDate, setDepartureDate] = useState('')
   const [arrivalDate, setArrivalDate] = useState('')
   const [availableKgs, setAvailableKgs] = useState('')
@@ -101,6 +103,8 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
         user_id: user.id,
         departure_country: departureCountry.trim(),
         arrival_country: arrivalCountry.trim(),
+        departure_city: departureCity.trim() || null,
+        arrival_city: arrivalCity.trim() || null,
         departure_date: departureDate,
         arrival_date: arrivalDate,
         available_kgs: kgs,
@@ -157,6 +161,36 @@ export const FlightListingForm = ({ onSuccess, onCancel, onRequiresSocialHandles
               placeholder="e.g. Morocco"
               value={arrivalCountry}
               onChange={setArrivalCountry}
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label" htmlFor="departure-city">
+              From (City) <span className="text-muted">(optional)</span>
+            </label>
+            <input
+              id="departure-city"
+              type="text"
+              placeholder="e.g. Shanghai or Beijing"
+              value={departureCity}
+              onChange={(e) => setDepartureCity(e.target.value)}
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="arrival-city">
+              To (City) <span className="text-muted">(optional)</span>
+            </label>
+            <input
+              id="arrival-city"
+              type="text"
+              placeholder="e.g. Casablanca or Rabat"
+              value={arrivalCity}
+              onChange={(e) => setArrivalCity(e.target.value)}
+              className="form-input"
             />
           </div>
         </div>
