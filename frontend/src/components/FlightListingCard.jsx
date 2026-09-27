@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
-import { socialPlatforms } from '../lib/socialPlatforms'
+import { SocialChip } from './SocialChip'
 
 const MONTHS_SHORT = [
   'Jan',
@@ -104,9 +104,6 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
   }
 
   const primarySocialHandle = getPrimarySocialHandle()
-  const socialPlatformData = primarySocialHandle
-    ? socialPlatforms[primarySocialHandle.platform] || socialPlatforms.other
-    : null
 
   const dateRange = formatDateRange(listing.departure_date, listing.arrival_date)
 
@@ -194,14 +191,22 @@ export const FlightListingCard = ({ listing, onDelete, canDelete = false }) => {
           listing.show_social_handle &&
           primarySocialHandle &&
           (showContact ? (
-            <button
-              onClick={() => setShowContact(false)}
-              className="contact-chip"
-              title="Click to hide"
-            >
-              <span className="contact-label">{socialPlatformData.label}:</span>
-              <span className="contact-value">{primarySocialHandle.handle}</span>
-            </button>
+            <div className="flight-contact-revealed">
+              <SocialChip
+                platform={primarySocialHandle.platform}
+                handle={primarySocialHandle.handle}
+                variant="compact"
+              />
+              <button
+                type="button"
+                onClick={() => setShowContact(false)}
+                className="flight-contact-hide-btn"
+                title="Hide contact"
+                aria-label="Hide contact"
+              >
+                <Icons.X />
+              </button>
+            </div>
           ) : (
             <button
               onClick={() => setShowContact(true)}
