@@ -63,6 +63,18 @@ No DB password needed anywhere — the Management API token covers all of it.
 - Docs-only commits: put `[skip netlify]` in the commit message to avoid burning build minutes.
 - **Pushing when git transport is down**: `node scripts/api_push.mjs --repo owner/name --branch <branch> --base <staging|master> --message "<msg>" <files...>` creates blobs → tree → commit → ref via `api.github.com` in one call — no shell quoting, no argv limits, no local git objects needed. Prefer it over hand-rolled `gh api` chains.
 
+#### GitHub reachability (verified 2026-09 — machine reality, not theory)
+
+The sandbox shell cannot reliably reach **any** GitHub endpoint — `git push`, `gh api`, `curl api.github.com`, and `api_push.mjs` ALL time out / `fetch failed`. What actually works:
+
+| Task | Reliable path |
+|---|---|
+| **Push / pull** | **GitHub Desktop** (user-side; uses the system proxy). For worktrees: File → Add local repository → the worktree path (`.git` pointer file is fine) → Publish/Push. |
+| **GitHub API reads** (branch sha, files, PR template) | `fetch` MCP server → `https://api.github.com/...` — consistent. |
+| **GitHub API writes** (create PR, merge, push_files) | `github-mcp-server` — *intermittent* (~1 in 5 connects). Retry a few times; if it stays dead, don't burn attempts — hand the URL to the user. |
+| **Create PR (fallback)** | Browser: `https://github.com/damitheswitch/therealchina/pull/new/<head-branch>` then pick base `staging`. Or Desktop → Branch → Create Pull Request. Note: a compare URL (`/compare/base...head`) shows the diff only — the PR exists only after clicking **Create pull request**. |
+| **Merge to staging** | **Squash and merge** keeps `[skip netlify]` in the squash message via the PR title; a plain merge commit would lose it and trigger a build. |
+
 ### Shell quirks on this machine (Windows + Git Bash)
 
 - `/tmp` is a Git-Bash alias for `C:\Users\ASUS\AppData\Local\Temp` — but non-shell tools (node, the read tool, tsc) resolve it literally as `C:\tmp` and fail. Use the repo-local `./.tmp/` (gitignored) for scratch files; bash and Windows tools both resolve it correctly.
