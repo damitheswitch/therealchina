@@ -5,7 +5,14 @@ import { SocialHandlesEditor } from './SocialHandlesEditor'
 describe('SocialHandlesEditor', () => {
   it('renders quick-add platform buttons', () => {
     const onChange = vi.fn()
-    render(<SocialHandlesEditor value={[{ platform: 'wechat', handle: '' }]} onChange={onChange} />)
+    render(
+      <SocialHandlesEditor
+        value={[{ platform: 'wechat', handle: '' }]}
+        onChange={onChange}
+        showHandles={true}
+        onShowChange={() => {}}
+      />
+    )
 
     expect(screen.getByRole('button', { name: /add instagram/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add whatsapp/i })).toBeInTheDocument()
@@ -15,7 +22,14 @@ describe('SocialHandlesEditor', () => {
 
   it('clicking a quick-add platform button replaces empty default row', () => {
     const onChange = vi.fn()
-    render(<SocialHandlesEditor value={[{ platform: 'wechat', handle: '' }]} onChange={onChange} />)
+    render(
+      <SocialHandlesEditor
+        value={[{ platform: 'wechat', handle: '' }]}
+        onChange={onChange}
+        showHandles={true}
+        onShowChange={() => {}}
+      />
+    )
 
     const addIgBtn = screen.getByRole('button', { name: /add instagram/i })
     fireEvent.click(addIgBtn)
@@ -26,7 +40,12 @@ describe('SocialHandlesEditor', () => {
   it('clicking a quick-add platform button appends when existing rows have data', () => {
     const onChange = vi.fn()
     render(
-      <SocialHandlesEditor value={[{ platform: 'wechat', handle: 'my_wx' }]} onChange={onChange} />
+      <SocialHandlesEditor
+        value={[{ platform: 'wechat', handle: 'my_wx' }]}
+        onChange={onChange}
+        showHandles={true}
+        onShowChange={() => {}}
+      />
     )
 
     const addIgBtn = screen.getByRole('button', { name: /add instagram/i })
@@ -40,7 +59,14 @@ describe('SocialHandlesEditor', () => {
 
   it('auto-detects platform and extracts clean handle when URL is pasted', () => {
     const onChange = vi.fn()
-    render(<SocialHandlesEditor value={[{ platform: 'wechat', handle: '' }]} onChange={onChange} />)
+    render(
+      <SocialHandlesEditor
+        value={[{ platform: 'wechat', handle: '' }]}
+        onChange={onChange}
+        showHandles={true}
+        onShowChange={() => {}}
+      />
+    )
 
     const handleInput = screen.getByPlaceholderText(/wechat id/i)
     fireEvent.change(handleInput, {
@@ -53,7 +79,12 @@ describe('SocialHandlesEditor', () => {
   it('cleans handle when typing or pasting @-prefix into Instagram', () => {
     const onChange = vi.fn()
     render(
-      <SocialHandlesEditor value={[{ platform: 'instagram', handle: '' }]} onChange={onChange} />
+      <SocialHandlesEditor
+        value={[{ platform: 'instagram', handle: '' }]}
+        onChange={onChange}
+        showHandles={true}
+        onShowChange={() => {}}
+      />
     )
 
     const handleInput = screen.getByPlaceholderText(/username/i)
@@ -73,6 +104,8 @@ describe('SocialHandlesEditor', () => {
           { platform: 'instagram', handle: 'ig_1' },
         ]}
         onChange={onChange}
+        showHandles={true}
+        onShowChange={() => {}}
       />
     )
 

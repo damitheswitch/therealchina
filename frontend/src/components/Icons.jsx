@@ -118,11 +118,12 @@ export const Icons = {
     </svg>
   ),
 
-  Link: () => (
+  Link: ({ size = 16, className = '' }) => (
     <svg
-      width="16"
-      height="16"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
+      className={className}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -358,11 +359,12 @@ export const Icons = {
     </svg>
   ),
 
-  Check: () => (
+  Check: ({ size = 18, className = '' }) => (
     <svg
-      width="18"
-      height="18"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
+      className={className}
       fill="none"
       stroke="currentColor"
       strokeWidth="2"

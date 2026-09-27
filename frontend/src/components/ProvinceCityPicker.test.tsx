@@ -58,7 +58,7 @@ describe('ProvinceCityPicker', () => {
     await user.selectOptions(screen.getByLabelText('Province'), 'Beijing')
     expect(screen.getByTestId('value')).toHaveTextContent(/^Beijing$/)
     // parts mode still reports a city so callers requiring city don't break
-    expect(parts.at(-1)).toEqual({ province: 'Beijing', city: 'Beijing' })
+    expect(parts[parts.length - 1]).toEqual({ province: 'Beijing', city: 'Beijing' })
   })
 
   it('typed "Somewhere else…" city joins the chosen province', async () => {
