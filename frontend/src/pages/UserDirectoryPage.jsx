@@ -10,6 +10,7 @@ import { Icons } from '../components/Icons'
 import { CityAutocomplete } from '../components/CityAutocomplete'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { getSocialHandles } from '../lib/socialHandles'
+import { SocialChip } from '../components/SocialChip'
 
 export const UserDirectoryPage = () => {
   const { user, loading: authLoading } = useAuth()
@@ -171,17 +172,30 @@ export const UserDirectoryPage = () => {
                       </p>
                     )}
                     {(() => {
-                      const socialHandles = getSocialHandles(profile)
-                      const hasSocialHandles = socialHandles.some(
+                      const socialHandles = getSocialHandles(profile).filter(
                         (sh) => sh.handle && sh.handle.trim()
                       )
+                      if (!profile.show_social_handle || socialHandles.length === 0) return null
+
                       return (
-                        profile.show_social_handle &&
-                        hasSocialHandles && (
-                          <div className="user-card-social">
-                            <Icons.Link size={14} /> Social handles available
-                          </div>
-                        )
+                        <div className="user-card-socials-row" onClick={(e) => e.stopPropagation()}>
+                          {socialHandles.slice(0, 4).map((sh, idx) => (
+                            <SocialChip
+                              key={`${sh.platform}-${idx}`}
+                              platform={sh.platform}
+                              handle={sh.handle}
+                              variant="icon-only"
+                            />
+                          ))}
+                          {socialHandles.length > 4 && (
+                            <span
+                              className="social-chip-more"
+                              title={`${socialHandles.length - 4} more socials`}
+                            >
+                              +{socialHandles.length - 4}
+                            </span>
+                          )}
+                        </div>
                       )
                     })()}
                   </div>
