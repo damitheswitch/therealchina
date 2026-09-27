@@ -4852,3 +4852,62 @@ h3 {
     transform: none;
   }
 }
+
+/* Danger button (destructive confirms) */
+.btn-danger {
+  background: var(--error);
+  color: #fff;
+  border: 1px solid var(--error);
+}
+.btn-danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Review edit overlay — wizard mounted over the profile page */
+.review-edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 22, 19, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  overflow-y: auto;
+  animation: fadeIn 0.2s ease-out;
+}
+.review-edit-panel {
+  max-width: 760px;
+  margin: var(--sp-4) auto;
+  background: #fff;
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* My reviews section on the profile page */
+.my-review-card .review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.my-review-card .edit-btn {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--ink-line);
+  background: #fff;
+  border-radius: var(--r-sm);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.my-review-card .edit-btn:hover {
+  background: var(--rice);
+}
+.my-review-card .delete-btn {
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--r-sm);
+  font-size: 0.82rem;
+}

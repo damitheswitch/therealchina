@@ -269,6 +269,7 @@ export type Database = {
           cons: string | null
           created_at: string | null
           degree_level: string | null
+          deleted_at: string | null
           end_year: number | null
           enrollment_status: string | null
           funding_coverage: string | null
@@ -301,6 +302,7 @@ export type Database = {
           cons?: string | null
           created_at?: string | null
           degree_level?: string | null
+          deleted_at?: string | null
           end_year?: number | null
           enrollment_status?: string | null
           funding_coverage?: string | null
@@ -333,6 +335,7 @@ export type Database = {
           cons?: string | null
           created_at?: string | null
           degree_level?: string | null
+          deleted_at?: string | null
           end_year?: number | null
           enrollment_status?: string | null
           funding_coverage?: string | null

@@ -15,6 +15,12 @@ verify_jwt = false
 [functions.review-submit]
 verify_jwt = false
 
+# review-manage verifies the user JWT inside the function (it must distinguish
+# "valid user token" from "public API key" itself). The gateway check would
+# reject publishable-key CORS preflights anyway.
+[functions.review-manage]
+verify_jwt = false
+
 # Reject signups from disposable email domains. The Postgres function is
 # created by migration 031; on hosted projects (staging/prod) this hook must
 # also be enabled in the Dashboard under Authentication → Hooks.
