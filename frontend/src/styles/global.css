@@ -4382,6 +4382,20 @@ h3 {
   .listings-header {
     flex-wrap: wrap;
     gap: 0.35rem;
+    align-items: stretch;
+  }
+
+  .flight-tabs {
+    width: 100%;
+    justify-content: center;
+  }
+  .flight-sort-wrapper {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .flight-sort-select {
+    flex: 1;
+    min-width: 0;
   }
 
   .flight-listing-form-container {
