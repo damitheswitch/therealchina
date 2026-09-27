@@ -119,6 +119,13 @@ Do not claim a task is complete until the relevant checks above pass.
 - New logic in `frontend/src/lib/` and changes to Edge Function logic should include tests once a harness exists (Vitest / Deno test).
 - If no harness exists yet, create the minimal one needed rather than skipping tests.
 
+### Copy & user-facing text
+
+- No em-dashes (—) or en-dashes (–) in user-visible copy. Use commas, colons, or full stops.
+- Humanize before committing: draft, then rewrite so it reads like a person wrote it. Kill AI tells: punchy fragment endings ("Full stop."), "No X, no Y, no Z" parallelism, "not X, but Y" contrast scaffolding, "It's not just…, it's…", rhetorical questions as transitions, and hype words ("seamless", "robust", "elevate", "unlock").
+- Sentences short and specific. If a sentence exists to sound clever instead of informing, cut it.
+- Applies to anything rendered to users: JSX text, guide/trust content, meta descriptions, error messages. Code comments are exempt.
+
 ### Git Hygiene
 
 - Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, etc. No placeholder messages.
