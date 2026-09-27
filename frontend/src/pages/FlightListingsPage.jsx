@@ -142,6 +142,72 @@ export const FlightListingsPage = () => {
     })
   }, [listings, departureCountry, arrivalCountry, month])
 
+  const handleTabChange = (newTab) => {
+    setViewTab(newTab)
+    if (newTab === 'past' && sortBy === 'departure_asc') {
+      setSortBy('departure_desc')
+    } else if (newTab === 'upcoming' && sortBy === 'departure_desc') {
+      setSortBy('departure_asc')
+    }
+  }
+
+  const counts = useMemo(() => {
+    const today = todayLocal()
+    let upcoming = 0
+    let past = 0
+    for (const listing of filteredListings) {
+      if (listing.departure_date && listing.departure_date < today) {
+        past++
+      } else {
+        upcoming++
+      }
+    }
+    return {
+      upcoming,
+      past,
+      all: filteredListings.length,
+    }
+  }, [filteredListings])
+
+  const displayedListings = useMemo(() => {
+    const today = todayLocal()
+    let list = filteredListings
+
+    if (viewTab === 'upcoming') {
+      list = list.filter((l) => !l.departure_date || l.departure_date >= today)
+    } else if (viewTab === 'past') {
+      list = list.filter((l) => l.departure_date && l.departure_date < today)
+    }
+
+    return [...list].sort((a, b) => {
+      const aDeparted = Boolean(a.departure_date && a.departure_date < today)
+      const bDeparted = Boolean(b.departure_date && b.departure_date < today)
+
+      if (sortBy === 'departure_asc') {
+        if (viewTab === 'all' && aDeparted !== bDeparted) {
+          return aDeparted ? 1 : -1
+        }
+        return (a.departure_date || '').localeCompare(b.departure_date || '')
+      }
+      if (sortBy === 'departure_desc') {
+        if (viewTab === 'all' && aDeparted !== bDeparted) {
+          return aDeparted ? 1 : -1
+        }
+        return (b.departure_date || '').localeCompare(a.departure_date || '')
+      }
+      if (sortBy === 'price_asc') {
+        return (Number(a.price_per_kg) || 0) - (Number(b.price_per_kg) || 0)
+      }
+      if (sortBy === 'kgs_desc') {
+        return (Number(b.available_kgs) || 0) - (Number(a.available_kgs) || 0)
+      }
+      if (sortBy === 'created_desc') {
+        return (b.created_at || '').localeCompare(a.created_at || '')
+      }
+      return 0
+    })
+  }, [filteredListings, viewTab, sortBy])
+
   const clearFilters = () => {
     setDepartureCountry('')
     setArrivalCountry('')
