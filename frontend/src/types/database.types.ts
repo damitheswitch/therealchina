@@ -373,7 +373,7 @@ export type Database = {
       }
       universities: {
         Row: {
-          city: string
+          city: string | null
           country: string | null
           created_at: string | null
           id: string
@@ -393,7 +393,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
-          city: string
+          city?: string | null
           country?: string | null
           created_at?: string | null
           id?: string
@@ -413,7 +413,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
-          city?: string
+          city?: string | null
           country?: string | null
           created_at?: string | null
           id?: string

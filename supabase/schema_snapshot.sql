@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS public.universities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   name_zh TEXT,
-  city TEXT NOT NULL,
+  -- NULL when only the province is known (migration 034) — never a province name
+  city TEXT,
   country TEXT,
   slug TEXT UNIQUE NOT NULL,
   logo_url TEXT,

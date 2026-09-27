@@ -22,7 +22,10 @@ VALUES
   ('Nanjing University', '南京大学', 'Nanjing', 'China', 'Jiangsu', 'comprehensive', 'nanjing-university', '{nju}', 'https://www.shanghairanking.cn/_uni/logo/44696062.png', false, 'public', '{Chinese,English}', 'https://www.nju.edu.cn/en/', '{"shanghai_national": 6, "shanghai_url": "https://www.shanghairanking.cn/institution/nanjing-university"}'),
   ('Hunan University', '湖南大学', 'Changsha', 'China', 'Hunan', 'comprehensive', 'hunan-university', '{hnu}', 'https://www.shanghairanking.cn/_uni/logo/79015808.png', false, 'public', '{Chinese}', 'https://www.hnu.edu.cn/', '{"shanghai_national": 29, "shanghai_url": "https://www.shanghairanking.cn/institution/hunan-university"}'),
   ('Tianjin University', '天津大学', 'Tianjin', 'China', 'Tianjin', 'comprehensive', 'tianjin-university', '{tju}', 'https://www.shanghairanking.cn/_uni/logo/74813674.png', false, 'public', '{Chinese,English}', 'https://www.tju.edu.cn/english/', '{"shanghai_national": 20, "shanghai_url": "https://www.shanghairanking.cn/institution/tianjin-university"}'),
-  ('Beihang University', '北京航空航天大学', 'Beijing', 'China', 'Beijing', 'stem', 'beihang-university', '{buaa}', 'https://www.shanghairanking.cn/_uni/logo/22403670.png', false, 'public', '{Chinese,English}', 'https://ev.buaa.edu.cn/', '{"shanghai_national": 11, "shanghai_url": "https://www.shanghairanking.cn/institution/beihang-university"}')
+  ('Beihang University', '北京航空航天大学', 'Beijing', 'China', 'Beijing', 'stem', 'beihang-university', '{buaa}', 'https://www.shanghairanking.cn/_uni/logo/22403670.png', false, 'public', '{Chinese,English}', 'https://ev.buaa.edu.cn/', '{"shanghai_national": 11, "shanghai_url": "https://www.shanghairanking.cn/institution/beihang-university"}'),
+  -- Real uni in Zhangye, Gansu whose true city is unknown in our dataset —
+  -- exercises the province-only (NULL city) rendering path.
+  ('Hexi University', '河西学院', NULL, 'China', 'Gansu', 'comprehensive', 'hexi-university', '{}', NULL, false, 'public', '{Chinese}', NULL, '{}')
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================

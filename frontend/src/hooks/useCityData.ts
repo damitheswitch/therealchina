@@ -55,7 +55,11 @@ export const useCityData = (citySlug: string | undefined) => {
           .abortSignal(controller.signal)
         if (cityErr) throw cityErr
         const match = [
-          ...new Set(((cityRows as { city: string }[] | null) || []).map((r) => r.city)),
+          ...new Set(
+            ((cityRows as { city: string | null }[] | null) || [])
+              .map((r) => r.city)
+              .filter((c): c is string => Boolean(c))
+          ),
         ].find((c) => slugify(c) === citySlug)
         if (!match) {
           setCity(null)

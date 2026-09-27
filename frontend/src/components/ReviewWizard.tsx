@@ -22,6 +22,8 @@ import { ProfileSavePrompt, type ProfileSaveItem } from './ProfileSavePrompt'
 import { RegistrationNudge } from './RegistrationNudge'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
+import { ProvinceCityPicker } from './ProvinceCityPicker'
+import { formatLocation } from '../lib/chinaDivisions'
 import { MediaUploader } from './MediaUploader'
 import { SealStampOverlay } from './SealStampOverlay'
 
@@ -147,6 +149,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
   const [selectedUniName, setSelectedUniName] = useState('')
   const [showNotListed, setShowNotListed] = useState(false)
   const [newUniName, setNewUniName] = useState('')
+  const [newUniProvince, setNewUniProvince] = useState('')
   const [newUniCity, setNewUniCity] = useState('')
 
   // Step 2: Sub-scores
@@ -405,7 +408,11 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
             ? selectedUniName.trim()
             : undefined,
         newUniversity: isNotListed
-          ? { name: newUniName.trim(), city: newUniCity.trim() }
+          ? {
+              name: newUniName.trim(),
+              city: newUniCity.trim(),
+              province: newUniProvince || undefined,
+            }
           : undefined,
         rating,
         text: reviewText.trim(),
@@ -564,17 +571,18 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
                     onChange={(e) => setNewUniName(e.target.value)}
                   />
                 </div>
-                <div className="form-group" style={{ flex: 1, minWidth: '140px' }}>
-                  <label className="form-label" htmlFor="new-uni-city">
+                <div className="form-group" style={{ flex: 1, minWidth: '240px' }}>
+                  <label className="form-label" htmlFor="new-uni-city-province">
                     City
                   </label>
-                  <input
-                    type="text"
+                  <ProvinceCityPicker
                     id="new-uni-city"
-                    className="form-input"
-                    placeholder="e.g. Shanghai"
-                    value={newUniCity}
-                    onChange={(e) => setNewUniCity(e.target.value)}
+                    value={formatLocation(newUniProvince, newUniCity)}
+                    onParts={(p) => {
+                      setNewUniProvince(p.province)
+                      setNewUniCity(p.city)
+                    }}
+                    allowOutsideChina={false}
                   />
                 </div>
               </div>

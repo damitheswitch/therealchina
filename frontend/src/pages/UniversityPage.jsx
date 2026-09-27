@@ -174,6 +174,7 @@ export const UniversityPage = () => {
               name: university.name,
               slug: university.slug,
               city: university.city,
+              province: university.province,
               logo: firstPartyLogo(university.logo_url),
               website: university.website,
               rating: reviewCount >= 2 ? { value: avgRating, count: reviewCount } : null,

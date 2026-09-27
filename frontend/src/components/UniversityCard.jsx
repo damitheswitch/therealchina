@@ -11,6 +11,7 @@ export const UniversityCard = ({ university }) => {
     name,
     name_zh,
     city,
+    province,
     slug,
     logo_url,
     avg_rating,
@@ -49,7 +50,7 @@ export const UniversityCard = ({ university }) => {
         </div>
         <div className="uni-card-meta">
           <span className="uni-card-city">
-            <Icons.MapPin /> {city}
+            <Icons.MapPin /> {city || province}
           </span>
           {is_verified && <SealBadge />}
         </div>

@@ -55,17 +55,14 @@ No DB password needed anywhere — the Management API token covers all of it.
 
 ### GitHub / web
 
-- On this machine, prefer the GitHub API path first for branch/ref updates and PR file pushes. `github.com` and `ssh.github.com` are intermittently unreachable (connection reset / 443 timeout), while `api.github.com` and `codeload.github.com` are the reliable path.
-- For ordinary git fetch/push, retry once. If it fails — or when creating/updating PR branches — use `gh api` / `gh pr` or `github-mcp-server` directly instead of burning time on repeated git retries.
-- If `gh api` POSTs time out, use `curl --retry` with `gh auth token` stored in a shell variable, or MCP `push_files`.
-- Never route git through third-party github proxies — credentials leak.
+- GitHub connectivity on this machine is intermittent, **not permanently fixed**: `github.com`/`ssh.github.com` can reset or time out; `api.github.com`, `gh api`, GitHub MCP, and Node `fetch` can also fail. Never assume an API endpoint will always work.
+- For ordinary git fetch/push, retry once. If it fails, try `gh api` / `gh pr` or GitHub MCP; if those time out, use `curl --retry --retry-all-errors` against `api.github.com` with `gh auth token` held in a shell variable. Do not print/store tokens or route git through third-party proxies. GitHub Desktop has worked as a manual fallback; it is not a guaranteed network fix either.
+- **Pushing when git transport is down**: `scripts/api_push.mjs` creates GitHub blobs → tree → commit → ref, but its Node `fetch` repeatedly failed mid-upload in one session. A retrying `curl` Git Data API sequence succeeded after several connection/TLS timeouts; allow retries and check every response. For an existing PR branch, use its **latest full remote head SHA** as parent and its tree as base, update only that feature-branch ref with `force: false`, and verify the resulting remote head. Never silently base a new commit on stale `staging` or rewrite remote history. API-created commits do **not** advance the local branch: fetch/sync before pushing again from GitHub Desktop. If the API remains unreachable, ask the user to push with Desktop rather than looping indefinitely.
 - `webfetch` blocked or redirect loop → domain-scoped `web_search`, then fetch the result URL.
-- Docs-only commits: put `[skip netlify]` in the commit message to avoid burning build minutes.
-- **Pushing when git transport is down**: `node scripts/api_push.mjs --repo owner/name --branch <branch> --base <staging|master> --message "<msg>" <files...>` creates blobs → tree → commit → ref via `api.github.com` in one call — no shell quoting, no argv limits, no local git objects needed. Prefer it over hand-rolled `gh api` chains.
 
 #### GitHub reachability (verified 2026-09 — machine reality, not theory)
 
-The sandbox shell cannot reliably reach **any** GitHub endpoint — `git push`, `gh api`, `curl api.github.com`, and `api_push.mjs` ALL time out / `fetch failed`. What actually works:
+During one session **every** GitHub endpoint failed from the sandbox shell — `git push`, `gh api`, `curl api.github.com`, and `api_push.mjs` all timed out / `fetch failed`. When the shell is fully blocked like that, what actually works:
 
 | Task | Reliable path |
 |---|---|
@@ -73,7 +70,12 @@ The sandbox shell cannot reliably reach **any** GitHub endpoint — `git push`, 
 | **GitHub API reads** (branch sha, files, PR template) | `fetch` MCP server → `https://api.github.com/...` — consistent. |
 | **GitHub API writes** (create PR, merge, push_files) | `github-mcp-server` — *intermittent* (~1 in 5 connects). Retry a few times; if it stays dead, don't burn attempts — hand the URL to the user. |
 | **Create PR (fallback)** | Browser: `https://github.com/damitheswitch/therealchina/pull/new/<head-branch>` then pick base `staging`. Or Desktop → Branch → Create Pull Request. Note: a compare URL (`/compare/base...head`) shows the diff only — the PR exists only after clicking **Create pull request**. |
-| **Merge to staging** | **Squash and merge** keeps `[skip netlify]` in the squash message via the PR title; a plain merge commit would lose it and trigger a build. |
+
+### Skipping Netlify deploys (when instructed)
+
+- Netlify's documented Git skip token is `[skip netlify]` or `[skip ci]`. To skip a **Deploy Preview**, put it in the **PR title before pushing**; a token only in a commit message did not stop a PR preview here. An already-created preview is not undone by changing the title.
+- To skip a **branch deploy** (including a merge into `staging`), put the token in the commit message of the **effective head commit pushed to that branch**. For a GitHub merge, set it explicitly in the merge-commit message; check the final message for squash/rebase merges — **squash and merge keeps `[skip netlify]` when it is in the PR title**, a plain merge commit message does not inherit it. Do not rely on the feature branch's earlier commit messages or PR title alone. Confirm Netlify reports the deploy skipped after merging.
+- The next commit without a skip token may deploy all previously skipped changes. Skip tokens do not disable GitHub Actions, Supabase migrations, or Edge Function deployments. Do not change Netlify site/build settings or bypass CI just to suppress a deploy. See https://docs.netlify.com/deploy/manage-deploys/manage-deploys-overview#skip-a-deploy.
 
 ### Shell quirks on this machine (Windows + Git Bash)
 

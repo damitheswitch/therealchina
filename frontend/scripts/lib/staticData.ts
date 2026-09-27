@@ -140,6 +140,7 @@ export const citiesData = (unis: UniRow[]) => {
   const byProv = new Map<string | null, Set<string>>()
   for (const u of unis) {
     const city = u.city ?? ''
+    if (!city) continue
     const prov = u.province && u.province !== city ? u.province : null
     if (!byProv.has(prov)) byProv.set(prov, new Set())
     byProv.get(prov)!.add(city)
