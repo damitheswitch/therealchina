@@ -33,7 +33,7 @@ export interface ReviewPayload {
   cfToken?: string
   universitySlug?: string
   universityName?: string
-  newUniversity?: { name: string; city: string }
+  newUniversity?: { name: string; city: string; province?: string }
   rating: number
   text: string
   program?: string

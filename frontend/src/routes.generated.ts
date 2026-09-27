@@ -316,6 +316,30 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             recommendAnswered: 0
           },
           {
+            id: "a1b2c3d4-0000-4000-8000-0000000000ff",
+            name: "Hexi University",
+            name_zh: "河西学院",
+            city: null,
+            country: "China",
+            province: "Gansu",
+            uni_category: "comprehensive",
+            slug: "hexi-university",
+            slug_aliases: [],
+            logo_url: null,
+            is_verified: false,
+            uni_type: "public",
+            languages_of_instruction: [
+              "Chinese"
+            ],
+            website: null,
+            rankings: {},
+            created_at: "2026-09-26T00:00:00+00:00",
+            avg_rating: 0,
+            review_count: 0,
+            recommendYesPct: null,
+            recommendAnswered: 0
+          },
+          {
             id: "edff55bf-bcd7-4d99-b4f8-d5baccb0c8c6",
             name: "Hunan University",
             name_zh: "湖南大学",
@@ -375,7 +399,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             recommendAnswered: 0
           }
         ],
-        totalCount: 12,
+        totalCount: 13,
         pageCount: 1
       },
       cities: {
@@ -752,6 +776,30 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             recommendAnswered: 0
           },
           {
+            id: "a1b2c3d4-0000-4000-8000-0000000000ff",
+            name: "Hexi University",
+            name_zh: "河西学院",
+            city: null,
+            country: "China",
+            province: "Gansu",
+            uni_category: "comprehensive",
+            slug: "hexi-university",
+            slug_aliases: [],
+            logo_url: null,
+            is_verified: false,
+            uni_type: "public",
+            languages_of_instruction: [
+              "Chinese"
+            ],
+            website: null,
+            rankings: {},
+            created_at: "2026-09-26T00:00:00+00:00",
+            avg_rating: 0,
+            review_count: 0,
+            recommendYesPct: null,
+            recommendAnswered: 0
+          },
+          {
             id: "edff55bf-bcd7-4d99-b4f8-d5baccb0c8c6",
             name: "Hunan University",
             name_zh: "湖南大学",
@@ -811,7 +859,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             recommendAnswered: 0
           }
         ],
-        totalCount: 12,
+        totalCount: 13,
         pageCount: 1
       },
       cities: {

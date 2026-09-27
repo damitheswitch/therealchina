@@ -33,6 +33,7 @@ interface UniInput {
   name: string
   slug: string
   city?: string | null
+  province?: string | null
   logo?: string | null
   website?: string | null
   rating?: { value: number; count: number } | null
@@ -46,8 +47,15 @@ export const universitySchema = (u: UniInput) => ({
   '@type': 'CollegeOrUniversity',
   name: u.name,
   url: siteUrl(`/university/${u.slug}`),
-  ...(u.city
-    ? { address: { '@type': 'PostalAddress', addressLocality: u.city, addressCountry: 'CN' } }
+  ...(u.city || u.province
+    ? {
+        address: {
+          '@type': 'PostalAddress',
+          ...(u.city ? { addressLocality: u.city } : {}),
+          ...(u.province ? { addressRegion: u.province } : {}),
+          addressCountry: 'CN',
+        },
+      }
     : {}),
   ...(u.logo ? { logo: siteUrl(u.logo) } : {}),
   ...(u.website ? { sameAs: [u.website] } : {}),

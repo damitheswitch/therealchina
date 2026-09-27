@@ -5,7 +5,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useProfileContext } from '../contexts/ProfileContext'
 import { validateDisplayName } from '../lib/validateDisplayName'
 import { COUNTRIES, LANGUAGES, CURRENT_STATUSES } from '../lib/constants'
-import { CityAutocomplete } from './CityAutocomplete'
+import { ProvinceCityPicker } from './ProvinceCityPicker'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
 import { SocialHandlesEditor } from './SocialHandlesEditor'
@@ -217,15 +217,10 @@ export const OnboardingForm = ({
         <h3 className="form-section-title">About you</h3>
 
         <div className="form-group">
-          <label className="form-label" htmlFor="onboarding-city">
+          <label className="form-label" htmlFor="onboarding-city-province">
             Where are you based?
           </label>
-          <CityAutocomplete
-            id="onboarding-city"
-            value={location}
-            onChange={setLocation}
-            placeholder="e.g. Beijing, Shanghai"
-          />
+          <ProvinceCityPicker id="onboarding-city" value={location} onChange={setLocation} />
           <p className="form-hint">
             Adding your city helps other students find relevant flights, listings, and connect with
             students in the same area.

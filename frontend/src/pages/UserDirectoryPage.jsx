@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealAvatar } from '../components/SealAvatar'
 import { Icons } from '../components/Icons'
-import { CityAutocomplete } from '../components/CityAutocomplete'
+import { ProvinceCityPicker } from '../components/ProvinceCityPicker'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { getSocialHandles } from '../lib/socialHandles'
 
@@ -88,10 +88,12 @@ export const UserDirectoryPage = () => {
         <form onSubmit={handleSearch} className="filter-form">
           <div className="filter-row">
             <div className="filter-group">
-              <label className="form-label">City</label>
-              <CityAutocomplete
+              <label className="form-label" htmlFor="city-filter-province">
+                City or province
+              </label>
+              <ProvinceCityPicker
                 id="city-filter"
-                placeholder="e.g. Beijing, Shanghai"
+                emitFormat="term"
                 value={cityFilter}
                 onChange={setCityFilter}
               />

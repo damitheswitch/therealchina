@@ -16,7 +16,7 @@ export type SortBy = keyof typeof SORT_CONFIG
 
 type UniversityRow = Pick<
   Tables<'universities'>,
-  'id' | 'name' | 'name_zh' | 'city' | 'slug' | 'logo_url'
+  'id' | 'name' | 'name_zh' | 'city' | 'province' | 'slug' | 'logo_url'
 >
 type UniversityStats = Pick<
   Tables<'university_stats'>,
@@ -90,13 +90,13 @@ export const useUniversities = ({
         const query = supabase
           .from('universities')
           .select(
-            'id, name, name_zh, city, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
+            'id, name, name_zh, city, province, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
             { count: 'exact' }
           )
 
         const withSearch = search?.trim()
           ? query.or(
-              `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%`
+              `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%,province.ilike.%${search.trim()}%`
             )
           : query
         // 'prov:X' filters by province (the grouped select emits these);

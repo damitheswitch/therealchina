@@ -4,7 +4,7 @@ import type { Tables } from '../types/database.types'
 
 // Kept as one literal so supabase-js can infer the row shape from the select.
 const REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, universities(name, city, slug)'
+  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, universities(name, city, province, slug)'
 
 type MemberProfile = Pick<
   Tables<'member_profiles'>,
@@ -49,7 +49,7 @@ type ReviewWithUniversity = Pick<
   | 'rating_extracurricular'
   | 'rating_career'
 > & {
-  universities?: { name: string; city: string; slug: string } | null
+  universities?: { name: string; city: string | null; province: string | null; slug: string } | null
 }
 
 export const useMemberProfileData = (

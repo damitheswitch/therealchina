@@ -33,7 +33,7 @@ export const useCities = () => {
         if (error) throw error
         const rows = (
           (data || []) as Array<Pick<Tables<'universities'>, 'city' | 'province'>>
-        ).filter((r) => r.city)
+        ).filter((r): r is { city: string; province: string | null } => Boolean(r.city))
         setCities([...new Set(rows.map((u) => u.city))].sort())
 
         // province → sorted city list; municipalities collapse to the city

@@ -5,7 +5,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useProfileContext } from '../contexts/ProfileContext'
 import { validateDisplayName } from '../lib/validateDisplayName'
 import { Icons } from './Icons'
-import { CityAutocomplete } from './CityAutocomplete'
+import { ProvinceCityPicker } from './ProvinceCityPicker'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
 import { SocialHandlesEditor } from './SocialHandlesEditor'
@@ -217,13 +217,10 @@ export const ProfileEditForm = () => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Base City</label>
-            <CityAutocomplete
-              id="location"
-              placeholder="e.g. Beijing, Shanghai"
-              value={location}
-              onChange={setLocation}
-            />
+            <label className="form-label" htmlFor="location-province">
+              Base City
+            </label>
+            <ProvinceCityPicker id="location" value={location} onChange={setLocation} />
           </div>
         </div>
 
