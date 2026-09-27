@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom'
 import { Icons } from './Icons'
 import { MediaGallery } from './MediaGallery'
+import { GUIDES } from '../lib/guides'
 import type { UniversityExtras } from '../lib/universityExtras'
 
 // ---- "Programs students reviewed" rail card --------------------------------
@@ -76,6 +78,27 @@ export const UniversityFunding = ({ extras }: { extras: UniversityExtras }) => {
     </section>
   )
 }
+
+// ---- "Guides" rail card ----------------------------------------------------
+// Static editorial links — renders on every university page, giving each
+// /guide/:slug article an inbound internal link from the site's
+// highest-volume indexable pages.
+export const UniversityGuides = () => (
+  <section className="uni-summary uni-rail-card" aria-labelledby="uni-guides-title">
+    <h2 className="uni-summary-title" id="uni-guides-title">
+      Guides
+    </h2>
+    <ul className="prog-list">
+      {GUIDES.map((g) => (
+        <li key={g.slug} className="prog-row">
+          <Link to={`/guide/${g.slug}`} className="prog-name">
+            {g.title}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  </section>
+)
 
 // ---- ShanghaiRanking indicator list ----------------------------------------
 // 软科 10-dimension indicator scores (top ~100 ranked schools only).

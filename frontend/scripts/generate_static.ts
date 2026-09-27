@@ -23,6 +23,7 @@ import {
   hubPageData,
 } from './lib/staticData'
 import { TRUST_PAGES, TRUST_REDIRECTS } from '../src/lib/trustContent'
+import { GUIDES } from '../src/lib/guides'
 import { buildEnv } from './lib/env'
 import { SITE, PROD_ORIGIN, siteUrl } from '../src/lib/seo/site'
 import { escapeAttr } from '../src/lib/seo/escape'
@@ -89,6 +90,9 @@ const routes: RouteEntry[] = [
     })),
   // Trust/legal pages — always indexable, static content.
   ...TRUST_PAGES.map((d) => ({ path: `/${d.slug}`, data: {} })),
+  // Guides index + articles — static bundled content, always indexable.
+  { path: '/guides', data: {} },
+  ...GUIDES.map((g) => ({ path: `/guide/${g.slug}`, data: {} })),
   ...indexableUnis.map((u) => ({
     path: `/university/${u.slug}`,
     data: { universityPage: universityPageData(u, reviews, stats, authors) },

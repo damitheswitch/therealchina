@@ -81,6 +81,7 @@ export const UserDropdown = () => {
     { to: '/', label: 'Universities', icon: <Icons.Book /> },
     { to: '/flights?post=1', label: 'Get paid to fly', icon: <Icons.Plane />, active: '/flights' },
     { to: '/users', label: 'Our Community', icon: <Icons.Users /> },
+    { to: '/guides', label: 'Guides', icon: <Icons.Info /> },
   ]
 
   return (

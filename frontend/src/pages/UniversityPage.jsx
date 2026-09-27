@@ -13,6 +13,7 @@ import { UniversityReviews } from '../components/UniversityReviews'
 import {
   UniversityPrograms,
   UniversityFunding,
+  UniversityGuides,
   UniversityPhotoStrip,
   RankingIndicatorList,
 } from '../components/UniversityExtras'
@@ -359,6 +360,7 @@ export const UniversityPage = () => {
         <aside className="uni-profile-aside">
           <UniversityFunding extras={extras} />
           <UniversityPrograms extras={extras} />
+          <UniversityGuides />
         </aside>
         <div className="uni-reviews-cell">
           <UniversityReviews key={university.id} university={university} />
