@@ -17,6 +17,9 @@ const formatFileSize = (bytes) => {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
+// Prefilled (edit-mode) items have no File — fall back to the stored name.
+const itemLabel = (item) => item.file?.name || item.media?.name || 'attachment'
+
 /**
  * Media attachment picker with eager upload.
  * Each selected file starts uploading through the media-upload Edge Function
@@ -26,11 +29,29 @@ const formatFileSize = (bytes) => {
  *  - media: successfully uploaded items ready to attach to the review
  *  - uploading: true while any attachment is still in flight
  *  - errorCount: number of tiles in the error state (skipped on submit)
+ *
+ * @typedef {{ url: string, type: 'image' | 'video', name?: string, mime?: string }} UploadedMedia
+ * @param {object} props
+ * @param {boolean} [props.disabled]
+ * @param {(state: { media: UploadedMedia[], uploading: boolean, errorCount: number }) => void} [props.onStateChange]
+ * @param {UploadedMedia[]} [props.initialMedia]
  */
-export const MediaUploader = ({ disabled, onStateChange }) => {
+export const MediaUploader = ({ disabled, onStateChange, initialMedia = [] }) => {
   const fileInputRef = useRef(null)
   const itemsRef = useRef([])
-  const [items, setItems] = useState([])
+  // Edit mode: already-uploaded items arrive as { url, type, name } — they
+  // show as 'done' tiles straight away, no file, no upload session needed.
+  const [items, setItems] = useState(() =>
+    initialMedia.map((m, i) => ({
+      id: i,
+      file: null,
+      type: m.type,
+      previewUrl: m.url,
+      status: 'done',
+      media: m,
+      error: null,
+    }))
+  )
   const [isDragging, setIsDragging] = useState(false)
   const { showToast } = useToast()
   const { user } = useAuth()
@@ -42,7 +63,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
   const resolveTurnstileLoaded = useRef(null)
   const turnstileLoadedPromiseRef = useRef(null)
   const turnstileRef = useRef(null)
-  const nextItemIdRef = useRef(0)
+  const nextItemIdRef = useRef(initialMedia.length)
 
   // Created on demand from event handlers/effects only: refs must not be
   // written during render (breaks under StrictMode / concurrent rendering).
@@ -77,10 +98,13 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
     })
   }, [items, verifying, onStateChange])
 
-  // Release preview URLs when the component unmounts
+  // Release preview URLs when the component unmounts — blob URLs only, never
+  // the remote URLs that prefilled items point at.
   useEffect(() => {
     return () => {
-      itemsRef.current.forEach((it) => URL.revokeObjectURL(it.previewUrl))
+      itemsRef.current.forEach((it) => {
+        if (it.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(it.previewUrl)
+      })
     }
   }, [])
 
@@ -140,7 +164,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
 
   const handleUploadError = useCallback(
     (item, err) => {
-      const message = err instanceof Error ? err.message : `Failed to upload ${item.file.name}`
+      const message = err instanceof Error ? err.message : `Failed to upload ${itemLabel(item)}`
       setItems((prev) =>
         prev.some((it) => it.id === item.id)
           ? prev.map((it) => (it.id === item.id ? { ...it, status: 'error', error: message } : it))
@@ -234,7 +258,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
   const handleRemove = (id) => {
     if (disabled) return
     const item = itemsRef.current.find((it) => it.id === id)
-    if (item) URL.revokeObjectURL(item.previewUrl)
+    if (item?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(item.previewUrl)
     setItems((prev) => prev.filter((it) => it.id !== id))
   }
 
@@ -352,7 +376,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
             <div
               key={item.id}
               className={`media-tile status-${item.status}`}
-              title={item.error ? `${item.file.name} — ${item.error}` : item.file.name}
+              title={item.error ? `${itemLabel(item)} — ${item.error}` : itemLabel(item)}
               onClick={() => item.status === 'error' && handleRetry(item)}
             >
               {item.type === 'video' ? (
@@ -363,7 +387,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
                   </span>
                 </>
               ) : (
-                <img src={item.previewUrl} alt={item.file.name} />
+                <img src={item.previewUrl} alt={itemLabel(item)} />
               )}
 
               {item.status === 'uploading' && (
@@ -371,7 +395,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
                   <span className="spinner" aria-label="Uploading" />
                   <span className="tile-status-label">
                     {item.type === 'video' ? 'Processing video' : 'Uploading'} ·{' '}
-                    {formatFileSize(item.file.size)}
+                    {item.file ? formatFileSize(item.file.size) : ''}
                   </span>
                 </div>
               )}
@@ -399,7 +423,7 @@ export const MediaUploader = ({ disabled, onStateChange }) => {
                   handleRemove(item.id)
                 }}
                 title="Remove attachment"
-                aria-label={`Remove ${item.file.name}`}
+                aria-label={`Remove ${itemLabel(item)}`}
                 disabled={disabled}
               >
                 <Icons.X />

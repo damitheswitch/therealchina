@@ -43,13 +43,14 @@ const UNI_COLS =
 const REVIEW_COLS =
   'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
 
-const fetchAll = async (table: string, columns: string): Promise<unknown[]> => {
+const fetchAll = async (table: string, columns: string, activeOnly = false): Promise<unknown[]> => {
   const rows: unknown[] = []
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await supabase
-      .from(table)
-      .select(columns)
-      .range(from, from + PAGE - 1)
+    let query = supabase.from(table).select(columns)
+    // RLS already hides soft-deleted reviews — this makes the exclusion
+    // explicit in the public export payload, independent of policy details.
+    if (activeOnly) query = query.is('deleted_at', null)
+    const { data, error } = await query.range(from, from + PAGE - 1)
     if (error) throw new Error(`${table}: ${error.message}`)
     rows.push(...(data ?? []))
     if (!data || data.length < PAGE) return rows
@@ -61,7 +62,7 @@ const stats = await fetchAll(
   'university_stats',
   'university_id, avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count, updated_at'
 )
-const reviews = await fetchAll('reviews', REVIEW_COLS)
+const reviews = await fetchAll('reviews', REVIEW_COLS, true)
 const authors = await fetchAll('profile_public', 'id, display_name, avatar_url')
 // review_id only — voter identity never enters the public payload.
 const upvotes = await fetchAll('upvotes', 'review_id')

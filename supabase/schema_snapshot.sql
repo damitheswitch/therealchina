@@ -95,6 +95,8 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
+  -- Soft delete: set by review-manage; row hidden by RLS, kept for audit.
+  deleted_at TIMESTAMPTZ,
   CONSTRAINT chk_reviews_end_after_start
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
@@ -215,6 +217,10 @@ CREATE INDEX IF NOT EXISTS idx_reviews_university_id ON public.reviews(universit
 CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON public.reviews(created_at);
 CREATE INDEX IF NOT EXISTS idx_reviews_rating ON public.reviews(rating);
 CREATE INDEX IF NOT EXISTS idx_reviews_tags ON public.reviews USING gin(tags);
+-- Active (non-deleted) reviews per university — matches every client read path.
+CREATE INDEX IF NOT EXISTS idx_reviews_university_active
+  ON public.reviews(university_id)
+  WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
@@ -411,6 +417,7 @@ BEGIN
     NOW()
   FROM public.reviews AS r
   WHERE r.university_id = p_university_id
+    AND r.deleted_at IS NULL
   ON CONFLICT (university_id) DO UPDATE SET
     review_count = EXCLUDED.review_count,
     avg_rating = EXCLUDED.avg_rating,
@@ -740,10 +747,13 @@ CREATE POLICY "Public read access to universities"
 
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
+-- Soft-deleted reviews are invisible to every client read path. There are no
+-- UPDATE/DELETE policies: edits and deletes go through the review-manage Edge
+-- Function only, which enforces ownership against the verified JWT.
 DROP POLICY IF EXISTS "Public read access to reviews" ON public.reviews;
 CREATE POLICY "Public read access to reviews"
   ON public.reviews FOR SELECT
-  TO public USING (true);
+  TO public USING (deleted_at IS NULL);
 
 DROP POLICY IF EXISTS "Public insert access to reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Authenticated users can insert reviews after onboarding" ON public.reviews;

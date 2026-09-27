@@ -3,6 +3,9 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmit'
+import { updateReview } from '../lib/reviewManage'
+import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
+import { ConfirmDialog } from './ConfirmDialog'
 import type { TablesUpdate } from '../types/database.types'
 import {
   COUNTRIES,
@@ -131,20 +134,35 @@ interface MediaState {
   errorCount: number
 }
 
-export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }) => {
+export const ReviewWizard = ({
+  searchParams,
+  editReview,
+  onDone,
+}: {
+  searchParams: URLSearchParams
+  // Edit mode: mount with the stored row and the wizard edits it in place.
+  // onDone(changed) fires on cancel (false) and after a saved update (true).
+  editReview?: EditableReview
+  onDone?: (changed: boolean) => void
+}) => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { profile, refetch: refetchProfile } = useProfileContext()
   const { showToast } = useToast()
   const { openAuthModal } = useAuthModal()
 
+  const editMode = !!editReview
+  // Stored values mapped once at mount — the wizard is only opened for edit
+  // with the row already in hand, so lazy initializers are safe.
+  const [initial] = useState(() => (editReview ? reviewToWizardState(editReview) : null))
+
   // Step state
   const [step, setStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
 
   // Step 1: Basics
-  const [rating, setRating] = useState(0)
-  const [recommend, setRecommend] = useState<string>('')
+  const [rating, setRating] = useState(initial?.rating ?? 0)
+  const [recommend, setRecommend] = useState<string>(initial?.recommend ?? '')
   const [selectedUni, setSelectedUni] = useState(searchParams.get('uni') || '')
   const [selectedUniName, setSelectedUniName] = useState('')
   const [showNotListed, setShowNotListed] = useState(false)
@@ -153,32 +171,37 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
   const [newUniCity, setNewUniCity] = useState('')
 
   // Step 2: Sub-scores
-  const [subscores, setSubscores] = useState<Record<string, number>>({})
+  const [subscores, setSubscores] = useState<Record<string, number>>(initial?.subscores ?? {})
 
   // Step 3: Details — no preselected values: a skipped field must stay NULL,
   // not write a fabricated "current student" / "self-funded" onto the review.
-  const [enrollmentStatus, setEnrollmentStatus] = useState('')
-  const [startYear, setStartYear] = useState<number | ''>('')
-  const [endYear, setEndYear] = useState<number | ''>('')
-  const [languageOfInstruction, setLanguageOfInstruction] = useState('')
-  const [degreeLevel, setDegreeLevel] = useState('')
-  const [tuitionRange, setTuitionRange] = useState('')
-  const [livingCostRange, setLivingCostRange] = useState('')
-  const [fundingType, setFundingType] = useState('')
-  const [fundingCoverage, setFundingCoverage] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [enrollmentStatus, setEnrollmentStatus] = useState(initial?.enrollmentStatus ?? '')
+  const [startYear, setStartYear] = useState<number | ''>(initial?.startYear ?? '')
+  const [endYear, setEndYear] = useState<number | ''>(initial?.endYear ?? '')
+  const [languageOfInstruction, setLanguageOfInstruction] = useState(
+    initial?.languageOfInstruction ?? ''
+  )
+  const [degreeLevel, setDegreeLevel] = useState(initial?.degreeLevel ?? '')
+  const [tuitionRange, setTuitionRange] = useState(initial?.tuitionRange ?? '')
+  const [livingCostRange, setLivingCostRange] = useState(initial?.livingCostRange ?? '')
+  const [fundingType, setFundingType] = useState(initial?.fundingType ?? '')
+  const [fundingCoverage, setFundingCoverage] = useState(initial?.fundingCoverage ?? '')
+  const [selectedTags, setSelectedTags] = useState<string[]>(initial?.tags ?? [])
   const [showMoreTags, setShowMoreTags] = useState(false)
 
   // Step 4: Story
-  const [pros, setPros] = useState('')
-  const [cons, setCons] = useState('')
-  const [reviewText, setReviewText] = useState('')
-  const [program, setProgram] = useState('')
+  const [pros, setPros] = useState(initial?.pros ?? '')
+  const [cons, setCons] = useState(initial?.cons ?? '')
+  const [reviewText, setReviewText] = useState(initial?.reviewText ?? '')
+  const [program, setProgram] = useState(initial?.program ?? '')
   const [mediaState, setMediaState] = useState<MediaState>({
-    media: [],
+    media: initial?.media ?? [],
     uploading: false,
     errorCount: 0,
   })
+
+  // Update-confirm dialog (edit mode only)
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false)
 
   // Step 5: About you
   const [homeCountry, setHomeCountry] = useState('')
@@ -208,25 +231,27 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
 
   // Sync resolved university into form state once
   useEffect(() => {
-    if (prefilledUni) {
+    if (prefilledUni && !editMode) {
       setSelectedUni(prefilledUni.slug || '')
       setSelectedUniName(prefilledUni.name || '')
     }
-  }, [prefilledUni])
+  }, [prefilledUni, editMode])
 
   // Pre-fill from the user's profile once it loads. Functional setState only
   // fills fields that are still empty, so a user who typed before the profile
   // arrived never loses input. Also prevents the save-prompt from offering to
   // write back values the profile already has.
+  // Skipped in edit mode: the review row is the source of truth — a field the
+  // original review left empty must stay empty, not inherit profile values.
   useEffect(() => {
-    if (!profile) return
+    if (!profile || editMode) return
     setProgram((v) => v || profile.program || '')
     setSelectedUniName((v) => v || profile.university || '')
     setHomeCountry((v) => v || profile.home_country || '')
     setCurrentStatus((v) => v || profile.current_status || '')
     setLanguagesSpoken((v) => (v.length > 0 ? v : (profile.languages_spoken ?? [])))
     setEmailConsent((v) => v || profile.email_consent === true)
-  }, [profile])
+  }, [profile, editMode])
 
   // ---- Handlers ----
 
@@ -267,8 +292,9 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
     switch (s) {
       case 1: {
         // A slug is ideal, but a typed name also works — the edge function
-        // resolves it (ilike) the same way the old form did.
-        if (!selectedUni && !selectedUniName.trim())
+        // resolves it (ilike) the same way the old form did. In edit mode the
+        // university is fixed — it never needs re-validating.
+        if (!editMode && !selectedUni && !selectedUniName.trim())
           return "Which university? Other students can't find your review without it."
         if (showNotListed && (!newUniName.trim() || !newUniCity.trim()))
           return 'Please enter the university name and city.'
@@ -305,7 +331,7 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
       return
     }
     clearError()
-    setStep((s) => Math.min(s + 1, TOTAL_STEPS))
+    setStep((s) => Math.min(s + 1, totalSteps))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -494,6 +520,58 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
     }
   }
 
+  // ---- Update (edit mode) ----
+
+  // Validate first — the confirm dialog (the warning) only opens once the
+  // form is known-good, so an error never hides behind the modal.
+  const requestUpdate = () => {
+    for (const s of [1, 3, 4]) {
+      const err = validateStep(s)
+      if (err) {
+        setError(err)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
+    }
+    clearError()
+    setShowUpdateConfirm(true)
+  }
+
+  // Hands off to review-manage — ownership is enforced server-side.
+  const handleUpdate = async () => {
+    setLoading(true)
+    try {
+      await updateReview(editReview!.id, {
+        rating,
+        text: reviewText.trim(),
+        program: program.trim() || undefined,
+        degreeLevel: degreeLevel || undefined,
+        media: mediaState.media,
+        subscores: subscores as SubScores,
+        enrollmentStatus: enrollmentStatus || undefined,
+        startYear: startYear || undefined,
+        endYear: endYear || undefined,
+        languageOfInstruction: languageOfInstruction || undefined,
+        tuitionRange: tuitionRange || undefined,
+        livingCostRange: livingCostRange || undefined,
+        fundingType: fundingType || undefined,
+        fundingCoverage: fundingType !== 'self' ? fundingCoverage || undefined : undefined,
+        recommend: recommend || undefined,
+        pros: pros.trim() || undefined,
+        cons: cons.trim() || undefined,
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
+      })
+      showToast('Review updated.', 'success')
+      onDone?.(true)
+    } catch (err) {
+      console.error('Error updating review:', err)
+      showToast(err instanceof Error ? err.message : 'Failed to update review', 'error')
+    } finally {
+      setLoading(false)
+      setShowUpdateConfirm(false)
+    }
+  }
+
   // ---- Year options ----
   const currentYear = new Date().getFullYear()
   const yearOptions: number[] = []
@@ -501,19 +579,35 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
 
   // ---- Render ----
 
-  const stepLabels = ['Basics', 'Ratings', 'Details', 'Your story', 'About you']
+  // Edit mode drops the anonymous-only "About you" step (reviewer context is
+  // never stored for signed-in users), so the flow ends on "Your story".
+  const totalSteps = editMode ? 4 : TOTAL_STEPS
+  const stepLabels = editMode
+    ? ['Basics', 'Ratings', 'Details', 'Your story']
+    : ['Basics', 'Ratings', 'Details', 'Your story', 'About you']
 
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
       <div className="section">
-        <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
-          <Icons.ArrowLeft /> Back
-        </Link>
-        <h1 className="section-title">Leave a Review</h1>
+        {editMode ? (
+          <button
+            type="button"
+            className="btn btn-outline"
+            style={{ marginBottom: 'var(--sp-2)' }}
+            onClick={() => onDone?.(false)}
+          >
+            <Icons.ArrowLeft /> Back
+          </button>
+        ) : (
+          <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
+            <Icons.ArrowLeft /> Back
+          </Link>
+        )}
+        <h1 className="section-title">{editMode ? 'Edit your review' : 'Leave a Review'}</h1>
 
         {/* Progress bar */}
         <div className="wizard-progress">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
+          {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
             <div
               key={s}
               className={`progress-step ${s === step ? 'active' : ''} ${s < step ? 'done' : ''}`}
@@ -545,18 +639,26 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
               <label className="form-label" htmlFor="uni-select">
                 University <span className="req-dot">*</span>
               </label>
-              <UniversityAutocomplete
-                id="uni-select"
-                value={selectedUniName}
-                placeholder="Start typing a university..."
-                onChange={handleUniversityChange}
-                onSelect={handleUniversitySelect}
-                onNotListed={handleNotListed}
-                allowNotListed={true}
-              />
+              {editMode ? (
+                // The university a review is about never changes — only its
+                // content does.
+                <div className="form-input" style={{ background: 'var(--rice)' }}>
+                  {initial?.universityLabel || 'University'}
+                </div>
+              ) : (
+                <UniversityAutocomplete
+                  id="uni-select"
+                  value={selectedUniName}
+                  placeholder="Start typing a university..."
+                  onChange={handleUniversityChange}
+                  onSelect={handleUniversitySelect}
+                  onNotListed={handleNotListed}
+                  allowNotListed={true}
+                />
+              )}
             </div>
 
-            {showNotListed && (
+            {!editMode && showNotListed && (
               <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
                 <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
                   <label className="form-label" htmlFor="new-uni-name">
@@ -628,7 +730,11 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
             </div>
 
             <div className="wizard-nav">
-              <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => (editMode ? onDone?.(false) : navigate('/'))}
+              >
                 ← Back
               </button>
               <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
@@ -979,16 +1085,31 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
               <label className="form-label">
                 Show the real life <span className="form-hint-inline">up to 5</span>
               </label>
-              <MediaUploader onStateChange={setMediaState} disabled={loading} />
+              <MediaUploader
+                onStateChange={setMediaState}
+                disabled={loading}
+                initialMedia={initial?.media ?? []}
+              />
             </div>
 
             <div className="wizard-nav">
               <button type="button" className="btn btn-ghost" onClick={goBack}>
                 ← Back
               </button>
-              <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
-                Continue →
-              </button>
+              {editMode ? (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg"
+                  disabled={loading || mediaState.uploading}
+                  onClick={requestUpdate}
+                >
+                  {loading ? 'Saving...' : 'Save changes'}
+                </button>
+              ) : (
+                <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
+                  Continue →
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -1188,6 +1309,18 @@ export const ReviewWizard = ({ searchParams }: { searchParams: URLSearchParams }
           saving={savingProfile}
           onSave={handleProfileSave}
           onSkip={handleProfileSkip}
+        />
+      )}
+
+      {showUpdateConfirm && (
+        <ConfirmDialog
+          title="Update your review?"
+          body="Saving swaps in this version for the one that's live now. The old wording isn't kept."
+          confirmLabel={loading ? 'Saving...' : 'Post update'}
+          cancelLabel="Keep editing"
+          busy={loading}
+          onConfirm={handleUpdate}
+          onCancel={() => setShowUpdateConfirm(false)}
         />
       )}
     </div>
