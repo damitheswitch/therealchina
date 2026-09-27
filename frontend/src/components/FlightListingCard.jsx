@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
 import { SocialChip } from './SocialChip'
+import { hasDeparted, todayLocal } from '../lib/flightListings'
 
 const MONTHS_SHORT = [
   'Jan',
@@ -38,14 +39,6 @@ const formatDateRange = (departure, arrival) => {
   const arr = formatDate(arrival)
   if (!dep || !arr) return dep || arr || ''
   return dep.year === arr.year ? `${dep.short} → ${arr.full}` : `${dep.full} → ${arr.full}`
-}
-
-// Local calendar date (YYYY-MM-DD), unlike toISOString() which is UTC
-const todayLocal = () => {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${now.getFullYear()}-${month}-${day}`
 }
 
 export const FlightListingCard = ({
@@ -131,8 +124,8 @@ export const FlightListingCard = ({
   }
 
   const dateRange = formatDateRange(listing.departure_date, listing.arrival_date)
-  const isDeparted = Boolean(listing.departure_date && listing.departure_date < todayLocal())
-  const isClosed = listing.is_active === false
+  const isDeparted = hasDeparted(listing, todayLocal())
+  const isClosed = listing.is_active !== true
 
   return (
     <div

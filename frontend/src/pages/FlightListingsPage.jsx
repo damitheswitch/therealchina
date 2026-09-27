@@ -11,6 +11,7 @@ import { SocialHandlesSetupModal } from '../components/SocialHandlesSetupModal'
 import { Icons } from '../components/Icons'
 import { CountryAutocomplete, isCountryName } from '../components/CountryAutocomplete'
 import { hasSocialHandles } from '../lib/socialHandles'
+import { filterByTab, flightCounts, sortListings, todayLocal } from '../lib/flightListings'
 
 const MONTHS = [
   'January',
@@ -38,14 +39,6 @@ const monthOf = (dateString) => {
 // Case-insensitive exact match, tolerant of legacy rows stored before the
 // strict country dropdown existed
 const sameCountry = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
-
-// Local calendar date (YYYY-MM-DD), unlike toISOString() which is UTC
-const todayLocal = () => {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${now.getFullYear()}-${month}-${day}`
-}
 
 export const FlightListingsPage = () => {
   const { user, loading: authLoading } = useAuth()
@@ -165,73 +158,17 @@ export const FlightListingsPage = () => {
     }
   }
 
-  const counts = useMemo(() => {
-    const today = todayLocal()
-    let upcoming = 0
-    let past = 0
-    let mine = 0
-    let all = 0
-    for (const listing of filteredListings) {
-      const departed = Boolean(listing.departure_date && listing.departure_date < today)
-      const own = Boolean(user && listing.user_id === user.id)
-      if (own) mine++
-      // Closed (is_active=false) rows stay visible to their owner only —
-      // they count toward My Flights and All, never Upcoming/Past
-      if (listing.is_active) {
-        if (departed) past++
-        else upcoming++
-        all++
-      } else if (own) {
-        all++
-      }
-    }
-    return { upcoming, past, mine, all }
-  }, [filteredListings, user])
+  const counts = useMemo(
+    () => flightCounts(filteredListings, todayLocal(), user?.id),
+    [filteredListings, user]
+  )
 
   const displayedListings = useMemo(() => {
     const today = todayLocal()
-    let list = filteredListings
-
-    if (viewTab === 'upcoming') {
-      list = list.filter((l) => l.is_active && (!l.departure_date || l.departure_date >= today))
-    } else if (viewTab === 'past') {
-      list = list.filter((l) => l.is_active && l.departure_date && l.departure_date < today)
-    } else if (viewTab === 'my_flights') {
-      list = list.filter((l) => user && l.user_id === user.id)
-    } else {
-      // 'all': public active listings plus the viewer's own closed ones
-      list = list.filter((l) => l.is_active || (user && l.user_id === user.id))
-    }
-
+    const list = filterByTab(filteredListings, viewTab, today, user?.id)
+    // In mixed tabs keep actionable rows ahead of history
     const departedLast = viewTab === 'all' || viewTab === 'my_flights'
-
-    return [...list].sort((a, b) => {
-      const aDeparted = Boolean(a.departure_date && a.departure_date < today)
-      const bDeparted = Boolean(b.departure_date && b.departure_date < today)
-
-      if (sortBy === 'departure_asc') {
-        if (departedLast && aDeparted !== bDeparted) {
-          return aDeparted ? 1 : -1
-        }
-        return (a.departure_date || '').localeCompare(b.departure_date || '')
-      }
-      if (sortBy === 'departure_desc') {
-        if (departedLast && aDeparted !== bDeparted) {
-          return aDeparted ? 1 : -1
-        }
-        return (b.departure_date || '').localeCompare(a.departure_date || '')
-      }
-      if (sortBy === 'price_asc') {
-        return (Number(a.price_per_kg) || 0) - (Number(b.price_per_kg) || 0)
-      }
-      if (sortBy === 'kgs_desc') {
-        return (Number(b.available_kgs) || 0) - (Number(a.available_kgs) || 0)
-      }
-      if (sortBy === 'created_desc') {
-        return (b.created_at || '').localeCompare(a.created_at || '')
-      }
-      return 0
-    })
+    return sortListings(list, sortBy, departedLast, today)
   }, [filteredListings, viewTab, sortBy, user])
 
   const clearFilters = () => {
