@@ -1,0 +1,24 @@
+# Daily production rebuild — new reviews earn new prerendered pages, sitemap
+# entries and JSON-LD ratings without a code change. Requires a Netlify build
+# hook stored in the NETLIFY_BUILD_HOOK repo secret (owner step — see
+# docs/seo-ops.md). Without the secret this workflow is a no-op.
+name: Daily rebuild
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # 02:00 UTC — low-traffic window
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Netlify production build
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "NETLIFY_BUILD_HOOK not set — skipping (owner setup pending)"
+            exit 0
+          fi
+          curl -fsSL -X POST "$HOOK"

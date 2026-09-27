@@ -9,7 +9,7 @@ import { MediaGallery } from './MediaGallery'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
-import { socialPlatforms } from '../lib/socialPlatforms'
+import { SocialChip } from './SocialChip'
 import { getSocialHandles } from '../lib/socialHandles'
 import { RecommendPill, ReviewContext, ReviewExtras } from './ReviewExtras'
 
@@ -21,6 +21,7 @@ const ProfileReviewCard = ({ review }) => {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'UTC',
   })
 
   return (
@@ -37,8 +38,10 @@ const ProfileReviewCard = ({ review }) => {
       <p className="review-text">{text}</p>
       <ReviewExtras review={review} />
       {media && media.length > 0 && <MediaGallery media={media} />}
-      <UpvoteButton reviewId={id} />
-      <CommentSection reviewId={id} />
+      <div className="review-actions">
+        <UpvoteButton reviewId={id} />
+        <CommentSection reviewId={id} />
+      </div>
     </div>
   )
 }
@@ -140,19 +143,18 @@ export const ProfileView = ({ userId }) => {
 
         {displaySocialHandles && (
           <div className="profile-section">
-            <h3 className="profile-section-title">Social</h3>
+            <h3 className="profile-section-title">Connect & Socials</h3>
             <div className="profile-social-list">
               {socialHandles
-                .filter((sh) => sh.handle)
-                .map((social, index) => {
-                  const platformData = socialPlatforms[social.platform] || socialPlatforms.other
-                  return (
-                    <div key={index} className="profile-social">
-                      <span className="profile-social-platform">{platformData.label}</span>
-                      <span className="profile-social-handle">{social.handle}</span>
-                    </div>
-                  )
-                })}
+                .filter((sh) => sh.handle && sh.handle.trim())
+                .map((social, index) => (
+                  <SocialChip
+                    key={`${social.platform}-${index}`}
+                    platform={social.platform}
+                    handle={social.handle}
+                    variant="full"
+                  />
+                ))}
             </div>
           </div>
         )}
@@ -165,10 +167,11 @@ export const ProfileView = ({ userId }) => {
                 <div key={review.id} className="profile-review-item">
                   {review.universities && (
                     <Link
-                      to={`/university/${review.universities.slug}`}
+                      to={`/university/${review.universities.slug}/`}
                       className="profile-review-university"
                     >
-                      <Icons.Book /> {review.universities.name} — {review.universities.city}
+                      <Icons.Book /> {review.universities.name} —{' '}
+                      {review.universities.city || review.universities.province}
                     </Link>
                   )}
                   <ProfileReviewCard review={review} />

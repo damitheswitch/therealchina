@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react'
 import { Icons } from './Icons'
+import { normalizeMediaItems } from '../lib/reviewDisplay'
 
-export const MediaGallery = ({ media }) => {
+export const MediaGallery = ({ media, maxVisible = 0 }) => {
   const [activeMediaIndex, setActiveMediaIndex] = useState(null)
 
   // Normalize media items (support array of objects or strings)
-  const items = (media || []).map((item) => {
-    if (typeof item === 'string') {
-      const isVideo = item.match(/\.(mp4|webm|mov)$/i)
-      return { url: item, type: isVideo ? 'video' : 'image', name: '' }
-    }
-    return item
-  })
+  const items = normalizeMediaItems(media)
+
+  // Optional cap on rendered tiles — the last visible tile carries a
+  // "+N more" overlay and opens the lightbox on the first hidden item.
+  const visible = maxVisible > 0 ? items.slice(0, maxVisible) : items
+  const hiddenCount = items.length - visible.length
 
   // Keyboard navigation for Lightbox modal
   useEffect(() => {
@@ -35,14 +35,15 @@ export const MediaGallery = ({ media }) => {
 
   return (
     <div className="review-media-gallery">
-      <div className={`media-grid grid-count-${Math.min(items.length, 4)}`}>
-        {items.map((item, index) => {
+      <div className={`media-grid grid-count-${Math.min(visible.length, 4)}`}>
+        {visible.map((item, index) => {
           const isVideo = item.type === 'video'
+          const isMoreTile = hiddenCount > 0 && index === visible.length - 1
           return (
             <div
               key={index}
               className={`gallery-item ${isVideo ? 'item-video' : 'item-image'}`}
-              onClick={() => setActiveMediaIndex(index)}
+              onClick={() => setActiveMediaIndex(isMoreTile ? index + 1 : index)}
             >
               {isVideo ? (
                 <div className="video-grid-preview">
@@ -55,6 +56,11 @@ export const MediaGallery = ({ media }) => {
                   <span className="video-label">
                     <Icons.Video /> Video
                   </span>
+                  {isMoreTile && (
+                    <div className="more-photos-overlay">
+                      +{hiddenCount} more photo{hiddenCount === 1 ? '' : 's'}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="image-grid-preview">
@@ -63,9 +69,15 @@ export const MediaGallery = ({ media }) => {
                     alt={item.name || `Review photo ${index + 1}`}
                     loading="lazy"
                   />
-                  <div className="zoom-hover-hint">
-                    <Icons.Maximize />
-                  </div>
+                  {isMoreTile ? (
+                    <div className="more-photos-overlay">
+                      +{hiddenCount} more photo{hiddenCount === 1 ? '' : 's'}
+                    </div>
+                  ) : (
+                    <div className="zoom-hover-hint">
+                      <Icons.Maximize />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

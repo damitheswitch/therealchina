@@ -95,6 +95,27 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
         console.warn('Display name pre-flight check failed:', preflightError)
       }
 
+      // Disposable email domains are rejected by a server-side auth hook too;
+      // this pre-check just lets us show the message before submitting.
+      // supabase.rpc() returns { data, error } rather than throwing, so check
+      // both; on either failure we proceed and let the server hook enforce.
+      try {
+        const { data: emailAllowed, error: emailCheckError } = await supabase.rpc(
+          'is_email_allowed',
+          { p_email: email }
+        )
+        if (emailCheckError) {
+          console.warn('Email domain pre-flight check failed:', emailCheckError)
+        } else if (emailAllowed === false) {
+          setErrorMsg(
+            'Please use a permanent email address — disposable email domains are not allowed.'
+          )
+          return
+        }
+      } catch (preflightError) {
+        console.warn('Email domain pre-flight check failed:', preflightError)
+      }
+
       await signUp(email, password, normalized)
       setVerificationSent(true)
     } catch (error) {

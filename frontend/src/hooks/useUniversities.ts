@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { getRecommendYesPct } from '../lib/reviewSummary'
+import { usePrerenderData } from '../lib/prerenderData'
 import type { Tables } from '../types/database.types'
 
 const PAGE_SIZE = 20
@@ -11,11 +12,11 @@ const SORT_CONFIG = {
   reviews: { column: 'university_stats(review_count)', ascending: false },
 } as const
 
-type SortBy = keyof typeof SORT_CONFIG
+export type SortBy = keyof typeof SORT_CONFIG
 
 type UniversityRow = Pick<
   Tables<'universities'>,
-  'id' | 'name' | 'name_zh' | 'city' | 'slug' | 'logo_url'
+  'id' | 'name' | 'name_zh' | 'city' | 'province' | 'slug' | 'logo_url'
 >
 type UniversityStats = Pick<
   Tables<'university_stats'>,
@@ -39,6 +40,15 @@ type UniversityDisplay = UniversityWithStats & {
   recommendAnswered: number
 }
 
+// Prerender payload written by scripts/generate_static.ts — matches the page's
+// initial query so hydration shows identical content without re-fetching.
+export interface UniversitiesPageData {
+  for: { search: string; city: string; sortBy: string; page: number }
+  rows: UniversityDisplay[]
+  totalCount: number
+  pageCount: number
+}
+
 export const useUniversities = ({
   search,
   city,
@@ -50,12 +60,28 @@ export const useUniversities = ({
   sortBy: SortBy
   page: number
 }) => {
-  const [universities, setUniversities] = useState<UniversityDisplay[]>([])
-  const [totalCount, setTotalCount] = useState<number>(0)
-  const [pageCount, setPageCount] = useState<number>(1)
-  const [loading, setLoading] = useState<boolean>(true)
+  const pd = usePrerenderData<UniversitiesPageData>('universitiesPage')
+  const seeded =
+    pd &&
+    pd.for.page === page &&
+    pd.for.sortBy === sortBy &&
+    (pd.for.search ?? '') === (search ?? '') &&
+    (pd.for.city ?? '') === (city ?? '')
+      ? pd
+      : null
+  const [universities, setUniversities] = useState<UniversityDisplay[]>(seeded?.rows ?? [])
+  const [totalCount, setTotalCount] = useState<number>(seeded?.totalCount ?? 0)
+  const [pageCount, setPageCount] = useState<number>(seeded?.pageCount ?? 1)
+  const [loading, setLoading] = useState<boolean>(!seeded)
 
   useEffect(() => {
+    if (seeded) {
+      setUniversities(seeded.rows)
+      setTotalCount(seeded.totalCount)
+      setPageCount(seeded.pageCount)
+      setLoading(false)
+      return
+    }
     const controller = new AbortController()
 
     const run = async () => {
@@ -64,16 +90,22 @@ export const useUniversities = ({
         const query = supabase
           .from('universities')
           .select(
-            'id, name, name_zh, city, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
+            'id, name, name_zh, city, province, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
             { count: 'exact' }
           )
 
         const withSearch = search?.trim()
           ? query.or(
-              `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%`
+              `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%,province.ilike.%${search.trim()}%`
             )
           : query
-        const withCity = city ? withSearch.eq('city', city) : withSearch
+        // 'prov:X' filters by province (the grouped select emits these);
+        // anything else is a city value.
+        const withCity = city?.startsWith('prov:')
+          ? withSearch.eq('province', city.slice(5))
+          : city
+            ? withSearch.eq('city', city)
+            : withSearch
 
         const start = (page - 1) * PAGE_SIZE
         const end = start + PAGE_SIZE - 1
@@ -86,6 +118,7 @@ export const useUniversities = ({
           count,
         } = await withCity
           .order(column, { ascending, nullsFirst: false })
+          .order('name', { ascending: true }) // stable tiebreak — deterministic pagination
           .abortSignal(controller.signal)
           .range(start, end)
 
@@ -125,7 +158,7 @@ export const useUniversities = ({
 
     run()
     return () => controller.abort()
-  }, [search, city, sortBy, page])
+  }, [search, city, sortBy, page, seeded])
 
   return { universities, totalCount, pageCount, loading }
 }

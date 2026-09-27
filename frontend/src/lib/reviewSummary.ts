@@ -1,4 +1,5 @@
-import { SUBSCORE_FIELDS, type ReviewDisplayData, type SubScoreKey } from './reviewDisplay'
+import { SUBSCORE_FIELDS, type SubScoreKey } from './reviewDisplay'
+import type { Tables } from '../types/database.types'
 
 export interface ReviewSummary {
   reviewCount: number
@@ -26,7 +27,20 @@ export interface ReviewSummary {
   modalTuition: string | null
 }
 
-type ReviewInput = ReviewDisplayData & { rating: number }
+// Exactly the columns buildReviewSummary reads — the university page fetches
+// this slim row set for ALL reviews to feed the "Student verdict" card, while
+// the review list itself is paginated with full rows. Any superset (e.g. a
+// full reviews row) stays assignable.
+export type ReviewSummaryInput = Pick<
+  Tables<'reviews'>,
+  | 'rating'
+  | 'recommend'
+  | 'tags'
+  | 'enrollment_status'
+  | 'tuition_range'
+  | 'living_cost_range'
+  | SubScoreKey
+>
 
 // Shared by the listing card pill: yes / (yes + maybe + no), rounded.
 // Returns null when nobody answered so callers can hide the badge entirely.
@@ -56,7 +70,7 @@ const modalValue = (values: (string | null | undefined)[]): string | null => {
   return best
 }
 
-export const buildReviewSummary = (reviews: ReviewInput[]): ReviewSummary => {
+export const buildReviewSummary = (reviews: ReviewSummaryInput[]): ReviewSummary => {
   const reviewCount = reviews.length
   const avgRating = reviewCount ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount : 0
 

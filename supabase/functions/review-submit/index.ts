@@ -299,23 +299,34 @@ function validateMedia(value: unknown): MediaItem[] {
 // ---- University resolution ------------------------------------------------------
 
 function slugify(name: string): string {
+  // Mirrors frontend/src/lib/seo/slugify.ts — keep in sync (slug has a DB
+  // CHECK: ^[a-z0-9]+(-[a-z0-9]+)*$, max 120 chars).
   const slug = name
     .toLowerCase()
+    .trim()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 120)
+    .replace(/-+$/g, '')
   return slug || 'university'
 }
 
 async function resolveUniversityId(body: {
   universitySlug?: string
   universityName?: string
-  newUniversity?: { name: string; city: string }
+  newUniversity?: { name: string; city: string; province?: string }
 }): Promise<{ id: string; slug: string; created: boolean }> {
   if (body.universitySlug) {
+    const s = body.universitySlug.trim().toLowerCase()
+    // Format check keeps the PostgREST filter string injection-safe.
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) || s.length > 120) {
+      throw new Error('invalid university slug')
+    }
     const { data, error } = await supabaseAdmin
       .from('universities')
       .select('id, slug')
-      .eq('slug', body.universitySlug)
+      .or(`slug.eq.${s},slug_aliases.cs.{${s}}`)
+      .limit(1)
       .maybeSingle()
     if (error) throw error
     if (!data) throw new Error('University not found')
@@ -334,11 +345,22 @@ async function resolveUniversityId(body: {
   }
 
   if (body.newUniversity) {
-    const { name, city } = body.newUniversity
+    const { name, city, province } = body.newUniversity
     const slug = slugify(name)
+    // Reuse an existing row when the slugified name is already a canonical
+    // slug or a known alias — avoids duplicate universities.
+    const { data: found, error: findError } = await supabaseAdmin
+      .from('universities')
+      .select('id, slug')
+      .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
+      .limit(1)
+      .maybeSingle()
+    if (findError) throw findError
+    if (found) return { ...found, created: false }
+
     const { data, error } = await supabaseAdmin
       .from('universities')
-      .insert({ name, city, slug })
+      .insert({ name, city, slug, province: province || null })
       .select('id, slug')
       .single()
 
@@ -349,7 +371,8 @@ async function resolveUniversityId(body: {
       const { data: existing, error: lookupError } = await supabaseAdmin
         .from('universities')
         .select('id, slug')
-        .eq('slug', slug)
+        .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
+        .limit(1)
         .single()
       if (lookupError || !existing) throw lookupError || new Error('University lookup failed')
       return { ...existing, created: false }
@@ -579,6 +602,11 @@ async function handleSubmit(req: Request): Promise<Response> {
             (body.newUniversity as Record<string, unknown>).city,
             LIMITS.uniCity.max
           ),
+          province:
+            asTrimmedString(
+              (body.newUniversity as Record<string, unknown>).province,
+              LIMITS.uniCity.max
+            ) || undefined,
         }
       : undefined
 
@@ -589,7 +617,9 @@ async function handleSubmit(req: Request): Promise<Response> {
     university = await resolveUniversityId({
       universitySlug: asTrimmedString(body.universitySlug, 200) || undefined,
       universityName: asTrimmedString(body.universityName, LIMITS.uniName.max) || undefined,
-      newUniversity: newUniversity as { name: string; city: string } | undefined,
+      newUniversity: newUniversity as
+        | { name: string; city: string; province?: string }
+        | undefined,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not resolve university'

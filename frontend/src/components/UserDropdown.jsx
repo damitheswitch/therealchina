@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { SealAvatar } from './SealAvatar'
+import { SealAvatar, GuestSeal } from './SealAvatar'
+import { Logo } from './Logo'
 import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
@@ -85,12 +86,19 @@ export const UserDropdown = () => {
   return (
     <div className="user-dropdown" ref={dropdownRef}>
       <button
-        className="user-dropdown-trigger"
+        className={`user-dropdown-trigger${user ? '' : ' user-dropdown-trigger--guest'}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-label={user ? 'User menu' : 'Menu'}
         aria-expanded={isOpen}
       >
-        {user ? <SealAvatar displayName={displayName} size={36} /> : <Icons.User size={36} />}
+        {user ? (
+          <SealAvatar displayName={displayName} size={36} />
+        ) : (
+          <>
+            <GuestSeal size={40} />
+            <Icons.Chevron />
+          </>
+        )}
       </button>
 
       {isOpen && (
@@ -104,36 +112,37 @@ export const UserDropdown = () => {
               </div>
             </div>
           ) : (
-            <div className="user-dropdown-header">
-              <Icons.User size={48} />
-              <div className="user-dropdown-info">
-                <div className="user-dropdown-name">Welcome</div>
-                <div className="user-dropdown-email">Sign up or sign in to continue</div>
-                <div
-                  className="user-dropdown-guest-actions"
-                  style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}
-                >
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => {
-                      setIsOpen(false)
-                      openAuthModal('register')
-                    }}
-                  >
-                    Sign up
-                  </button>
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => {
-                      setIsOpen(false)
-                      openAuthModal('login')
-                    }}
-                  >
-                    Sign in
-                  </button>
+            <>
+              <div className="user-dropdown-header user-dropdown-header--guest">
+                <Logo size={32} />
+                <div className="user-dropdown-info">
+                  <div className="user-dropdown-name">Welcome to The Real China</div>
+                  <div className="user-dropdown-email">
+                    Sign in to review &amp; connect with students
+                  </div>
                 </div>
               </div>
-            </div>
+              <div className="user-dropdown-guest-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setIsOpen(false)
+                    openAuthModal('register')
+                  }}
+                >
+                  Create free account
+                </button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setIsOpen(false)
+                    openAuthModal('login')
+                  }}
+                >
+                  Sign in
+                </button>
+              </div>
+            </>
           )}
 
           <div className="user-dropdown-divider" />

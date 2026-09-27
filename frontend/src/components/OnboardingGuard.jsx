@@ -1,82 +1,45 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
+// Renders child routes immediately (no loading gate — required for prerendered
+// HTML to survive hydration). Logged-in users without a completed profile are
+// still redirected to /onboarding; the check runs in the background with an
+// 800ms retry for just-created profiles, same as before.
 export const OnboardingGuard = () => {
   const { user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
-  const [checking, setChecking] = useState(true)
-  const [onboardingComplete, setOnboardingComplete] = useState(false)
 
   useEffect(() => {
-    if (authLoading) return
-    if (!user) {
-      setChecking(false)
-      return
-    }
+    if (authLoading || !user) return
 
-    const checkProfile = async () => {
+    const controller = new AbortController()
+    const fetchComplete = async () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('onboarding_completed')
         .eq('id', user.id)
-        .single()
-
-      if (error || !data) {
-        setTimeout(async () => {
-          const { data: retry } = await supabase
-            .from('profiles')
-            .select('onboarding_completed')
-            .eq('id', user.id)
-            .single()
-          if (retry?.onboarding_completed) {
-            setOnboardingComplete(true)
-          } else {
-            navigate('/onboarding', { replace: true })
-          }
-          setChecking(false)
-        }, 800)
-        return
-      }
-
-      if (data.onboarding_completed) {
-        setOnboardingComplete(true)
-      } else {
-        navigate('/onboarding', { replace: true })
-      }
-      setChecking(false)
+        .abortSignal(controller.signal)
+        .maybeSingle()
+      return !error && !!data?.onboarding_completed
     }
 
-    checkProfile()
+    let timer
+    ;(async () => {
+      if (await fetchComplete()) return
+      if (controller.signal.aborted) return
+      timer = setTimeout(async () => {
+        const ok = await fetchComplete()
+        if (!controller.signal.aborted && !ok) navigate('/onboarding', { replace: true })
+      }, 800)
+    })()
+
+    return () => {
+      controller.abort()
+      clearTimeout(timer)
+    }
   }, [user, authLoading, navigate])
 
-  if (authLoading || checking) {
-    return (
-      <div
-        className="loading"
-        style={{
-          minHeight: '60vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        Loading...
-      </div>
-    )
-  }
-
-  if (!user || onboardingComplete) {
-    return <Outlet />
-  }
-
-  return (
-    <div
-      className="loading"
-      style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    >
-      Loading...
-    </div>
-  )
+  return <Outlet />
 }

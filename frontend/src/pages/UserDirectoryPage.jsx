@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Seo } from '../components/Seo'
 import { useDebounce } from '../hooks/useDebounce'
 import { useMemberDirectory } from '../hooks/useMemberDirectory'
 import { Link } from 'react-router-dom'
@@ -6,9 +7,10 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealAvatar } from '../components/SealAvatar'
 import { Icons } from '../components/Icons'
-import { CityAutocomplete } from '../components/CityAutocomplete'
+import { ProvinceCityPicker } from '../components/ProvinceCityPicker'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { getSocialHandles } from '../lib/socialHandles'
+import { SocialChip } from '../components/SocialChip'
 
 export const UserDirectoryPage = () => {
   const { user, loading: authLoading } = useAuth()
@@ -76,6 +78,7 @@ export const UserDirectoryPage = () => {
 
   return (
     <div className="container" style={{ paddingTop: 'var(--sp-4)' }}>
+      <Seo path="/users" title="Community members" index={false} />
       <div className="section">
         <div className="section-header">
           <h1 className="section-title">User Directory</h1>
@@ -86,10 +89,12 @@ export const UserDirectoryPage = () => {
         <form onSubmit={handleSearch} className="filter-form">
           <div className="filter-row">
             <div className="filter-group">
-              <label className="form-label">City</label>
-              <CityAutocomplete
+              <label className="form-label" htmlFor="city-filter-province">
+                City or province
+              </label>
+              <ProvinceCityPicker
                 id="city-filter"
-                placeholder="e.g. Beijing, Shanghai"
+                emitFormat="term"
                 value={cityFilter}
                 onChange={setCityFilter}
               />
@@ -169,17 +174,30 @@ export const UserDirectoryPage = () => {
                       </p>
                     )}
                     {(() => {
-                      const socialHandles = getSocialHandles(profile)
-                      const hasSocialHandles = socialHandles.some(
+                      const socialHandles = getSocialHandles(profile).filter(
                         (sh) => sh.handle && sh.handle.trim()
                       )
+                      if (!profile.show_social_handle || socialHandles.length === 0) return null
+
                       return (
-                        profile.show_social_handle &&
-                        hasSocialHandles && (
-                          <div className="user-card-social">
-                            <Icons.Link size={14} /> Social handles available
-                          </div>
-                        )
+                        <div className="user-card-socials-row" onClick={(e) => e.stopPropagation()}>
+                          {socialHandles.slice(0, 4).map((sh, idx) => (
+                            <SocialChip
+                              key={`${sh.platform}-${idx}`}
+                              platform={sh.platform}
+                              handle={sh.handle}
+                              variant="icon-only"
+                            />
+                          ))}
+                          {socialHandles.length > 4 && (
+                            <span
+                              className="social-chip-more"
+                              title={`${socialHandles.length - 4} more socials`}
+                            >
+                              +{socialHandles.length - 4}
+                            </span>
+                          )}
+                        </div>
                       )
                     })()}
                   </div>

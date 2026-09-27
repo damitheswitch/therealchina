@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { Icons } from './Icons'
+import { UniversityLogo } from './UniversityLogo'
 import { getRecommendMeta } from '../lib/reviewDisplay'
 
 // UniversityCard component
@@ -10,6 +11,7 @@ export const UniversityCard = ({ university }) => {
     name,
     name_zh,
     city,
+    province,
     slug,
     logo_url,
     avg_rating,
@@ -39,8 +41,8 @@ export const UniversityCard = ({ university }) => {
     )
 
   return (
-    <Link to={`/university/${slug}`} className="uni-card fade-in">
-      <img src={logo_url} alt={`${name} campus`} className="uni-card-img" loading="lazy" />
+    <Link to={`/university/${slug}/`} className="uni-card fade-in">
+      <UniversityLogo name={name} logoUrl={logo_url} size={160} className="uni-card-img" />
       <div className="uni-card-body">
         <div>
           <div className="uni-card-name">{name}</div>
@@ -48,7 +50,7 @@ export const UniversityCard = ({ university }) => {
         </div>
         <div className="uni-card-meta">
           <span className="uni-card-city">
-            <Icons.MapPin /> {city}
+            <Icons.MapPin /> {city || province}
           </span>
           {is_verified && <SealBadge />}
         </div>

@@ -5,7 +5,11 @@ import {
   formatEnrollmentLabel,
   formatReviewerMix,
   getRecommendMeta,
+  getReviewTeaserItems,
   getSubScores,
+  hasReviewExtras,
+  normalizeMediaItems,
+  type ReviewCardData,
   type ReviewDisplayData,
 } from './reviewDisplay'
 
@@ -149,5 +153,106 @@ describe('formatReviewerMix', () => {
   it('is empty when nothing is known', () => {
     expect(formatReviewerMix([])).toBe('')
     expect(formatReviewerMix([{ status: 'exchange', count: 2 }])).toBe('2 exchange students')
+  })
+})
+
+const baseCard: ReviewCardData = { ...base, media: null }
+
+describe('normalizeMediaItems', () => {
+  it('returns [] for null/undefined/non-array media', () => {
+    expect(normalizeMediaItems(null)).toEqual([])
+    expect(normalizeMediaItems(undefined)).toEqual([])
+    expect(normalizeMediaItems('not-an-array')).toEqual([])
+  })
+
+  it('infers type from the extension for legacy string urls', () => {
+    expect(
+      normalizeMediaItems(['https://cdn/x.jpg', 'https://cdn/y.mp4', 'https://cdn/z.MOV'])
+    ).toEqual([
+      { url: 'https://cdn/x.jpg', type: 'image', name: '' },
+      { url: 'https://cdn/y.mp4', type: 'video', name: '' },
+      { url: 'https://cdn/z.MOV', type: 'video', name: '' },
+    ])
+  })
+
+  it('passes object items through with sane defaults', () => {
+    expect(
+      normalizeMediaItems([
+        { url: 'https://cdn/a.png', type: 'image', name: 'dorm' },
+        { url: 'https://cdn/b.png' },
+      ])
+    ).toEqual([
+      { url: 'https://cdn/a.png', type: 'image', name: 'dorm' },
+      { url: 'https://cdn/b.png', type: 'image', name: '' },
+    ])
+  })
+
+  it('drops entries without a usable url', () => {
+    expect(
+      normalizeMediaItems([{ type: 'image' }, 42, null, { url: 'https://cdn/ok.png' }])
+    ).toEqual([{ url: 'https://cdn/ok.png', type: 'image', name: '' }])
+  })
+})
+
+describe('hasReviewExtras', () => {
+  it('is false when a review has nothing beyond the visible preview', () => {
+    expect(hasReviewExtras(baseCard)).toBe(false)
+  })
+
+  it('is true for pros, cons, sub-scores, tags, or media alone', () => {
+    expect(hasReviewExtras({ ...baseCard, pros: 'great food' })).toBe(true)
+    expect(hasReviewExtras({ ...baseCard, cons: 'loud dorms' })).toBe(true)
+    expect(hasReviewExtras({ ...baseCard, rating_campus: 4 })).toBe(true)
+    expect(hasReviewExtras({ ...baseCard, tags: ['safe'] })).toBe(true)
+    expect(hasReviewExtras({ ...baseCard, media: ['https://cdn/x.jpg'] })).toBe(true)
+  })
+
+  it('ignores empty tags and empty/invalid media', () => {
+    expect(hasReviewExtras({ ...baseCard, tags: [null as unknown as string] })).toBe(false)
+    expect(hasReviewExtras({ ...baseCard, media: [] })).toBe(false)
+    expect(hasReviewExtras({ ...baseCard, media: [{ nope: 1 }] })).toBe(false)
+  })
+})
+
+describe('getReviewTeaserItems', () => {
+  it('returns [] when the review hides nothing', () => {
+    expect(getReviewTeaserItems(baseCard)).toEqual([])
+  })
+
+  it('branches the pros/cons label correctly', () => {
+    expect(getReviewTeaserItems({ ...baseCard, pros: 'x' })).toEqual(['Pros'])
+    expect(getReviewTeaserItems({ ...baseCard, cons: 'x' })).toEqual(['Cons'])
+    expect(getReviewTeaserItems({ ...baseCard, pros: 'x', cons: 'y' })).toEqual(['Pros & cons'])
+  })
+
+  it('uses singular forms for a count of one', () => {
+    expect(getReviewTeaserItems({ ...baseCard, rating_academics: 5 })).toEqual([
+      '1 category rating',
+    ])
+    expect(getReviewTeaserItems({ ...baseCard, media: ['https://cdn/x.jpg'] })).toEqual(['1 photo'])
+    expect(getReviewTeaserItems({ ...baseCard, tags: ['safe'] })).toEqual(['1 tag'])
+  })
+
+  it('says "media items" when a video is present', () => {
+    expect(
+      getReviewTeaserItems({
+        ...baseCard,
+        media: ['https://cdn/a.jpg', 'https://cdn/b.mp4'],
+      })
+    ).toEqual(['2 media items'])
+  })
+
+  it('lists items in a fixed order: pros/cons, ratings, media, tags', () => {
+    expect(
+      getReviewTeaserItems({
+        ...baseCard,
+        tags: ['a', 'b'],
+        media: ['https://cdn/x.jpg'],
+        rating_academics: 5,
+        rating_social: 4,
+        pros: 'x',
+        cons: 'y',
+      })
+    ).toEqual(['Pros & cons', '2 category ratings', '1 photo', '2 tags'])
   })
 })

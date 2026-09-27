@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useProfile } from '../hooks/useProfile'
 import { OnboardingForm } from '../components/OnboardingForm'
+import { Seo } from '../components/Seo'
 import { validateDisplayName } from '../lib/validateDisplayName'
 
 export const OnboardingPage = () => {
@@ -76,6 +77,7 @@ export const OnboardingPage = () => {
       className="container onboarding-page"
       style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}
     >
+      <Seo path="/onboarding" title="Set up your profile" index={false} />
       <div
         className="onboarding-header"
         style={{ textAlign: 'center', marginBottom: 'var(--sp-4)' }}

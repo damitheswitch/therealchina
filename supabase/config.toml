@@ -14,3 +14,10 @@ verify_jwt = false
 # are Turnstile-gated inside the function.
 [functions.review-submit]
 verify_jwt = false
+
+# Reject signups from disposable email domains. The Postgres function is
+# created by migration 031; on hosted projects (staging/prod) this hook must
+# also be enabled in the Dashboard under Authentication → Hooks.
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_reject_disposable_email"

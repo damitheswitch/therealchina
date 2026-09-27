@@ -1,4 +1,5 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
+import { Seo } from '../components/Seo'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { ProfileEditForm } from '../components/ProfileEditForm'
@@ -9,6 +10,7 @@ import { Icons } from '../components/Icons'
 // ProfilePage component - Main profile page with routing logic
 export const ProfilePage = () => {
   const { userId } = useParams()
+  const location = useLocation()
   const { user, loading: authLoading } = useAuth()
   const { openAuthModal } = useAuthModal()
 
@@ -58,6 +60,7 @@ export const ProfilePage = () => {
   // If userId parameter exists, show that user's profile (view mode)
   return (
     <div className="container" style={{ paddingTop: 'var(--sp-4)' }}>
+      <Seo path={location.pathname} title="Profile" index={false} />
       <div className="section">
         <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
           <Icons.ArrowLeft /> Back
