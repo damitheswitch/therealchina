@@ -11,6 +11,7 @@ import { SocialHandlesSetupModal } from '../components/SocialHandlesSetupModal'
 import { Icons } from '../components/Icons'
 import { CountryAutocomplete, isCountryName } from '../components/CountryAutocomplete'
 import { hasSocialHandles } from '../lib/socialHandles'
+import { filterByTab, flightCounts, sortListings, todayLocal } from '../lib/flightListings'
 
 const MONTHS = [
   'January',
@@ -53,8 +54,13 @@ export const FlightListingsPage = () => {
   const [arrivalCountry, setArrivalCountry] = useState('')
   const [month, setMonth] = useState('')
 
+  // View + sort states
+  const [viewTab, setViewTab] = useState('upcoming')
+  const [sortBy, setSortBy] = useState('departure_asc')
+  const [editingListing, setEditingListing] = useState(null)
+
   // TODO(scale): when listings grow into the hundreds, filter and paginate
-  // server-side instead of downloading every active row.
+  // server-side instead of downloading every visible row.
   const {
     listings,
     loading,
@@ -92,6 +98,7 @@ export const FlightListingsPage = () => {
   }, [user, fetchOwnProfile])
 
   const handleStartPosting = async () => {
+    setEditingListing(null)
     const currentProfile = ownProfile || (await fetchOwnProfile())
     if (!hasSocialHandles(currentProfile)) {
       setShowSetupModal(true)
@@ -142,19 +149,68 @@ export const FlightListingsPage = () => {
     })
   }, [listings, departureCountry, arrivalCountry, month])
 
+  const handleTabChange = (newTab) => {
+    setViewTab(newTab)
+    if (newTab === 'past' && sortBy === 'departure_asc') {
+      setSortBy('departure_desc')
+    } else if (newTab === 'upcoming' && sortBy === 'departure_desc') {
+      setSortBy('departure_asc')
+    }
+  }
+
+  const counts = useMemo(
+    () => flightCounts(filteredListings, todayLocal(), user?.id),
+    [filteredListings, user]
+  )
+
+  const displayedListings = useMemo(() => {
+    const today = todayLocal()
+    const list = filterByTab(filteredListings, viewTab, today, user?.id)
+    // In mixed tabs keep actionable rows ahead of history
+    const departedLast = viewTab === 'all' || viewTab === 'my_flights'
+    return sortListings(list, sortBy, departedLast, today)
+  }, [filteredListings, viewTab, sortBy, user])
+
   const clearFilters = () => {
     setDepartureCountry('')
     setArrivalCountry('')
     setMonth('')
   }
 
-  const handleListingCreated = () => {
+  const handleListingSaved = () => {
     setShowForm(false)
+    setEditingListing(null)
     refetchListings()
+  }
+
+  const handleFormCancel = () => {
+    setShowForm(false)
+    setEditingListing(null)
   }
 
   const handleListingDeleted = () => {
     refetchListings()
+  }
+
+  const handleEditListing = (listing) => {
+    setEditingListing(listing)
+    setShowForm(true)
+  }
+
+  const handleToggleActive = async (listing) => {
+    try {
+      const { error } = await supabase
+        .from('flight_listings')
+        .update({ is_active: !listing.is_active })
+        .eq('id', listing.id)
+
+      if (error) throw error
+      showToast(listing.is_active ? 'Listing marked as full' : 'Listing reopened', 'success')
+      refetchListings()
+    } catch (error) {
+      console.error('Error updating listing status:', error)
+      showToast('Failed to update listing', 'error')
+    }
   }
 
   const hasActiveFilters = departureCountry || arrivalCountry || month
@@ -260,44 +316,126 @@ export const FlightListingsPage = () => {
 
       {showForm ? (
         <FlightListingForm
+          listing={editingListing}
           onRequiresSocialHandles={() => setShowSetupModal(true)}
-          onSuccess={handleListingCreated}
-          onCancel={() => setShowForm(false)}
+          onSuccess={handleListingSaved}
+          onCancel={handleFormCancel}
         />
       ) : (
         <>
           <div className="listings-header">
-            <h2>
-              {hasActiveFilters ? 'Filtered Results' : 'All Listings'}
-              <span className="count">({filteredListings.length})</span>
-            </h2>
+            <div className="flight-tabs" role="tablist" aria-label="Flight listing views">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'upcoming'}
+                className={`flight-tab-btn ${viewTab === 'upcoming' ? 'active' : ''}`}
+                onClick={() => handleTabChange('upcoming')}
+              >
+                Upcoming <span className="flight-tab-count">({counts.upcoming})</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'past'}
+                className={`flight-tab-btn ${viewTab === 'past' ? 'active' : ''}`}
+                onClick={() => handleTabChange('past')}
+              >
+                Past Flights <span className="flight-tab-count">({counts.past})</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'my_flights'}
+                className={`flight-tab-btn ${viewTab === 'my_flights' ? 'active' : ''}`}
+                onClick={() => handleTabChange('my_flights')}
+              >
+                My Flights <span className="flight-tab-count">({counts.mine})</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'all'}
+                className={`flight-tab-btn ${viewTab === 'all' ? 'active' : ''}`}
+                onClick={() => handleTabChange('all')}
+              >
+                All <span className="flight-tab-count">({counts.all})</span>
+              </button>
+            </div>
+
+            <div className="flight-sort-wrapper">
+              <label htmlFor="flight-sort" className="flight-sort-label">
+                Sort by
+              </label>
+              <select
+                id="flight-sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="form-select flight-sort-select"
+              >
+                <option value="departure_asc">Departure (Soonest first)</option>
+                <option value="departure_desc">Departure (Latest first)</option>
+                <option value="price_asc">Price (Lowest first)</option>
+                <option value="kgs_desc">Space (Most kg first)</option>
+                <option value="created_desc">Recently posted</option>
+              </select>
+            </div>
           </div>
 
           {loading ? (
             <div className="loading">Loading listings...</div>
-          ) : filteredListings.length === 0 ? (
+          ) : displayedListings.length === 0 ? (
             <div className="empty-state">
               <Icons.Plane />
-              <h3>No flight listings found</h3>
+              <h3>
+                {viewTab === 'past'
+                  ? 'No past flight listings found'
+                  : viewTab === 'my_flights'
+                    ? 'No flights posted yet'
+                    : viewTab === 'all'
+                      ? 'No flight listings found'
+                      : 'No upcoming flight listings found'}
+              </h3>
               <p>
                 {hasActiveFilters
                   ? 'Try adjusting your filters or clearing them to see more listings.'
-                  : 'Be the first to post a flight listing!'}
+                  : viewTab === 'past'
+                    ? 'No historical flight listings have been recorded yet.'
+                    : viewTab === 'my_flights'
+                      ? "You haven't posted any flights yet."
+                      : 'Be the first to post a flight listing!'}
               </p>
-              {user && !hasActiveFilters && (
-                <button onClick={handleStartPosting} className="btn btn-primary">
+              {viewTab === 'upcoming' && counts.past > 0 && !hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('past')}
+                  className="btn btn-outline btn-sm"
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  View past flights ({counts.past})
+                </button>
+              )}
+              {user && !hasActiveFilters && viewTab !== 'past' && (
+                <button
+                  type="button"
+                  onClick={handleStartPosting}
+                  className="btn btn-primary"
+                  style={{ marginTop: '0.75rem' }}
+                >
                   <Icons.Plus /> Post Your Flight
                 </button>
               )}
             </div>
           ) : (
             <div className="flight-rows">
-              {filteredListings.map((listing) => (
+              {displayedListings.map((listing) => (
                 <FlightListingCard
                   key={listing.id}
                   listing={listing}
                   canDelete={user?.id === listing.user_id}
                   onDelete={handleListingDeleted}
+                  onEdit={handleEditListing}
+                  onToggleActive={handleToggleActive}
                 />
               ))}
             </div>

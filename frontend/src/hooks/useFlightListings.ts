@@ -37,7 +37,8 @@ export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}
         .select(
           'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle'
         )
-        .eq('is_active', true)
+        // No client-side is_active filter: the view already returns
+        // active rows plus the viewer's own closed listings
         .order('created_at', { ascending: false })
 
       if (fetchError) throw fetchError
