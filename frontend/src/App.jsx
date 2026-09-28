@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
+import { LoginDraftBanner } from './components/LoginDraftBanner'
 // LandingPage stays in the entry chunk: it is what most visits load first.
 import { LandingPage } from './pages/LandingPage'
 import { OnboardingGuard } from './components/OnboardingGuard'
@@ -84,6 +85,7 @@ function App() {
   return (
     <>
       {!isOnboarding && <Header />}
+      {!isOnboarding && <LoginDraftBanner />}
       <main>
         <Suspense fallback={<PageFallback />}>
           <Routes>

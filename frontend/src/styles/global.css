@@ -5418,3 +5418,74 @@ a.claim-review-uni:hover {
   border-radius: var(--r-sm);
   font-size: 0.82rem;
 }
+
+/* Review draft reminders */
+.draft-reminder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  margin: 0 0 var(--sp-3);
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+}
+.draft-reminder-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+.draft-reminder-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--seal-red);
+  color: #fff;
+}
+.draft-banner-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+.draft-banner-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.draft-banner a {
+  color: #fff;
+}
+.draft-banner .btn-ghost {
+  color: #fff;
+}
+.draft-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .draft-reminder,
+  .draft-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .draft-reminder-actions,
+  .draft-banner-actions {
+    justify-content: flex-end;
+  }
+}

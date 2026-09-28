@@ -18,6 +18,7 @@ import {
   RankingIndicatorList,
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
+import { DraftReminder } from '../components/DraftReminder'
 import { UniversityLogo } from '../components/UniversityLogo'
 import { Seo } from '../components/Seo'
 import { firstPartyLogo } from '../lib/logo'
@@ -349,6 +350,8 @@ export const UniversityPage = () => {
           <Icons.Pen /> Leave a Review
         </Link>
       </div>
+
+      <DraftReminder university={university} />
 
       <div className="uni-profile-layout">
         <div className="uni-photos-cell">

@@ -276,6 +276,44 @@ export type Database = {
           },
         ]
       }
+      review_drafts: {
+        Row: {
+          created_at: string | null
+          id: string
+          payload: Json
+          progress: number | null
+          university_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payload: Json
+          progress?: number | null
+          university_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          progress?: number | null
+          university_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'review_drafts_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       reviews: {
         Row: {
           cons: string | null
