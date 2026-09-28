@@ -1,7 +1,7 @@
 // Server entry — used ONLY by scripts/prerender.tsx inside vite-node.
 // Renders a route to HTML + collects its <Seo> declarations into head tags.
 import { renderToString } from 'react-dom/server'
-import { StaticRouter } from 'react-router-dom/server'
+import { StaticRouter } from 'react-router-dom'
 import App from './App'
 import { AppProviders } from './components/AppProviders'
 import { createHeadStore, HeadStoreContext, mergeSeoInputs } from './lib/seo/collector'

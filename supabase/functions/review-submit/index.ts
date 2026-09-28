@@ -4,201 +4,44 @@
 // rate-limited. Universities referenced as "not listed" are created here, with
 // server-side slug handling, instead of via direct client inserts. The function
 // writes with the service role key, so no anonymous INSERT policies exist.
+//
+// Auth, CORS, rate limiting, and field validation live in ../_shared/ and are
+// shared with review-manage — an edit can never sneak in values a fresh
+// submission would reject.
 
-import { createClient } from 'supabase'
+import {
+  supabaseAdmin,
+  MEDIA_URL_PREFIX,
+  getCaller,
+  getClientIP,
+  checkRateLimit,
+  corsHeaders,
+  jsonResponse,
+} from '../_shared/guard.ts'
+import {
+  LIMITS,
+  VALID_CURRENT_STATUS,
+  asTrimmedString,
+  validateReviewFields,
+} from '../_shared/reviewFields.ts'
 
 // ---- Config --------------------------------------------------------------------
 
 const ANON_REVIEW_LIMIT_PER_HOUR = 10
 const AUTH_REVIEW_LIMIT_PER_HOUR = 30
-const MAX_MEDIA_ITEMS = 5
-
-const LIMITS = {
-  text: { min: 10, max: 5000 },
-  program: { max: 120 },
-  degreeLevel: { max: 60 },
-  uniName: { max: 160 },
-  uniCity: { max: 120 },
-  pros: { max: 1000 },
-  cons: { max: 1000 },
-  tags: { max: 20 },
-  tagLen: { max: 40 },
-}
-
-const VALID_ENROLLMENT = ['current', 'alumni', 'exchange', 'applicant'] as const
-const VALID_FUNDING = ['self', 'csc', 'school', 'province'] as const
-const VALID_COVERAGE = ['partial', 'full'] as const
-const VALID_RECOMMEND = ['yes', 'no', 'maybe'] as const
-const VALID_CURRENT_STATUS = [
-  'studying',
-  'working',
-  'internship',
-  'job_hunting',
-  'break',
-  'other',
-] as const
-const VALID_SUBSCORES = [
-  'rating_academics', 'rating_campus', 'rating_accommodation', 'rating_cost',
-  'rating_intl_office', 'rating_social', 'rating_extracurricular', 'rating_career',
-] as const
 
 const RATE_LIMIT_MESSAGE =
   "You've submitted quite a few reviews in a short time. Please wait a little before sharing more — we want to keep TRC authentic and spam-free."
 
-function getSecretKey(): string | null {
-  const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (legacy) return legacy
-
-  const rawKeys = Deno.env.get('SUPABASE_SECRET_KEYS') || Deno.env.get('SUPABASE_SECRET_KEY')
-  if (!rawKeys) return null
-  try {
-    const parsed = JSON.parse(rawKeys) as Record<string, string>
-    if (typeof parsed === 'object' && parsed !== null) {
-      return parsed['default'] || Object.values(parsed).find((k) => typeof k === 'string') || null
-    }
-  } catch {
-    return rawKeys
-  }
-  return null
-}
-
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-const SUPABASE_SERVICE_ROLE_KEY = getSecretKey()
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('SUPABASE_URL and a service role / secret key must be set')
-}
-
-// Admin client uses the service role key and bypasses RLS: THIS function is the
-// authorization boundary, so every check below matters.
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-})
-
-// Media URLs must point at our own bucket; nothing else is accepted.
-const MEDIA_URL_PREFIX = `${SUPABASE_URL}/storage/v1/object/public/review-media/`
-
-// ---- CORS ----------------------------------------------------------------------
-// CORS_ORIGIN supports:
-//   - "*"                              (allow any origin)
-//   - "https://example.com"            (single exact origin)
-//   - "https://a.com,https://b.com"    (comma-separated list)
-//   - "https://deploy-preview-*--app.netlify.app"  (wildcard * matches any chars)
-const CORS_ORIGIN_RAW = (Deno.env.get('CORS_ORIGIN') || '*').trim()
-
-const CORS_PATTERNS: string[] =
-  CORS_ORIGIN_RAW === '*'
-    ? ['*']
-    : CORS_ORIGIN_RAW.split(',')
-        .map((o) => o.trim().replace(/\/$/, ''))
-        .filter(Boolean)
-
-function originMatches(requestOrigin: string, pattern: string): boolean {
-  if (pattern === '*') return true
-  if (!pattern.includes('*')) return requestOrigin === pattern
-  // Convert glob pattern to regex: escape regex special chars, then turn * into .*
-  const regex = new RegExp(
-    '^' + pattern.replace(/[.*+?^${}()|[\]\\]/g, (ch) => (ch === '*' ? '.*' : '\\' + ch)) + '$'
-  )
-  return regex.test(requestOrigin)
-}
-
-const corsHeaders = (origin?: string) => {
-  const requestOrigin = (origin || '').replace(/\/$/, '')
-  const allowOrigin = CORS_PATTERNS.some((p) => originMatches(requestOrigin, p))
-    ? origin || (CORS_PATTERNS.length === 1 ? CORS_PATTERNS[0] : '*')
-    : CORS_PATTERNS.length === 1
-      ? CORS_PATTERNS[0]
-      : ''
-  return {
-    'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  }
-}
-
-function jsonResponse(req: Request, body: unknown, status: number) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...corsHeaders(req.headers.get('origin') || undefined),
-      'Content-Type': 'application/json',
-    },
-  })
-}
-
-// ---- Auth ----------------------------------------------------------------------
-
-// Publishable/legacy anon API keys are checked by value: they are API keys,
-// not user credentials.
-function isPublicApiKey(token: string): boolean {
-  const raw = Deno.env.get('SUPABASE_PUBLISHABLE_KEYS') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY')
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw)
-      const values = typeof parsed === 'object' && parsed !== null ? Object.values(parsed) : [raw]
-      if (values.includes(token)) return true
-    } catch {
-      if (raw === token) return true
-    }
-  }
-  const legacyAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-  return !!legacyAnonKey && token === legacyAnonKey
-}
-
-// Never trust base64-decoded JWT claims: verify the signature and expiry
-// server-side before granting any authenticated privilege. Fail closed.
-async function verifyUserToken(token: string): Promise<{ id: string } | null> {
-  try {
-    const { data, error } = await supabaseAdmin.auth.getUser(token)
-    if (error || !data.user) return null
-    return { id: data.user.id }
-  } catch (err) {
-    console.error('Token verification error:', err)
-    return null
-  }
-}
-
-type Caller = { role: 'anon' | 'authenticated'; sub?: string }
-
-async function getCaller(req: Request): Promise<Caller | null> {
-  const authToken = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
-  const apikey = req.headers.get('apikey') || ''
-
-  if (authToken) {
-    if (isPublicApiKey(authToken)) return { role: 'anon' }
-    const user = await verifyUserToken(authToken)
-    return user ? { role: 'authenticated', sub: user.id } : null
-  }
-
-  if (apikey && isPublicApiKey(apikey)) return { role: 'anon' }
-  return null
-}
-
-function getClientIP(req: Request): string {
-  const privateRegex =
-    /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)|^(fc00:|fe80:|::1|0\.0\.0\.0)/
-  // Every proxy APPENDS to X-Forwarded-For, so the rightmost entry is the one
-  // the platform itself added. Entries to the left are client-controlled and
-  // must not be trusted for rate limiting.
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) {
-    const ips = forwarded
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-    for (let i = ips.length - 1; i >= 0; i--) {
-      if (!privateRegex.test(ips[i])) return ips[i]
-    }
-  }
-  return 'unknown'
-}
-
 // ---- Turnstile -----------------------------------------------------------------
 
 const TURNSTILE_ACTION = 'review-submit'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Cloudflare's official test secret — when it is configured, the environment
+// IS a test environment and siteverify returns no action/hostname to check.
+const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA'
 
 async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
@@ -206,6 +49,7 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
     console.error('TURNSTILE_SECRET_KEY not configured')
     return false
   }
+  const isTestSecret = secret === TURNSTILE_TEST_SECRET
 
   const form = new URLSearchParams()
   form.append('secret', secret)
@@ -222,12 +66,10 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
     hostname?: string
     'error-codes'?: string[]
   }
-  if (!data.success) {
-    console.error('Turnstile verification failed:', data['error-codes'])
-    return false
-  }
-  // Validate the action to prevent token reuse across surfaces.
-  if (data.action !== TURNSTILE_ACTION) {
+  if (!data.success) return false
+  // Test-secret environments skip the action + hostname checks: test tokens
+  // carry neither, so enforcing them would make staging/local unusable.
+  if (!isTestSecret && data.action !== TURNSTILE_ACTION) {
     console.error('Turnstile action mismatch:', data.action, 'expected', TURNSTILE_ACTION)
     return false
   }
@@ -236,7 +78,7 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   // hostnames (comma-separated, no scheme, no trailing slash) and never
   // include localhost / 127.0.0.1.
   const hostnamesRaw = Deno.env.get('TURNSTILE_HOSTNAMES')
-  if (hostnamesRaw) {
+  if (hostnamesRaw && !isTestSecret) {
     const allowed = new Set(
       hostnamesRaw
         .split(',')
@@ -249,51 +91,6 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
     }
   }
   return true
-}
-
-// ---- Rate limiting (shared table with media-upload) ----------------------------
-
-async function checkRateLimit(key: string, limit: number): Promise<boolean> {
-  const { data, error } = await supabaseAdmin.rpc('record_upload_attempt', { p_key: key })
-  if (error) {
-    console.error('Rate limit RPC error:', error)
-    // If the rate-limit table is unavailable, fail open so the app keeps working.
-    return true
-  }
-  return (data as number) <= limit
-}
-
-// ---- Input validation ----------------------------------------------------------
-
-function asTrimmedString(value: unknown, maxLength: number): string | null {
-  if (value === null || value === undefined) return null
-  if (typeof value !== 'string') throw new Error('invalid field type')
-  const trimmed = value.replace(/\s+/g, ' ').trim()
-  if (trimmed.length > maxLength) throw new Error('field too long')
-  return trimmed || null
-}
-
-type MediaItem = { url: string; type: 'image' | 'video'; name?: string; mime?: string }
-
-function validateMedia(value: unknown): MediaItem[] {
-  if (value === null || value === undefined) return []
-  if (!Array.isArray(value)) throw new Error('media must be an array')
-  if (value.length > MAX_MEDIA_ITEMS) throw new Error(`at most ${MAX_MEDIA_ITEMS} media items`)
-
-  return value.map((item) => {
-    if (!item || typeof item !== 'object') throw new Error('invalid media item')
-    const { url, type, name, mime } = item as Record<string, unknown>
-    if (typeof url !== 'string' || !url.startsWith(MEDIA_URL_PREFIX)) {
-      throw new Error('media url is not a TRC upload')
-    }
-    if (type !== 'image' && type !== 'video') throw new Error('invalid media type')
-    return {
-      url,
-      type,
-      name: typeof name === 'string' ? name.slice(0, 200) : undefined,
-      mime: typeof mime === 'string' ? mime.slice(0, 100) : undefined,
-    }
-  })
 }
 
 // ---- University resolution ------------------------------------------------------
@@ -314,7 +111,7 @@ function slugify(name: string): string {
 async function resolveUniversityId(body: {
   universitySlug?: string
   universityName?: string
-  newUniversity?: { name: string; city: string; province?: string }
+  newUniversity?: { name: string; city: string }
 }): Promise<{ id: string; slug: string; created: boolean }> {
   if (body.universitySlug) {
     const s = body.universitySlug.trim().toLowerCase()
@@ -345,7 +142,7 @@ async function resolveUniversityId(body: {
   }
 
   if (body.newUniversity) {
-    const { name, city, province } = body.newUniversity
+    const { name, city } = body.newUniversity
     const slug = slugify(name)
     // Reuse an existing row when the slugified name is already a canonical
     // slug or a known alias — avoids duplicate universities.
@@ -360,7 +157,7 @@ async function resolveUniversityId(body: {
 
     const { data, error } = await supabaseAdmin
       .from('universities')
-      .insert({ name, city, slug, province: province || null })
+      .insert({ name, city, slug })
       .select('id, slug')
       .single()
 
@@ -437,13 +234,28 @@ async function handleSubmit(req: Request): Promise<Response> {
   }
 
   // ---- Validate the payload ----
-  let rating: number, text: string, program: string | null, degreeLevel: string | null
-  let media: MediaItem[]
-  let subscores: Record<string, number> = {}
-  let enrollmentStatus: string | null, startYear: number | null, endYear: number | null
-  let languageOfInstruction: string | null, tuitionRange: string | null, livingCostRange: string | null
-  let fundingType: string | null, fundingCoverage: string | null, recommend: string | null
-  let pros: string | null, cons: string | null, tags: string[]
+  let fields
+  try {
+    fields = validateReviewFields(body, MEDIA_URL_PREFIX)
+  } catch (err) {
+    return jsonResponse(
+      req,
+      { error: err instanceof Error ? err.message : 'Invalid submission' },
+      400
+    )
+  }
+
+  // Anonymous reviews carry a browser-generated claim token so the same
+  // person can claim the review after signing up. Stored on the private
+  // reviewer_context row — a malformed token degrades to "not claimable",
+  // it never fails the review itself.
+  const claimToken =
+    isAnon && typeof body.claimToken === 'string' && UUID_RE.test(body.claimToken)
+      ? body.claimToken
+      : null
+
+  // Anonymous reviewer context (optional): stored in the private
+  // reviewer_context table, never exposed to clients.
   let reviewerContext: {
     email: string | null
     emailConsent: boolean
@@ -452,101 +264,6 @@ async function handleSubmit(req: Request): Promise<Response> {
     languagesSpoken: string[]
   } | null = null
   try {
-    if (typeof body.rating !== 'number' || body.rating < 1 || body.rating > 5 || !Number.isInteger(body.rating)) {
-      throw new Error('Rating must be a whole number between 1 and 5')
-    }
-    rating = body.rating
-
-    const trimmedText = asTrimmedString(body.text, LIMITS.text.max)
-    if (!trimmedText || trimmedText.length < LIMITS.text.min) {
-      throw new Error(`Review text must be at least ${LIMITS.text.min} characters`)
-    }
-    text = trimmedText
-
-    program = asTrimmedString(body.program, LIMITS.program.max)
-    degreeLevel = asTrimmedString(body.degreeLevel, LIMITS.degreeLevel.max)
-    media = validateMedia(body.media)
-
-    // Sub-scores (optional, 1-5)
-    if (body.subscores !== null && body.subscores !== undefined) {
-      if (typeof body.subscores !== 'object' || Array.isArray(body.subscores)) {
-        throw new Error('subscores must be an object')
-      }
-      for (const key of VALID_SUBSCORES) {
-        const val = (body.subscores as Record<string, unknown>)[key]
-        if (val === null || val === undefined) continue
-        if (typeof val !== 'number' || !Number.isInteger(val) || val < 1 || val > 5) {
-          throw new Error(`${key} must be a whole number between 1 and 5`)
-        }
-        subscores[key] = val
-      }
-    }
-
-    enrollmentStatus = asTrimmedString(body.enrollmentStatus, 20)
-    if (enrollmentStatus && !VALID_ENROLLMENT.includes(enrollmentStatus as typeof VALID_ENROLLMENT[number])) {
-      throw new Error('Invalid enrollment status')
-    }
-
-    if (body.startYear !== null && body.startYear !== undefined) {
-      if (typeof body.startYear !== 'number' || !Number.isInteger(body.startYear) || body.startYear < 1990 || body.startYear > new Date().getFullYear() + 1) {
-        throw new Error('Invalid start year')
-      }
-      startYear = body.startYear
-    } else {
-      startYear = null
-    }
-
-    if (body.endYear !== null && body.endYear !== undefined) {
-      if (typeof body.endYear !== 'number' || !Number.isInteger(body.endYear) || body.endYear < 1990 || body.endYear > new Date().getFullYear() + 1) {
-        throw new Error('Invalid end year')
-      }
-      endYear = body.endYear
-    } else {
-      endYear = null
-    }
-
-    if (startYear !== null && endYear !== null && endYear < startYear) {
-      throw new Error('End year cannot be before start year')
-    }
-
-    languageOfInstruction = asTrimmedString(body.languageOfInstruction, 60)
-    tuitionRange = asTrimmedString(body.tuitionRange, 40)
-    livingCostRange = asTrimmedString(body.livingCostRange, 40)
-
-    fundingType = asTrimmedString(body.fundingType, 20)
-    if (fundingType && !VALID_FUNDING.includes(fundingType as typeof VALID_FUNDING[number])) {
-      throw new Error('Invalid funding type')
-    }
-    fundingCoverage = asTrimmedString(body.fundingCoverage, 20)
-    if (fundingCoverage && !VALID_COVERAGE.includes(fundingCoverage as typeof VALID_COVERAGE[number])) {
-      throw new Error('Invalid funding coverage')
-    }
-    // Coverage only valid when funding is not self-funded
-    if (fundingCoverage && fundingType === 'self') {
-      fundingCoverage = null
-    }
-
-    recommend = asTrimmedString(body.recommend, 10)
-    if (recommend && !VALID_RECOMMEND.includes(recommend as typeof VALID_RECOMMEND[number])) {
-      throw new Error('Invalid recommend value')
-    }
-
-    pros = asTrimmedString(body.pros, LIMITS.pros.max)
-    cons = asTrimmedString(body.cons, LIMITS.cons.max)
-
-    // Tags: array of short strings
-    tags = []
-    if (body.tags !== null && body.tags !== undefined) {
-      if (!Array.isArray(body.tags)) throw new Error('tags must be an array')
-      if (body.tags.length > LIMITS.tags.max) throw new Error(`at most ${LIMITS.tags.max} tags`)
-      for (const t of body.tags) {
-        const trimmed = asTrimmedString(t, LIMITS.tagLen.max)
-        if (trimmed) tags.push(trimmed)
-      }
-    }
-
-    // Anonymous reviewer context (optional): stored in the private
-    // reviewer_context table, never exposed to clients.
     if (body.reviewerContext !== null && body.reviewerContext !== undefined) {
       if (typeof body.reviewerContext !== 'object' || Array.isArray(body.reviewerContext)) {
         throw new Error('reviewerContext must be an object')
@@ -602,11 +319,6 @@ async function handleSubmit(req: Request): Promise<Response> {
             (body.newUniversity as Record<string, unknown>).city,
             LIMITS.uniCity.max
           ),
-          province:
-            asTrimmedString(
-              (body.newUniversity as Record<string, unknown>).province,
-              LIMITS.uniCity.max
-            ) || undefined,
         }
       : undefined
 
@@ -617,9 +329,7 @@ async function handleSubmit(req: Request): Promise<Response> {
     university = await resolveUniversityId({
       universitySlug: asTrimmedString(body.universitySlug, 200) || undefined,
       universityName: asTrimmedString(body.universityName, LIMITS.uniName.max) || undefined,
-      newUniversity: newUniversity as
-        | { name: string; city: string; province?: string }
-        | undefined,
+      newUniversity: newUniversity as { name: string; city: string } | undefined,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not resolve university'
@@ -634,31 +344,7 @@ async function handleSubmit(req: Request): Promise<Response> {
     .insert({
       university_id: university.id,
       user_id: isAnon ? null : caller.sub,
-      rating,
-      text,
-      program,
-      degree_level: degreeLevel,
-      media,
-      rating_academics: subscores.rating_academics ?? null,
-      rating_campus: subscores.rating_campus ?? null,
-      rating_accommodation: subscores.rating_accommodation ?? null,
-      rating_cost: subscores.rating_cost ?? null,
-      rating_intl_office: subscores.rating_intl_office ?? null,
-      rating_social: subscores.rating_social ?? null,
-      rating_extracurricular: subscores.rating_extracurricular ?? null,
-      rating_career: subscores.rating_career ?? null,
-      enrollment_status: enrollmentStatus,
-      start_year: startYear,
-      end_year: endYear,
-      language_of_instruction: languageOfInstruction,
-      tuition_range: tuitionRange,
-      living_cost_range: livingCostRange,
-      funding_type: fundingType,
-      funding_coverage: fundingCoverage,
-      recommend,
-      pros,
-      cons,
-      tags,
+      ...fields,
     })
     .select('id')
     .single()
@@ -669,23 +355,27 @@ async function handleSubmit(req: Request): Promise<Response> {
   }
 
   // Anonymous "about you" answers land in the private reviewer_context table
-  // (no client access at all). Best-effort: a context failure must not fail
-  // the review that was just saved.
-  if (isAnon && reviewerContext) {
+  // (no client access at all). The row is also written when only a claim
+  // token exists — it is the claim link, so it must exist even when the
+  // reviewer skipped every optional field. Best-effort: a context failure
+  // must not fail the review that was just saved.
+  if (isAnon && (reviewerContext || claimToken)) {
     const hasContext =
-      reviewerContext.email !== null ||
-      reviewerContext.emailConsent ||
-      reviewerContext.homeCountry !== null ||
-      reviewerContext.currentStatus !== null ||
-      reviewerContext.languagesSpoken.length > 0
-    if (hasContext) {
+      reviewerContext !== null &&
+      (reviewerContext.email !== null ||
+        reviewerContext.emailConsent ||
+        reviewerContext.homeCountry !== null ||
+        reviewerContext.currentStatus !== null ||
+        reviewerContext.languagesSpoken.length > 0)
+    if (hasContext || claimToken) {
       const { error: contextError } = await supabaseAdmin.from('reviewer_context').insert({
         review_id: review.id,
-        email: reviewerContext.email,
-        email_consent: reviewerContext.emailConsent,
-        home_country: reviewerContext.homeCountry,
-        current_status: reviewerContext.currentStatus,
-        languages_spoken: reviewerContext.languagesSpoken,
+        email: reviewerContext?.email ?? null,
+        email_consent: reviewerContext?.emailConsent ?? false,
+        home_country: reviewerContext?.homeCountry ?? null,
+        current_status: reviewerContext?.currentStatus ?? null,
+        languages_spoken: reviewerContext?.languagesSpoken ?? [],
+        claim_token: claimToken,
       })
       if (contextError) {
         console.error('Reviewer context insert error:', contextError)
@@ -704,7 +394,7 @@ async function handleSubmit(req: Request): Promise<Response> {
   )
 }
 
-// ---- Main ----------------------------------------------------------------------
+// ---- Main ------------------------------------------------------------------------
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin') || undefined

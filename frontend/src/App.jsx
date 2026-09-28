@@ -2,10 +2,12 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
+import { LoginDraftBanner } from './components/LoginDraftBanner'
 // LandingPage stays in the entry chunk: it is what most visits load first.
 import { LandingPage } from './pages/LandingPage'
 import { OnboardingGuard } from './components/OnboardingGuard'
 import { AuthModal } from './components/AuthModal'
+import { ReviewClaimPrompt } from './components/ReviewClaimPrompt'
 import { useAuthModal } from './contexts/AuthModalContext'
 import { useAuth } from './contexts/AuthContext'
 import { TRUST_REDIRECTS } from './lib/trustContent'
@@ -29,6 +31,8 @@ const DegreeHubPage = lazy(() =>
   import('./pages/HubPage').then((m) => ({ default: m.DegreeHubPage }))
 )
 const TrustPage = lazy(() => import('./pages/TrustPage').then((m) => ({ default: m.TrustPage })))
+const GuidesPage = lazy(() => import('./pages/GuidesPage').then((m) => ({ default: m.GuidesPage })))
+const GuidePage = lazy(() => import('./pages/GuidePage').then((m) => ({ default: m.GuidePage })))
 const ReviewPage = lazy(() => import('./pages/ReviewPage').then((m) => ({ default: m.ReviewPage })))
 const ProfilePage = lazy(() =>
   import('./pages/ProfilePage').then((m) => ({ default: m.ProfilePage }))
@@ -81,6 +85,7 @@ function App() {
   return (
     <>
       {!isOnboarding && <Header />}
+      {!isOnboarding && <LoginDraftBanner />}
       <main>
         <Suspense fallback={<PageFallback />}>
           <Routes>
@@ -98,6 +103,9 @@ function App() {
               <Route path="/city/:slug" element={<CityPage />} />
               <Route path="/program/:slug" element={<ProgramHubPage />} />
               <Route path="/degree/:slug" element={<DegreeHubPage />} />
+              <Route path="/guides" element={<GuidesPage />} />
+              <Route path="/guide" element={<Navigate to="/guides" replace />} />
+              <Route path="/guide/:slug" element={<GuidePage />} />
               {['about', 'editorial-policy', 'privacy', 'terms'].map((p) => (
                 <Route key={p} path={`/${p}`} element={<TrustPage slug={p} />} />
               ))}
@@ -123,6 +131,7 @@ function App() {
         initialMode={initialMode}
         config={config}
       />
+      <ReviewClaimPrompt />
     </>
   )
 }

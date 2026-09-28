@@ -228,30 +228,42 @@ export type Database = {
       }
       reviewer_context: {
         Row: {
+          claim_dismissed: boolean
+          claim_token: string | null
+          claimed_at: string | null
           created_at: string
           current_status: string | null
           email: string | null
           email_consent: boolean
           home_country: string | null
           languages_spoken: string[]
+          owner_id: string | null
           review_id: string
         }
         Insert: {
+          claim_dismissed?: boolean
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           current_status?: string | null
           email?: string | null
           email_consent?: boolean
           home_country?: string | null
           languages_spoken?: string[]
+          owner_id?: string | null
           review_id: string
         }
         Update: {
+          claim_dismissed?: boolean
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           current_status?: string | null
           email?: string | null
           email_consent?: boolean
           home_country?: string | null
           languages_spoken?: string[]
+          owner_id?: string | null
           review_id?: string
         }
         Relationships: [
@@ -264,11 +276,50 @@ export type Database = {
           },
         ]
       }
+      review_drafts: {
+        Row: {
+          created_at: string | null
+          id: string
+          payload: Json
+          progress: number | null
+          university_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          payload: Json
+          progress?: number | null
+          university_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          payload?: Json
+          progress?: number | null
+          university_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'review_drafts_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       reviews: {
         Row: {
           cons: string | null
           created_at: string | null
           degree_level: string | null
+          deleted_at: string | null
           end_year: number | null
           enrollment_status: string | null
           funding_coverage: string | null
@@ -301,6 +352,7 @@ export type Database = {
           cons?: string | null
           created_at?: string | null
           degree_level?: string | null
+          deleted_at?: string | null
           end_year?: number | null
           enrollment_status?: string | null
           funding_coverage?: string | null
@@ -333,6 +385,7 @@ export type Database = {
           cons?: string | null
           created_at?: string | null
           degree_level?: string | null
+          deleted_at?: string | null
           end_year?: number | null
           enrollment_status?: string | null
           funding_coverage?: string | null

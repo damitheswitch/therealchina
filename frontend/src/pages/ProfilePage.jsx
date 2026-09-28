@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { ProfileEditForm } from '../components/ProfileEditForm'
 import { ProfileView } from '../components/ProfileView'
+import { MyReviews } from '../components/MyReviews'
+import { MyDrafts } from '../components/MyDrafts'
 import { Link } from 'react-router-dom'
 import { Icons } from '../components/Icons'
 
@@ -52,6 +54,8 @@ export const ProfilePage = () => {
           <h1 className="section-title">My Profile</h1>
           <p className="muted mb-3">Manage your profile information and preferences.</p>
           <ProfileEditForm />
+          <MyDrafts />
+          <MyReviews />
         </div>
       </div>
     )

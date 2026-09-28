@@ -13,10 +13,12 @@ import { UniversityReviews } from '../components/UniversityReviews'
 import {
   UniversityPrograms,
   UniversityFunding,
+  UniversityGuides,
   UniversityPhotoStrip,
   RankingIndicatorList,
 } from '../components/UniversityExtras'
 import { RegistrationNudge } from '../components/RegistrationNudge'
+import { DraftReminder } from '../components/DraftReminder'
 import { UniversityLogo } from '../components/UniversityLogo'
 import { Seo } from '../components/Seo'
 import { firstPartyLogo } from '../lib/logo'
@@ -349,6 +351,8 @@ export const UniversityPage = () => {
         </Link>
       </div>
 
+      <DraftReminder university={university} />
+
       <div className="uni-profile-layout">
         <div className="uni-photos-cell">
           <UniversityPhotoStrip extras={extras} />
@@ -359,6 +363,7 @@ export const UniversityPage = () => {
         <aside className="uni-profile-aside">
           <UniversityFunding extras={extras} />
           <UniversityPrograms extras={extras} />
+          <UniversityGuides />
         </aside>
         <div className="uni-reviews-cell">
           <UniversityReviews key={university.id} university={university} />
