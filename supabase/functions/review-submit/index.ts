@@ -37,12 +37,19 @@ const RATE_LIMIT_MESSAGE =
 
 const TURNSTILE_ACTION = 'review-submit'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Cloudflare's official test secret — when it is configured, the environment
+// IS a test environment and siteverify returns no action/hostname to check.
+const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA'
+
 async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
   if (!secret) {
     console.error('TURNSTILE_SECRET_KEY not configured')
     return false
   }
+  const isTestSecret = secret === TURNSTILE_TEST_SECRET
 
   const form = new URLSearchParams()
   form.append('secret', secret)
@@ -60,7 +67,9 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
     'error-codes'?: string[]
   }
   if (!data.success) return false
-  if (data.action !== TURNSTILE_ACTION) {
+  // Test-secret environments skip the action + hostname checks: test tokens
+  // carry neither, so enforcing them would make staging/local unusable.
+  if (!isTestSecret && data.action !== TURNSTILE_ACTION) {
     console.error('Turnstile action mismatch:', data.action, 'expected', TURNSTILE_ACTION)
     return false
   }
@@ -69,7 +78,7 @@ async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   // hostnames (comma-separated, no scheme, no trailing slash) and never
   // include localhost / 127.0.0.1.
   const hostnamesRaw = Deno.env.get('TURNSTILE_HOSTNAMES')
-  if (hostnamesRaw) {
+  if (hostnamesRaw && !isTestSecret) {
     const allowed = new Set(
       hostnamesRaw
         .split(',')
@@ -236,6 +245,15 @@ async function handleSubmit(req: Request): Promise<Response> {
     )
   }
 
+  // Anonymous reviews carry a browser-generated claim token so the same
+  // person can claim the review after signing up. Stored on the private
+  // reviewer_context row — a malformed token degrades to "not claimable",
+  // it never fails the review itself.
+  const claimToken =
+    isAnon && typeof body.claimToken === 'string' && UUID_RE.test(body.claimToken)
+      ? body.claimToken
+      : null
+
   // Anonymous reviewer context (optional): stored in the private
   // reviewer_context table, never exposed to clients.
   let reviewerContext: {
@@ -337,23 +355,27 @@ async function handleSubmit(req: Request): Promise<Response> {
   }
 
   // Anonymous "about you" answers land in the private reviewer_context table
-  // (no client access at all). Best-effort: a context failure must not fail
-  // the review that was just saved.
-  if (isAnon && reviewerContext) {
+  // (no client access at all). The row is also written when only a claim
+  // token exists — it is the claim link, so it must exist even when the
+  // reviewer skipped every optional field. Best-effort: a context failure
+  // must not fail the review that was just saved.
+  if (isAnon && (reviewerContext || claimToken)) {
     const hasContext =
-      reviewerContext.email !== null ||
-      reviewerContext.emailConsent ||
-      reviewerContext.homeCountry !== null ||
-      reviewerContext.currentStatus !== null ||
-      reviewerContext.languagesSpoken.length > 0
-    if (hasContext) {
+      reviewerContext !== null &&
+      (reviewerContext.email !== null ||
+        reviewerContext.emailConsent ||
+        reviewerContext.homeCountry !== null ||
+        reviewerContext.currentStatus !== null ||
+        reviewerContext.languagesSpoken.length > 0)
+    if (hasContext || claimToken) {
       const { error: contextError } = await supabaseAdmin.from('reviewer_context').insert({
         review_id: review.id,
-        email: reviewerContext.email,
-        email_consent: reviewerContext.emailConsent,
-        home_country: reviewerContext.homeCountry,
-        current_status: reviewerContext.currentStatus,
-        languages_spoken: reviewerContext.languagesSpoken,
+        email: reviewerContext?.email ?? null,
+        email_consent: reviewerContext?.emailConsent ?? false,
+        home_country: reviewerContext?.homeCountry ?? null,
+        current_status: reviewerContext?.currentStatus ?? null,
+        languages_spoken: reviewerContext?.languagesSpoken ?? [],
+        claim_token: claimToken,
       })
       if (contextError) {
         console.error('Reviewer context insert error:', contextError)

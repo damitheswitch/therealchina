@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmit'
+import { getOrCreateClaimToken } from '../lib/reviewClaim'
 import { updateReview } from '../lib/reviewManage'
 import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
 import { ConfirmDialog } from './ConfirmDialog'
@@ -717,6 +718,7 @@ export const ReviewWizard = ({
 
       const result = await submitReview({
         cfToken,
+        claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
         universitySlug: !isNotListed && selectedUni ? selectedUni : undefined,
         universityName:
           !isNotListed && !selectedUni && selectedUniName.trim()
@@ -804,6 +806,9 @@ export const ReviewWizard = ({
       if (!user) {
         sessionStorage.setItem('trc_anon_review_submitted', 'true')
         sessionStorage.setItem('trc_anon_review_redirect', redirectSlug || '')
+        // A fresh anonymous review may be claimable after this sign-in — let
+        // the claim prompt re-check even if it already ran for this user.
+        sessionStorage.removeItem('trc_claim_checked')
         setPendingSuccess(
           () => () =>
             openAuthModal('register', {
@@ -1453,7 +1458,8 @@ export const ReviewWizard = ({
                   onChange={(e) => setAnonEmail(e.target.value)}
                 />
                 <span className="form-hint">
-                  Only used if you want early access. Not linked to your public review.
+                  Never shown publicly. If you sign up with this email, we&apos;ll match the review
+                  to your account so you can claim it.
                 </span>
               </div>
             )}

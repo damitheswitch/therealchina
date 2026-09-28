@@ -31,6 +31,9 @@ export interface ReviewerContext {
 
 export interface ReviewPayload {
   cfToken?: string
+  // Anonymous-only: browser-held token that later links this review to an
+  // account (stored privately, matched by review-claim after sign-in).
+  claimToken?: string
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string; province?: string }

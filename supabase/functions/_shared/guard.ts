@@ -104,23 +104,49 @@ export function isPublicApiKey(token: string): boolean {
     }
   }
   const legacyAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-  return !!legacyAnonKey && token === legacyAnonKey
+  if (legacyAnonKey && token === legacyAnonKey) return true
+  return isLegacyAnonJwt(token)
+}
+
+// A well-formed project anon JWT is also a valid public API key: runtimes on
+// key-migrated projects inject only the publishable key, so a stale-but-valid
+// legacy JWT (old bundles, cached env) would otherwise 401. Decode-only is
+// safe because API keys are public client credentials — possession is auth —
+// and the 'anon' role grants nothing beyond public access. User JWTs
+// (role 'authenticated') still go through signature verification in
+// verifyUserToken; this never shortcuts them.
+function isLegacyAnonJwt(token: string): boolean {
+  const parts = token.split('.')
+  if (parts.length !== 3) return false
+  try {
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
+    if (payload.iss !== 'supabase' || payload.role !== 'anon') return false
+    const ref = (SUPABASE_URL || '').match(/^https?:\/\/([^.]+)\./)?.[1]
+    if (!ref || payload.ref !== ref) return false
+    return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now()
+  } catch {
+    return false
+  }
 }
 
 // Never trust base64-decoded JWT claims: verify the signature and expiry
 // server-side before granting any authenticated privilege. Fail closed.
-export async function verifyUserToken(token: string): Promise<{ id: string } | null> {
+// The returned email is the verified auth.users address — safe to match
+// against, unlike anything client-supplied.
+export async function verifyUserToken(
+  token: string
+): Promise<{ id: string; email: string | null } | null> {
   try {
     const { data, error } = await supabaseAdmin.auth.getUser(token)
     if (error || !data.user) return null
-    return { id: data.user.id }
+    return { id: data.user.id, email: data.user.email ?? null }
   } catch (err) {
     console.error('Token verification error:', err)
     return null
   }
 }
 
-export type Caller = { role: 'anon' | 'authenticated'; sub?: string }
+export type Caller = { role: 'anon' | 'authenticated'; sub?: string; email?: string | null }
 
 export async function getCaller(req: Request): Promise<Caller | null> {
   const authToken = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
@@ -129,7 +155,7 @@ export async function getCaller(req: Request): Promise<Caller | null> {
   if (authToken) {
     if (isPublicApiKey(authToken)) return { role: 'anon' }
     const user = await verifyUserToken(authToken)
-    return user ? { role: 'authenticated', sub: user.id } : null
+    return user ? { role: 'authenticated', sub: user.id, email: user.email } : null
   }
 
   if (apikey && isPublicApiKey(apikey)) return { role: 'anon' }

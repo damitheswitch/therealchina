@@ -145,6 +145,8 @@ frontend/src/
 supabase/
 ├── functions/media-upload/    # Edge Function for secure media uploads (+ media_detect module + Deno tests)
 ├── functions/review-submit/   # Edge Function for gated review submissions
+├── functions/review-manage/   # Edge Function for editing/deleting own reviews
+├── functions/review-claim/    # Edge Function for claiming anonymous reviews after sign-in
 ├── migrations/                # Numbered schema migrations (do not rename or delete)
 ├── schema_snapshot.sql        # Canonical current schema (single source of truth)
 └── config.toml                # Edge Function config (e.g., verify_jwt)
@@ -246,6 +248,8 @@ Edge Function type-checking (matches what CI runs):
 ```bash
 npx deno check --config supabase/functions/media-upload/deno.json supabase/functions/media-upload/index.ts
 npx deno check --config supabase/functions/review-submit/deno.json supabase/functions/review-submit/index.ts
+npx deno check --config supabase/functions/review-manage/deno.json supabase/functions/review-manage/index.ts
+npx deno check --config supabase/functions/review-claim/deno.json supabase/functions/review-claim/index.ts
 ```
 
 SEO pipeline notes (see `docs/seo-ops.md` for the full runbook):
