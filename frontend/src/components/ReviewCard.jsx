@@ -112,18 +112,22 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
         </div>
       </div>
 
-      {user_id && (
-        <div className="review-author">
-          {author ? (
+      <div className="review-author">
+        {user_id ? (
+          author ? (
             <Link to={`/profile/${user_id}`} className="review-author-link">
               <SealAvatar displayName={author.display_name} size={24} />
               <span className="review-author-name">{author.display_name}</span>
             </Link>
           ) : (
             <span className="review-author-name muted">Former member</span>
-          )}
-        </div>
-      )}
+          )
+        ) : (
+          // user_id NULL = anonymous (never claimed, or claimed anonymously —
+          // the private owner link never reaches public reads either way).
+          <span className="review-author-name muted">Anonymous</span>
+        )}
+      </div>
 
       <ReviewContext review={review} />
 

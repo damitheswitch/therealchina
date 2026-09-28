@@ -1,10 +1,16 @@
 // Supabase Edge Function: review-manage
 // Lets a signed-in user update or soft-delete THEIR OWN reviews. There are no
 // UPDATE/DELETE RLS policies on reviews — this function is the only write
-// path besides review-submit, and it enforces ownership twice: a read check
-// against the verified user id, and a `user_id` predicate inside the write
-// itself so a row can never be touched by another user, even via crafted
-// direct requests. Anonymous reviews (user_id NULL) are never manageable.
+// path besides review-submit and review-claim, and it enforces ownership
+// twice: a read check against the verified user id, and a `user_id` predicate
+// inside the write itself so a row can never be touched by another user,
+// even via crafted direct requests.
+//
+// "Own" covers two shapes: public reviews (reviews.user_id = caller) and
+// anonymously-claimed ones (reviews.user_id IS NULL, private
+// reviewer_context.owner_id = caller). Anon-owned writes re-check
+// `user_id IS NULL` in the query so a concurrent public claim can never be
+// silently overwritten.
 //
 // Payload: { action: 'update' | 'delete', reviewId: string, ...reviewFields }
 // Update accepts the same field set as review-submit (minus university and
@@ -104,26 +110,54 @@ async function handleManage(req: Request): Promise<Response> {
     console.error('Review fetch error:', fetchError)
     return jsonResponse(req, { error: 'Something went wrong. Please try again.' }, 500)
   }
+
+  // Public ownership is reviews.user_id; anonymous claims live on the private
+  // reviewer_context row (owner_id). Only look there when the cheap check fails.
+  let ownsAnonymously = false
+  if (review && review.user_id === null) {
+    const { data: ctx } = await supabaseAdmin
+      .from('reviewer_context')
+      .select('owner_id')
+      .eq('review_id', reviewId)
+      .maybeSingle()
+    ownsAnonymously = ctx?.owner_id === caller.sub
+  }
+
   // Same response for missing rows and other people's reviews — existence is
   // not leaked to non-owners.
-  if (!review || review.user_id !== caller.sub) {
+  if (!review || (review.user_id !== caller.sub && !ownsAnonymously)) {
     return jsonResponse(req, { error: 'Review not found' }, 404)
   }
+
+  // Ownership predicate re-applied inside every write: the caller's id when
+  // publicly owned, or `user_id IS NULL` when anonymously owned — a concurrent
+  // public claim turns it into someone else's row, and the predicate then
+  // matches nothing instead of touching a stranger's review.
+  const applyOwnership = <
+    T extends { eq(c: string, v: string): T; is(c: string, v: null): T },
+  >(
+    q: T
+  ): T => (ownsAnonymously ? q.is('user_id', null) : q.eq('user_id', caller.sub!))
 
   // ---- Delete (soft) -------------------------------------------------------------
   if (action === 'delete') {
     if (review.deleted_at) {
       return jsonResponse(req, { deleted: true }, 200) // idempotent
     }
-    const { error } = await supabaseAdmin
-      .from('reviews')
-      .update({ deleted_at: new Date().toISOString() })
-      .eq('id', reviewId)
-      .eq('user_id', caller.sub) // ownership re-checked inside the write
-      .is('deleted_at', null)
+    const { data: deletedRows, error } = await applyOwnership(
+      supabaseAdmin
+        .from('reviews')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', reviewId)
+        .is('deleted_at', null)
+    ).select('id')
     if (error) {
       console.error('Review delete error:', error)
       return jsonResponse(req, { error: 'Could not delete the review. Please try again.' }, 500)
+    }
+    if (!deletedRows || deletedRows.length === 0) {
+      // Lost a race with a public claim — the row is no longer theirs to touch.
+      return jsonResponse(req, { error: 'Review not found' }, 404)
     }
     await purgeUnreferencedMedia(mediaUrls(review.media), reviewId)
     return jsonResponse(req, { deleted: true }, 200)
@@ -145,16 +179,20 @@ async function handleManage(req: Request): Promise<Response> {
     )
   }
 
-  const { error: updateError } = await supabaseAdmin
-    .from('reviews')
-    .update(fields)
-    .eq('id', reviewId)
-    .eq('user_id', caller.sub) // ownership re-checked inside the write
-    .is('deleted_at', null)
+  const { data: updatedRows, error: updateError } = await applyOwnership(
+    supabaseAdmin
+      .from('reviews')
+      .update(fields)
+      .eq('id', reviewId)
+      .is('deleted_at', null)
+  ).select('id')
 
   if (updateError) {
     console.error('Review update error:', updateError)
     return jsonResponse(req, { error: 'Could not save the changes. Please try again.' }, 500)
+  }
+  if (!updatedRows || updatedRows.length === 0) {
+    return jsonResponse(req, { error: 'Review not found' }, 404)
   }
 
   // Purge media dropped by this edit (storage cleanup, best effort)

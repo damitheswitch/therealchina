@@ -42,7 +42,15 @@ const MyReviewCard = ({
         <StarRating rating={review.rating} />
         <div className="review-meta">
           <RecommendPill value={review.recommend} />
-          <SealBadge />
+          {/* user_id NULL = claimed anonymously: publicly it shows "Anonymous"
+              and no Verified seal — say so here so the owner isn't confused. */}
+          {review.user_id ? (
+            <SealBadge />
+          ) : (
+            <span className="muted" style={{ fontSize: '.78rem' }}>
+              Posted anonymously
+            </span>
+          )}
           <span>
             {date}
             {edited && ' · edited'}
