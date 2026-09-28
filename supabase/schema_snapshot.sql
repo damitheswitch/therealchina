@@ -62,6 +62,18 @@ ALTER TABLE public.universities
   ADD CONSTRAINT universities_slug_format
     CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$') NOT VALID;
 
+CREATE TABLE IF NOT EXISTS public.review_drafts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  university_id UUID REFERENCES public.universities(id) ON DELETE SET NULL,
+  payload JSONB NOT NULL,
+  progress SMALLINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT review_drafts_payload_size CHECK (pg_column_size(payload) <= 262144),
+  CONSTRAINT review_drafts_progress_range CHECK (progress BETWEEN 0 AND 5)
+);
+
 CREATE TABLE IF NOT EXISTS public.reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   university_id UUID NOT NULL REFERENCES public.universities(id) ON DELETE CASCADE,
@@ -101,8 +113,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
 
--- Anonymous reviewer "about you" data. Internal-only: RLS enabled
--- with no policies and all client grants revoked — service role only.
+-- Anonymous reviewer "about you" data + review-claim linkage. Internal-only:
+-- RLS enabled with no policies and all client grants revoked — service role
+-- only. claim_token is the browser-held capability the review-claim function
+-- matches on; owner_id links a review claimed "as anonymous" to its account
+-- while reviews.user_id stays NULL (so it keeps rendering as Anonymous and
+-- never earns the Verified seal or a public profile listing).
 CREATE TABLE IF NOT EXISTS public.reviewer_context (
   review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
   email TEXT,
@@ -112,7 +128,11 @@ CREATE TABLE IF NOT EXISTS public.reviewer_context (
     CHECK (current_status IS NULL OR current_status IN
       ('studying','working','internship','job_hunting','break','other')),
   languages_spoken TEXT[] NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  claim_token UUID,
+  owner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  claimed_at TIMESTAMPTZ,
+  claim_dismissed BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -225,6 +245,14 @@ CREATE INDEX IF NOT EXISTS idx_reviews_university_active
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
 
+-- Claim lookups always filter to a present token / owner.
+CREATE INDEX IF NOT EXISTS idx_reviewer_context_claim_token
+  ON public.reviewer_context(claim_token)
+  WHERE claim_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_reviewer_context_owner_id
+  ON public.reviewer_context(owner_id)
+  WHERE owner_id IS NOT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_upvotes_review_id ON public.upvotes(review_id);
 CREATE INDEX IF NOT EXISTS idx_upvotes_user_id ON public.upvotes(user_id);
 
@@ -247,6 +275,13 @@ CREATE INDEX IF NOT EXISTS idx_universities_name_trgm
   ON public.universities USING gin (name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS universities_slug_aliases_gin
   ON public.universities USING gin (slug_aliases);
+
+-- Draft lookups are per-user; university id is optional for "not listed" starts.
+CREATE INDEX IF NOT EXISTS idx_review_drafts_user_id ON public.review_drafts(user_id);
+CREATE INDEX IF NOT EXISTS idx_review_drafts_university_id ON public.review_drafts(university_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_review_drafts_user_university
+  ON public.review_drafts(user_id, university_id)
+  WHERE university_id IS NOT NULL;
 
 -- ---------------------------------------------------------
 -- 4. Functions
@@ -277,6 +312,14 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION public.update_flight_listings_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.update_review_drafts_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
@@ -731,6 +774,12 @@ CREATE TRIGGER update_flight_listings_updated_at_trigger
   FOR EACH ROW
   EXECUTE FUNCTION public.update_flight_listings_updated_at();
 
+DROP TRIGGER IF EXISTS update_review_drafts_updated_at_trigger ON public.review_drafts;
+CREATE TRIGGER update_review_drafts_updated_at_trigger
+  BEFORE UPDATE ON public.review_drafts
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_review_drafts_updated_at();
+
 -- ---------------------------------------------------------
 -- 6. Row Level Security (RLS) policies
 -- ---------------------------------------------------------
@@ -773,6 +822,28 @@ CREATE POLICY "Authenticated users can insert reviews after onboarding"
 -- written and read only by the review-submit Edge Function (service role).
 ALTER TABLE public.reviewer_context ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.reviewer_context FROM anon, authenticated;
+
+ALTER TABLE public.review_drafts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Authenticated users can read own drafts" ON public.review_drafts;
+CREATE POLICY "Authenticated users can read own drafts"
+  ON public.review_drafts FOR SELECT
+  TO authenticated USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Authenticated users can insert own drafts" ON public.review_drafts;
+CREATE POLICY "Authenticated users can insert own drafts"
+  ON public.review_drafts FOR INSERT
+  TO authenticated WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Authenticated users can update own drafts" ON public.review_drafts;
+CREATE POLICY "Authenticated users can update own drafts"
+  ON public.review_drafts FOR UPDATE
+  TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Authenticated users can delete own drafts" ON public.review_drafts;
+CREATE POLICY "Authenticated users can delete own drafts"
+  ON public.review_drafts FOR DELETE
+  TO authenticated USING (auth.uid() = user_id);
 
 -- blocked_email_domains: no policies at all — the blocklist is read only by
 -- the security-definer is_email_allowed / hook functions.

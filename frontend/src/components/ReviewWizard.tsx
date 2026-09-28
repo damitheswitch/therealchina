@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
@@ -6,6 +6,18 @@ import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmi
 import { updateReview } from '../lib/reviewManage'
 import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
 import { ConfirmDialog } from './ConfirmDialog'
+import { supabase } from '../lib/supabaseClient'
+import {
+  saveReviewDraft,
+  getReviewDraft,
+  deleteReviewDraft,
+  deleteReviewDraftForUniversity,
+  loadLocalDraft,
+  saveLocalDraft,
+  clearLocalDraft,
+  isDraftWorthSaving,
+  type ReviewDraftPayload,
+} from '../lib/reviewDrafts'
 import type { TablesUpdate } from '../types/database.types'
 import {
   COUNTRIES,
@@ -146,7 +158,7 @@ export const ReviewWizard = ({
   onDone?: (changed: boolean) => void
 }) => {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { profile, refetch: refetchProfile } = useProfileContext()
   const { showToast } = useToast()
   const { openAuthModal } = useAuthModal()
@@ -155,6 +167,15 @@ export const ReviewWizard = ({
   // Stored values mapped once at mount — the wizard is only opened for edit
   // with the row already in hand, so lazy initializers are safe.
   const [initial] = useState(() => (editReview ? reviewToWizardState(editReview) : null))
+
+  // Resume a saved draft: ?draft=<id> for signed-in users, or the anonymous
+  // localStorage fallback for everyone else.
+  const draftParam = searchParams.get('draft')
+  const uniParam = searchParams.get('uni')
+  const [draftId, setDraftId] = useState<string | null>(draftParam)
+  const [draftLoading, setDraftLoading] = useState(!editMode)
+  const [draftMedia, setDraftMedia] = useState<MediaItem[]>([])
+  const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
 
   // Step state
   const [step, setStep] = useState(1)
@@ -225,17 +246,285 @@ export const ReviewWizard = ({
   const reviewTurnstileRef = useRef<TurnstileInstance | undefined>(undefined)
   const [reviewTurnstileReady, setReviewTurnstileReady] = useState(false)
 
+  // ---- Draft persistence -----------------------------------------------------
+  // One serializable snapshot of the whole form. Autosave and manual load
+  // read/write this shape; the DB row stores it in `review_drafts.payload`.
+
+  const draftPayload = useMemo<ReviewDraftPayload>(
+    () => ({
+      step,
+      selectedUni,
+      selectedUniName,
+      showNotListed,
+      newUniName,
+      newUniProvince,
+      newUniCity,
+      rating,
+      recommend,
+      program,
+      subscores,
+      enrollmentStatus,
+      startYear,
+      endYear,
+      languageOfInstruction,
+      degreeLevel,
+      tuitionRange,
+      livingCostRange,
+      fundingType,
+      fundingCoverage,
+      selectedTags,
+      pros,
+      cons,
+      reviewText,
+      media: mediaState.media,
+      homeCountry,
+      currentStatus,
+      languagesSpoken,
+      emailConsent,
+      anonEmail,
+    }),
+    [
+      step,
+      selectedUni,
+      selectedUniName,
+      showNotListed,
+      newUniName,
+      newUniProvince,
+      newUniCity,
+      rating,
+      recommend,
+      program,
+      subscores,
+      enrollmentStatus,
+      startYear,
+      endYear,
+      languageOfInstruction,
+      degreeLevel,
+      tuitionRange,
+      livingCostRange,
+      fundingType,
+      fundingCoverage,
+      selectedTags,
+      pros,
+      cons,
+      reviewText,
+      mediaState.media,
+      homeCountry,
+      currentStatus,
+      languagesSpoken,
+      emailConsent,
+      anonEmail,
+    ]
+  )
+
+  const draftIdRef = useRef<string | null>(draftParam)
+  const lastSavedPayloadRef = useRef<ReviewDraftPayload | null>(null)
+  const draftPayloadRef = useRef<ReviewDraftPayload>(draftPayload)
+
+  useEffect(() => {
+    draftIdRef.current = draftId
+  }, [draftId])
+
+  useEffect(() => {
+    draftPayloadRef.current = draftPayload
+  }, [draftPayload])
+
+  const applyDraftPayload = useCallback((p: ReviewDraftPayload) => {
+    setStep(p.step && p.step >= 1 ? Math.min(p.step, TOTAL_STEPS) : 1)
+    setRating(p.rating ?? 0)
+    setRecommend(p.recommend ?? '')
+    setSelectedUni(p.selectedUni ?? '')
+    setSelectedUniName(p.selectedUniName ?? '')
+    setShowNotListed(p.showNotListed ?? false)
+    setNewUniName(p.newUniName ?? '')
+    setNewUniProvince(p.newUniProvince ?? '')
+    setNewUniCity(p.newUniCity ?? '')
+    setProgram(p.program ?? '')
+    setSubscores((p.subscores ?? {}) as Record<string, number>)
+    setEnrollmentStatus(p.enrollmentStatus ?? '')
+    setStartYear(p.startYear ?? '')
+    setEndYear(p.endYear ?? '')
+    setLanguageOfInstruction(p.languageOfInstruction ?? '')
+    setDegreeLevel(p.degreeLevel ?? '')
+    setTuitionRange(p.tuitionRange ?? '')
+    setLivingCostRange(p.livingCostRange ?? '')
+    setFundingType(p.fundingType ?? '')
+    setFundingCoverage(p.fundingCoverage ?? '')
+    setSelectedTags(p.selectedTags ?? [])
+    setPros(p.pros ?? '')
+    setCons(p.cons ?? '')
+    setReviewText(p.reviewText ?? '')
+    setDraftMedia(p.media ?? [])
+    setMediaState({ media: p.media ?? [], uploading: false, errorCount: 0 })
+    setHomeCountry(p.homeCountry ?? '')
+    setCurrentStatus(p.currentStatus ?? '')
+    setLanguagesSpoken(p.languagesSpoken ?? [])
+    setEmailConsent(p.emailConsent ?? false)
+    setAnonEmail(p.anonEmail ?? '')
+    lastSavedPayloadRef.current = p
+  }, [])
+
+  // Load the draft once auth is ready. Signed-in users pull by ?draft=<id>, or
+  // by ?uni=<slug> when a draft already exists for that university (so the
+  // wizard resumes instead of overwriting it on the first autosave). Anonymous
+  // visitors fall back to the localStorage draft when the slug matches.
+  useEffect(() => {
+    if (editMode || authLoading) return
+
+    const controller = new AbortController()
+    const run = async () => {
+      let loaded = false
+      try {
+        if (user && draftParam) {
+          const d = await getReviewDraft(draftParam, user.id)
+          if (controller.signal.aborted) return
+          if (d) {
+            const payload = d.payload as unknown as ReviewDraftPayload
+            applyDraftPayload(payload)
+            setDraftUniversityId(d.university_id)
+            loaded = true
+          } else {
+            showToast('That draft could not be found.', 'error')
+          }
+        } else if (user && uniParam) {
+          // A draft for this slug may already exist — resume it so autosave
+          // updates the saved row instead of clobbering it with a fresh one.
+          const { data: uni, error: uniError } = await supabase
+            .from('universities')
+            .select('id')
+            .eq('slug', uniParam)
+            .abortSignal(controller.signal)
+            .maybeSingle()
+          if (uniError) throw uniError
+          if (uni?.id) {
+            const { data: d, error: draftError } = await supabase
+              .from('review_drafts')
+              .select('id, payload, university_id')
+              .eq('user_id', user.id)
+              .eq('university_id', uni.id)
+              .abortSignal(controller.signal)
+              .maybeSingle()
+            if (draftError) throw draftError
+            if (d) {
+              setDraftId(d.id)
+              const payload = d.payload as unknown as ReviewDraftPayload
+              applyDraftPayload(payload)
+              setDraftUniversityId(d.university_id)
+              loaded = true
+            }
+          }
+        } else if (!user) {
+          const local = loadLocalDraft()
+          if (local && isDraftWorthSaving(local)) {
+            const sameUni = !uniParam || local.selectedUni === uniParam
+            if (sameUni) applyDraftPayload(local)
+          }
+        }
+
+        // Anonymous progress survives login: if the visitor just signed in and
+        // no server draft was loaded, pick up the localStorage draft and let
+        // autosave promote it to their account.
+        if (user && !draftParam && !loaded && !controller.signal.aborted) {
+          const local = loadLocalDraft()
+          if (local && isDraftWorthSaving(local)) {
+            const sameUni = !uniParam || local.selectedUni === uniParam
+            if (sameUni) {
+              applyDraftPayload(local)
+              clearLocalDraft()
+            }
+          }
+        }
+      } catch (err) {
+        if (controller.signal.aborted) return
+        console.error('Error loading draft:', err)
+      } finally {
+        if (!controller.signal.aborted) setDraftLoading(false)
+      }
+    }
+
+    run()
+    return () => controller.abort()
+  }, [editMode, authLoading, user, draftParam, uniParam, applyDraftPayload, showToast])
+
+  // Resolve the current university slug to an id for the draft row. Optional —
+  // drafts for "not listed" universities stay linked by payload only.
+  useEffect(() => {
+    if (editMode || !selectedUni || selectedUni === '__not_listed') {
+      setDraftUniversityId(null)
+      return
+    }
+    const controller = new AbortController()
+    const run = async () => {
+      const { data } = await supabase
+        .from('universities')
+        .select('id')
+        .eq('slug', selectedUni)
+        .abortSignal(controller.signal)
+        .maybeSingle()
+      if (!controller.signal.aborted) setDraftUniversityId(data?.id ?? null)
+    }
+    run()
+    return () => controller.abort()
+  }, [editMode, selectedUni])
+
+  // Autosave once something worth keeping exists. Debounced so typing doesn't
+  // create a write per keystroke.
+  useEffect(() => {
+    if (editMode || draftLoading) return
+    if (!isDraftWorthSaving(draftPayload)) return
+    if (JSON.stringify(draftPayload) === JSON.stringify(lastSavedPayloadRef.current)) return
+
+    const timer = setTimeout(async () => {
+      try {
+        if (user) {
+          const savedId = await saveReviewDraft({
+            userId: user.id,
+            draftId: draftIdRef.current,
+            universityId: draftUniversityId,
+            payload: draftPayload,
+            progress: draftPayload.step,
+          })
+          setDraftId(savedId)
+          lastSavedPayloadRef.current = draftPayload
+        } else {
+          saveLocalDraft(draftPayload)
+          lastSavedPayloadRef.current = draftPayload
+        }
+      } catch (err) {
+        console.error('Draft save failed:', err)
+      }
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [user, editMode, draftLoading, draftPayload, draftUniversityId])
+
+  // Warn before closing the tab when there is unsaved progress. The autosave
+  // runs every 1.5s, so this only guards the narrow window after a change.
+  useEffect(() => {
+    if (editMode || draftLoading) return
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const current = draftPayloadRef.current
+      if (!isDraftWorthSaving(current)) return
+      if (JSON.stringify(current) === JSON.stringify(lastSavedPayloadRef.current)) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [editMode, draftLoading])
+
   // Pre-fill university from ?uni=<slug>
-  const uniSlug = searchParams.get('uni')
+  const uniSlug = uniParam
   const { university: prefilledUni } = useUniversity(uniSlug || undefined)
 
-  // Sync resolved university into form state once
+  // Sync resolved university into form state once. Drafts already carry their
+  // own university — don't let the ?uni prefill overwrite a loaded draft.
   useEffect(() => {
-    if (prefilledUni && !editMode) {
+    if (prefilledUni && !editMode && !draftParam) {
       setSelectedUni(prefilledUni.slug || '')
       setSelectedUniName(prefilledUni.name || '')
     }
-  }, [prefilledUni, editMode])
+  }, [prefilledUni, editMode, draftParam])
 
   // Pre-fill from the user's profile once it loads. Functional setState only
   // fills fields that are still empty, so a user who typed before the profile
@@ -492,6 +781,23 @@ export const ReviewWizard = ({
       }
 
       showToast('Review submitted! Thank you.', 'success')
+
+      // The review is live — the draft it came from is done. Server drafts are
+      // deleted by id (or by university when the row was created earlier);
+      // anonymous progress lives in localStorage and is cleared the same way.
+      if (user) {
+        try {
+          if (draftIdRef.current) {
+            await deleteReviewDraft(draftIdRef.current, user.id)
+          } else if (draftUniversityId) {
+            await deleteReviewDraftForUniversity(user.id, draftUniversityId)
+          }
+        } catch (err) {
+          console.error('Could not delete draft after submit:', err)
+        }
+      } else {
+        clearLocalDraft()
+      }
 
       const redirectSlug = result.universityCreated ? null : result.universitySlug
 
@@ -1085,11 +1391,14 @@ export const ReviewWizard = ({
               <label className="form-label">
                 Show the real life <span className="form-hint-inline">up to 5</span>
               </label>
-              <MediaUploader
-                onStateChange={setMediaState}
-                disabled={loading}
-                initialMedia={initial?.media ?? []}
-              />
+              {!draftLoading && (
+                <MediaUploader
+                  key={editMode ? `edit-${editReview!.id}` : 'wizard-media'}
+                  onStateChange={setMediaState}
+                  disabled={loading}
+                  initialMedia={editMode ? (initial?.media ?? []) : draftMedia}
+                />
+              )}
             </div>
 
             <div className="wizard-nav">
