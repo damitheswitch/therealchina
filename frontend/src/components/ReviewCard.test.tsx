@@ -79,12 +79,37 @@ const baseReview = {
   rating_career: null,
 }
 
-const renderCard = (review: object) =>
+const renderCard = (review: object, author: object | null = null) =>
   render(
     <MemoryRouter>
-      <ReviewCard review={review} author={null} upvote={undefined} />
+      <ReviewCard review={review} author={author} upvote={undefined} />
     </MemoryRouter>
   )
+
+// Attribution rules: user_id NULL renders "Anonymous" and no Verified seal —
+// that covers both never-claimed reviews and ones claimed anonymously (the
+// private owner link never reaches the public row). A present user_id links
+// to the author and earns the seal.
+describe('ReviewCard attribution', () => {
+  it('shows "Anonymous" and no Verified seal when user_id is null', () => {
+    renderCard(baseReview)
+    expect(screen.getByText('Anonymous')).toBeInTheDocument()
+    expect(screen.queryByText('Verified')).not.toBeInTheDocument()
+  })
+
+  it('links the author and shows the Verified seal when user_id is set', () => {
+    renderCard({ ...baseReview, user_id: 'u-1' }, { display_name: 'Alex (SHU)', avatar_url: null })
+    expect(screen.getByText('Alex (SHU)')).toBeInTheDocument()
+    expect(screen.getByText('Verified')).toBeInTheDocument()
+    expect(screen.queryByText('Anonymous')).not.toBeInTheDocument()
+  })
+
+  it('falls back to "Former member" for a deleted/missing profile', () => {
+    renderCard({ ...baseReview, user_id: 'u-gone' }, null)
+    expect(screen.getByText('Former member')).toBeInTheDocument()
+    expect(screen.getByText('Verified')).toBeInTheDocument()
+  })
+})
 
 // jsdom reports 0 for scrollHeight/getComputedStyle dimensions, so the
 // text-overflow collapse path can't be exercised here without property

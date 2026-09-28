@@ -6,6 +6,7 @@ import { Footer } from './components/Footer'
 import { LandingPage } from './pages/LandingPage'
 import { OnboardingGuard } from './components/OnboardingGuard'
 import { AuthModal } from './components/AuthModal'
+import { ReviewClaimPrompt } from './components/ReviewClaimPrompt'
 import { useAuthModal } from './contexts/AuthModalContext'
 import { useAuth } from './contexts/AuthContext'
 import { TRUST_REDIRECTS } from './lib/trustContent'
@@ -128,6 +129,7 @@ function App() {
         initialMode={initialMode}
         config={config}
       />
+      <ReviewClaimPrompt />
     </>
   )
 }

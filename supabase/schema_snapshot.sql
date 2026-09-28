@@ -101,8 +101,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
 
--- Anonymous reviewer "about you" data. Internal-only: RLS enabled
--- with no policies and all client grants revoked — service role only.
+-- Anonymous reviewer "about you" data + review-claim linkage. Internal-only:
+-- RLS enabled with no policies and all client grants revoked — service role
+-- only. claim_token is the browser-held capability the review-claim function
+-- matches on; owner_id links a review claimed "as anonymous" to its account
+-- while reviews.user_id stays NULL (so it keeps rendering as Anonymous and
+-- never earns the Verified seal or a public profile listing).
 CREATE TABLE IF NOT EXISTS public.reviewer_context (
   review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
   email TEXT,
@@ -112,7 +116,11 @@ CREATE TABLE IF NOT EXISTS public.reviewer_context (
     CHECK (current_status IS NULL OR current_status IN
       ('studying','working','internship','job_hunting','break','other')),
   languages_spoken TEXT[] NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  claim_token UUID,
+  owner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  claimed_at TIMESTAMPTZ,
+  claim_dismissed BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -224,6 +232,14 @@ CREATE INDEX IF NOT EXISTS idx_reviews_university_active
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
+
+-- Claim lookups always filter to a present token / owner.
+CREATE INDEX IF NOT EXISTS idx_reviewer_context_claim_token
+  ON public.reviewer_context(claim_token)
+  WHERE claim_token IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_reviewer_context_owner_id
+  ON public.reviewer_context(owner_id)
+  WHERE owner_id IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_upvotes_review_id ON public.upvotes(review_id);
 CREATE INDEX IF NOT EXISTS idx_upvotes_user_id ON public.upvotes(user_id);

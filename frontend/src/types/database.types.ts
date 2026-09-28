@@ -228,30 +228,42 @@ export type Database = {
       }
       reviewer_context: {
         Row: {
+          claim_dismissed: boolean
+          claim_token: string | null
+          claimed_at: string | null
           created_at: string
           current_status: string | null
           email: string | null
           email_consent: boolean
           home_country: string | null
           languages_spoken: string[]
+          owner_id: string | null
           review_id: string
         }
         Insert: {
+          claim_dismissed?: boolean
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           current_status?: string | null
           email?: string | null
           email_consent?: boolean
           home_country?: string | null
           languages_spoken?: string[]
+          owner_id?: string | null
           review_id: string
         }
         Update: {
+          claim_dismissed?: boolean
+          claim_token?: string | null
+          claimed_at?: string | null
           created_at?: string
           current_status?: string | null
           email?: string | null
           email_consent?: boolean
           home_country?: string | null
           languages_spoken?: string[]
+          owner_id?: string | null
           review_id?: string
         }
         Relationships: [
