@@ -501,6 +501,15 @@ h3 {
   font-size: 0.8rem;
   color: var(--ink-soft);
 }
+.uni-card-rank {
+  margin-left: auto;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.uni-card-rank strong {
+  color: var(--ink);
+}
 .uni-card-rating {
   display: flex;
   align-items: center;
