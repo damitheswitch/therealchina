@@ -27,6 +27,19 @@ verify_jwt = false
 [functions.comment-notify]
 verify_jwt = false
 
+# Email-link redirects (signup confirmation, password recovery) must land on
+# the Vite dev server. site_url is the base Supabase falls back to when an
+# email link has no redirect_to, so point it at the dev origin.
+# Local stack only — remote projects set these in the Dashboard under
+# Authentication → URL Configuration → Redirect URLs.
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = [
+  "http://localhost:5173/**",
+  "http://127.0.0.1:5173/**",
+  "http://localhost:4173/**",
+]
+
 # Reject signups from disposable email domains. The Postgres function is
 # created by migration 031; on hosted projects (staging/prod) this hook must
 # also be enabled in the Dashboard under Authentication → Hooks.
