@@ -21,6 +21,12 @@ verify_jwt = false
 [functions.review-manage]
 verify_jwt = false
 
+# comment-notify is invoked server-to-server by the comments INSERT trigger
+# (pg_net) and authenticates via a shared-secret header stored in Vault.
+# There is no user JWT to verify, so the gateway check would reject it.
+[functions.comment-notify]
+verify_jwt = false
+
 # Email-link redirects (signup confirmation, password recovery) must land on
 # the Vite dev server. site_url is the base Supabase falls back to when an
 # email link has no redirect_to, so point it at the dev origin.

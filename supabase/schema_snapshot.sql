@@ -1183,7 +1183,82 @@ GRANT ALL ON public.upload_rate_limits TO service_role;
 GRANT ALL ON public.upload_sessions TO service_role;
 
 -- ---------------------------------------------------------
--- 12. PostgREST schema reload
+-- 12. Comment email notifications
+-- ---------------------------------------------------------
+
+-- comments INSERT trigger → net.http_post → comment-notify Edge Function.
+-- URL and shared secret live in Supabase Vault (comment_notify_url /
+-- comment_notify_secret); the trigger no-ops when they are unset.
+
+CREATE TABLE IF NOT EXISTS public.comment_email_log (
+  comment_id UUID PRIMARY KEY REFERENCES public.comments(id) ON DELETE CASCADE,
+  review_id UUID NOT NULL REFERENCES public.reviews(id) ON DELETE CASCADE,
+  recipient_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  recipient_email TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'sent', 'skipped', 'failed')),
+  detail TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comment_email_log_recipient
+  ON public.comment_email_log (recipient_user_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_comment_email_log_review_recipient
+  ON public.comment_email_log (review_id, recipient_user_id, created_at);
+
+ALTER TABLE public.comment_email_log ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.comment_email_log FROM anon, authenticated;
+GRANT ALL ON public.comment_email_log TO service_role;
+
+CREATE OR REPLACE FUNCTION public.enqueue_comment_notification()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_url TEXT;
+  v_secret TEXT;
+BEGIN
+  SELECT s.decrypted_secret INTO v_url
+    FROM vault.decrypted_secrets AS s
+    WHERE s.name = 'comment_notify_url'
+    LIMIT 1;
+  SELECT s.decrypted_secret INTO v_secret
+    FROM vault.decrypted_secrets AS s
+    WHERE s.name = 'comment_notify_secret'
+    LIMIT 1;
+
+  IF v_url IS NULL OR v_secret IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  PERFORM net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'x-notify-secret', v_secret
+    ),
+    body := jsonb_build_object('comment_id', NEW.id)
+  );
+  RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'comment notification enqueue failed: %', SQLERRM;
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.enqueue_comment_notification() FROM PUBLIC;
+
+DROP TRIGGER IF EXISTS comment_notify_inserted ON public.comments;
+CREATE TRIGGER comment_notify_inserted
+  AFTER INSERT ON public.comments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enqueue_comment_notification();
+
+-- ---------------------------------------------------------
+-- 13. PostgREST schema reload
 -- ---------------------------------------------------------
 
 NOTIFY pgrst, 'reload schema';
