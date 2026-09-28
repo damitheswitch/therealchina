@@ -21,6 +21,12 @@ verify_jwt = false
 [functions.review-manage]
 verify_jwt = false
 
+# comment-notify is invoked server-to-server by the comments INSERT trigger
+# (pg_net) and authenticates via a shared-secret header stored in Vault.
+# There is no user JWT to verify, so the gateway check would reject it.
+[functions.comment-notify]
+verify_jwt = false
+
 # review-claim does its own JWT verification like review-manage — the caller's
 # verified id and email drive the claim matching.
 [functions.review-claim]
