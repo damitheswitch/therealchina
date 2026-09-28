@@ -4,7 +4,7 @@ import { useUniversities, type SortBy } from '../hooks/useUniversities'
 import { useCities } from '../hooks/useCities'
 import { UniversityCard } from './UniversityCard'
 
-const VALID_SORTS: SortBy[] = ['name', 'rating', 'reviews']
+const VALID_SORTS: SortBy[] = ['name', 'rating', 'reviews', 'rank', 'rank_desc']
 
 // Shared browse/search/sort/paginate grid — used by the homepage and the
 // canonical /universities index page. Filters and page live in the URL
@@ -99,6 +99,8 @@ export const UniversityDirectory = () => {
             <option value="name">Sort: Name (A-Z)</option>
             <option value="rating">Sort: Highest rated</option>
             <option value="reviews">Sort: Most reviewed</option>
+            <option value="rank">Sort: Rank in China (best first)</option>
+            <option value="rank_desc">Sort: Rank in China (worst first)</option>
           </select>
         </div>
 
@@ -115,7 +117,11 @@ export const UniversityDirectory = () => {
           <>
             <div className="uni-grid">
               {universities.map((university) => (
-                <UniversityCard key={university.id} university={university} />
+                <UniversityCard
+                  key={university.id}
+                  university={university}
+                  showRank={sortBy === 'rank' || sortBy === 'rank_desc'}
+                />
               ))}
             </div>
 

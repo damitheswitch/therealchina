@@ -5,8 +5,9 @@ import { Icons } from './Icons'
 import { UniversityLogo } from './UniversityLogo'
 import { getRecommendMeta } from '../lib/reviewDisplay'
 
-// UniversityCard component
-export const UniversityCard = ({ university }) => {
+// UniversityCard component — `showRank` adds the ShanghaiRanking national rank,
+// used when the directory is sorted by rank so the ordering is visible.
+export const UniversityCard = ({ university, showRank = false }) => {
   const {
     name,
     name_zh,
@@ -14,12 +15,16 @@ export const UniversityCard = ({ university }) => {
     province,
     slug,
     logo_url,
+    rankings,
     avg_rating,
     review_count,
     is_verified,
     recommendYesPct,
     recommendAnswered,
   } = university
+
+  const rankNational =
+    showRank && typeof rankings?.shanghai_national === 'number' ? rankings.shanghai_national : null
 
   // Hidden below 2 answers — a lone "yes" rendering as "👍 100%" is noise.
   const recTier =
@@ -53,6 +58,11 @@ export const UniversityCard = ({ university }) => {
             <Icons.MapPin /> {city || province}
           </span>
           {is_verified && <SealBadge />}
+          {rankNational !== null && (
+            <span className="uni-card-rank">
+              <strong>#{rankNational}</strong> in China
+            </span>
+          )}
         </div>
         <div className="uni-card-meta">
           {ratingDisplay}
