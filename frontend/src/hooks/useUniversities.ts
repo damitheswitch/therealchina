@@ -10,13 +10,16 @@ const SORT_CONFIG = {
   name: { column: 'name', ascending: true },
   rating: { column: 'university_stats(avg_rating)', ascending: false },
   reviews: { column: 'university_stats(review_count)', ascending: false },
+  // `->` (jsonb) not `->>` (text) so Postgres compares rank numbers numerically.
+  rank: { column: 'rankings->shanghai_national', ascending: true },
+  rank_desc: { column: 'rankings->shanghai_national', ascending: false },
 } as const
 
 export type SortBy = keyof typeof SORT_CONFIG
 
 type UniversityRow = Pick<
   Tables<'universities'>,
-  'id' | 'name' | 'name_zh' | 'city' | 'province' | 'slug' | 'logo_url'
+  'id' | 'name' | 'name_zh' | 'city' | 'province' | 'slug' | 'logo_url' | 'rankings'
 >
 type UniversityStats = Pick<
   Tables<'university_stats'>,
@@ -90,7 +93,7 @@ export const useUniversities = ({
         const query = supabase
           .from('universities')
           .select(
-            'id, name, name_zh, city, province, slug, logo_url, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
+            'id, name, name_zh, city, province, slug, logo_url, rankings, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
             { count: 'exact' }
           )
 

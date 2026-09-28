@@ -17,10 +17,10 @@ const uni = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 })
 
-const renderCard = (u: ReturnType<typeof uni>) =>
+const renderCard = (u: ReturnType<typeof uni>, props: Record<string, unknown> = {}) =>
   render(
     <MemoryRouter>
-      <UniversityCard university={u} />
+      <UniversityCard university={u} {...props} />
     </MemoryRouter>
   )
 
@@ -40,6 +40,25 @@ describe('UniversityCard', () => {
   it('uses singular "review" for a count of 1', () => {
     const { container } = renderCard(uni({ review_count: 1, recommendAnswered: 0 }))
     expect(container.querySelector('.uni-card-count')?.textContent).toBe('1 review')
+  })
+})
+
+describe('UniversityCard rank badge', () => {
+  it('shows the national rank when showRank is set', () => {
+    const { container } = renderCard(uni({ rankings: { shanghai_national: 1 } }), {
+      showRank: true,
+    })
+    expect(container.querySelector('.uni-card-rank')).toHaveTextContent('#1 in China')
+  })
+
+  it('stays hidden without showRank even when a rank exists', () => {
+    const { container } = renderCard(uni({ rankings: { shanghai_national: 1 } }))
+    expect(container.querySelector('.uni-card-rank')).toBeNull()
+  })
+
+  it('stays hidden for unranked universities', () => {
+    const { container } = renderCard(uni({ rankings: {} }), { showRank: true })
+    expect(container.querySelector('.uni-card-rank')).toBeNull()
   })
 })
 
