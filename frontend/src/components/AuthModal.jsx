@@ -10,10 +10,11 @@ import { Logo } from './Logo'
 // AuthModal component - Login/Register modal with createPortal mounting
 export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} }) => {
   const { title, subtitle, closable = true } = config
-  const { signIn, signUp, signInWithGoogle, user } = useAuth()
+  const { signIn, signUp, signInWithGoogle, resetPassword, user } = useAuth()
   const { showToast } = useToast()
-  const [mode, setMode] = useState(initialMode) // 'login' or 'register'
+  const [mode, setMode] = useState(initialMode) // 'login', 'register' or 'forgot'
   const [verificationSent, setVerificationSent] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,6 +30,7 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
     if (isOpen) {
       setMode(initialMode)
       setVerificationSent(false)
+      setResetSent(false)
       setEmail('')
       setPassword('')
       setDisplayName('')
@@ -39,17 +41,20 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
   }, [isOpen, initialMode])
 
   const canClose = closable
+  // Either inbox notice (signup verification or reset link) counts as a
+  // confirmation screen: Escape/overlay clicks are locked to the X button.
+  const noticeShown = verificationSent || resetSent
 
   // Close on Escape key when the modal is closable, but force the user to use the X while the verification notice is showing
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && canClose && !verificationSent) onClose()
+      if (e.key === 'Escape' && canClose && !noticeShown) onClose()
     }
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown)
     }
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose, verificationSent, canClose])
+  }, [isOpen, onClose, noticeShown, canClose])
 
   // Never leave the password revealed the next time the modal opens
   useEffect(() => {
@@ -70,6 +75,12 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
         await signIn(email, password)
         showToast('Signed in successfully!', 'success')
         if (canClose) onClose()
+        return
+      }
+
+      if (mode === 'forgot') {
+        await resetPassword(email)
+        setResetSent(true)
         return
       }
 
@@ -149,12 +160,9 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
   }
 
   const modalContent = (
-    <div
-      className="auth-modal-overlay"
-      onClick={canClose && !verificationSent ? onClose : undefined}
-    >
+    <div className="auth-modal-overlay" onClick={canClose && !noticeShown ? onClose : undefined}>
       <div
-        className={`auth-modal-content ${verificationSent ? 'verification' : ''}`}
+        className={`auth-modal-content ${noticeShown ? 'verification' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         {canClose && (
@@ -168,17 +176,24 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
           </button>
         )}
 
-        {verificationSent ? (
+        {noticeShown ? (
           <div className="auth-modal-verification">
             <div className="verification-brand">
               <Logo size={96} />
               <h2 className="verification-title">Check your inbox</h2>
               <p className="verification-subtitle">The Real China</p>
             </div>
-            <p className="verification-message">
-              We&apos;ve sent a verification link to <strong>{email}</strong>. Please check your
-              email and click the link to activate your account.
-            </p>
+            {resetSent ? (
+              <p className="verification-message">
+                If <strong>{email}</strong> matches an account, we&apos;ve sent a link to reset your
+                password. Open it on this device to choose a new one.
+              </p>
+            ) : (
+              <p className="verification-message">
+                We&apos;ve sent a verification link to <strong>{email}</strong>. Please check your
+                email and click the link to activate your account.
+              </p>
+            )}
             <p className="verification-help">
               Didn&apos;t receive it? Check your spam or junk folder, or make sure the address above
               is correct.
@@ -190,6 +205,52 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
               </p>
             )}
           </div>
+        ) : mode === 'forgot' ? (
+          <>
+            <div className="auth-modal-header">
+              <h2>{title || 'Reset your password'}</h2>
+              <p className="auth-modal-subtitle">
+                {subtitle ||
+                  "Enter your account email and we'll send you a link to set a new password."}
+              </p>
+            </div>
+
+            {errorMsg && <div className="auth-modal-error">{errorMsg}</div>}
+
+            <form onSubmit={handleSubmit} className="auth-modal-form">
+              <div className="form-group">
+                <label className="form-label" htmlFor="auth-reset-email">
+                  Email Address
+                </label>
+                <input
+                  id="auth-reset-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div className="auth-modal-actions">
+                <button type="submit" disabled={loading} className="btn btn-primary w-full">
+                  {loading ? 'Sending...' : 'Send reset link'}
+                </button>
+              </div>
+            </form>
+
+            <button
+              type="button"
+              className="auth-link-button auth-back-link"
+              onClick={() => {
+                setMode('login')
+                setErrorMsg('')
+              }}
+            >
+              Back to sign in
+            </button>
+          </>
         ) : (
           <>
             <div className="auth-modal-header">
@@ -248,8 +309,11 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
             <form onSubmit={handleSubmit} className="auth-modal-form">
               {mode === 'register' && (
                 <div className="form-group">
-                  <label className="form-label">Display Name / Pseudonym</label>
+                  <label className="form-label" htmlFor="auth-display-name">
+                    Display Name / Pseudonym
+                  </label>
                   <input
+                    id="auth-display-name"
                     type="text"
                     value={displayName}
                     onChange={(e) => {
@@ -269,8 +333,11 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
               )}
 
               <div className="form-group">
-                <label className="form-label">Email Address</label>
+                <label className="form-label" htmlFor="auth-email">
+                  Email Address
+                </label>
                 <input
+                  id="auth-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -281,9 +348,12 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
               </div>
 
               <div className="form-group">
-                <label className="form-label">Password</label>
+                <label className="form-label" htmlFor="auth-password">
+                  Password
+                </label>
                 <div className="password-field">
                   <input
+                    id="auth-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -303,6 +373,20 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
                   </button>
                 </div>
               </div>
+
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  className="auth-link-button forgot-link"
+                  onClick={() => {
+                    setMode('forgot')
+                    setErrorMsg('')
+                    setDisplayNameError('')
+                  }}
+                >
+                  Forgot password?
+                </button>
+              )}
 
               <div className="auth-modal-actions">
                 <button type="submit" disabled={loading} className="btn btn-primary w-full">

@@ -3126,6 +3126,79 @@ h3 {
   padding: 0 0.75rem;
 }
 
+/* Link-styled inline buttons (forgot password, back to sign in) */
+.auth-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--seal-red);
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.auth-link-button:hover {
+  text-decoration: underline;
+}
+.forgot-link {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  margin-top: -0.25rem;
+}
+.auth-back-link {
+  display: block;
+  margin: var(--sp-2) auto 0;
+  font-size: 0.85rem;
+}
+
+/* ===== Auth pages (reset password) ===== */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-6) var(--sp-2) var(--sp-8);
+}
+.auth-page-card {
+  background: #ffffff;
+  border-radius: var(--r-lg);
+  padding: var(--sp-4);
+  max-width: 440px;
+  width: 100%;
+  align-self: flex-start;
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+.auth-page-card h1 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+.auth-page-copy {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin-bottom: var(--sp-3);
+}
+.auth-page-foot {
+  margin-top: var(--sp-2);
+  text-align: center;
+}
+.auth-page-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.auth-page-home:hover {
+  color: var(--seal-red);
+}
+.auth-page-home svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* ===== User Dropdown ===== */
 .user-dropdown {
   position: relative;

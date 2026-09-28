@@ -47,6 +47,9 @@ const NotFoundPage = lazy(() =>
 const OnboardingPage = lazy(() =>
   import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage }))
 )
+const ResetPasswordPage = lazy(() =>
+  import('./pages/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage }))
+)
 
 const PageFallback = () => (
   <div className="loading" style={{ minHeight: '40vh' }}>
@@ -84,6 +87,10 @@ function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/onboarding" element={<OnboardingPage />} />
+            {/* Outside OnboardingGuard: recovery links create a session, and a
+                user without a completed profile must not be bounced to
+                /onboarding before they can set the new password. */}
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             <Route element={<OnboardingGuard />}>
               <Route path="/" element={<LandingPage />} />
