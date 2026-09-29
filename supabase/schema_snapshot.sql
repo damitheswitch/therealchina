@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 033_rate_limit_retention_cron.sql
+-- as of migration 040_function_grants_lockdown.sql
 -- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
@@ -993,6 +993,12 @@ WHERE display_name IS NOT NULL
 
 GRANT SELECT ON public.member_profiles TO authenticated;
 
+-- Migration 039: member_profiles is members-only. Supabase default privileges
+-- auto-grant SELECT to anon on CREATE VIEW, so without this revoke the view is
+-- publicly readable. Re-run this revoke after any future DROP/CREATE of the
+-- view (CREATE re-applies default grants; CREATE OR REPLACE preserves them).
+REVOKE SELECT ON public.member_profiles FROM PUBLIC, anon;
+
 CREATE OR REPLACE VIEW public.flight_listings_with_profile AS
 SELECT
   fl.id,
@@ -1045,10 +1051,19 @@ GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
 -- 8. Function grants
 -- ---------------------------------------------------------
 
+-- Migration 040: EXECUTE is authenticated-only — Supabase default privileges
+-- auto-grant EXECUTE to anon too, so revoke per-role (PUBLIC alone is not
+-- enough). Re-run after any DROP/CREATE of the function.
+REVOKE ALL ON FUNCTION public.profile_has_social_handle(UUID) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.profile_has_social_handle(UUID) TO authenticated;
 
-REVOKE ALL ON FUNCTION public.toggle_upvote(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.toggle_upvote(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_role;
+
+-- refresh_university_stats runs inside trigger functions (security-definer
+-- owner privileges); it is not a client-callable surface.
+REVOKE ALL ON FUNCTION public.refresh_university_stats(UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.refresh_university_stats(UUID) TO service_role;
 
 REVOKE ALL ON FUNCTION public.is_email_allowed(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;
@@ -1189,7 +1204,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.record_upload_attempt(TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.record_upload_attempt(TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.record_upload_attempt(TEXT) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.use_upload_session(p_session_id UUID)
@@ -1221,7 +1236,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.use_upload_session(UUID) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.use_upload_session(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.use_upload_session(UUID) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.cleanup_upload_rate_limits()
@@ -1236,7 +1251,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.cleanup_upload_rate_limits() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.cleanup_upload_rate_limits() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cleanup_upload_rate_limits() TO service_role;
 
 -- Scheduled daily at 03:17 UTC by migration 033 (job name is stable —
@@ -1320,7 +1335,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.enqueue_comment_notification() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.enqueue_comment_notification() FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS comment_notify_inserted ON public.comments;
 CREATE TRIGGER comment_notify_inserted

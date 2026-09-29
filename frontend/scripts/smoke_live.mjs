@@ -114,6 +114,17 @@ if (uniSlug) {
   } else {
     if (!/Sitemap:/.test(robots.body)) fail('prod robots.txt missing Sitemap line')
     if (/Disallow:\s*\/\s*$/m.test(robots.body)) fail('PROD robots.txt disallows everything!')
+    const home = await get('/')
+    for (const h of [
+      'content-security-policy',
+      'x-frame-options',
+      'x-content-type-options',
+      'referrer-policy',
+    ]) {
+      if (!home.headers.get(h)) fail(`prod missing ${h} header`)
+    }
+    const csp = home.headers.get('content-security-policy') ?? ''
+    if (!/frame-ancestors 'none'/.test(csp)) fail('prod CSP missing frame-ancestors')
   }
 }
 
