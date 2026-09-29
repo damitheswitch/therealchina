@@ -31,9 +31,10 @@ consequences:
 | # | Severity | Finding | Fix |
 |---|----------|---------|-----|
 | 5 | Low | `upvotes.user_id` publicly readable (`SELECT TO public USING (true)`): voter identity + which reviews they upvoted is anonymous-readable. Only `review_id` is needed client-side. | Aggregate RPC/count view for public counts, or accept as public-by-design (it's a small leak — decide deliberately). |
-| 6 | Low | Rate limiter fails open: `checkRateLimit` returns allowed on RPC error in `supabase/functions/_shared/guard.ts` and `media-upload`. Project rule says default to reject. | Return `false` on error (fail closed), or document an approved exception. |
 
 Resolved during follow-up: prod Edge Function env confirmed — `TURNSTILE_SECRET_KEY` is the real secret (owner verified in dashboard, 2026-09-29). `TURNSTILE_HOSTNAMES`/`CORS_ORIGIN` behave correctly: foreign origins get no `Access-Control-Allow-Origin` on OPTIONS or POST.
+
+Fixed in code, pending deploy: `checkRateLimit` in `supabase/functions/_shared/guard.ts` and `media-upload` now fails closed (`return false` on RPC error) instead of open — abuse gates no longer open exactly when the limiter is broken. Takes effect on the next `supabase functions deploy` per env (functions do not auto-update on merge).
 
 ## Verified clean
 
