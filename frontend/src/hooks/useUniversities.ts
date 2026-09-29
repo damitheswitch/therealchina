@@ -97,9 +97,17 @@ export const useUniversities = ({
             { count: 'exact' }
           )
 
-        const withSearch = search?.trim()
+        // The `or(...)` string is parsed, not parameterized: commas, parens,
+        // quotes and wildcard chars in raw input break the filter or widen the
+        // match beyond what the user typed. Strip them before interpolating.
+        const term = (search ?? '')
+          .replace(/[%,()."*\\]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+
+        const withSearch = term
           ? query.or(
-              `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%,province.ilike.%${search.trim()}%`
+              `name.ilike.%${term}%,name_zh.ilike.%${term}%,city.ilike.%${term}%,province.ilike.%${term}%`
             )
           : query
         // 'prov:X' filters by province (the grouped select emits these);
