@@ -14,6 +14,7 @@ When doing anything database-related (migrations, schema changes, RLS, views, fu
 4. If you need the history of a specific change, open only the relevant migration file (e.g. `017_definer_view_qualified_names.sql`).
 5. New migrations go in `supabase/migrations/` with the next number. Update `schema_snapshot.sql` in the same change.
 6. Never delete, rename, or squash migration files unless the user explicitly asks.
+7. Grants: `REVOKE ... FROM PUBLIC` alone does **not** remove Supabase's per-role default grants. New tables/views/functions in `public` are auto-granted to `anon`/`authenticated` at CREATE time — always `REVOKE ... FROM PUBLIC, anon, authenticated` on anything not meant for clients, and re-run the revoke in any migration that DROPs/recreates the object (`CREATE OR REPLACE` preserves grants, `CREATE` does not). See `docs/security-audit.md`.
 
 ### Environments (mandatory)
 
