@@ -24,17 +24,16 @@ consequences:
 |---|---------|-----|----------|
 | 1 | `member_profiles` readable by anon: bio, location, university, program, social handles exposed to anyone holding the publishable key. | Migration `039_member_profiles_revoke_anon.sql`: `REVOKE SELECT ON public.member_profiles FROM PUBLIC, anon;` | Staging: `has_table_privilege('anon') = false`, authenticated still true. Prod: live anon request now 401; `profile_public` still readable (intended). Local: auto-applies on next `supabase start` / `db reset`. Pushed to prod directly as an approved security hotfix, ahead of the normal merge flow. |
 | 2 | Service-role-only functions callable by `anon`/`authenticated`. Verified live: `use_upload_session` executed as anon. `REVOKE ... FROM PUBLIC` alone does not remove Supabase's per-role default EXECUTE grants. | Migration `040_function_grants_lockdown.sql`: per-role `REVOKE ALL ... FROM PUBLIC, anon, authenticated` on `record_upload_attempt`, `use_upload_session`, `cleanup_upload_rate_limits`, `refresh_university_stats`, `enqueue_comment_notification` (service-role only); `FROM PUBLIC, anon` on `profile_has_social_handle`, `toggle_upvote` (authenticated kept). | Staging: `has_function_privilege` all expected values. Prod: live anon POSTs now 401 on `use_upload_session`, `refresh_university_stats`, `toggle_upvote`; `is_email_allowed` still 200 (intended). Pushed to prod directly as an approved security hotfix. |
+| 4 | No security headers on the site: no CSP, `X-Frame-Options`/`frame-ancestors` (frameable → clickjacking), `nosniff`, `Referrer-Policy`, `Permissions-Policy`. `generate_static.ts` emitted a comment-only `_headers` on prod deploys. | Prod `_headers` now emits a CSP scoped to what the site loads (self + Supabase API/realtime/storage + Turnstile + CF beacon; `script-src 'unsafe-inline'` only because `__PRERENDERED_DATA__` is inline and static hosting has no nonces), plus `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy`. `smoke_live.mjs` asserts the headers on prod post-deploy. | Fixture prod build emits the headers; lint/tests/build gate green. Live on next prod deploy — run `node scripts/smoke_live.mjs https://www.therealchina.net` after merge. |
 
 ## Open findings
 
-In recommended fix order.
-
 | # | Severity | Finding | Fix |
 |---|----------|---------|-----|
-| 3 | Medium-env | Prod Edge Function env not verified: is `TURNSTILE_SECRET_KEY` the real secret or the Cloudflare test key (`1x0000...AA`)? If test, anonymous Turnstile is effectively off. Also confirm `TURNSTILE_HOSTNAMES` and `CORS_ORIGIN` are set. | Check function env vars in the Supabase dashboard (prod project → Edge Functions → each function → secrets). |
-| 4 | Low-Med | No security headers on the site. Live response has Netlify's default HSTS only: no CSP, no `X-Frame-Options`/`frame-ancestors` (app is frameable → clickjacking), no `nosniff`, no `Referrer-Policy`, no `Permissions-Policy`. `generate_static.ts` emits a comment-only `_headers` on prod deploys. | Emit headers in `scripts/generate_static.ts`: CSP scoped to actual origins (Supabase, Cloudflare beacon, Turnstile), `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. |
 | 5 | Low | `upvotes.user_id` publicly readable (`SELECT TO public USING (true)`): voter identity + which reviews they upvoted is anonymous-readable. Only `review_id` is needed client-side. | Aggregate RPC/count view for public counts, or accept as public-by-design (it's a small leak — decide deliberately). |
 | 6 | Low | Rate limiter fails open: `checkRateLimit` returns allowed on RPC error in `supabase/functions/_shared/guard.ts` and `media-upload`. Project rule says default to reject. | Return `false` on error (fail closed), or document an approved exception. |
+
+Resolved during follow-up: prod Edge Function env confirmed — `TURNSTILE_SECRET_KEY` is the real secret (owner verified in dashboard, 2026-09-29). `TURNSTILE_HOSTNAMES`/`CORS_ORIGIN` behave correctly: foreign origins get no `Access-Control-Allow-Origin` on OPTIONS or POST.
 
 ## Verified clean
 
