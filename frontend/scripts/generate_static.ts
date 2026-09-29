@@ -173,8 +173,41 @@ const robots = isProdDeploy
   : `User-agent: *\nDisallow: /\n`
 writeFileSync(resolve(DIST, 'robots.txt'), robots)
 
+// Security headers — prod deploys only (previews keep the noindex block).
+// CSP allowlists what the site actually loads: first-party assets, Supabase
+// (API + realtime + storage media), the Turnstile widget, and the Cloudflare
+// analytics beacon. script-src keeps 'unsafe-inline' for the inline
+// __PRERENDERED_DATA__ payload — static hosting has no per-response nonce.
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://cloudflareinsights.com",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' blob: https://*.supabase.co",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
+  'frame-src https://challenges.cloudflare.com',
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ')
+
 const headers = isProdDeploy
-  ? `# GENERATED — production deploy, no extra SEO headers required.\n`
+  ? [
+      '# GENERATED — production deploy.',
+      '/*',
+      `  Content-Security-Policy: ${CSP}`,
+      '  X-Frame-Options: DENY',
+      '  X-Content-Type-Options: nosniff',
+      '  Referrer-Policy: strict-origin-when-cross-origin',
+      '  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+      '  Cross-Origin-Opener-Policy: same-origin-allow-popups',
+      '',
+    ].join('\n')
   : `# GENERATED — non-production deploy: keep everything out of the index.\n/*\n  X-Robots-Tag: noindex, nofollow\n`
 writeFileSync(resolve(DIST, '_headers'), headers)
 

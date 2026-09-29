@@ -267,8 +267,8 @@ async function checkRateLimit(key: string, limit: number): Promise<boolean> {
   const { data, error } = await supabaseAdmin.rpc('record_upload_attempt', { p_key: key })
   if (error) {
     console.error('Rate limit RPC error:', error)
-    // If the rate-limit table is unavailable, fail open so the app keeps working.
-    return true
+    // Fail closed: an unavailable limiter means reject, not open floodgates.
+    return false
   }
   return (data as number) <= limit
 }
