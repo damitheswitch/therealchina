@@ -23,6 +23,7 @@ consequences:
 | # | Finding | Fix | Verified |
 |---|---------|-----|----------|
 | 1 | `member_profiles` readable by anon: bio, location, university, program, social handles exposed to anyone holding the publishable key. | Migration `039_member_profiles_revoke_anon.sql`: `REVOKE SELECT ON public.member_profiles FROM PUBLIC, anon;` | Staging: `has_table_privilege('anon') = false`, authenticated still true. Prod: live anon request now 401; `profile_public` still readable (intended). Local: auto-applies on next `supabase start` / `db reset`. Pushed to prod directly as an approved security hotfix, ahead of the normal merge flow. |
+| 2 | Service-role-only functions callable by `anon`/`authenticated`. Verified live: `use_upload_session` executed as anon. `REVOKE ... FROM PUBLIC` alone does not remove Supabase's per-role default EXECUTE grants. | Migration `040_function_grants_lockdown.sql`: per-role `REVOKE ALL ... FROM PUBLIC, anon, authenticated` on `record_upload_attempt`, `use_upload_session`, `cleanup_upload_rate_limits`, `refresh_university_stats`, `enqueue_comment_notification` (service-role only); `FROM PUBLIC, anon` on `profile_has_social_handle`, `toggle_upvote` (authenticated kept). | Staging: `has_function_privilege` all expected values. Prod: live anon POSTs now 401 on `use_upload_session`, `refresh_university_stats`, `toggle_upvote`; `is_email_allowed` still 200 (intended). Pushed to prod directly as an approved security hotfix. |
 
 ## Open findings
 
@@ -30,7 +31,6 @@ In recommended fix order.
 
 | # | Severity | Finding | Fix |
 |---|----------|---------|-----|
-| 2 | Medium | Service-role-only functions callable by `anon`/`authenticated`. Verified live: `use_upload_session` executes as anon (returned `[]`). Same pattern means `record_upload_attempt`, `cleanup_upload_rate_limits`, `refresh_university_stats`, `toggle_upvote`, `profile_has_social_handle` are also callable. Impact: rate-limit counter poisoning (lock a user out of reviews/uploads), burning upload-session slots. | One migration: `REVOKE ALL ON FUNCTION <fn> FROM PUBLIC, anon, authenticated` for each service-role-only fn. Keep `toggle_upvote` (authenticated) and `is_email_allowed` (anon) callable. |
 | 3 | Medium-env | Prod Edge Function env not verified: is `TURNSTILE_SECRET_KEY` the real secret or the Cloudflare test key (`1x0000...AA`)? If test, anonymous Turnstile is effectively off. Also confirm `TURNSTILE_HOSTNAMES` and `CORS_ORIGIN` are set. | Check function env vars in the Supabase dashboard (prod project → Edge Functions → each function → secrets). |
 | 4 | Low-Med | No security headers on the site. Live response has Netlify's default HSTS only: no CSP, no `X-Frame-Options`/`frame-ancestors` (app is frameable → clickjacking), no `nosniff`, no `Referrer-Policy`, no `Permissions-Policy`. `generate_static.ts` emits a comment-only `_headers` on prod deploys. | Emit headers in `scripts/generate_static.ts`: CSP scoped to actual origins (Supabase, Cloudflare beacon, Turnstile), `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. |
 | 5 | Low | `upvotes.user_id` publicly readable (`SELECT TO public USING (true)`): voter identity + which reviews they upvoted is anonymous-readable. Only `review_id` is needed client-side. | Aggregate RPC/count view for public counts, or accept as public-by-design (it's a small leak — decide deliberately). |
@@ -49,4 +49,3 @@ In recommended fix order.
 
 - Supabase security advisors (authoritative lint): the Supabase MCP server was unreachable during the audit. Re-run `get_advisors` when available.
 - HaveIBeenPwned password check, token/OTP expiries: dashboard-only settings.
-- Whether `record_upload_attempt` actually executes as anon (a POST would write a counter row; skipped under the reads-only rule — inferred from the identical grant pattern on `use_upload_session`, which was verified).
