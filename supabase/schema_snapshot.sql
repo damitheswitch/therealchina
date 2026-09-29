@@ -993,6 +993,12 @@ WHERE display_name IS NOT NULL
 
 GRANT SELECT ON public.member_profiles TO authenticated;
 
+-- Migration 039: member_profiles is members-only. Supabase default privileges
+-- auto-grant SELECT to anon on CREATE VIEW, so without this revoke the view is
+-- publicly readable. Re-run this revoke after any future DROP/CREATE of the
+-- view (CREATE re-applies default grants; CREATE OR REPLACE preserves them).
+REVOKE SELECT ON public.member_profiles FROM PUBLIC, anon;
+
 CREATE OR REPLACE VIEW public.flight_listings_with_profile AS
 SELECT
   fl.id,
