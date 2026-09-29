@@ -14,6 +14,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from '../_shared/guard.ts'
+import { verifyTurnstile } from '../_shared/turnstile.ts'
 import { detectMediaType } from './media_detect.ts'
 
 // ---- Config --------------------------------------------------------------------
@@ -48,60 +49,9 @@ const RATE_LIMIT_MESSAGE =
   "You've reached our upload guard for now. Please wait a little before sharing more photos or videos. We want to keep TRC authentic and spam-free."
 
 // ---- Turnstile -----------------------------------------------------------------
+// verifyTurnstile lives in ../_shared/turnstile.ts (fail-closed, action-bound).
 
 const TURNSTILE_ACTION = 'media-upload'
-
-async function verifyTurnstile(token: string, ip: string, expectedAction: string) {
-  const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
-  if (!secret) throw new Error('TURNSTILE_SECRET_KEY not configured')
-
-  const form = new URLSearchParams()
-  form.append('secret', secret)
-  form.append('response', token)
-  form.append('remoteip', ip)
-
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    body: form,
-  })
-  const data = (await res.json()) as {
-    success: boolean
-    action?: string
-    hostname?: string
-    'error-codes'?: string[]
-  }
-  if (!data.success) {
-    console.error('Turnstile verification failed:', data['error-codes'])
-    throw new Error('Turnstile verification failed')
-  }
-  // Validate the action to prevent token reuse across surfaces.
-  if (data.action !== expectedAction) {
-    console.error(
-      'Turnstile action mismatch:',
-      data.action,
-      'expected',
-      expectedAction
-    )
-    throw new Error('Turnstile verification failed')
-  }
-  // Optional hostname allowlist. When TURNSTILE_HOSTNAMES is unset, skip so
-  // local dev keeps working. In production, set it to the exact frontend
-  // hostnames (comma-separated, no scheme, no trailing slash) and never
-  // include localhost / 127.0.0.1.
-  const hostnamesRaw = Deno.env.get('TURNSTILE_HOSTNAMES')
-  if (hostnamesRaw) {
-    const allowed = new Set(
-      hostnamesRaw
-        .split(',')
-        .map((h) => h.trim().replace(/\/$/, ''))
-        .filter(Boolean)
-    )
-    if (!data.hostname || !allowed.has(data.hostname)) {
-      console.error('Turnstile hostname not allowed:', data.hostname)
-      throw new Error('Turnstile verification failed')
-    }
-  }
-}
 
 // Magic-byte file type detection lives in ./media_detect.ts (pure, unit-tested
 // by media_detect_test.ts). Imported above.
@@ -147,9 +97,8 @@ async function handleCreateSession(req: Request): Promise<Response> {
     }
     // Turnstile failure is a client problem, not an internal error: return a
     // status the frontend can act on instead of a generic 500.
-    try {
-      await verifyTurnstile(cfToken, ip, TURNSTILE_ACTION)
-    } catch {
+    const ok = await verifyTurnstile(cfToken, ip, TURNSTILE_ACTION)
+    if (!ok) {
       return jsonResponse(req, { error: 'Verification failed. Please try again.' }, 403)
     }
   }

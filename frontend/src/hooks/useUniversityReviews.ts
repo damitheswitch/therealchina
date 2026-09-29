@@ -9,6 +9,7 @@ import {
   type ReviewSort,
   type ReviewSortable,
 } from '../lib/reviewSort'
+import { REVIEW_COLUMNS, REVIEW_HEAD_COLUMNS } from '../lib/queryColumns'
 import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
@@ -17,14 +18,6 @@ type AuthorProfile = Pick<Tables<'profile_public'>, 'id' | 'display_name' | 'ava
 export type ReviewUpvote = { count: number; upvoted: boolean }
 
 export const REVIEW_PAGE_SIZE = 5
-
-// Kept as one literal so supabase-js can infer the row shape from the select.
-const REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
-
-// Light row shape for ranking 'helpful' — enough to order, cheap to fetch for
-// the full set before hydrating a single page of full rows.
-const REVIEW_HEAD_COLUMNS = 'id, rating, created_at'
 
 // Paginated fetch of one university's reviews. `sort` is the ReviewSort model
 // from lib/reviewSort: column-backed sorts run as server ORDER BYs with an

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useProfileContext } from '../contexts/ProfileContext'
 import { validateDisplayName } from '../lib/validateDisplayName'
-import { COUNTRIES, LANGUAGES, CURRENT_STATUSES } from '../lib/constants'
+import { COUNTRIES, LANGUAGES, CURRENT_STATUSES, canonicalCountryName } from '../lib/constants'
 import { ProvinceCityPicker } from './ProvinceCityPicker'
 import { UniversityAutocomplete } from './UniversityAutocomplete'
 import { ProgramAutocomplete } from './ProgramAutocomplete'
@@ -92,7 +92,7 @@ export const OnboardingForm = ({
       university: university.trim() !== '__not_listed' ? university.trim() || null : null,
       program: program.trim() || null,
       show_social_handle: showSocialHandle,
-      home_country: homeCountry || null,
+      home_country: canonicalCountryName(homeCountry),
       current_status: currentStatus || null,
       languages_spoken: languagesSpoken.length > 0 ? languagesSpoken : null,
       email_consent: emailConsent,
@@ -270,7 +270,7 @@ export const OnboardingForm = ({
             <select
               id="onboarding-home-country"
               className="form-select"
-              value={homeCountry}
+              value={canonicalCountryName(homeCountry) ?? ''}
               onChange={(e) => setHomeCountry(e.target.value)}
               disabled={saving}
             >

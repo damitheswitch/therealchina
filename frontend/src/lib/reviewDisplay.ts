@@ -58,12 +58,18 @@ export const SUBSCORE_FIELDS: { key: SubScoreKey; label: string }[] = [
   { key: 'rating_career', label: 'Career support' },
 ]
 
-export const ENROLLMENT_LABELS: Record<string, string> = {
-  current: 'Current student',
-  alumni: 'Alumni',
-  exchange: 'Exchange',
-  applicant: 'Applicant',
-}
+// Option arrays are the canonical form — the wizard renders them, display
+// helpers use the derived Record maps. Same strings, one definition.
+export const ENROLLMENT_OPTIONS = [
+  { value: 'current', label: 'Current student' },
+  { value: 'alumni', label: 'Alumni' },
+  { value: 'exchange', label: 'Exchange' },
+  { value: 'applicant', label: 'Applicant' },
+] as const
+
+export const ENROLLMENT_LABELS: Record<string, string> = Object.fromEntries(
+  ENROLLMENT_OPTIONS.map((o) => [o.value, o.label])
+)
 
 // Lowercase, count-aware variants for mid-sentence use (e.g. the reviewer-mix
 // footer line reads "3 current students · 1 alum", not "3 Current students").
@@ -81,12 +87,16 @@ const ENROLLMENT_PLURAL: Record<string, string> = {
   applicant: 'applicants',
 }
 
-export const FUNDING_LABELS: Record<string, string> = {
-  self: 'Self-funded',
-  csc: 'CSC / Government',
-  school: 'School',
-  province: 'Provincial',
-}
+export const FUNDING_OPTIONS = [
+  { value: 'self', label: 'Self-funded' },
+  { value: 'csc', label: 'CSC / Government' },
+  { value: 'school', label: 'School' },
+  { value: 'province', label: 'Provincial' },
+] as const
+
+export const FUNDING_LABELS: Record<string, string> = Object.fromEntries(
+  FUNDING_OPTIONS.map((o) => [o.value, o.label])
+)
 
 const RECOMMEND_META: Record<string, { label: string; emoji: string }> = {
   yes: { label: 'Recommends', emoji: '👍' },

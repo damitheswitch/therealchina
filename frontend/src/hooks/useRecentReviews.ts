@@ -9,6 +9,7 @@ import {
   type ReviewSort,
   type ReviewSortable,
 } from '../lib/reviewSort'
+import { REVIEW_COLUMNS, REVIEW_HEAD_COLUMNS } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
 export type RecentReview = Tables<'reviews'>
@@ -22,11 +23,6 @@ export interface ReviewsPageData {
   // review_id → public upvote count (batch — cards must not query per-row)
   upvoteCounts?: Record<string, number>
 }
-
-const REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
-
-const REVIEW_HEAD_COLUMNS = 'id, rating, created_at'
 
 const PAGE_SIZE = 50
 

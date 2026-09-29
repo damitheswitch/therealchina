@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
-import { CountryAutocomplete, isCountryName } from './CountryAutocomplete'
+import { CountryAutocomplete } from './CountryAutocomplete'
+import { canonicalCountryName, isCountryName } from '../lib/constants'
 import { hasSocialHandles } from '../lib/socialHandles'
 
 export const FlightListingForm = ({
@@ -123,8 +124,10 @@ export const FlightListingForm = ({
       }
 
       const payload = {
-        departure_country: departureCountry.trim(),
-        arrival_country: arrivalCountry.trim(),
+        // Store canonical spellings even when the row being edited (or the
+        // user's typed text) carried a legacy one.
+        departure_country: canonicalCountryName(departureCountry) ?? departureCountry.trim(),
+        arrival_country: canonicalCountryName(arrivalCountry) ?? arrivalCountry.trim(),
         departure_city: departureCity.trim() || null,
         arrival_city: arrivalCity.trim() || null,
         departure_date: departureDate,

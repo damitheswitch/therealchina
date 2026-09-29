@@ -18,6 +18,12 @@ export const Autocomplete = ({
   getOptionValue = (option) => option.value ?? '',
   getOptionKey = (option) => option.key ?? option.value,
   isExactMatch = (option, value) => option.value?.toLowerCase() === value?.trim()?.toLowerCase(),
+  // Strict-input hook (CountryAutocomplete): called with the live input text
+  // on blur-commit and on Enter with no highlighted option, so the caller can
+  // canonicalize or clear free text.
+  onCommitText,
+  // Enter with exactly one unhighlighted suggestion selects it.
+  selectSingleOnEnter = false,
 }) => {
   const [focused, setFocused] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
@@ -146,8 +152,17 @@ export const Autocomplete = ({
         } else {
           handleNotListed()
         }
+      } else if (selectSingleOnEnter && showList && suggestions.length === 1) {
+        e.preventDefault()
+        select(suggestions[0])
       } else {
         selectExactMatchIfAny()
+        if (onCommitText) {
+          e.preventDefault()
+          onCommitText(inputRef.current?.value ?? '')
+          setFocused(false)
+          e.currentTarget.blur()
+        }
       }
     } else if (e.key === 'Escape') {
       setFocused(false)
@@ -159,6 +174,7 @@ export const Autocomplete = ({
     blurTimer.current = setTimeout(() => {
       setFocused(false)
       selectExactMatchIfAny()
+      onCommitText?.(inputRef.current?.value ?? '')
     }, 120)
   }
 

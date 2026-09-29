@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
+import { REVIEW_COLUMNS, UNI_COLUMNS } from '../lib/queryColumns'
 import type { HubDef } from '../lib/seo/programs'
 import type { Tables } from '../types/database.types'
 
@@ -17,11 +18,6 @@ export interface HubPageData {
   authors?: Record<string, { id: string; display_name: string | null; avatar_url: string | null }>
   upvoteCounts?: Record<string, number>
 }
-
-const UNI_COLS =
-  'id, name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings, slug_aliases'
-const REVIEW_COLS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
 
 /**
  * Shared fetcher for /program/:slug and /degree/:slug hubs. `resolve` maps a
@@ -98,7 +94,7 @@ export const useHubData = (
       try {
         const { data, error: fetchError } = await supabase
           .from('reviews')
-          .select(REVIEW_COLS)
+          .select(REVIEW_COLUMNS)
           .abortSignal(controller.signal)
         if (fetchError) throw fetchError
         const rows = ((data as ReviewRow[] | null) || []).filter((r) => resolve(r) === slug)
@@ -109,7 +105,7 @@ export const useHubData = (
           uniIds.length
             ? supabase
                 .from('universities')
-                .select(`${UNI_COLS}, ${STATS_EMBED}`)
+                .select(`${UNI_COLUMNS}, ${STATS_EMBED}`)
                 .in('id', uniIds)
                 .order('name')
                 .abortSignal(controller.signal)
