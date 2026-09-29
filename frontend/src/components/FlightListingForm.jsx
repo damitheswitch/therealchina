@@ -328,6 +328,7 @@ export const FlightListingForm = ({
             }
             className="form-textarea"
             rows={3}
+            maxLength={1000}
           />
           <p className="form-hint">
             <Icons.Info />

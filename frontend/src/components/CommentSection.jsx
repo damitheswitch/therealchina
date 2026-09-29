@@ -228,6 +228,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                       aria-label="Write a reply"
                       className="form-textarea"
                       rows="3"
+                      maxLength={2000}
                     />
                     <div style={{ display: 'flex', gap: 'var(--sp-1)', marginTop: 'var(--sp-1)' }}>
                       <button type="submit" disabled={posting} className="btn btn-primary">
@@ -258,6 +259,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                 aria-label={user ? 'Write a comment' : 'Sign in to leave a comment'}
                 className="form-textarea"
                 rows="3"
+                maxLength={2000}
                 disabled={!user}
               />
               <button
