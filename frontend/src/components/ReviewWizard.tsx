@@ -26,7 +26,9 @@ import {
   CURRENT_STATUSES,
   TUITION_RANGES,
   LIVING_COSTS,
+  canonicalCountryName,
 } from '../lib/constants'
+import { ENROLLMENT_OPTIONS, FUNDING_OPTIONS } from '../lib/reviewDisplay'
 import { useUniversity } from '../hooks/useUniversity'
 import { useProfileContext } from '../contexts/ProfileContext'
 import { StarInput } from './StarInput'
@@ -102,18 +104,6 @@ const DEGREE_LEVELS = [
   'Other',
 ]
 const INSTRUCTION_LANGS = ['English', 'Chinese (Mandarin)', 'Bilingual', 'Other']
-const ENROLLMENT_STATUSES = [
-  { value: 'current', label: 'Current student' },
-  { value: 'alumni', label: 'Alumni' },
-  { value: 'exchange', label: 'Exchange' },
-  { value: 'applicant', label: 'Applicant' },
-]
-const FUNDING_TYPES = [
-  { value: 'self', label: 'Self-funded' },
-  { value: 'csc', label: 'CSC / Government' },
-  { value: 'school', label: 'School' },
-  { value: 'province', label: 'Provincial' },
-]
 const RECOMMEND_OPTIONS = [
   { value: 'yes', label: 'Yes, definitely', emoji: '👍' },
   { value: 'no', label: 'No', emoji: '👎' },
@@ -767,7 +757,7 @@ export const ReviewWizard = ({
       if (user) {
         const updates: TablesUpdate<'profiles'> = {}
         if (homeCountry && homeCountry !== (profile?.home_country ?? '')) {
-          updates.home_country = homeCountry
+          updates.home_country = canonicalCountryName(homeCountry) ?? homeCountry
         }
         if (currentStatus && currentStatus !== (profile?.current_status ?? '')) {
           updates.current_status = currentStatus
@@ -1112,7 +1102,7 @@ export const ReviewWizard = ({
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Enrollment status</label>
                 <div className="segmented">
-                  {ENROLLMENT_STATUSES.map((opt) => (
+                  {ENROLLMENT_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
@@ -1247,7 +1237,7 @@ export const ReviewWizard = ({
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label">Funding</label>
                 <div className="segmented">
-                  {FUNDING_TYPES.map((opt) => (
+                  {FUNDING_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
@@ -1472,7 +1462,7 @@ export const ReviewWizard = ({
                 <select
                   id="home-country"
                   className="form-select"
-                  value={homeCountry}
+                  value={canonicalCountryName(homeCountry) ?? ''}
                   onChange={(e) => setHomeCountry(e.target.value)}
                 >
                   <option value="">Prefer not to say</option>

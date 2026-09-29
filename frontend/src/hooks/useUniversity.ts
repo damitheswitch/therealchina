@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
+import { UNI_COLUMNS } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
 // Prerender payload written by scripts/prerender.tsx into the page.
@@ -40,9 +41,7 @@ export const useUniversity = (slug: string | undefined) => {
       try {
         const { data, error: fetchError } = await supabase
           .from('universities')
-          .select(
-            'id, name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings, slug_aliases'
-          )
+          .select(UNI_COLUMNS)
           .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
           .abortSignal(controller.signal)
           .single()

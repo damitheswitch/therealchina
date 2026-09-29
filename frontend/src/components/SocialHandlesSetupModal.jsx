@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { useProfileContext } from '../contexts/ProfileContext'
 import { useToast } from '../contexts/ToastContext'
 import { SocialHandlesEditor } from './SocialHandlesEditor'
 import { getSocialHandles, hasSocialHandles } from '../lib/socialHandles'
 
 export const SocialHandlesSetupModal = ({ isOpen, onClose, onSaved }) => {
   const { user } = useAuth()
+  const { profile, loading: profileLoading, refetch } = useProfileContext()
   const { showToast } = useToast()
 
   const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(false)
+  const [seeded, setSeeded] = useState(false)
   const [socialHandles, setSocialHandles] = useState([{ platform: 'wechat', handle: '' }])
   const [showSocialHandle, setShowSocialHandle] = useState(true)
 
@@ -25,38 +27,25 @@ export const SocialHandlesSetupModal = ({ isOpen, onClose, onSaved }) => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
+  // Seed the editor from the already-cached profile, once per open — the
+  // profile row is app state (ProfileContext), no per-modal refetch.
   useEffect(() => {
-    if (!isOpen || !user) return
-
-    const fetchProfile = async () => {
-      setFetching(true)
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-
-        if (error) throw error
-
-        const handles = getSocialHandles(data)
-        setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
-        setShowSocialHandle(data?.show_social_handle !== false)
-      } catch (err) {
-        console.error('Error fetching profile for social setup modal:', err)
-        showToast('Failed to load profile', 'error')
-      } finally {
-        setFetching(false)
-      }
+    if (!isOpen) {
+      setSeeded(false)
+      return
     }
-
-    fetchProfile()
-  }, [isOpen, user, showToast])
+    if (seeded || !profile) return
+    const handles = getSocialHandles(profile)
+    setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
+    setShowSocialHandle(profile.show_social_handle !== false)
+    setSeeded(true)
+  }, [isOpen, profile, seeded])
 
   if (!isOpen || !user) return null
 
   const handleSave = async (e) => {
     e.preventDefault()
+    if (!profile) return // never save over a row we haven't read
 
     const validHandles = socialHandles.filter((sh) => sh.handle && sh.handle.trim())
     if (!hasSocialHandles({ social_handles: validHandles })) {
@@ -78,6 +67,7 @@ export const SocialHandlesSetupModal = ({ isOpen, onClose, onSaved }) => {
 
       if (error) throw error
 
+      refetch() // keep the shared profile cache in sync with the new handles
       showToast('Social handles saved!', 'success')
       onSaved?.()
     } catch (err) {
@@ -111,9 +101,11 @@ export const SocialHandlesSetupModal = ({ isOpen, onClose, onSaved }) => {
           </p>
         </div>
 
-        {fetching ? (
+        {!profile ? (
           <div className="loading" style={{ padding: '2rem 0', textAlign: 'center' }}>
-            Loading...
+            {profileLoading
+              ? 'Loading...'
+              : 'Could not load your profile. Please close this and try again.'}
           </div>
         ) : (
           <form onSubmit={handleSave} className="auth-modal-form">
