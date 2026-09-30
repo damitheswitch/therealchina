@@ -18,6 +18,7 @@ import {
   corsHeaders,
   jsonResponse,
 } from '../_shared/guard.ts'
+import { verifyTurnstile } from '../_shared/turnstile.ts'
 import {
   LIMITS,
   VALID_CURRENT_STATUS,
@@ -34,64 +35,11 @@ const RATE_LIMIT_MESSAGE =
   "You've submitted quite a few reviews in a short time. Please wait a little before sharing more — we want to keep TRC authentic and spam-free."
 
 // ---- Turnstile -----------------------------------------------------------------
+// verifyTurnstile lives in ../_shared/turnstile.ts (fail-closed, action-bound).
 
 const TURNSTILE_ACTION = 'review-submit'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-// Cloudflare's official test secret — when it is configured, the environment
-// IS a test environment and siteverify returns no action/hostname to check.
-const TURNSTILE_TEST_SECRET = '1x0000000000000000000000000000000AA'
-
-async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
-  const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
-  if (!secret) {
-    console.error('TURNSTILE_SECRET_KEY not configured')
-    return false
-  }
-  const isTestSecret = secret === TURNSTILE_TEST_SECRET
-
-  const form = new URLSearchParams()
-  form.append('secret', secret)
-  form.append('response', token)
-  form.append('remoteip', ip)
-
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    body: form,
-  })
-  const data = (await res.json()) as {
-    success: boolean
-    action?: string
-    hostname?: string
-    'error-codes'?: string[]
-  }
-  if (!data.success) return false
-  // Test-secret environments skip the action + hostname checks: test tokens
-  // carry neither, so enforcing them would make staging/local unusable.
-  if (!isTestSecret && data.action !== TURNSTILE_ACTION) {
-    console.error('Turnstile action mismatch:', data.action, 'expected', TURNSTILE_ACTION)
-    return false
-  }
-  // Optional hostname allowlist. When TURNSTILE_HOSTNAMES is unset, skip so
-  // local dev keeps working. In production, set it to the exact frontend
-  // hostnames (comma-separated, no scheme, no trailing slash) and never
-  // include localhost / 127.0.0.1.
-  const hostnamesRaw = Deno.env.get('TURNSTILE_HOSTNAMES')
-  if (hostnamesRaw && !isTestSecret) {
-    const allowed = new Set(
-      hostnamesRaw
-        .split(',')
-        .map((h) => h.trim().replace(/\/$/, ''))
-        .filter(Boolean)
-    )
-    if (!data.hostname || !allowed.has(data.hostname)) {
-      console.error('Turnstile hostname not allowed:', data.hostname)
-      return false
-    }
-  }
-  return true
-}
 
 // ---- University resolution ------------------------------------------------------
 
@@ -205,7 +153,7 @@ async function handleSubmit(req: Request): Promise<Response> {
     if (!cfToken || typeof cfToken !== 'string') {
       return jsonResponse(req, { error: 'Turnstile token required for anonymous reviews' }, 400)
     }
-    const ok = await verifyTurnstile(cfToken, ip)
+    const ok = await verifyTurnstile(cfToken, ip, TURNSTILE_ACTION)
     if (!ok) {
       return jsonResponse(req, { error: 'Verification failed. Please try again.' }, 403)
     }

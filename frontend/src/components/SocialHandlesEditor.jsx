@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   socialPlatforms,
   phonePlatforms,
@@ -27,6 +28,22 @@ export const SocialHandlesEditor = ({
   disabled = false,
 }) => {
   const handles = value?.length > 0 ? value : [{ platform: 'wechat', handle: '' }]
+
+  // Stable per-row ids: the persisted shape is {platform, handle} — no id —
+  // so keys live in parallel state, spliced in lockstep with the mutations
+  // below. Without them, removing a middle row re-keys its siblings and
+  // React remounts their inputs (focus and browser state lost).
+  const [rowIds, setRowIds] = useState(() => handles.map(() => crypto.randomUUID()))
+  useEffect(() => {
+    // Covers external replacement (e.g. a profile fetch swapping in an array
+    // of different length); editor-driven changes keep ids aligned inside
+    // the add/remove handlers themselves. Same array back = bail out, no loop.
+    setRowIds((ids) =>
+      ids.length === handles.length
+        ? ids
+        : Array.from({ length: handles.length }, (_, i) => ids[i] ?? crypto.randomUUID())
+    )
+  }, [handles.length])
 
   const updateHandle = (index, field, newValue) => {
     if (field === 'handle') {
@@ -62,27 +79,30 @@ export const SocialHandlesEditor = ({
 
   const removeHandle = (index) => {
     const updated = handles.filter((_, i) => i !== index)
-    onChange(updated.length > 0 ? updated : [{ platform: 'wechat', handle: '' }])
+    if (updated.length > 0) {
+      setRowIds((ids) => ids.filter((_, i) => i !== index))
+      onChange(updated)
+    } else {
+      // The blank fallback row is new content, not the removed row.
+      setRowIds([crypto.randomUUID()])
+      onChange([{ platform: 'wechat', handle: '' }])
+    }
   }
 
   const addHandle = () => {
+    setRowIds((ids) => [...ids, crypto.randomUUID()])
     onChange([...handles, { platform: 'wechat', handle: '' }])
   }
 
   const addSpecificPlatform = (platformKey) => {
     // If the only item is an untouched blank default wechat row, replace it
     if (handles.length === 1 && handles[0].platform === 'wechat' && !handles[0].handle?.trim()) {
+      setRowIds([crypto.randomUUID()])
       onChange([{ platform: platformKey, handle: '' }])
       return
     }
-    // Check if platform is already added
-    const alreadyExists = handles.some((h) => h.platform === platformKey)
-    if (alreadyExists) {
-      // Append another row or keep as is
-      onChange([...handles, { platform: platformKey, handle: '' }])
-    } else {
-      onChange([...handles, { platform: platformKey, handle: '' }])
-    }
+    setRowIds((ids) => [...ids, crypto.randomUUID()])
+    onChange([...handles, { platform: platformKey, handle: '' }])
   }
 
   const existingPlatforms = new Set(handles.map((h) => h.platform))
@@ -127,7 +147,7 @@ export const SocialHandlesEditor = ({
           const prefix = platformData.prefix
 
           return (
-            <div key={index} className="social-handle-item">
+            <div key={rowIds[index] ?? `row-${index}`} className="social-handle-item">
               <div className="social-handle-fields-grid">
                 <div className="form-group social-platform-group">
                   <label htmlFor={`social-platform-select-${index}`} className="form-label">

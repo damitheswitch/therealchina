@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { PROFILE_COLUMNS } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
 export type Profile = Pick<
@@ -56,9 +57,7 @@ export const useProfile = (
     try {
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select(
-          'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
-        )
+        .select(PROFILE_COLUMNS)
         .eq('id', userId)
         .single()
 
@@ -67,9 +66,7 @@ export const useProfile = (
         if (!mounted.current) return null
         const { data: retryData, error: retryError } = await supabase
           .from('profiles')
-          .select(
-            'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
-          )
+          .select(PROFILE_COLUMNS)
           .eq('id', userId)
           .single()
         if (retryError) throw retryError
