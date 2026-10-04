@@ -94,19 +94,16 @@ export const useUniversities = ({
           .from('universities')
           .select(`${UNI_COLUMNS}, ${STATS_EMBED}`, { count: 'exact' })
 
-        // The `or(...)` string is parsed, not parameterized: commas, parens,
-        // quotes and wildcard chars in raw input break the filter or widen the
-        // match beyond what the user typed. Strip them before interpolating.
-        const term = (search ?? '')
-          .replace(/[%,()."*\\]/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim()
+        // Every typed word must appear somewhere in search_text (name,
+        // name_zh, city, province, slug, slug_aliases) — same matching as
+        // UniversityAutocomplete. LIKE wildcards are stripped so user input
+        // can't widen the match.
+        const words = (search ?? '')
+          .replace(/[%,()."*\\_]/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean)
 
-        const withSearch = term
-          ? query.or(
-              `name.ilike.%${term}%,name_zh.ilike.%${term}%,city.ilike.%${term}%,province.ilike.%${term}%`
-            )
-          : query
+        const withSearch = words.reduce((q, w) => q.ilike('search_text', `%${w}%`), query)
         // 'prov:X' filters by province (the grouped select emits these);
         // anything else is a city value.
         const withCity = city?.startsWith('prov:')
