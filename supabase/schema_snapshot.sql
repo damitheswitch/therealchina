@@ -43,12 +43,15 @@ CREATE TABLE IF NOT EXISTS public.universities (
   rankings JSONB NOT NULL DEFAULT '{}'::jsonb,
   -- alternate slugs that resolve to this row (e.g. 'zhejiang', 'tsinghua-university')
   slug_aliases TEXT[] NOT NULL DEFAULT '{}',
+  -- covers province + slug_aliases so search matches abbreviations (migration 043)
   search_text TEXT GENERATED ALWAYS AS (
     lower(
       replace(coalesce(name, ''), '&amp;', '&') || ' ' ||
       replace(coalesce(name_zh, ''), '&amp;', '&') || ' ' ||
       replace(coalesce(city, ''), '&amp;', '&') || ' ' ||
-      replace(coalesce(slug, ''), '&amp;', '&')
+      replace(coalesce(province, ''), '&amp;', '&') || ' ' ||
+      replace(coalesce(slug, ''), '&amp;', '&') || ' ' ||
+      public.immutable_array_to_string(slug_aliases, ' ')
     )
   ) STORED,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -752,6 +755,19 @@ BEGIN
 END;
 $$;
 
+-- Migration 043: array_to_string is STABLE so generated columns can't call
+-- it; this IMMUTABLE wrapper is sound for text[] (deterministic output).
+-- Only used by universities.search_text at write time.
+CREATE OR REPLACE FUNCTION public.immutable_array_to_string(arr TEXT[], sep TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+SET search_path = ''
+AS $$
+  SELECT pg_catalog.array_to_string(arr, sep)
+$$;
+
 -- ---------------------------------------------------------
 -- 5. Triggers
 -- ---------------------------------------------------------
@@ -1124,6 +1140,11 @@ GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_r
 -- owner privileges); it is not a client-callable surface.
 REVOKE ALL ON FUNCTION public.refresh_university_stats(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.refresh_university_stats(UUID) TO service_role;
+
+-- immutable_array_to_string only runs inside the search_text generated
+-- column at write time (migration 043) — not a client-callable surface.
+REVOKE ALL ON FUNCTION public.immutable_array_to_string(TEXT[], TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.immutable_array_to_string(TEXT[], TEXT) TO service_role;
 
 REVOKE ALL ON FUNCTION public.is_email_allowed(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;
