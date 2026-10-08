@@ -11,16 +11,21 @@ import { fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const env = Object.fromEntries(
+const fileEnv = Object.fromEntries(
   readFileSync(join(ROOT, 'frontend/.env.local'), 'utf8')
     .split('\n')
     .filter((l) => l.includes('=') && !l.startsWith('#'))
     .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).trim()])
 )
+const env = {
+  VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? fileEnv.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? fileEnv.VITE_SUPABASE_ANON_KEY,
+}
 const OUT_DIR = resolve(
   process.argv[2] ?? join(ROOT, '..', 'china-universities-dataset', 'data')
 )
 const RANK_YEAR = 2026
+const PREV_RANK_YEAR = 2021
 
 const url = new URL(`${env.VITE_SUPABASE_URL}/rest/v1/universities`)
 url.searchParams.set(
@@ -62,6 +67,8 @@ const records = rows.map((r) => {
       score: rk.shanghai_score ?? null,
       url: rk.shanghai_url ?? null,
       tags: rk.shanghai_tags ?? [],
+      national_rank_2021: rk.shanghai_national_2021 ?? null,
+      score_2021: rk.shanghai_score_2021 ?? null,
       ...(rk.shanghai_indicators ? { indicators: rk.shanghai_indicators } : {}),
     },
   }
@@ -76,6 +83,7 @@ const csvCols = [
   'slug', 'name', 'name_zh', 'city', 'province', 'country', 'category',
   'uni_type', 'languages_of_instruction', 'website',
   'national_rank', 'score', 'tags', 'institution_url', 'logo_url', 'slug_aliases',
+  'national_rank_2021', 'score_2021',
 ]
 const csv = [
   csvCols.join(','),
@@ -86,6 +94,7 @@ const csv = [
       r.shanghairanking.national_rank, r.shanghairanking.score,
       r.shanghairanking.tags.join(';'), r.shanghairanking.url,
       r.logo_url, r.slug_aliases.join(';'),
+      r.shanghairanking.national_rank_2021, r.shanghairanking.score_2021,
     ]
       .map(csvEsc)
       .join(',')
@@ -113,6 +122,8 @@ const sql = [
   `  website TEXT,`,
   `  national_rank INTEGER,`,
   `  score NUMERIC(6,1),`,
+  `  national_rank_2021 INTEGER,`,
+  `  score_2021 NUMERIC(6,1),`,
   `  tags TEXT[] NOT NULL DEFAULT '{}',`,
   `  institution_url TEXT,`,
   `  logo_url TEXT,`,
@@ -121,8 +132,8 @@ const sql = [
   ``,
   ...records.map(
     (r) =>
-      `INSERT INTO china_universities (slug, name, name_zh, city, province, country, category, uni_type, languages_of_instruction, website, national_rank, score, tags, institution_url, logo_url, slug_aliases)\n` +
-      `VALUES (${s(r.slug)}, ${s(r.name)}, ${s(r.name_zh)}, ${s(r.city)}, ${s(r.province)}, ${s(r.country)}, ${s(r.category)}, ${s(r.uni_type)}, ${arr(r.languages_of_instruction)}, ${s(r.website)}, ${r.shanghairanking.national_rank ?? 'NULL'}, ${r.shanghairanking.score ?? 'NULL'}, ${arr(r.shanghairanking.tags)}, ${s(r.shanghairanking.url)}, ${s(r.logo_url)}, ${arr(r.slug_aliases)})\n` +
+      `INSERT INTO china_universities (slug, name, name_zh, city, province, country, category, uni_type, languages_of_instruction, website, national_rank, score, tags, institution_url, logo_url, slug_aliases, national_rank_2021, score_2021)\n` +
+      `VALUES (${s(r.slug)}, ${s(r.name)}, ${s(r.name_zh)}, ${s(r.city)}, ${s(r.province)}, ${s(r.country)}, ${s(r.category)}, ${s(r.uni_type)}, ${arr(r.languages_of_instruction)}, ${s(r.website)}, ${r.shanghairanking.national_rank ?? 'NULL'}, ${r.shanghairanking.score ?? 'NULL'}, ${arr(r.shanghairanking.tags)}, ${s(r.shanghairanking.url)}, ${s(r.logo_url)}, ${arr(r.slug_aliases)}, ${r.shanghairanking.national_rank_2021 ?? 'NULL'}, ${r.shanghairanking.score_2021 ?? 'NULL'})\n` +
       `ON CONFLICT (slug) DO NOTHING;`
   ),
 ].join('\n')
