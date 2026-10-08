@@ -21,10 +21,10 @@
 
 - Students prefer **WeChat groups** over the site. The site has to feel more
   useful than the group chat, not compete with it on speed.
-- The **community Q&A** (Reddit / Stack Overflow style) is still a prototype on
-  `origin/feat/community-mock` (mock data in `frontend/src/lib/communityMock.ts`,
-  no real tables). It has the classic empty-room problem: nobody asks because
-  nobody answers, and the reverse.
+- The **community Q&A** (Reddit / Stack Overflow style) is a staging prototype
+  backed by `frontend/src/lib/communityMock.ts`, with no real tables. It has
+  the classic empty-room problem: nobody asks because nobody answers, and the
+  reverse.
 - **Friends asked to leave reviews didn't.** 3 to 4 people asked, near zero
   results.
 - **The review form is too long.** Observed directly: a friend on a Discord call
@@ -47,13 +47,13 @@ File: `frontend/src/components/ReviewWizard.tsx` (1643 lines, 5 steps,
 `TOTAL_STEPS = 5` at line 48). Background on why it was built this way:
 `REVIEW_WIZARD_CHANGES.md`.
 
-| Step | Inputs | Required |
-|---|---|---|
-| 1 Basics | university, program, overall stars, recommend | all 4 |
-| 2 Ratings | 8 sub-score star rows | none |
-| 3 Details | enrollment status, start year, end year, instruction language, degree level, tuition, living cost, funding, coverage, tags (28 chips) | start year |
-| 4 Story | pros, cons, review text, media | review text >= 10 chars |
-| 5 About you | anon email, home country, current status, languages, email consent, Turnstile | none |
+| Step        | Inputs                                                                                                                                | Required                |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 1 Basics    | university, program, overall stars, recommend                                                                                         | all 4                   |
+| 2 Ratings   | 8 sub-score star rows                                                                                                                 | none                    |
+| 3 Details   | enrollment status, start year, end year, instruction language, degree level, tuition, living cost, funding, coverage, tags (28 chips) | start year              |
+| 4 Story     | pros, cons, review text, media                                                                                                        | review text >= 10 chars |
+| 5 About you | anon email, home country, current status, languages, email consent, Turnstile                                                         | none                    |
 
 Findings:
 
@@ -72,20 +72,21 @@ Findings:
 - **Dropdowns everywhere** (`<select>` for years, language, degree, tuition,
   living cost, country, status, languages). Slow on phones, which is where this
   audience is (WeChat in-app browser).
-- **No product analytics** anywhere in the frontend. We can't see where people
-  drop. The only signal is the drafts table (§5).
+- **No released product analytics** before Phase 1. Phase 1 adds privacy-safe
+  Umami events on `feat/phase1-measurement`, but until that branch is staged,
+  released, and observed, the only durable signal is the drafts table (§5).
 
 ## 4. What the leaders do (research summary)
 
-| Who | Pattern | What we take from it |
-|---|---|---|
-| Google Local Guides | 1 pt for a star rating alone, 10 for a review, +10 bonus over 200 chars, points for photos/answers; levels and a badge next to your name | A rating alone is a valid contribution. **Reward depth, don't require it.** |
-| Glassdoor | "Give to get": one contribution unlocks 12 months of full access. They report reviews collected this way spread more evenly across the 1-5 scale (less extreme-only reviewing) | Soft gate on the most valuable data, only once contributing is cheap |
-| Niche | Monthly $1,000 scholarship draw; every verified review is an entry | One monthly draw beats paying per review |
-| Reddit | Founders posted ~most early content themselves (via many accounts) to set tone | Cold start is solved by founders doing the work. **We do it under our own name, never fake accounts** (trust site; `AGENTS.md` forbids fabricated data on prod) |
-| Stack Overflow | Launched with traffic from two big existing blogs | Bring an existing audience. Ours lives in WeChat groups |
-| Zhihu | Askers invite specific people to answer | "Invite someone to answer" routing for Q&A |
-| Form research | Completion drops noticeably at 4-6 fields and falls off a cliff around 7-10. Questions users see a reason for cost less | Keep the pre-publish part tiny; explain why each extra question matters |
+| Who                 | Pattern                                                                                                                                                                        | What we take from it                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Google Local Guides | 1 pt for a star rating alone, 10 for a review, +10 bonus over 200 chars, points for photos/answers; levels and a badge next to your name                                       | A rating alone is a valid contribution. **Reward depth, don't require it.**                                                                                     |
+| Glassdoor           | "Give to get": one contribution unlocks 12 months of full access. They report reviews collected this way spread more evenly across the 1-5 scale (less extreme-only reviewing) | Soft gate on the most valuable data, only once contributing is cheap                                                                                            |
+| Niche               | Monthly $1,000 scholarship draw; every verified review is an entry                                                                                                             | One monthly draw beats paying per review                                                                                                                        |
+| Reddit              | Founders posted ~most early content themselves (via many accounts) to set tone                                                                                                 | Cold start is solved by founders doing the work. **We do it under our own name, never fake accounts** (trust site; `AGENTS.md` forbids fabricated data on prod) |
+| Stack Overflow      | Launched with traffic from two big existing blogs                                                                                                                              | Bring an existing audience. Ours lives in WeChat groups                                                                                                         |
+| Zhihu               | Askers invite specific people to answer                                                                                                                                        | "Invite someone to answer" routing for Q&A                                                                                                                      |
+| Form research       | Completion drops noticeably at 4-6 fields and falls off a cliff around 7-10. Questions users see a reason for cost less                                                        | Keep the pre-publish part tiny; explain why each extra question matters                                                                                         |
 
 Sources:
 [Glassdoor give-to-get (Clark)](https://clark.com/make-money/glassdoor/),
@@ -132,52 +133,48 @@ Supabase dashboard → project **TRC prod** → **SQL Editor** → new query →
 Run. Save each one as a snippet so it's one click next time. **Run only
 `SELECT`s on prod**: the SQL editor runs with full privileges.
 
+Keep the two sources separate:
+
+- `public.reviews` is the authoritative count of published outcomes.
+- `public.review_drafts` is a snapshot of currently idle signed-in work. It is
+  not a denominator for finished reviews because successful submissions delete
+  the draft and anonymous drafts never reach the table.
+
+For a dated before/after window, use the full bounded queries in
+[01-measurement.md](01-measurement.md#baseline-queries). The important
+definitions are:
+
 ```sql
--- Where signed-in reviewers stopped (idle > 1 hour = treat as abandoned)
+-- Authoritative published outcomes for a bounded window.
+select
+  date_trunc('day', created_at)::date as day,
+  count(*) as published_reviews,
+  count(*) filter (where user_id is null) as anonymous_reviews,
+  count(*) filter (where user_id is not null) as signed_in_reviews
+from public.reviews
+where deleted_at is null
+  and created_at >= '<window_start_utc>'
+  and created_at <  '<window_end_utc>'
+group by 1
+order by 1;
+```
+
+```sql
+-- Idle signed-in draft snapshot. This is not a conversion denominator.
 select
   progress as stopped_at_step,
-  case progress
-    when 1 then 'Basics' when 2 then 'Ratings' when 3 then 'Details'
-    when 4 then 'Your story' when 5 then 'About you'
-  end as step_name,
-  count(*) as drafts,
-  min(updated_at) as oldest,
-  max(updated_at) as newest
+  count(*) as idle_drafts,
+  min(updated_at) as oldest_update,
+  max(updated_at) as newest_update
 from public.review_drafts
 where updated_at < now() - interval '1 hour'
 group by progress
 order by progress;
 ```
 
-```sql
--- Finished vs abandoned, signed-in only, since drafts went live
-select
-  (select count(*) from public.reviews
-     where user_id is not null
-       and deleted_at is null
-       and created_at >= '2026-09-28') as finished,
-  (select count(*) from public.review_drafts
-     where updated_at < now() - interval '1 hour') as abandoned;
-```
-
-```sql
--- Optional-field fill rate on existing reviews (baseline for "same data" goal)
-select
-  count(*) as reviews,
-  round(100.0 * count(rating_academics) / nullif(count(*),0)) as pct_subscores,
-  round(100.0 * count(tuition_range)    / nullif(count(*),0)) as pct_tuition,
-  round(100.0 * count(living_cost_range)/ nullif(count(*),0)) as pct_living_cost,
-  round(100.0 * count(funding_type)     / nullif(count(*),0)) as pct_funding,
-  round(100.0 * count(pros)             / nullif(count(*),0)) as pct_pros,
-  round(100.0 * count(cons)             / nullif(count(*),0)) as pct_cons,
-  round(100.0 * count(*) filter (where cardinality(tags) > 0) / nullif(count(*),0)) as pct_tags,
-  round(100.0 * count(*) filter (where jsonb_array_length(media) > 0) / nullif(count(*),0)) as pct_media
-from public.reviews
-where deleted_at is null;
-```
-
-**Capture these numbers before workstream B ships.** B changes the step
-numbers, so `progress` will mean something different afterwards.
+The same measurement file has an optional-field fill-rate query for the same
+review cohort. Capture the production browser baseline only after Phase 1
+events are released, then observe at least one complete pre-Phase-2 week.
 
 ### Tools that won't answer this
 
@@ -232,16 +229,16 @@ review that is already live.
 
 ### Boost: one card at a time, each saved immediately
 
-| Today's field | New home |
-|---|---|
-| 8 sub-scores | Card stack: one aspect per card, tap a score → next card, "Don't know" button. ~15 s for all 8 |
-| Tuition, living cost, funding, coverage | One "money" card, chips only |
-| Enrollment status, end year, instruction language, degree level | One "details" card, chips only |
-| Pros / cons | "One more: what was the worst part?" (whichever wasn't covered) |
-| Media | "Got a photo of your dorm?" |
-| Home country | One tap; top-country chips (Pakistan, Bangladesh, Russia, Central Asia...) + autocomplete |
-| Anon email | On the success screen, framed as "get told when someone replies" |
-| Languages, current status, email consent | Move to sign-up onboarding (`OnboardingForm.jsx` already collects them). Signed-in users with a complete profile never see them |
+| Today's field                                                   | New home                                                                                                                        |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 8 sub-scores                                                    | Card stack: one aspect per card, tap a score → next card, "Don't know" button. ~15 s for all 8                                  |
+| Tuition, living cost, funding, coverage                         | One "money" card, chips only                                                                                                    |
+| Enrollment status, end year, instruction language, degree level | One "details" card, chips only                                                                                                  |
+| Pros / cons                                                     | "One more: what was the worst part?" (whichever wasn't covered)                                                                 |
+| Media                                                           | "Got a photo of your dorm?"                                                                                                     |
+| Home country                                                    | One tap; top-country chips (Pakistan, Bangladesh, Russia, Central Asia...) + autocomplete                                       |
+| Anon email                                                      | On the success screen, framed as "get told when someone replies"                                                                |
+| Languages, current status, email consent                        | Move to sign-up onboarding (`OnboardingForm.jsx` already collects them). Signed-in users with a complete profile never see them |
 
 ### Making Boost worth doing
 
@@ -261,15 +258,15 @@ before vs after.
 
 ## 7. Workstreams (each becomes its own sub-plan)
 
-| Phase | Workstream | Depends on | Plan |
-|---|---|---|---|
-| 1 (A) | Measurement baseline + step events | none | [01-measurement.md](01-measurement.md) |
-| 2 (B) | Two-screen flow, success screen, Boost for signed-in users | Phase 1 baseline captured | [02-review-flow.md](02-review-flow.md) |
-| 3 (C) | Anonymous Boost (claim-token edge function) | Phase 2 | [03-anon-boost.md](03-anon-boost.md) |
-| 4 (D) | Display: "Detailed review" mark, strength meter, helpfulness sort | Phase 2 | [04-review-display.md](04-review-display.md) |
-| 5 (E) | Re-engagement email for missing fields | Phases 2, 3 | [05-reengagement.md](05-reengagement.md) |
-| 6 (F1) | Q&A launch and cold start | Phase 2 shipped | [06-qa-cold-start.md](06-qa-cold-start.md) |
-| 7 (F2) | Incentives (points, give-to-get, draw) | Phases 2, 4 | [07-incentives.md](07-incentives.md) |
+| Phase  | Workstream                                                        | Depends on                | Plan                                         |
+| ------ | ----------------------------------------------------------------- | ------------------------- | -------------------------------------------- |
+| 1 (A)  | Measurement baseline + step events                                | none                      | [01-measurement.md](01-measurement.md)       |
+| 2 (B)  | Two-screen flow, success screen, Boost for signed-in users        | Phase 1 baseline captured | [02-review-flow.md](02-review-flow.md)       |
+| 3 (C)  | Anonymous Boost (claim-token edge function)                       | Phase 2                   | [03-anon-boost.md](03-anon-boost.md)         |
+| 4 (D)  | Display: "Detailed review" mark, strength meter, helpfulness sort | Phase 2                   | [04-review-display.md](04-review-display.md) |
+| 5 (E)  | Re-engagement email for missing fields                            | Phases 2, 3               | [05-reengagement.md](05-reengagement.md)     |
+| 6 (F1) | Q&A launch and cold start                                         | Phase 2 shipped           | [06-qa-cold-start.md](06-qa-cold-start.md)   |
+| 7 (F2) | Incentives (points, give-to-get, draw)                            | Phases 2, 4               | [07-incentives.md](07-incentives.md)         |
 
 The section letters (A to F) below are kept for reference; the phase files are
 the source of truth once they exist.
