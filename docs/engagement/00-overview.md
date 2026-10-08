@@ -72,9 +72,10 @@ Findings:
 - **Dropdowns everywhere** (`<select>` for years, language, degree, tuition,
   living cost, country, status, languages). Slow on phones, which is where this
   audience is (WeChat in-app browser).
-- **No released product analytics** before Phase 1. Phase 1 adds privacy-safe
-  Umami events on `feat/phase1-measurement`, but until that branch is staged,
-  released, and observed, the only durable signal is the drafts table (§5).
+- **No released product analytics** before Phase 1. Phase 1 instrumentation is
+  merged to `staging`, but until Umami site IDs are configured, staging is
+  verified, production is released, and a baseline is observed, the only
+  durable signal is the drafts table (§5).
 
 ## 4. What the leaders do (research summary)
 

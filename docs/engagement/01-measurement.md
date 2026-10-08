@@ -1,6 +1,6 @@
 # Phase 1: Measurement
 
-**Status:** implemented on `feat/phase1-measurement`; staging verification pending; production instrumentation pending; baseline not captured. Last updated 2026-10-08.
+**Status:** implemented and merged to `staging` in PR #51; the staging deploy is ready, but staging analytics verification is blocked pending separate Umami website IDs and dashboard access. Production instrumentation and baseline collection remain pending. Last updated 2026-10-08.
 
 **Depends on:** nothing. **Blocks:** Phase 2 (the dated baseline must exist before the flow changes).
 
@@ -92,8 +92,8 @@ Required account setup:
 
 ## Milestones
 
-1. **Implementation:** helper, wizard wiring, exact schemas, tests, environment gating, and privacy copy. Implemented locally and merged with current `staging` code, pending PR/deploy.
-2. **Staging verification:** pending the staging website ID and exact staging hostname. Must inspect real script and collection requests, staging dashboard events, all success/failure paths, the three resume paths, hostname isolation, and absence of sensitive data.
+1. **Implementation:** complete. Helper, wizard wiring, exact schemas, tests, environment gating, and privacy copy are merged to `staging` in PR #51. The staging deploy is `staging--therealchina.netlify.app`.
+2. **Staging verification:** pending the staging Umami website ID and dashboard access. The exact staging hostname is configured as `staging--therealchina.netlify.app`; a new staging deploy is still required after the website ID is set. Must inspect real script and collection requests, staging dashboard events, all success/failure paths, the three resume paths, hostname isolation, and absence of sensitive data.
 3. **Production instrumentation:** pending staging verification and the production website ID. No production test reviews or test writes.
 4. **Baseline collection:** pending production instrumentation. Needs at least one complete pre-Phase-2 observation week, raw sample sizes, dated read-only Supabase results, and separate idle-draft snapshots.
 
