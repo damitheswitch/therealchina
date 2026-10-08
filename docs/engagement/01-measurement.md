@@ -1,6 +1,6 @@
 # Phase 1: Measurement
 
-**Status:** implemented and merged to `staging` in PR #51; the staging deploy is ready, but staging analytics verification is blocked pending separate Umami website IDs and dashboard access. Production instrumentation and baseline collection remain pending. Last updated 2026-10-08.
+**Status:** implemented and merged to `staging` in PR #51. Production instrumentation was merged in PR #53 using the single available Umami website, but the production CSP initially blocked the tracker. The CSP fix is merged in PR #54 and is waiting for a Netlify production deploy because the account is out of build credits. Staging Umami verification was not performed because only the production Umami site exists. Baseline collection has not started. Last updated 2026-10-08.
 
 **Depends on:** nothing. **Blocks:** Phase 2 (the dated baseline must exist before the flow changes).
 
@@ -85,17 +85,18 @@ VITE_UMAMI_HOST_URL=<collection host, used only for a proxy or request-level tes
 
 Required account setup:
 
-- separate production and staging Umami Cloud websites,
-- dashboard access,
-- exact production and staging hostnames configured,
+- production Umami Cloud website and dashboard access,
+- exact production hostname configured,
 - no preview wildcard in `VITE_UMAMI_ALLOWED_HOSTNAMES`.
+
+Current setup: the free Umami account has one website, so only production is configured and staging tracking is intentionally off. If a staging website is added later, use a separate website ID and re-run the staging checklist before relying on its dashboard evidence.
 
 ## Milestones
 
 1. **Implementation:** complete. Helper, wizard wiring, exact schemas, tests, environment gating, and privacy copy are merged to `staging` in PR #51. The staging deploy is `staging--therealchina.netlify.app`.
-2. **Staging verification:** pending the staging Umami website ID and dashboard access. The exact staging hostname is configured as `staging--therealchina.netlify.app`; a new staging deploy is still required after the website ID is set. Must inspect real script and collection requests, staging dashboard events, all success/failure paths, the three resume paths, hostname isolation, and absence of sensitive data.
-3. **Production instrumentation:** pending staging verification and the production website ID. No production test reviews or test writes.
-4. **Baseline collection:** pending production instrumentation. Needs at least one complete pre-Phase-2 observation week, raw sample sizes, dated read-only Supabase results, and separate idle-draft snapshots.
+2. **Staging verification:** not performed. The free Umami account has only the production website, so staging analytics remains disabled. Production request/dashboard verification must therefore carry more weight, and the checklist below remains required if a staging site is added later.
+3. **Production instrumentation:** Phase 1 code is merged to `master` in PR #53 and the CSP fix is merged in PR #54. Activation is pending the Netlify production deploy that applies PR #54; no production test reviews or test writes.
+4. **Baseline collection:** pending the successful production tracker request and dashboard evidence. Needs at least one complete pre-Phase-2 observation week, raw sample sizes, dated read-only Supabase results, and separate idle-draft snapshots.
 
 ## Staging verification checklist
 
@@ -178,8 +179,8 @@ order by progress;
 
 ## Done when
 
-- Staging verification is complete with actual request and dashboard evidence.
-- Production instrumentation is deployed and verified against the production website only.
+- Staging verification is complete if a separate staging website exists; otherwise it is explicitly recorded as not performed.
+- Production instrumentation is deployed and verified with actual request and dashboard evidence.
 - At least one complete pre-Phase-2 observation week is recorded with raw sample sizes.
 - Dated read-only Supabase outcomes and idle-draft snapshots are recorded above.
 - Phase 2 remains unreleased until the baseline exists.
