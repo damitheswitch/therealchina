@@ -51,6 +51,73 @@ describe('review analytics privacy boundary', () => {
         },
       } as never)
     ).toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'review_started',
+        data: { ...validStartEvent.data, step: 1, stage: 'basics' },
+      } as never)
+    ).toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'boost_card_completed',
+        data: { flow: 'legacy_5', auth: 'anonymous', card: 'unknown_future_card' },
+      } as never)
+    ).toBeNull()
+  })
+
+  it('enforces each event property set exactly', async () => {
+    vi.stubEnv('VITE_UMAMI_WEBSITE_ID', 'umami-site-id')
+    const { buildUmamiPayload } = await loadAnalytics()
+
+    expect(
+      buildUmamiPayload({
+        name: 'review_step_1_viewed',
+        data: {
+          flow: 'legacy_5',
+          entry: 'new',
+          auth: 'anonymous',
+          step: 1,
+          stage: 'basics',
+        },
+      })
+    ).not.toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'review_step_1_viewed',
+        data: {
+          flow: 'legacy_5',
+          entry: 'new',
+          auth: 'anonymous',
+          step: 1,
+          stage: 'basics',
+          reason: 'server_input',
+        },
+      } as never)
+    ).toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'review_validation_failed',
+        data: {
+          flow: 'legacy_5',
+          entry: 'new',
+          auth: 'anonymous',
+          step: 1,
+          stage: 'basics',
+        },
+      } as never)
+    ).toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'review_published',
+        data: {
+          flow: 'legacy_5',
+          entry: 'new',
+          auth: 'anonymous',
+          duration_band: 'under_1m',
+          step: 5,
+        },
+      } as never)
+    ).toBeNull()
   })
 
   it('only enables the tracker on an explicitly allowed hostname', async () => {
