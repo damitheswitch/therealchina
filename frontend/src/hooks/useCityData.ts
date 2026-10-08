@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { slugify } from '../lib/seo/slugify'
 import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
+import { UNI_COLUMNS } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
 type UniRow = Tables<'universities'>
@@ -13,9 +14,6 @@ export interface CityPageData {
   universities?: CityUni[]
   reviewCount?: number
 }
-
-const UNI_COLS =
-  'id, name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings, slug_aliases'
 
 /**
  * Resolves a /city/:slug URL to a city name + its universities. The slug is
@@ -70,7 +68,7 @@ export const useCityData = (citySlug: string | undefined) => {
         }
         const { data: unis, error: uniErr } = await supabase
           .from('universities')
-          .select(`${UNI_COLS}, ${STATS_EMBED}`)
+          .select(`${UNI_COLUMNS}, ${STATS_EMBED}`)
           .eq('city', match)
           .order('name', { ascending: true })
           .abortSignal(controller.signal)

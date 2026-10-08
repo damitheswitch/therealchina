@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { listAnonymousOwnedIds, mergeMyReviews } from '../lib/reviewClaim'
+import { REVIEW_COLUMNS, REVIEW_UNI_EMBED } from '../lib/queryColumns'
 import type { EditableReview } from '../lib/reviewEdit'
 
-// Same column list as useMemberProfileData (kept as one literal so supabase-js
-// infers the row shape), plus the university join for display labels.
-const MY_REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, updated_at, deleted_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, universities(name, city, slug)'
+// Shared review columns plus the management extras (updated_at, deleted_at)
+// and the university join for display labels.
+const MY_REVIEW_COLUMNS = `${REVIEW_COLUMNS}, updated_at, deleted_at, ${REVIEW_UNI_EMBED}`
 
 // The signed-in user's own reviews, newest first — plus reviews they claimed
 // anonymously: those keep user_id NULL publicly (the private
