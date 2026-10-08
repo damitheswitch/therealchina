@@ -33,8 +33,6 @@ export interface ReviewEventData {
   stage?: ReviewStage
   reason?: ReviewFailureReason
   duration_band?: PublishDurationBand
-  card?: string
-  after_card?: string
 }
 
 export type ReviewEventName =
@@ -49,8 +47,6 @@ export type ReviewEventName =
   | 'review_submit_attempted'
   | 'review_submit_failed'
   | 'review_published'
-  | 'boost_card_completed'
-  | 'boost_exited'
 
 export interface ReviewAnalyticsEvent {
   name: ReviewEventName
@@ -90,11 +86,9 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_submit_attempted',
   'review_submit_failed',
   'review_published',
-  'boost_card_completed',
-  'boost_exited',
 ])
 
-const REQUIRED_DATA_KEYS: Record<ReviewEventName, (keyof ReviewEventData)[]> = {
+const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[]> = {
   review_started: ['flow', 'entry', 'auth'],
   review_step_1_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_2_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
@@ -106,8 +100,6 @@ const REQUIRED_DATA_KEYS: Record<ReviewEventName, (keyof ReviewEventData)[]> = {
   review_submit_attempted: ['flow', 'entry', 'auth'],
   review_submit_failed: ['flow', 'entry', 'auth', 'reason'],
   review_published: ['flow', 'entry', 'auth', 'duration_band'],
-  boost_card_completed: ['flow', 'auth', 'card'],
-  boost_exited: ['flow', 'auth', 'after_card'],
 }
 
 const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive) => boolean> = {
@@ -135,8 +127,6 @@ const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive)
     value === '2_to_5m' ||
     value === 'over_5m' ||
     value === 'unknown',
-  card: (value) => typeof value === 'string' && /^[a-z0-9_]{1,50}$/.test(value),
-  after_card: (value) => typeof value === 'string' && /^[a-z0-9_]{1,50}$/.test(value),
 }
 
 const isPrimitive = (value: unknown): value is AnalyticsPrimitive =>
@@ -166,11 +156,13 @@ const validateEvent = (event: ReviewAnalyticsEvent): boolean => {
   if (!EVENT_NAMES.has(event.name)) return false
   if (!event.data || typeof event.data !== 'object' || Array.isArray(event.data)) return false
 
-  for (const key of REQUIRED_DATA_KEYS[event.name]) {
+  const allowedKeys = new Set<keyof ReviewEventData>(EVENT_DATA_KEYS[event.name])
+  for (const key of allowedKeys) {
     if (!(key in event.data)) return false
   }
 
   return Object.entries(event.data).every(([key, value]) => {
+    if (!allowedKeys.has(key as keyof ReviewEventData)) return false
     const validator = DATA_VALIDATORS[key as keyof ReviewEventData]
     return Boolean(validator && isPrimitive(value) && validator(value))
   })
