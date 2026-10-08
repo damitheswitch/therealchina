@@ -9,7 +9,8 @@ import { FlightListingCard } from '../components/FlightListingCard'
 import { FlightListingForm } from '../components/FlightListingForm'
 import { SocialHandlesSetupModal } from '../components/SocialHandlesSetupModal'
 import { Icons } from '../components/Icons'
-import { CountryAutocomplete, isCountryName } from '../components/CountryAutocomplete'
+import { CountryAutocomplete } from '../components/CountryAutocomplete'
+import { canonicalCountryName, isCountryName } from '../lib/constants'
 import { hasSocialHandles } from '../lib/socialHandles'
 import { filterByTab, flightCounts, sortListings, todayLocal } from '../lib/flightListings'
 
@@ -38,7 +39,10 @@ const monthOf = (dateString) => {
 
 // Case-insensitive exact match, tolerant of legacy rows stored before the
 // strict country dropdown existed
-const sameCountry = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase()
+// Compare on canonical spellings so stored legacy names match their
+// canonical filter value in both directions.
+const sameCountry = (a, b) =>
+  canonicalCountryName(a) != null && canonicalCountryName(a) === canonicalCountryName(b)
 
 export const FlightListingsPage = () => {
   const { user, loading: authLoading } = useAuth()
@@ -132,8 +136,8 @@ export const FlightListingsPage = () => {
   // resolves to a canonical country (partial text is ignored, invalid text
   // is cleared by the autocomplete itself).
   const filteredListings = useMemo(() => {
-    const from = isCountryName(departureCountry) ? departureCountry.trim() : ''
-    const to = isCountryName(arrivalCountry) ? arrivalCountry.trim() : ''
+    const from = isCountryName(departureCountry) ? canonicalCountryName(departureCountry) : ''
+    const to = isCountryName(arrivalCountry) ? canonicalCountryName(arrivalCountry) : ''
     const mon = month ? parseInt(month, 10) : null
 
     return listings.filter((listing) => {

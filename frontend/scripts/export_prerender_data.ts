@@ -11,6 +11,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { buildEnv } from './lib/env'
+import { REVIEW_COLUMNS, UNI_COLUMNS } from '../src/lib/queryColumns'
 
 const FRONTEND = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const OUT_DIR = resolve(FRONTEND, '.prerender-data')
@@ -38,10 +39,10 @@ if (!url || !key) {
 }
 const supabase = createClient(url, key)
 
-const UNI_COLS =
-  'id, name, name_zh, city, country, province, uni_category, slug, slug_aliases, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings, created_at'
-const REVIEW_COLS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
+// Same projections the app reads (src/lib/queryColumns) — the export adds
+// created_at for the universities payload ordering.
+const UNI_COLS = `${UNI_COLUMNS}, created_at`
+const REVIEW_COLS = REVIEW_COLUMNS
 
 const fetchAll = async (table: string, columns: string, activeOnly = false): Promise<unknown[]> => {
   const rows: unknown[] = []

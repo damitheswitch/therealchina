@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { getRecommendYesPct } from '../lib/reviewSummary'
 import { usePrerenderData } from '../lib/prerenderData'
+import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
+import { UNI_COLUMNS } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
 const PAGE_SIZE = 20
@@ -19,29 +20,28 @@ export type SortBy = keyof typeof SORT_CONFIG
 
 type UniversityRow = Pick<
   Tables<'universities'>,
-  'id' | 'name' | 'name_zh' | 'city' | 'province' | 'slug' | 'logo_url' | 'rankings'
->
-type UniversityStats = Pick<
-  Tables<'university_stats'>,
-  | 'avg_rating'
-  | 'review_count'
-  | 'has_verified_review'
-  | 'recommend_yes_count'
-  | 'recommend_maybe_count'
-  | 'recommend_no_count'
+  | 'id'
+  | 'name'
+  | 'name_zh'
+  | 'city'
+  | 'country'
+  | 'province'
+  | 'uni_category'
+  | 'slug'
+  | 'logo_url'
+  | 'is_verified'
+  | 'uni_type'
+  | 'languages_of_instruction'
+  | 'website'
+  | 'rankings'
+  | 'slug_aliases'
 >
 
 type UniversityWithStats = UniversityRow & {
-  university_stats?: UniversityStats | UniversityStats[] | null
+  university_stats?: StatsEmbed | StatsEmbed[] | null
 }
 
-type UniversityDisplay = UniversityWithStats & {
-  avg_rating: number
-  review_count: number
-  is_verified: boolean
-  recommendYesPct: number | null
-  recommendAnswered: number
-}
+type UniversityDisplay = UniversityRow & UniStatFields
 
 // Prerender payload written by scripts/generate_static.ts — matches the page's
 // initial query so hydration shows identical content without re-fetching.
@@ -92,16 +92,18 @@ export const useUniversities = ({
       try {
         const query = supabase
           .from('universities')
-          .select(
-            'id, name, name_zh, city, province, slug, logo_url, rankings, university_stats(avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count)',
-            { count: 'exact' }
-          )
+          .select(`${UNI_COLUMNS}, ${STATS_EMBED}`, { count: 'exact' })
 
-        const withSearch = search?.trim()
-          ? query.or(
-              `name.ilike.%${search.trim()}%,name_zh.ilike.%${search.trim()}%,city.ilike.%${search.trim()}%,province.ilike.%${search.trim()}%`
-            )
-          : query
+        // Every typed word must appear somewhere in search_text (name,
+        // name_zh, city, province, slug, slug_aliases) — same matching as
+        // UniversityAutocomplete. LIKE wildcards are stripped so user input
+        // can't widen the match.
+        const words = (search ?? '')
+          .replace(/[%,()."*\\_]/g, ' ')
+          .split(/\s+/)
+          .filter(Boolean)
+
+        const withSearch = words.reduce((q, w) => q.ilike('search_text', `%${w}%`), query)
         // 'prov:X' filters by province (the grouped select emits these);
         // anything else is a city value.
         const withCity = city?.startsWith('prov:')
@@ -128,21 +130,7 @@ export const useUniversities = ({
         if (fetchError) throw fetchError
 
         const mapped = ((data as unknown as UniversityWithStats[] | null) || []).map(
-          (u): UniversityDisplay => {
-            const rawStat = u.university_stats
-            const stat = Array.isArray(rawStat) ? rawStat[0] : rawStat
-            const recYes = stat?.recommend_yes_count || 0
-            const recMaybe = stat?.recommend_maybe_count || 0
-            const recNo = stat?.recommend_no_count || 0
-            return {
-              ...u,
-              avg_rating: stat?.avg_rating || 0,
-              review_count: stat?.review_count || 0,
-              is_verified: stat?.has_verified_review || false,
-              recommendYesPct: getRecommendYesPct(recYes, recMaybe, recNo),
-              recommendAnswered: recYes + recMaybe + recNo,
-            }
-          }
+          (u): UniversityDisplay => withStats(u)
         )
 
         setUniversities(mapped)

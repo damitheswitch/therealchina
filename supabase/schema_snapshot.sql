@@ -43,12 +43,15 @@ CREATE TABLE IF NOT EXISTS public.universities (
   rankings JSONB NOT NULL DEFAULT '{}'::jsonb,
   -- alternate slugs that resolve to this row (e.g. 'zhejiang', 'tsinghua-university')
   slug_aliases TEXT[] NOT NULL DEFAULT '{}',
+  -- covers province + slug_aliases so search matches abbreviations (migration 043)
   search_text TEXT GENERATED ALWAYS AS (
     lower(
       replace(coalesce(name, ''), '&amp;', '&') || ' ' ||
       replace(coalesce(name_zh, ''), '&amp;', '&') || ' ' ||
       replace(coalesce(city, ''), '&amp;', '&') || ' ' ||
-      replace(coalesce(slug, ''), '&amp;', '&')
+      replace(coalesce(province, ''), '&amp;', '&') || ' ' ||
+      replace(coalesce(slug, ''), '&amp;', '&') || ' ' ||
+      public.immutable_array_to_string(slug_aliases, ' ')
     )
   ) STORED,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -113,6 +116,47 @@ CREATE TABLE IF NOT EXISTS public.reviews (
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
 
+-- Length caps mirroring _shared/reviewFields.ts (migration 041): the direct
+-- authenticated INSERT path bypasses edge validation, so the table enforces
+-- the same bounds. NOT VALID keeps existing rows out of the check.
+ALTER TABLE public.reviews
+DROP CONSTRAINT IF EXISTS chk_reviews_text_length,
+ADD CONSTRAINT chk_reviews_text_length
+  CHECK (char_length(text) BETWEEN 10 AND 5000)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_pros_length,
+ADD CONSTRAINT chk_reviews_pros_length
+  CHECK (pros IS NULL OR char_length(pros) <= 1000)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_cons_length,
+ADD CONSTRAINT chk_reviews_cons_length
+  CHECK (cons IS NULL OR char_length(cons) <= 1000)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_program_length,
+ADD CONSTRAINT chk_reviews_program_length
+  CHECK (program IS NULL OR char_length(program) <= 120)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_degree_level_length,
+ADD CONSTRAINT chk_reviews_degree_level_length
+  CHECK (degree_level IS NULL OR char_length(degree_level) <= 60)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_language_length,
+ADD CONSTRAINT chk_reviews_language_length
+  CHECK (language_of_instruction IS NULL OR char_length(language_of_instruction) <= 60)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_tuition_range_length,
+ADD CONSTRAINT chk_reviews_tuition_range_length
+  CHECK (tuition_range IS NULL OR char_length(tuition_range) <= 40)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_living_cost_range_length,
+ADD CONSTRAINT chk_reviews_living_cost_range_length
+  CHECK (living_cost_range IS NULL OR char_length(living_cost_range) <= 40)
+  NOT VALID,
+DROP CONSTRAINT IF EXISTS chk_reviews_tags_cardinality,
+ADD CONSTRAINT chk_reviews_tags_cardinality
+  CHECK (cardinality(tags) <= 20)
+  NOT VALID;
+
 -- Anonymous reviewer "about you" data + review-claim linkage. Internal-only:
 -- RLS enabled with no policies and all client grants revoked — service role
 -- only. claim_token is the browser-held capability the review-claim function
@@ -143,6 +187,14 @@ CREATE TABLE IF NOT EXISTS public.comments (
   text TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Cap matches the comment textareas (migration 041); comments have no edge
+-- validation at all.
+ALTER TABLE public.comments
+DROP CONSTRAINT IF EXISTS chk_comments_text_length,
+ADD CONSTRAINT chk_comments_text_length
+  CHECK (char_length(text) BETWEEN 1 AND 2000)
+  NOT VALID;
 
 CREATE TABLE IF NOT EXISTS public.upvotes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -218,6 +270,13 @@ CREATE TABLE IF NOT EXISTS public.flight_listings (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Cap matches the notes textarea (migration 041).
+ALTER TABLE public.flight_listings
+DROP CONSTRAINT IF EXISTS chk_flight_listings_notes_length,
+ADD CONSTRAINT chk_flight_listings_notes_length
+  CHECK (notes IS NULL OR char_length(notes) <= 1000)
+  NOT VALID;
+
 -- Disposable/temp-mail domains rejected at signup and on email change.
 -- Seeded by migration 031 from the community disposable-email-domains list;
 -- refresh with new rows as providers appear. Legit providers the upstream
@@ -242,8 +301,12 @@ CREATE INDEX IF NOT EXISTS idx_reviews_university_active
   ON public.reviews(university_id)
   WHERE deleted_at IS NULL;
 
+-- Owner lookups: my-reviews and member-profile queries (migration 041).
+CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON public.reviews(user_id);
+
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON public.comments(user_id);
 
 -- Claim lookups always filter to a present token / owner.
 CREATE INDEX IF NOT EXISTS idx_reviewer_context_claim_token
@@ -692,6 +755,19 @@ BEGIN
 END;
 $$;
 
+-- Migration 043: array_to_string is STABLE so generated columns can't call
+-- it; this IMMUTABLE wrapper is sound for text[] (deterministic output).
+-- Only used by universities.search_text at write time.
+CREATE OR REPLACE FUNCTION public.immutable_array_to_string(arr TEXT[], sep TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+SET search_path = ''
+AS $$
+  SELECT pg_catalog.array_to_string(arr, sep)
+$$;
+
 -- ---------------------------------------------------------
 -- 5. Triggers
 -- ---------------------------------------------------------
@@ -1064,6 +1140,11 @@ GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_r
 -- owner privileges); it is not a client-callable surface.
 REVOKE ALL ON FUNCTION public.refresh_university_stats(UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.refresh_university_stats(UUID) TO service_role;
+
+-- immutable_array_to_string only runs inside the search_text generated
+-- column at write time (migration 043) — not a client-callable surface.
+REVOKE ALL ON FUNCTION public.immutable_array_to_string(TEXT[], TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.immutable_array_to_string(TEXT[], TEXT) TO service_role;
 
 REVOKE ALL ON FUNCTION public.is_email_allowed(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;

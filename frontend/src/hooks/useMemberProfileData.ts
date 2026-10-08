@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { REVIEW_COLUMNS, REVIEW_UNI_EMBED_PROVINCE } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
-// Kept as one literal so supabase-js can infer the row shape from the select.
-const REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, universities(name, city, province, slug)'
+const REVIEW_WITH_UNI_COLUMNS = `${REVIEW_COLUMNS}, ${REVIEW_UNI_EMBED_PROVINCE}`
 
 type MemberProfile = Pick<
   Tables<'member_profiles'>,
@@ -87,7 +86,7 @@ export const useMemberProfileData = (
 
         const { data: reviewsData, error: reviewsError } = await supabase
           .from('reviews')
-          .select(REVIEW_COLUMNS)
+          .select(REVIEW_WITH_UNI_COLUMNS)
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
 
