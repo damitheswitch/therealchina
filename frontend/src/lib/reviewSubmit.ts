@@ -65,6 +65,16 @@ export interface ReviewSubmitResult {
   universityCreated: boolean
 }
 
+export class ReviewSubmitError extends Error {
+  readonly status?: number
+
+  constructor(message: string, status?: number) {
+    super(message)
+    this.name = 'ReviewSubmitError'
+    this.status = status
+  }
+}
+
 /**
  * Submits a review through the review-submit Edge Function.
  * All submissions (anonymous and authenticated) go through the function:
@@ -75,8 +85,9 @@ export interface ReviewSubmitResult {
 export const submitReview = async (payload: ReviewPayload): Promise<ReviewSubmitResult> => {
   const { data, error } = await supabase.functions.invoke('review-submit', { body: payload })
   if (error) {
+    const status = (error as { context?: { status?: unknown } }).context?.status
     const msg = await parseFunctionError(error)
-    throw new Error(msg)
+    throw new ReviewSubmitError(msg, typeof status === 'number' ? status : undefined)
   }
   return data as ReviewSubmitResult
 }
