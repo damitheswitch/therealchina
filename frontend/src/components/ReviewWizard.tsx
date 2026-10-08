@@ -2,7 +2,23 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
-import { submitReview, type MediaItem, type SubScores } from '../lib/reviewSubmit'
+import {
+  submitReview,
+  ReviewSubmitError,
+  type MediaItem,
+  type SubScores,
+} from '../lib/reviewSubmit'
+import {
+  classifyReviewSubmitFailure,
+  publishDurationBand,
+  resolveReviewEntry,
+  trackReviewEvent,
+  type ReviewAuth,
+  type ReviewEntry,
+  type ReviewEventName,
+  type ReviewStage,
+  type ReviewStep,
+} from '../lib/analytics'
 import { getOrCreateClaimToken } from '../lib/reviewClaim'
 import { updateReview } from '../lib/reviewManage'
 import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
@@ -46,6 +62,22 @@ import { SealStampOverlay } from './SealStampOverlay'
 // ---- Constants ----------------------------------------------------------------
 
 const TOTAL_STEPS = 5
+
+const REVIEW_STEP_EVENTS: Record<ReviewStep, ReviewEventName> = {
+  1: 'review_step_1_viewed',
+  2: 'review_step_2_viewed',
+  3: 'review_step_3_viewed',
+  4: 'review_step_4_viewed',
+  5: 'review_step_5_viewed',
+}
+
+const REVIEW_STEP_STAGES: Record<ReviewStep, ReviewStage> = {
+  1: 'basics',
+  2: 'ratings',
+  3: 'details',
+  4: 'story',
+  5: 'about_you',
+}
 
 const SUBSCORE_FIELDS: { key: keyof SubScores; label: string }[] = [
   { key: 'rating_academics', label: 'Academics / teaching' },
@@ -181,6 +213,7 @@ export const ReviewWizard = ({
   // Step state
   const [step, setStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
 
   // Step 1: Basics
   const [rating, setRating] = useState(initial?.rating ?? 0)
@@ -321,6 +354,12 @@ export const ReviewWizard = ({
   const draftIdRef = useRef<string | null>(draftParam)
   const lastSavedPayloadRef = useRef<ReviewDraftPayload | null>(null)
   const draftPayloadRef = useRef<ReviewDraftPayload>(draftPayload)
+  const reviewStartedRef = useRef(false)
+  const attemptStartedAtRef = useRef<number | null>(null)
+  const viewedStepsRef = useRef(new Set<number>())
+  const storyViewedRef = useRef(false)
+  const reportedValidationStepsRef = useRef(new Set<number>())
+  const submitInFlightRef = useRef(false)
 
   useEffect(() => {
     draftIdRef.current = draftId
@@ -375,6 +414,7 @@ export const ReviewWizard = ({
     const controller = new AbortController()
     const run = async () => {
       let loaded = false
+      let lookupFailed = false
       try {
         if (user && draftParam) {
           const d = await getReviewDraft(draftParam, user.id)
@@ -385,6 +425,7 @@ export const ReviewWizard = ({
             setDraftUniversityId(d.university_id)
             loaded = true
           } else {
+            lookupFailed = true
             showToast('That draft could not be found.', 'error')
           }
         } else if (user && uniParam) {
@@ -418,7 +459,10 @@ export const ReviewWizard = ({
           const local = loadLocalDraft()
           if (local && isDraftWorthSaving(local)) {
             const sameUni = !uniParam || local.selectedUni === uniParam
-            if (sameUni) applyDraftPayload(local)
+            if (sameUni) {
+              applyDraftPayload(local)
+              loaded = true
+            }
           }
         }
 
@@ -432,20 +476,65 @@ export const ReviewWizard = ({
             if (sameUni) {
               applyDraftPayload(local)
               clearLocalDraft()
+              loaded = true
             }
           }
         }
       } catch (err) {
         if (controller.signal.aborted) return
+        lookupFailed = true
         console.error('Error loading draft:', err)
       } finally {
-        if (!controller.signal.aborted) setDraftLoading(false)
+        if (!controller.signal.aborted) {
+          setReviewEntry(
+            resolveReviewEntry({ loaded, requested: Boolean(draftParam), lookupFailed })
+          )
+          setDraftLoading(false)
+        }
       }
     }
 
     run()
     return () => controller.abort()
   }, [editMode, authLoading, user, draftParam, uniParam, applyDraftPayload, showToast])
+
+  const reviewAuth: ReviewAuth = user ? 'signed_in' : 'anonymous'
+
+  const beginReviewAttempt = useCallback(() => {
+    if (reviewStartedRef.current) return
+    reviewStartedRef.current = true
+    attemptStartedAtRef.current = Date.now()
+    void trackReviewEvent({
+      name: 'review_started',
+      data: { flow: 'legacy_5', entry: reviewEntry, auth: reviewAuth },
+    })
+  }, [reviewEntry, reviewAuth])
+
+  useEffect(() => {
+    if (editMode || authLoading || draftLoading) return
+    beginReviewAttempt()
+    const currentStep = step as ReviewStep
+    if (!viewedStepsRef.current.has(currentStep)) {
+      viewedStepsRef.current.add(currentStep)
+      void trackReviewEvent({
+        name: REVIEW_STEP_EVENTS[currentStep],
+        data: {
+          flow: 'legacy_5',
+          entry: reviewEntry,
+          auth: reviewAuth,
+          step: currentStep,
+          stage: REVIEW_STEP_STAGES[currentStep],
+        },
+      })
+    }
+    if (currentStep === 4 && !storyViewedRef.current) {
+      storyViewedRef.current = true
+      void trackReviewEvent({
+        name: 'review_story_viewed',
+        data: { flow: 'legacy_5', entry: reviewEntry, auth: reviewAuth },
+      })
+    }
+  }, [authLoading, beginReviewAttempt, draftLoading, editMode, reviewAuth, reviewEntry, step])
 
   // Resolve the current university slug to an id for the draft row. Optional —
   // drafts for "not listed" universities stay linked by payload only.
@@ -576,6 +665,24 @@ export const ReviewWizard = ({
 
   const clearError = useCallback(() => setError(null), [])
 
+  const reportValidationFailure = useCallback(
+    (s: number) => {
+      const failedStep = s as ReviewStep
+      if (reportedValidationStepsRef.current.has(failedStep)) return
+      reportedValidationStepsRef.current.add(failedStep)
+      void trackReviewEvent({
+        name: 'review_validation_failed',
+        data: {
+          flow: 'legacy_5',
+          auth: reviewAuth,
+          step: failedStep,
+          stage: REVIEW_STEP_STAGES[failedStep],
+        },
+      })
+    },
+    [reviewAuth]
+  )
+
   // ---- Validation ----
 
   const validateStep = (s: number): string | null => {
@@ -617,6 +724,7 @@ export const ReviewWizard = ({
     const err = validateStep(step)
     if (err) {
       setError(err)
+      reportValidationFailure(step)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
@@ -692,25 +800,40 @@ export const ReviewWizard = ({
   }
 
   const handleSubmit = async () => {
+    if (submitInFlightRef.current) return
+    beginReviewAttempt()
     const err = validateStep(4)
     if (err) {
       setError(err)
+      reportValidationFailure(4)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
     // Also validate step 5 has no issues (all optional, so just proceed)
     clearError()
     setLoading(true)
+    submitInFlightRef.current = true
+    void trackReviewEvent({
+      name: 'review_submit_attempted',
+      data: { flow: 'legacy_5', entry: reviewEntry, auth: reviewAuth },
+    })
 
+    let turnstileClientFailed = false
+    let submissionSucceeded = false
     try {
       let cfToken: string | undefined
       if (!user) {
-        if (!reviewTurnstileRef.current) {
-          throw new Error('Verification is still loading. Please wait a moment and try again.')
-        }
-        cfToken = await reviewTurnstileRef.current.getResponsePromise(30000, 250)
-        if (!cfToken) {
-          throw new Error('Verification failed. Please refresh and try again.')
+        try {
+          if (!reviewTurnstileRef.current) {
+            throw new Error('Verification is still loading. Please wait a moment and try again.')
+          }
+          cfToken = await reviewTurnstileRef.current.getResponsePromise(30000, 250)
+          if (!cfToken) {
+            throw new Error('Verification failed. Please refresh and try again.')
+          }
+        } catch (turnstileError) {
+          turnstileClientFailed = true
+          throw turnstileError
         }
       }
 
@@ -758,6 +881,17 @@ export const ReviewWizard = ({
               languagesSpoken: languagesSpoken.length > 0 ? languagesSpoken : undefined,
             }
           : undefined,
+      })
+
+      submissionSucceeded = true
+      void trackReviewEvent({
+        name: 'review_published',
+        data: {
+          flow: 'legacy_5',
+          entry: reviewEntry,
+          auth: reviewAuth,
+          duration_band: publishDurationBand(attemptStartedAtRef.current),
+        },
       })
 
       // For logged-in users, figure out which step-5 answers the profile
@@ -824,9 +958,24 @@ export const ReviewWizard = ({
       }
       setShowStamp(true)
     } catch (error) {
+      const status = error instanceof ReviewSubmitError ? error.status : undefined
+      if (!submissionSucceeded) {
+        void trackReviewEvent({
+          name: 'review_submit_failed',
+          data: {
+            flow: 'legacy_5',
+            entry: reviewEntry,
+            auth: reviewAuth,
+            reason: turnstileClientFailed
+              ? 'turnstile_client'
+              : classifyReviewSubmitFailure(status, !user),
+          },
+        })
+      }
       console.error('Error submitting review:', error)
       showToast(error instanceof Error ? error.message : 'Failed to submit review', 'error')
     } finally {
+      submitInFlightRef.current = false
       setLoading(false)
     }
   }
