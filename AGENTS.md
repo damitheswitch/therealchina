@@ -47,6 +47,7 @@ No DB password needed anywhere — the Management API token covers all of it.
 - Read/query any env: MCP `execute_sql` / `list_migrations` with `project_id` — no `supabase link` needed. Staging `pthlbalvkunugifbzgzk`; prod `hfinkagueeojyyrpauav` (prod = reads only).
 - Push migrations to staging: `supabase db push --project-ref pthlbalvkunugifbzgzk`. It pushes **all** pending local migration files — run it from a clean worktree (`git worktree add`) if the working tree holds unrelated WIP migrations.
 - Apply a data SQL file (e.g. `seed_merge.sql`) to staging: `supabase link --project-ref <ref>` once per worktree, then `supabase db query --linked --file <path>`. Plain `--project-ref` on `db query` errors — it only applies to the linked project.
+- **`SUPABASE_PROJECT_ID` env var hazard (verified 2026-10):** `config.toml` uses `project_id = "env(SUPABASE_PROJECT_ID)"` for the local stack, and the main worktree's env sets it to `hfinkagueeojyyrpauav` — which is also the **prod** ref. If that variable is exported when running `supabase db query --linked`, it overrides the `--linked` project and the query runs against **prod**. For remote queries, run `supabase db query --linked` with the variable unset, and sanity-check which project answered (e.g. `SELECT current_database(), inet_server_addr()` or a known row) before trusting write results.
 - `seed_merge.sql` is UPDATE-only — safe to replay on any env that has the uni dataset.
 
 ### Local stack
