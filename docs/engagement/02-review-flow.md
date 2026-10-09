@@ -3,8 +3,12 @@
 **Depends on:** Phase 1 baseline recorded (production tracker working + dated
 pre-change baseline captured — not done yet; see `01-measurement.md`).
 **Blocks:** Phases 3 to 7.
-**Status:** implemented on `feat/phase2-fast-review-flow` (unreleased — do not
-merge to `staging` or `master` until the Phase 1 gate opens).
+**Status:** implemented on `feat/phase2-fast-review-flow-clean` (unreleased —
+do not merge to `staging` or `master` until the Phase 1 gate opens). The
+earlier working branch `feat/phase2-fast-review-flow` collected two unrelated
+commits from a parallel session (seed backfill `649641c`, column drop
+`bda005a`) because it was checked out in the shared worktree; the `-clean`
+branch cherry-picks only the Phase 2 commits and is the one to review.
 **Overview:** [00-overview.md](00-overview.md) §3 (diagnosis) and §6 (target flow).
 
 ## Goal
@@ -159,6 +163,39 @@ ReviewStory,ReviewSuccess,BoostCards,ReviewEditForm}.tsx`,
 
 This branch must not reach production until the Phase 1 gate opens: the
 production Umami tracker verified delivering events **and** a dated
-pre-change baseline captured. Merge `feat/phase2-fast-review-flow` into
+pre-change baseline captured. Merge `feat/phase2-fast-review-flow-clean` into
 `staging` only for a deploy preview; do not merge `staging` into `master`
 with it. The legacy 5-step flow keeps serving production until then.
+
+## Local verification (2026-10-09, dev + local Supabase)
+
+Passed: typecheck, lint (5 pre-existing Fast Refresh warnings), format,
+build, prerender, 324 unit tests. Browser e2e against the local stack:
+
+- Signed-in publish (Fudan, rating, text, tag) → success screen with live
+  preview, Boost offer, "See it on the page" link.
+- Boost: program+degree card saved via `review-manage` (`program`,
+  `degree_level` persisted); ratings card saved (`rating_academics`);
+  money card saved (`tuition_range`, `funding_type`); mid-card "Stop here"
+  discarded unsaved picks (`enrollment_status`, `start_year` stayed null).
+- Draft autosave (server PATCH/POST), `?draft=` resume landing on screen 2,
+  legacy v1 draft (step 4, no `v`) resumed and published with all old
+  fields intact (`program`, `subscores`, `pros`, years, `language`).
+- Draft row deleted on publish — required a fix: a debounced autosave could
+  fire during the seal animation while `phase` was still `'form'`, PATCH the
+  just-deleted draft, and `saveReviewDraft`'s zero-row fallback re-INSERTed
+  it. `submittedRef` now blocks post-submit autosaves (`9e4acd0`).
+- University not-listed path: proposed "Testville Technical College" →
+  server created the university row and the review published against it.
+  (The server accepts only `name` + `city` for new universities — `province`
+  is collected in the draft but not persisted; pre-existing behavior.)
+- One-page edit from MyReviews: modify → confirm dialog → save → row
+  updated; enriched review renders correctly on the university page.
+- Anonymous path: submit without Turnstile token rejected 400 by
+  `review-submit` (fail-closed). The local test sitekey errored (400020)
+  in the browser, so an anonymous *happy path* was not completed locally —
+  verify on the deploy preview.
+
+Not verifiable locally: Umami payload delivery (no site ID locally or on
+staging; unit tests cover payload shape), real Turnstile pass, the
+anonymous sign-up offer on the success screen (needs an anon publish).
