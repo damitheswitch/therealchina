@@ -74,6 +74,36 @@ export const flightCounts = (
   return counts
 }
 
+// Contact picker helpers. flight_listings.contact_platforms stores which of
+// the owner's profile platforms a listing exposes:
+//   NULL      -> every profile handle (legacy rows and "select all")
+//   []        -> no contact shown
+//   ['wechat']-> handles on those platforms only
+
+// Checkbox state for the form: a stored array is intersected with the
+// platforms still on the profile; anything else (NULL, malformed) means all.
+export const contactPlatformSelection = (
+  stored: unknown,
+  currentPlatforms: readonly string[]
+): Set<string> => {
+  const current = new Set(currentPlatforms)
+  if (!Array.isArray(stored)) return current
+  return new Set(stored.filter((p): p is string => typeof p === 'string' && current.has(p)))
+}
+
+// Value to persist: "all checked" collapses to NULL so the listing keeps
+// following future profile handles; a real subset (including empty) stores
+// as an explicit array.
+export const contactPlatformsToStore = (
+  selected: ReadonlySet<string> | null,
+  allPlatforms: readonly string[]
+): string[] | null => {
+  if (!selected) return null
+  const all = new Set(allPlatforms)
+  const coversAll = selected.size === all.size && [...selected].every((p) => all.has(p))
+  return coversAll ? null : [...selected]
+}
+
 // departedLast keeps actionable rows ahead of history in mixed tabs
 // (All / My Flights) regardless of the chosen sort direction.
 export const sortListings = (

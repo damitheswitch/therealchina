@@ -37,7 +37,7 @@ export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}
       const { data, error: fetchError } = await supabase
         .from('flight_listings_with_profile')
         .select(
-          'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle'
+          'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle, contact_platforms'
         )
         // No client-side is_active filter: the view already returns
         // active rows plus the viewer's own closed listings
