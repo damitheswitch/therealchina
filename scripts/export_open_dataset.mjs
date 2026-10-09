@@ -21,22 +21,31 @@ const env = {
   VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? fileEnv.VITE_SUPABASE_URL,
   VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY ?? fileEnv.VITE_SUPABASE_ANON_KEY,
 }
+const positional = process.argv.slice(2).filter((a, i, all) => !a.startsWith('--') && all[i - 1] !== '--json')
 const OUT_DIR = resolve(
-  process.argv[2] ?? join(ROOT, '..', 'china-universities-dataset', 'data')
+  positional[0] ?? join(ROOT, '..', 'china-universities-dataset', 'data')
 )
 const RANK_YEAR = 2026
 const PREV_RANK_YEAR = 2021
 
-const url = new URL(`${env.VITE_SUPABASE_URL}/rest/v1/universities`)
-url.searchParams.set(
-  'select',
-  'slug,slug_aliases,name,name_zh,city,province,country,uni_category,uni_type,languages_of_instruction,website,logo_url,rankings'
-)
-url.searchParams.set('limit', '2000')
-
-const res = await fetch(url, { headers: { apikey: env.VITE_SUPABASE_ANON_KEY } })
-if (!res.ok) throw new Error(`REST ${res.status}: ${await res.text()}`)
-const rows = await res.json()
+// --json <path>: read rows from a JSON file instead of the REST API
+// (a `db query --linked` dump: [{"json_agg": [ ...rows... ]}]).
+const jsonIdx = process.argv.indexOf('--json')
+let rows
+if (jsonIdx >= 0) {
+  const dump = JSON.parse(readFileSync(process.argv[jsonIdx + 1], 'utf8'))
+  rows = dump[0]?.json_agg ?? dump.json_agg ?? dump
+} else {
+  const url = new URL(`${env.VITE_SUPABASE_URL}/rest/v1/universities`)
+  url.searchParams.set(
+    'select',
+    'slug,slug_aliases,name,name_zh,city,province,country,uni_category,website,logo_url,rankings'
+  )
+  url.searchParams.set('limit', '2000')
+  const res = await fetch(url, { headers: { apikey: env.VITE_SUPABASE_ANON_KEY } })
+  if (!res.ok) throw new Error(`REST ${res.status}: ${await res.text()}`)
+  rows = await res.json()
+}
 // rank is stored in jsonb — sort numerically client-side (text order would
 // give 1, 10, 100, 2…)
 rows.sort((a, b) => {
@@ -56,8 +65,6 @@ const records = rows.map((r) => {
     province: r.province,
     country: r.country,
     category: r.uni_category,
-    uni_type: r.uni_type,
-    languages_of_instruction: r.languages_of_instruction ?? [],
     website: r.website,
     logo_url: r.logo_url,
     slug_aliases: r.slug_aliases ?? [],
@@ -81,7 +88,7 @@ writeFileSync(join(OUT_DIR, 'universities.json'), JSON.stringify(records, null, 
 const csvEsc = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))
 const csvCols = [
   'slug', 'name', 'name_zh', 'city', 'province', 'country', 'category',
-  'uni_type', 'languages_of_instruction', 'website',
+  'website',
   'national_rank', 'score', 'tags', 'institution_url', 'logo_url', 'slug_aliases',
   'national_rank_2021', 'score_2021',
 ]
@@ -90,7 +97,7 @@ const csv = [
   ...records.map((r) =>
     [
       r.slug, r.name, r.name_zh, r.city, r.province, r.country, r.category,
-      r.uni_type, r.languages_of_instruction.join(';'), r.website,
+      r.website,
       r.shanghairanking.national_rank, r.shanghairanking.score,
       r.shanghairanking.tags.join(';'), r.shanghairanking.url,
       r.logo_url, r.slug_aliases.join(';'),
@@ -117,8 +124,7 @@ const sql = [
   `  province TEXT,`,
   `  country TEXT,`,
   `  category TEXT,`,
-  `  uni_type TEXT,`,
-  `  languages_of_instruction TEXT[] NOT NULL DEFAULT '{}',`,
+
   `  website TEXT,`,
   `  national_rank INTEGER,`,
   `  score NUMERIC(6,1),`,
@@ -132,8 +138,8 @@ const sql = [
   ``,
   ...records.map(
     (r) =>
-      `INSERT INTO china_universities (slug, name, name_zh, city, province, country, category, uni_type, languages_of_instruction, website, national_rank, score, tags, institution_url, logo_url, slug_aliases, national_rank_2021, score_2021)\n` +
-      `VALUES (${s(r.slug)}, ${s(r.name)}, ${s(r.name_zh)}, ${s(r.city)}, ${s(r.province)}, ${s(r.country)}, ${s(r.category)}, ${s(r.uni_type)}, ${arr(r.languages_of_instruction)}, ${s(r.website)}, ${r.shanghairanking.national_rank ?? 'NULL'}, ${r.shanghairanking.score ?? 'NULL'}, ${arr(r.shanghairanking.tags)}, ${s(r.shanghairanking.url)}, ${s(r.logo_url)}, ${arr(r.slug_aliases)}, ${r.shanghairanking.national_rank_2021 ?? 'NULL'}, ${r.shanghairanking.score_2021 ?? 'NULL'})\n` +
+      `INSERT INTO china_universities (slug, name, name_zh, city, province, country, category, website, national_rank, score, tags, institution_url, logo_url, slug_aliases, national_rank_2021, score_2021)\n` +
+      `VALUES (${s(r.slug)}, ${s(r.name)}, ${s(r.name_zh)}, ${s(r.city)}, ${s(r.province)}, ${s(r.country)}, ${s(r.category)}, ${s(r.website)}, ${r.shanghairanking.national_rank ?? 'NULL'}, ${r.shanghairanking.score ?? 'NULL'}, ${arr(r.shanghairanking.tags)}, ${s(r.shanghairanking.url)}, ${s(r.logo_url)}, ${arr(r.slug_aliases)}, ${r.shanghairanking.national_rank_2021 ?? 'NULL'}, ${r.shanghairanking.score_2021 ?? 'NULL'})\n` +
       `ON CONFLICT (slug) DO NOTHING;`
   ),
 ].join('\n')

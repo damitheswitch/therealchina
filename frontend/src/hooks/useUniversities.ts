@@ -30,8 +30,6 @@ type UniversityRow = Pick<
   | 'slug'
   | 'logo_url'
   | 'is_verified'
-  | 'uni_type'
-  | 'languages_of_instruction'
   | 'website'
   | 'rankings'
   | 'slug_aliases'

@@ -14,7 +14,7 @@ export const REVIEW_HEAD_COLUMNS = 'id, rating, created_at'
 
 // University row as rendered on directory/city/hub/detail pages.
 export const UNI_COLUMNS =
-  'id, name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings, slug_aliases'
+  'id, name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, website, rankings, slug_aliases'
 
 // Own-profile row (the columns ProfileContext exposes to the app).
 export const PROFILE_COLUMNS =
