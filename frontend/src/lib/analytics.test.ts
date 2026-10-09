@@ -120,6 +120,55 @@ describe('review analytics privacy boundary', () => {
     ).toBeNull()
   })
 
+  it('accepts boost events only with their exact card schemas', async () => {
+    vi.stubEnv('VITE_UMAMI_WEBSITE_ID', 'umami-site-id')
+    const { buildUmamiPayload } = await loadAnalytics()
+
+    expect(
+      buildUmamiPayload({
+        name: 'boost_card_completed',
+        data: { flow: 'fast_2', auth: 'signed_in', card: 'ratings' },
+      })
+    ).toEqual({
+      website: 'umami-site-id',
+      url: '/review',
+      name: 'boost_card_completed',
+      data: { flow: 'fast_2', auth: 'signed_in', card: 'ratings' },
+    })
+    expect(
+      buildUmamiPayload({
+        name: 'boost_exited',
+        data: { flow: 'fast_2', auth: 'signed_in', after_card: 'money' },
+      })
+    ).not.toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'boost_exited',
+        data: { flow: 'fast_2', auth: 'signed_in', after_card: 'none' },
+      })
+    ).not.toBeNull()
+
+    // Extra or wrong keys still get dropped.
+    expect(
+      buildUmamiPayload({
+        name: 'boost_card_completed',
+        data: { flow: 'fast_2', auth: 'signed_in', card: 'ratings', review_id: 'r-1' },
+      } as never)
+    ).toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'boost_exited',
+        data: { flow: 'fast_2', auth: 'signed_in', after_card: 'context' },
+      } as never)
+    ).toBeNull()
+    expect(
+      buildUmamiPayload({
+        name: 'boost_exited',
+        data: { flow: 'fast_2', auth: 'signed_in' },
+      } as never)
+    ).toBeNull()
+  })
+
   it('only enables the tracker on an explicitly allowed hostname', async () => {
     vi.stubEnv('VITE_UMAMI_WEBSITE_ID', 'umami-site-id')
     vi.stubEnv('VITE_UMAMI_ALLOWED_HOSTNAMES', 'staging.example.net')
