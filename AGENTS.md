@@ -46,6 +46,7 @@ No DB password needed anywhere — the Management API token covers all of it.
 
 - Read/query any env: MCP `execute_sql` / `list_migrations` with `project_id` — no `supabase link` needed. Staging `pthlbalvkunugifbzgzk`; prod `hfinkagueeojyyrpauav` (prod = reads only).
 - Push migrations to staging: `supabase db push --project-ref pthlbalvkunugifbzgzk`. It pushes **all** pending local migration files — run it from a clean worktree (`git worktree add`) if the working tree holds unrelated WIP migrations.
+- **Version collisions on staging**: other feature branches push their migrations to trc-staging for previews, so the remote can hold versions with no local file (e.g. boost branch owns 044-046 while master/staging only ship 043). Run `supabase migration list --project-ref pthlbalvkunugifbzgzk` before numbering a new migration; if remote is ahead, number yours after the highest remote version, not the highest local file. If `db push` errors "Remote migration versions not found in local migrations directory", extract the missing files from their feature branch into `supabase/migrations/` untracked (`git show <branch>:<path> > <path>`), push, then delete them — do NOT `migration repair` them away.
 - Apply a data SQL file (e.g. `seed_merge.sql`) to staging: `supabase link --project-ref <ref>` once per worktree, then `supabase db query --linked --file <path>`. Plain `--project-ref` on `db query` errors — it only applies to the linked project.
 - `seed_merge.sql` is UPDATE-only — safe to replay on any env that has the uni dataset.
 
@@ -53,6 +54,7 @@ No DB password needed anywhere — the Management API token covers all of it.
 
 - `docker info` before `supabase status`/`start` — Docker Desktop isn't always running.
 - `db reset` order: migrations → `seed.sql`. Seed inserts that join onto tables populated only by `seed.sql` silently insert 0 rows when placed in a migration — put them in `seed.sql`, or re-apply the file manually after reset.
+- `npm run types:local` fails with a TLS error on the local DB; append `?sslmode=disable` to the db-url: `npx supabase gen types typescript --db-url "postgresql://postgres:postgres@localhost:54322/postgres?sslmode=disable" > frontend/src/types/database.types.ts`. Note the generated file can drift from what is committed — check `git diff` after regenerating and keep only intended changes.
 
 ### GitHub / web
 
