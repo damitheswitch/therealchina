@@ -266,7 +266,7 @@ CREATE TABLE IF NOT EXISTS public.flight_listings (
   currency TEXT DEFAULT 'CNY',
   notes TEXT,
   is_active BOOLEAN DEFAULT TRUE,
-  -- Platforms the owner chose to expose on this listing (migration 044).
+  -- Platforms the owner chose to expose on this listing (migration 047).
   -- NULL = all profile handles, [] = none. Keys only, never handle values.
   contact_platforms JSONB DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
