@@ -39,8 +39,7 @@ const RESULTS: Record<string, { status: number; body: Record<string, unknown> }>
   locked: {
     status: 429,
     body: {
-      error:
-        'Too many failed attempts on this review. Create an account to claim and edit it instead.',
+      error: 'Too many attempts. Give it a few minutes and try again.',
     },
   },
   over_limit: {

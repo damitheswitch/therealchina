@@ -178,13 +178,14 @@ CREATE TABLE IF NOT EXISTS public.reviewer_context (
   claimed_at TIMESTAMPTZ,
   claim_dismissed BOOLEAN NOT NULL DEFAULT FALSE,
   -- Phase 3 anonymous Boost: only the SHA-256 digest of the per-review
-  -- capability lives here — never the raw token. boost_save_count /
-  -- boost_fail_count bound successful saves (30) and wrong-token probes (20)
-  -- inside apply_anonymous_boost.
+  -- capability lives here — never the raw token. boost_save_count bounds
+  -- successful saves (30); wrong-token probes are throttled by
+  -- boost_next_attempt_at exponential backoff inside apply_anonymous_boost.
   boost_secret_hash TEXT
     CHECK (boost_secret_hash IS NULL OR boost_secret_hash ~ '^[0-9a-f]{64}$'),
   boost_save_count INT NOT NULL DEFAULT 0,
-  boost_fail_count INT NOT NULL DEFAULT 0
+  boost_fail_count INT NOT NULL DEFAULT 0,
+  boost_next_attempt_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -839,13 +840,16 @@ BEGIN
     RETURN 'not_found';
   END IF;
 
-  IF v_ctx.boost_fail_count >= 20 THEN
+  IF v_ctx.boost_next_attempt_at IS NOT NULL AND now() < v_ctx.boost_next_attempt_at THEN
     RETURN 'locked';
   END IF;
 
   IF v_ctx.boost_secret_hash <> p_boost_hash THEN
     UPDATE public.reviewer_context
-      SET boost_fail_count = boost_fail_count + 1
+      SET boost_fail_count = boost_fail_count + 1,
+          boost_next_attempt_at =
+            now() + LEAST(power(2, LEAST(boost_fail_count + 1, 10))::int, 600)
+              * INTERVAL '1 second'
       WHERE review_id = p_review_id;
     RETURN 'bad_token';
   END IF;
@@ -903,7 +907,9 @@ BEGIN
   WHERE id = p_review_id;
 
   UPDATE public.reviewer_context
-    SET boost_save_count = boost_save_count + 1
+    SET boost_save_count = boost_save_count + 1,
+        boost_fail_count = 0,
+        boost_next_attempt_at = NULL
     WHERE review_id = p_review_id;
 
   RETURN 'ok';

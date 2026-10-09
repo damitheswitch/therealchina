@@ -312,6 +312,7 @@ async function handleSubmit(req: Request): Promise<Response> {
   // token exists — it is the claim link, so it must exist even when the
   // reviewer skipped every optional field. Best-effort: a context failure
   // must not fail the review that was just saved.
+  let boostAvailable = false
   if (isAnon && (reviewerContext || claimToken || boostHash)) {
     const hasContext =
       reviewerContext !== null &&
@@ -333,6 +334,11 @@ async function handleSubmit(req: Request): Promise<Response> {
       })
       if (contextError) {
         console.error('Reviewer context insert error:', contextError)
+      } else {
+        // Only report the capability usable when the digest actually landed —
+        // the client hides the Boost offer otherwise instead of promising a
+        // save that can only 403.
+        boostAvailable = boostHash !== null
       }
     }
   }
@@ -343,6 +349,7 @@ async function handleSubmit(req: Request): Promise<Response> {
       reviewId: review.id,
       universitySlug: university.slug,
       universityCreated: university.created,
+      boostAvailable,
     },
     200
   )

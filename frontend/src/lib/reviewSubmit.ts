@@ -66,6 +66,10 @@ export interface ReviewSubmitResult {
   reviewId: string
   universitySlug: string
   universityCreated: boolean
+  // Anonymous-only: the server persisted the Boost capability's digest. When
+  // false, the client must not store the token or offer Boost — saves would
+  // always 403.
+  boostAvailable?: boolean
 }
 
 export class ReviewSubmitError extends Error {

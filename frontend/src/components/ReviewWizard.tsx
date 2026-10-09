@@ -638,7 +638,9 @@ export const ReviewWizard = ({
       }
 
       const slug = result.universityCreated ? null : result.universitySlug
-      if (boostToken) storeBoostToken(result.reviewId, boostToken)
+      // Only keep the capability when the server actually persisted its
+      // digest — otherwise anonymous Boost would be offered but always 403.
+      if (boostToken && result.boostAvailable) storeBoostToken(result.reviewId, boostToken)
       setPublished({
         reviewId: result.reviewId,
         universitySlug: slug,
