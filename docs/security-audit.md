@@ -49,3 +49,17 @@ Fixed in code, pending deploy: `checkRateLimit` in `supabase/functions/_shared/g
 
 - Supabase security advisors (authoritative lint): the Supabase MCP server was unreachable during the audit. Re-run `get_advisors` when available.
 - HaveIBeenPwned password check, token/OTP expiries: dashboard-only settings.
+
+## Phase 3: anonymous Boost write path (2026-10)
+
+New anonymous write surface: `review-boost` Edge Function + `apply_anonymous_boost` RPC (migration 044). Design decisions and what they rest on:
+
+- **Capability, not account.** New anonymous reviews mint a per-review token in the browser (`crypto.getRandomValues`, 256 bits, base64url). There is no `Math.random` fallback — without a CSPRNG the review submits but cannot be Boosted. The legacy shared `claim_token` is not accepted for Boost.
+- **Digest at rest.** `reviewer_context.boost_secret_hash` stores SHA-256(token); the raw token never touches the DB or logs. A leaked `reviewer_context` row (service-role only table) does not yield a usable capability. `review-claim` hashes presented tokens before matching, so the same capability doubles as the device-claim matcher and is cleared on any resolution.
+- **Authorization inside the write.** The RPC locks the review then the context row `FOR UPDATE`, then evaluates: hash match, `user_id`/`owner_id`/`claim_dismissed` all unset, `deleted_at IS NULL`, `created_at + 24h > now()`, `boost_save_count < 30`, `boost_fail_count < 20`. Verified locally with held locks: a committed claim mid-race flips the result to `claimed`; a committed Boost lets the claim proceed — no torn state.
+- **Counter limits inside the transaction.** 30 successful saves and 20 wrong-token attempts per review per window, incremented in the same transaction as the update — no header or IP is consulted, and an RPC failure rejects the request (fail closed). A review locked by wrong-token probes still resolves via sign-up claim.
+- **Allowlist twice.** `validateBoostPatch` rejects any key outside the 20 Boost columns; the RPC re-checks patch keys before writing (`bad_fields`). Partial patches merge into stored values — stale client state cannot clobber fields the card doesn't own. `rating`, `text`, university, owner, `recommend`, `tags`, `media`, `deleted_at` are unreachable.
+- **Grants.** `apply_anonymous_boost` revoked from `PUBLIC, anon, authenticated`; `service_role` only — the Edge Function is the single entry point. New `reviewer_context` columns inherit the table's existing lockdown.
+- **Not opened.** Media upload still requires an `upload_sessions` token minted by a user JWT — anonymous Boost cannot attach media. `review-manage` remains JWT-only. `claim_token`/`email` claim flow unchanged for legacy rows.
+- **Residual trade-off.** Wrong-token probes can deliberately burn a review's 20-failure budget and lock its anonymous Boost window. Accepted per D3.4: the reviewer keeps the claim path, and a per-reviewer lockout prevents an attacker from racing their own saves. Worth revisiting only if abuse reports show targeted lockouts.
+- **Unverified on staging** as of this note: deployed `review-boost` + claim-hash matching end to end; signed-in Boost and `?draft=` resume also remain unverified on staging (Phase 2 doc tracks those).

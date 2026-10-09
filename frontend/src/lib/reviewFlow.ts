@@ -1,5 +1,6 @@
 import type { MediaItem, SubScores } from './reviewSubmit'
 import type { ReviewEditPayload } from './reviewManage'
+import type { BoostFields } from './reviewBoost'
 import { DRAFT_PAYLOAD_VERSION, type ReviewDraftPayload } from './reviewDrafts'
 import type { BoostCard } from './analytics'
 
@@ -124,6 +125,47 @@ export const BOOST_CARD_ORDER: BoostCard[] = [
   'pros_cons',
   'media',
 ]
+
+// Anonymous Boost (Phase 3) can only write the columns the review-boost
+// function allowlists — no media card (uploads are a separate surface) and no
+// tags card exists in Boost at all.
+export const ANON_BOOST_CARDS: BoostCard[] = BOOST_CARD_ORDER.filter((c) => c !== 'media')
+
+// Per-card request fields for the anonymous path — the client sends exactly
+// the card's current values, so a stale draft can never rewrite columns a
+// later card owns.
+export const buildBoostPatch = (values: ReviewFieldValues, card: BoostCard): BoostFields => {
+  switch (card) {
+    case 'program':
+      return {
+        program: values.program.trim() || null,
+        degreeLevel: values.degreeLevel || null,
+      }
+    case 'ratings':
+      return { subscores: values.subscores }
+    case 'money':
+      return {
+        tuitionRange: values.tuitionRange || null,
+        livingCostRange: values.livingCostRange || null,
+        fundingType: values.fundingType || null,
+        fundingCoverage: values.fundingType !== 'self' ? values.fundingCoverage || null : null,
+      }
+    case 'details':
+      return {
+        enrollmentStatus: values.enrollmentStatus || null,
+        startYear: values.startYear === '' ? null : values.startYear,
+        endYear: values.endYear === '' ? null : values.endYear,
+        languageOfInstruction: values.languageOfInstruction || null,
+      }
+    case 'pros_cons':
+      return {
+        pros: values.pros.trim() || null,
+        cons: values.cons.trim() || null,
+      }
+    default:
+      return {}
+  }
+}
 
 export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> = {
   program: {

@@ -8,14 +8,31 @@ export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 // string, where they could otherwise smuggle extra filter terms.
 export const EMAIL_RE = /^[^\s@,()]+@[^\s@,()]+\.[^\s@,()]{2,}$/
 
+const HASH_RE = /^[0-9a-f]{64}$/i
+
+export function asBoostHash(value: unknown): string | null {
+  return typeof value === 'string' && HASH_RE.test(value) ? value.toLowerCase() : null
+}
+
 // PostgREST .or() string for "this caller has a claim path to the row":
-// the browser's claim token, or their verified auth email matching the
-// address the anonymous reviewer left. Both atoms are re-validated here —
-// the string this builds lands in a raw .or() filter, where commas/parens
-// could otherwise smuggle extra conditions.
-export function claimMatcher(claimToken: string | null, email: string | null): string | null {
+// the browser's legacy claim token, a per-review Boost capability hash
+// (new anonymous reviews; the raw token is hashed before matching), or their
+// verified auth email matching the address the anonymous reviewer left. Every
+// atom is re-validated here — the string this builds lands in a raw .or()
+// filter, where commas/parens could otherwise smuggle extra conditions.
+export function claimMatcher(
+  claimToken: string | null,
+  email: string | null,
+  boostHashes: string[] = []
+): string | null {
   const parts: string[] = []
   if (claimToken && UUID_RE.test(claimToken)) parts.push(`claim_token.eq.${claimToken}`)
+  const hashes = boostHashes.filter((h) => HASH_RE.test(h))
+  if (hashes.length === 1) {
+    parts.push(`boost_secret_hash.eq.${hashes[0].toLowerCase()}`)
+  } else if (hashes.length > 1) {
+    parts.push(`boost_secret_hash.in.(${hashes.map((h) => h.toLowerCase()).join(',')})`)
+  }
   if (email && EMAIL_RE.test(email)) {
     parts.push(`email.ilike.${email.replace(/([%_\\])/g, '\\$1')}`)
   }
