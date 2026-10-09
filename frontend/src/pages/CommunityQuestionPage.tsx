@@ -3,31 +3,18 @@ import { Link, useParams } from 'react-router-dom'
 import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
 import { VotePill } from '../components/community/VotePill'
+import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
+import { useProfileContext } from '../contexts/ProfileContext'
 import { useToast } from '../contexts/ToastContext'
-import { categoryLabel, type CommunityAnswer } from '../lib/community'
-import { MOCK_QUESTIONS, MOCK_VIEWER } from '../lib/communityMock'
+import { categoryLabel, type CommunityAnswer, type CommunityQuestion } from '../lib/community'
+import { MOCK_QUESTIONS } from '../lib/communityMock'
 
 // /community/q/:slug — question + answers. PROTOTYPE: communityMock.ts only,
 // votes/accepts/posts mutate local state and nothing is persisted.
 export const CommunityQuestionPage = () => {
   const { slug } = useParams<{ slug: string }>()
   const question = MOCK_QUESTIONS.find((q) => q.slug === slug)
-  const { showToast } = useToast()
-
-  const [answers, setAnswers] = useState<CommunityAnswer[]>(question?.answers ?? [])
-  const [acceptedId, setAcceptedId] = useState<string | null>(question?.acceptedAnswerId ?? null)
-  const [draft, setDraft] = useState('')
-  const [postAnon, setPostAnon] = useState(false)
-
-  const sorted = useMemo(
-    () =>
-      [...answers].sort((a, b) => {
-        if (a.id === acceptedId) return -1
-        if (b.id === acceptedId) return 1
-        return b.upvotes - a.upvotes
-      }),
-    [answers, acceptedId]
-  )
 
   if (!question) {
     return (
@@ -42,6 +29,32 @@ export const CommunityQuestionPage = () => {
     )
   }
 
+  // key remounts the view per slug — router reuses this route for any
+  // /community/q/* navigation, so answers/draft must not bleed across.
+  return <QuestionView key={question.slug} question={question} />
+}
+
+const QuestionView = ({ question }: { question: CommunityQuestion }) => {
+  const { showToast } = useToast()
+  const { user } = useAuth()
+  const { openAuthModal } = useAuthModal()
+  const { profile } = useProfileContext()
+
+  const [answers, setAnswers] = useState<CommunityAnswer[]>(question.answers)
+  const [acceptedId, setAcceptedId] = useState<string | null>(question.acceptedAnswerId)
+  const [draft, setDraft] = useState('')
+  const [postAnon, setPostAnon] = useState(false)
+
+  const sorted = useMemo(
+    () =>
+      [...answers].sort((a, b) => {
+        if (a.id === acceptedId) return -1
+        if (b.id === acceptedId) return 1
+        return b.upvotes - a.upvotes
+      }),
+    [answers, acceptedId]
+  )
+
   const flag = () => showToast('Report noted. Our team will take a look.', 'success')
 
   const accept = (a: CommunityAnswer) => {
@@ -52,11 +65,17 @@ export const CommunityQuestionPage = () => {
   const postAnswer = () => {
     const text = draft.trim()
     if (!text) return
+    if (!user) {
+      openAuthModal('login')
+      return
+    }
     setAnswers((prev) => [
       ...prev,
       {
         id: `a-new-${prev.length}`,
-        author: postAnon ? null : MOCK_VIEWER,
+        author: postAnon
+          ? null
+          : { id: user.id, displayName: profile?.display_name ?? 'Anonymous' },
         body: [text],
         upvotes: 0,
         ago: 'just now',
@@ -170,35 +189,50 @@ export const CommunityQuestionPage = () => {
 
       <section className="answer-form" aria-label="Write an answer">
         <h2 className="answer-form-title">Your answer</h2>
-        <label htmlFor="answer-draft" className="sr-only">
-          Your answer
-        </label>
-        <textarea
-          id="answer-draft"
-          className="form-textarea"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Been through this? Share what actually happened: steps, costs, office names, what you would do differently."
-        />
-        <div className="answer-form-row">
-          <label className="form-checkbox-label" htmlFor="answer-anon">
-            <input
-              id="answer-anon"
-              type="checkbox"
-              className="form-checkbox"
-              checked={postAnon}
-              onChange={(e) => setPostAnon(e.target.checked)}
+        {user ? (
+          <>
+            <label htmlFor="answer-draft" className="sr-only">
+              Your answer
+            </label>
+            <textarea
+              id="answer-draft"
+              className="form-textarea"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Been through this? Share what actually happened: steps, costs, office names, what you would do differently."
             />
-            Post anonymously
-          </label>
-          <button type="button" className="btn btn-primary" onClick={postAnswer}>
-            Post answer
-          </button>
-        </div>
-        {postAnon && (
-          <p className="form-hint">
-            Your name is hidden from everyone. Moderators can still trace abuse.
-          </p>
+            <div className="answer-form-row">
+              <label className="form-checkbox-label" htmlFor="answer-anon">
+                <input
+                  id="answer-anon"
+                  type="checkbox"
+                  className="form-checkbox"
+                  checked={postAnon}
+                  onChange={(e) => setPostAnon(e.target.checked)}
+                />
+                Post anonymously
+              </label>
+              <button type="button" className="btn btn-primary" onClick={postAnswer}>
+                Post answer
+              </button>
+            </div>
+            {postAnon && (
+              <p className="form-hint">
+                Your name is hidden from everyone. Moderators can still trace abuse.
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="qa-empty answer-login">
+            <span>Been through this? Sign in to share what happened.</span>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => openAuthModal('login')}
+            >
+              Sign in to answer
+            </button>
+          </div>
         )}
       </section>
     </div>
