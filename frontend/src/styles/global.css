@@ -6071,6 +6071,13 @@ a.claim-review-uni:hover {
   flex-wrap: wrap;
   margin-top: var(--sp-2);
 }
+.answer-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
 .ask-page {
   max-width: 72rem;
   padding-bottom: var(--sp-6);
