@@ -1,6 +1,7 @@
 -- Website backfill from uni dataset/Chinese_Universities.csv (link column). UPDATE-only, idempotent.
 -- Keyed by name_zh / name / SR logo id (DB slugs differ from export slugs).
 -- Only fills empty website; the 12 curated English-subdomain URLs are preserved.
+-- Two upstream link errors corrected vs the source file: cumtb.edu.cn for CUMT Beijing, huse.edu.cn for the Yongzhou HNUS&E.
 
 UPDATE universities SET website = 'https://www.tsinghua.edu.cn/' WHERE name_zh = '清华大学' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.pku.edu.cn/' WHERE name_zh = '北京大学' AND (website IS NULL OR website = '');
@@ -73,7 +74,7 @@ UPDATE universities SET website = 'https://www.nwu.edu.cn/' WHERE name_zh = '西
 UPDATE universities SET website = 'https://www.ynu.edu.cn/' WHERE name_zh = '云南大学' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.dhu.edu.cn/' WHERE name_zh = '东华大学' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'http://www.ncu.edu.cn/' WHERE name_zh = '南昌大学' AND (website IS NULL OR website = '');
-UPDATE universities SET website = 'http://www.cumt.edu.cn/' WHERE name_zh = '中国矿业大学（北京）' AND (website IS NULL OR website = '');
+UPDATE universities SET website = 'https://www.cumtb.edu.cn/' WHERE name_zh = '中国矿业大学（北京）' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.fzu.edu.cn/' WHERE name_zh = '福州大学' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.nbu.edu.cn/' WHERE name_zh = '宁波大学' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.scnu.edu.cn/' WHERE name_zh = '华南师范大学' AND (website IS NULL OR website = '');
@@ -457,7 +458,7 @@ UPDATE universities SET website = 'https://www.bttc.edu.cn/' WHERE name_zh = '�
 UPDATE universities SET website = 'https://www.thnu.edu.cn/' WHERE name_zh = '通化师范学院' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.jnxy.edu.cn/' WHERE name_zh = '济宁学院' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'https://www.wnu.edu.cn/' WHERE name_zh = '渭南师范学院' AND (website IS NULL OR website = '');
-UPDATE universities SET website = 'https://www.hnust.edu.cn/' WHERE name_zh = '湖南科技学院' AND (website IS NULL OR website = '');
+UPDATE universities SET website = 'https://www.huse.edu.cn/' WHERE name_zh = '湖南科技学院' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'http://www.hntou.edu.cn/' WHERE name_zh = '海南热带海洋学院' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'http://www.hncu.edu.cn/' WHERE name_zh = '湖南城市学院' AND (website IS NULL OR website = '');
 UPDATE universities SET website = 'http://www.qlnu.edu.cn/' WHERE name_zh = '齐鲁师范学院' AND (website IS NULL OR website = '');
