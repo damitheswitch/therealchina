@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
 import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { ProvinceCityPicker } from '../components/ProvinceCityPicker'
 import { COMMUNITY_CATEGORIES } from '../lib/community'
@@ -11,6 +13,8 @@ import { COMMUNITY_CATEGORIES } from '../lib/community'
 // returns to the feed; nothing is persisted.
 export const AskQuestionPage = () => {
   const { showToast } = useToast()
+  const { user } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('')
@@ -21,6 +25,10 @@ export const AskQuestionPage = () => {
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
+    if (!user) {
+      openAuthModal('login')
+      return
+    }
     if (title.trim().length < 10) {
       showToast('Give it a proper title, at least 10 characters.', 'error')
       return

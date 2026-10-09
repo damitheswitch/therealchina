@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { useProfileContext } from '../contexts/ProfileContext'
 import { useToast } from '../contexts/ToastContext'
-import { categoryLabel, type CommunityAnswer } from '../lib/community'
+import { categoryLabel, type CommunityAnswer, type CommunityQuestion } from '../lib/community'
 import { MOCK_QUESTIONS } from '../lib/communityMock'
 
 // /community/q/:slug — question + answers. PROTOTYPE: communityMock.ts only,
@@ -15,25 +15,6 @@ import { MOCK_QUESTIONS } from '../lib/communityMock'
 export const CommunityQuestionPage = () => {
   const { slug } = useParams<{ slug: string }>()
   const question = MOCK_QUESTIONS.find((q) => q.slug === slug)
-  const { showToast } = useToast()
-  const { user } = useAuth()
-  const { openAuthModal } = useAuthModal()
-  const { profile } = useProfileContext()
-
-  const [answers, setAnswers] = useState<CommunityAnswer[]>(question?.answers ?? [])
-  const [acceptedId, setAcceptedId] = useState<string | null>(question?.acceptedAnswerId ?? null)
-  const [draft, setDraft] = useState('')
-  const [postAnon, setPostAnon] = useState(false)
-
-  const sorted = useMemo(
-    () =>
-      [...answers].sort((a, b) => {
-        if (a.id === acceptedId) return -1
-        if (b.id === acceptedId) return 1
-        return b.upvotes - a.upvotes
-      }),
-    [answers, acceptedId]
-  )
 
   if (!question) {
     return (
@@ -47,6 +28,32 @@ export const CommunityQuestionPage = () => {
       </div>
     )
   }
+
+  // key remounts the view per slug — router reuses this route for any
+  // /community/q/* navigation, so answers/draft must not bleed across.
+  return <QuestionView key={question.slug} question={question} />
+}
+
+const QuestionView = ({ question }: { question: CommunityQuestion }) => {
+  const { showToast } = useToast()
+  const { user } = useAuth()
+  const { openAuthModal } = useAuthModal()
+  const { profile } = useProfileContext()
+
+  const [answers, setAnswers] = useState<CommunityAnswer[]>(question.answers)
+  const [acceptedId, setAcceptedId] = useState<string | null>(question.acceptedAnswerId)
+  const [draft, setDraft] = useState('')
+  const [postAnon, setPostAnon] = useState(false)
+
+  const sorted = useMemo(
+    () =>
+      [...answers].sort((a, b) => {
+        if (a.id === acceptedId) return -1
+        if (b.id === acceptedId) return 1
+        return b.upvotes - a.upvotes
+      }),
+    [answers, acceptedId]
+  )
 
   const flag = () => showToast('Report noted. Our team will take a look.', 'success')
 
