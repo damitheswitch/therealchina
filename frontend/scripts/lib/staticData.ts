@@ -6,6 +6,11 @@ import { resolve } from 'node:path'
 import { getRecommendYesPct } from '../../src/lib/reviewSummary'
 import { indexableByReviews } from '../../src/lib/seo/indexable'
 import { slugify } from '../../src/lib/seo/slugify'
+import {
+  HELPFUL_DEFAULT_MIN_REVIEWS,
+  sortReviews,
+  type ReviewSortable,
+} from '../../src/lib/reviewSort'
 
 export interface UniRow {
   id: string
@@ -158,19 +163,36 @@ export const universityPageData = (
   uni: UniRow,
   reviews: ReviewRow[],
   stats: StatsRow[],
-  authors: AuthorRow[]
+  authors: AuthorRow[],
+  upvotes: UpvoteRow[] = []
 ) => {
   const rows = reviews
     .filter((r) => r.university_id === uni.id)
-    // Same ordering as useUniversityReviews — created_at desc, id desc — so
-    // hydrated slices match runtime pages at same-timestamp boundaries.
     .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id))
   const authorIds = new Set(rows.map((r) => r.user_id).filter(Boolean))
   const authorMap = Object.fromEntries(
     authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])
   )
   const stat = stats.find((s) => s.university_id === uni.id) ?? null
-  return { university: uni, reviews: rows, authors: authorMap, stats: stat }
+  const rowIds = new Set(rows.map((r) => r.id))
+  // review_id → count for this uni's reviews only. Voter identity never
+  // enters the payload — same export rule as reviewsPageData/hubPageData.
+  const counts = upvoteCounts(upvotes.filter((u) => rowIds.has(u.review_id)))
+  // Ship rows in the order the page's default view renders them (D4.3):
+  // 'helpful' past HELPFUL_DEFAULT_MIN_REVIEWS — same comparator the hook
+  // applies — else 'newest'. Static HTML and the first hydrated paint then
+  // agree, so nothing reshuffles after hydration.
+  const ordered =
+    rows.length >= HELPFUL_DEFAULT_MIN_REVIEWS
+      ? (sortReviews(rows as ReviewSortable[], 'helpful', counts) as ReviewRow[])
+      : rows
+  return {
+    university: uni,
+    reviews: ordered,
+    authors: authorMap,
+    stats: stat,
+    upvoteCounts: counts,
+  }
 }
 
 // ── Hub/index payload builders ──────────────────────────────────────────────

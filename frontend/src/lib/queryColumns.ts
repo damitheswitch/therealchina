@@ -12,6 +12,11 @@ export const REVIEW_COLUMNS =
 // Minimal row for "has more pages" / total-count probes.
 export const REVIEW_HEAD_COLUMNS = 'id, rating, created_at'
 
+// Head row for the client-ranked 'helpful' sort: the sort keys plus every
+// column lib/reviewDetail reads. 'text' stays out — it's the heavy field and
+// detail scoring never touches it. Keep in sync with DETAIL_AREAS.
+export const REVIEW_DETAIL_COLUMNS = `${REVIEW_HEAD_COLUMNS}, program, degree_level, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, pros, cons, tags, media, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career`
+
 // University row as rendered on directory/city/hub/detail pages.
 export const UNI_COLUMNS =
   'id, name, name_zh, city, country, province, uni_category, slug, logo_url, is_verified, uni_type, languages_of_instruction, website, rankings, slug_aliases'

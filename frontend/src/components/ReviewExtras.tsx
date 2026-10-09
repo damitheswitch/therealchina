@@ -4,8 +4,16 @@ import {
   buildFactItems,
   getRecommendMeta,
   getSubScores,
+  type ReviewCardData,
   type ReviewDisplayData,
 } from '../lib/reviewDisplay'
+import {
+  DETAIL_AREA_COUNT,
+  DETAILED_THRESHOLD,
+  detailScore,
+  isDetailedReview,
+  missingDetailAreas,
+} from '../lib/reviewDetail'
 
 // Small pill shown in the card header: "Recommends" / "Neutral" /
 // "Doesn't recommend". Renders nothing for reviews without a value.
@@ -79,5 +87,47 @@ export const ReviewExtras = ({ review }: { review: ReviewDisplayData }) => {
         </div>
       )}
     </>
+  )
+}
+
+// Author-facing completeness gauge (D4.4 — owner decision: authors only, a
+// public score would invite gaming). Shown in My reviews; the post-publish
+// success screen picks it up when the Phase 3 branch lands. Nothing here
+// renders on public cards — their mark is the gold accent alone.
+export const ReviewStrengthMeter = ({ review }: { review: ReviewCardData }) => {
+  const score = detailScore(review)
+  const missing = missingDetailAreas(review)
+  const earned = isDetailedReview(review)
+  const missingLabels = missing.map((a) => a.label).join(', ')
+  return (
+    <div className="strength-meter">
+      <div className="strength-meter-head">
+        <span className="strength-meter-label">Review strength</span>
+        <span className="strength-meter-count">
+          {score} of {DETAIL_AREA_COUNT}
+        </span>
+      </div>
+      <div
+        className="strength-meter-track"
+        role="meter"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={DETAIL_AREA_COUNT}
+        aria-valuetext={`${score} of ${DETAIL_AREA_COUNT} areas`}
+        aria-label="Review strength"
+      >
+        <span
+          className="strength-meter-fill"
+          style={{ width: `${(score / DETAIL_AREA_COUNT) * 100}%` }}
+        />
+      </div>
+      <p className="strength-meter-hint">
+        {earned
+          ? missing.length
+            ? `Gold highlight earned. Still missing: ${missingLabels}.`
+            : 'Gold highlight earned. Every area covered.'
+          : `Still missing: ${missingLabels}. ${DETAILED_THRESHOLD} or more areas earn the gold highlight.`}
+      </p>
+    </div>
   )
 }

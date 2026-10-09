@@ -95,7 +95,7 @@ const routes: RouteEntry[] = [
   ...GUIDES.map((g) => ({ path: `/guide/${g.slug}`, data: {} })),
   ...indexableUnis.map((u) => ({
     path: `/university/${u.slug}`,
-    data: { universityPage: universityPageData(u, reviews, stats, authors) },
+    data: { universityPage: universityPageData(u, reviews, stats, authors, upvotes) },
   })),
 ]
 
