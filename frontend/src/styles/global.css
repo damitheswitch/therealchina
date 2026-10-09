@@ -6071,19 +6071,53 @@ a.claim-review-uni:hover {
   flex-wrap: wrap;
   margin-top: var(--sp-2);
 }
+.answer-login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
 .ask-page {
-  max-width: 40rem;
+  max-width: 72rem;
   padding-bottom: var(--sp-6);
+}
+.ask-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: var(--sp-4);
+  align-items: start;
+}
+.ask-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.ask-tips {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 .ask-form {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
 }
-.ask-form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);
+.ask-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.ask-anon {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 @media (max-width: 1050px) {
   .community-layout {
@@ -6094,7 +6128,8 @@ a.claim-review-uni:hover {
   }
 }
 @media (max-width: 720px) {
-  .community-layout {
+  .community-layout,
+  .ask-layout {
     grid-template-columns: 1fr;
   }
   .community-nav-wrap {
@@ -6146,9 +6181,6 @@ a.claim-review-uni:hover {
   }
 }
 @media (max-width: 640px) {
-  .ask-form-grid {
-    grid-template-columns: 1fr;
-  }
   .community-head .btn {
     width: 100%;
     justify-content: center;
