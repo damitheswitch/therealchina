@@ -110,11 +110,12 @@ reviewers already have a claim token: a random secret kept in their browser
 `SUPABASE_PROJECT_ID=hfinkagueeojyyrpauav` was set in the shell env (it is
 the local-stack project label in `config.toml`), which redirected
 `supabase db query --linked` from the linked staging project to **prod**.
-Migration 044's objects (3 dormant `reviewer_context` columns, the
+Migration 044's objects (3 `reviewer_context` columns, the
 service-role-only `apply_anonymous_boost` function) and its
 `schema_migrations` row were applied to prod directly. No prod data was
 modified (the only row write was a fixture review inserted and deleted in
-one transaction; `reviewer_context` shows zero rows with boost data). The
-objects are inert — no deployed prod code calls them — but prod is now
-ahead of its release gate. Reverting them is itself a prod write; pending
-owner decision. `AGENTS.md` documents the env-var pitfall.
+one transaction; `reviewer_context` showed zero rows with boost data).
+With owner approval the objects and the migration row were reverted the
+same day — prod is back to its pre-044 state and Phase 3 will reach it
+normally through the release gate. `AGENTS.md` documents the env-var
+pitfall.
