@@ -54,7 +54,19 @@ Enums:
 
 `entry=resumed` means a worthwhile server or local draft was actually loaded. A `?draft=` parameter alone is not resumption. Missing or failed lookups use `unknown`. Local drafts promoted after sign-in remain `resumed`.
 
-`boost_card_completed` and `boost_exited` are reserved only. They are not allowed events until Phase 2 defines a fixed card-name enum.
+### Boost events (defined in Phase 2, `feat/phase2-fast-review-flow`)
+
+| Event                   | When it fires                                                                     | Exact properties              |
+| ----------------------- | --------------------------------------------------------------------------------- | ----------------------------- |
+| `boost_card_completed`  | A Boost card's save through `review-manage` succeeds                              | `flow`, `auth`, `card`        |
+| `boost_exited`          | The reviewer leaves the Boost card stack before finishing it                      | `flow`, `auth`, `after_card`  |
+
+- `card`: `program`, `ratings`, `money`, `details`, `pros_cons`, `media`.
+- `after_card`: the last card completed before exit, or `none` when the
+  reviewer exits before any card saved.
+- Both events fire only under `flow: fast_2`. `auth` stays `signed_in` while
+  Boost is signed-in only; anonymous Boost (Phase 3) may emit `anonymous` if
+  it ships.
 
 ## Privacy and payload boundary
 
