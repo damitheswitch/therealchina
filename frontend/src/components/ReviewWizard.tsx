@@ -171,6 +171,10 @@ export const ReviewWizard = ({
   const storyViewedRef = useRef(false)
   const reportedValidationScreensRef = useRef(new Set<number>())
   const submitInFlightRef = useRef(false)
+  // Set the moment submitReview succeeds — a debounced autosave can still fire
+  // during the stamp animation (phase is still 'form' until it finishes), and
+  // without this it would re-create the draft row publish just deleted.
+  const submittedRef = useRef(false)
 
   useEffect(() => {
     draftIdRef.current = draftId
@@ -364,6 +368,7 @@ export const ReviewWizard = ({
 
     const timer = setTimeout(async () => {
       try {
+        if (submittedRef.current) return
         if (user) {
           const savedId = await saveReviewDraft({
             userId: user.id,
@@ -583,6 +588,7 @@ export const ReviewWizard = ({
       })
 
       submissionSucceeded = true
+      submittedRef.current = true
       void trackReviewEvent({
         name: 'review_published',
         data: {
