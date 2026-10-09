@@ -3,9 +3,10 @@
 **Depends on:** Phase 2. **Security-sensitive:** yes.
 **Overview:** [00-overview.md](00-overview.md) §7 C.
 **Status:** implemented on `feat/phase3-anon-boost` (migration 044 +
-`review-boost` Edge Function). Locally verified; staging E2E pending. Not
-released to production — gated behind the Phase 1 baseline and the Phase 2
-production release.
+`review-boost` Edge Function, PR #58). Locally verified; staging migration,
+functions, and the anonymous happy path verified live. Not released to
+production — gated behind the Phase 1 baseline and the Phase 2 production
+release.
 
 ## Goal
 
@@ -87,12 +88,33 @@ reviewers already have a claim token: a random secret kept in their browser
 6. ✅ Frontend: anonymous submissions mint `boostToken`; Boost cards call
    `review-boost` with the per-card patch; `review-claim` accepts boost
    tokens for device matching and clears the hash on resolution.
-7. ⏳ Staging deploy + E2E (publish → Boost → sign-up claim) — pending.
-8. ⏳ `docs/security-audit.md` update — pending.
+7. ✅ Staging (`trc-staging`): migration 044 + `review-boost`/`review-submit`/
+   `review-claim` deployed; anonymous publish → Boost offer → two card saves
+   (program card, ratings card) verified live, `degree_level`/`rating_*`
+   persisted, `boost_save_count` incremented; a tampered token was rejected
+   (403, `boost_fail_count` incremented) and saving resumed with the real
+   token. Staging RPC grant + counter smoke also run directly.
+   ⏳ Claim-after-sign-up on staging pending — needs a staging test account.
+   ⏳ Signed-in Boost and `?draft=` resume on staging still unverified
+   (Phase 2 carry-over, same reason).
+8. ✅ `docs/security-audit.md` updated.
 
 ## Done when
 
 - All five rejection cases are covered by tests. (done, per task 4)
 - The anonymous path works end to end on staging: publish, Boost, then
-  claim after signing up. (pending)
-- The `docs/security-audit.md` notes are updated. (pending)
+  claim after signing up. (publish + Boost done; claim pending test account)
+- The `docs/security-audit.md` notes are updated. (done)
+
+**Incident note (2026-10-09):** during staging verification,
+`SUPABASE_PROJECT_ID=hfinkagueeojyyrpauav` was set in the shell env (it is
+the local-stack project label in `config.toml`), which redirected
+`supabase db query --linked` from the linked staging project to **prod**.
+Migration 044's objects (3 dormant `reviewer_context` columns, the
+service-role-only `apply_anonymous_boost` function) and its
+`schema_migrations` row were applied to prod directly. No prod data was
+modified (the only row write was a fixture review inserted and deleted in
+one transaction; `reviewer_context` shows zero rows with boost data). The
+objects are inert — no deployed prod code calls them — but prod is now
+ahead of its release gate. Reverting them is itself a prod write; pending
+owner decision. `AGENTS.md` documents the env-var pitfall.
