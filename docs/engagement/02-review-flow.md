@@ -199,3 +199,19 @@ build, prerender, 324 unit tests. Browser e2e against the local stack:
 Not verifiable locally: Umami payload delivery (no site ID locally or on
 staging; unit tests cover payload shape), real Turnstile pass, the
 anonymous sign-up offer on the success screen (needs an anon publish).
+
+## Staging-preview verification (deploy-preview-56, against trc-staging)
+
+- Two-screen flow renders; university autocomplete served by `trc-staging`.
+- **Anonymous publish end-to-end works with the real Turnstile sitekey** —
+  the widget is not domain-locked to therealchina.net, so the preview
+  published a real anonymous review row on staging (`rating 4`,
+  `recommend: yes` carried from the optional screen-1 pill).
+- Anonymous success screen shows the closable sign-up offer ("Keep your
+  review" + "Create free account"); the `×` dismisses it without forcing
+  a modal.
+- Anonymous localStorage draft autosaves on screen 1 and auto-resumes
+  after reload; `?uni=` prefill takes precedence over the local draft.
+- Not checked on the preview: signed-in Boost and `?draft=` server resume
+  (no staging account provisioned; the code path is the one verified
+  locally), Umami dashboard delivery (staging has no site ID — by design).
