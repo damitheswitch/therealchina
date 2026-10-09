@@ -63,13 +63,14 @@ reviewers already have a claim token: a random secret kept in their browser
   transaction so they can't be raced:
   - `boost_save_count` — 30 successful saves per review per window.
   - Wrong-token attempts are throttled by **exponential backoff** on
-    `boost_next_attempt_at` (migration 045): each failure sets the wait to
-    `min(2^fails, 600s)`. Attempts inside the backoff are rejected without
-    extending it, so a hostile caller who knows a public review ID can at
-    most keep the review throttled briefly — the legitimate reviewer waits
-    at most 10 minutes after the last bad attempt, never a lockout. A
-    successful save resets the counter. (The original 20-failure permanent
-    lock was replaced after review: it let anyone DoS the reviewer.)
+    `boost_next_attempt_at` (migrations 045+046): each failure sets the
+    wait to `min(2^fails, 600s)`, and attempts inside the backoff are
+    rejected without extending it. The capability is compared **before**
+    the throttle (046), so a valid token saves even while wrong-token
+    backoff is active — bad-token traffic can never block or delay the
+    real reviewer's saves at all. Only invalid tokens wait; a successful
+    save resets the counter. (045 alone still gated the correct token
+    during backoff; 046 fixed the ordering.)
 - No client-supplied header or IP participates in authorization or abuse
   decisions; every check runs on columns inside the locked rows. A failed
   or unreachable RPC rejects the request (fail closed).
@@ -97,7 +98,7 @@ reviewers already have a claim token: a random secret kept in their browser
    can only 403); Boost cards call `review-boost` with the per-card patch;
    `review-claim` accepts boost tokens for device matching and clears the
    hash on resolution.
-7. ✅ Staging (`trc-staging`): migrations 044+045 and `review-boost`/
+7. ✅ Staging (`trc-staging`): migrations 044+045+046 and `review-boost`/
    `review-submit`/`review-claim` deployed; verified live end to end:
    anonymous publish (digest on `reviewer_context`) → Boost offer (5 cards,
    no media) → card saves persisted (`degree_level`, `rating_*`,
@@ -106,6 +107,9 @@ reviewers already have a claim token: a random secret kept in their browser
    (`trc-e2e-stage2@proton.me`) → claim prompt matched via the boost token →
    anonymous claim set `owner_id`/`claimed_at` and cleared the hash →
    post-claim Boost with the real token returns 404 (capability dead).
+   046 verified live on a staging fixture: wrong token → 403 `bad_token`,
+   immediate wrong retry → 429 `locked`, correct token during active
+   backoff → 200 save, then claimed → 409 `claimed`.
    ⏳ Signed-in Boost and `?draft=` resume on staging still unverified
    (Phase 2 carry-over — no signed-in session existed on the staging build
    before this account was created; retest pending).
@@ -129,9 +133,11 @@ prod: one fixture review row inserted and deleted inside a single
 transaction (net zero rows; a sequence value was consumed), plus the
 schema objects and migration-history row above. With owner approval the
 objects and the migration row were reverted the same day. Final state
-verified read-only via the Management API (`POST /v1/projects/<ref>/
-database/query`, project ref explicit in the URL): prod has 0 boost
-functions/columns/constraints/indexes, no `044` migration row, 6 reviews,
-4 `reviewer_context` rows; staging has all 044+045 objects present.
+verified read-only by the implementing agent via the Management API
+(`POST /v1/projects/<ref>/database/query`, project ref explicit in the
+URL — not `--linked`): prod has 0 boost
+functions/columns/constraints/indexes, no `044`/`045` migration row, 6
+reviews, 4 `reviewer_context` rows; staging has all 044-046 objects
+present. (Agent-verified, not independently re-verified by the reviewer.)
 `AGENTS.md` documents the env-var pitfall; prod remains gated on the
 Phase 1 baseline and Phase 2's release.
