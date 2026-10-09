@@ -840,11 +840,10 @@ BEGIN
     RETURN 'not_found';
   END IF;
 
-  IF v_ctx.boost_next_attempt_at IS NOT NULL AND now() < v_ctx.boost_next_attempt_at THEN
-    RETURN 'locked';
-  END IF;
-
   IF v_ctx.boost_secret_hash <> p_boost_hash THEN
+    IF v_ctx.boost_next_attempt_at IS NOT NULL AND now() < v_ctx.boost_next_attempt_at THEN
+      RETURN 'locked';
+    END IF;
     UPDATE public.reviewer_context
       SET boost_fail_count = boost_fail_count + 1,
           boost_next_attempt_at =
