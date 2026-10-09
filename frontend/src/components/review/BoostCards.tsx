@@ -41,6 +41,7 @@ export const BoostCards = ({
   form,
   mediaState,
   onMediaStateChange,
+  cards = BOOST_CARD_ORDER,
   initialIndex = 0,
   onSave,
   onCardCompleted,
@@ -50,8 +51,11 @@ export const BoostCards = ({
   form: ReviewForm
   mediaState: MediaState
   onMediaStateChange: (s: MediaState) => void
+  // Which cards to walk, in order. Anonymous Boost (Phase 3) passes the subset
+  // the review-boost function allowlists.
+  cards?: BoostCard[]
   initialIndex?: number
-  onSave: () => Promise<boolean>
+  onSave: (card: BoostCard) => Promise<boolean>
   onCardCompleted: (card: BoostCard) => void
   onExit: (afterCard: BoostAfterCard, nextIndex: number) => void
   onFinish: () => void
@@ -73,8 +77,8 @@ export const BoostCards = ({
     mediaStateRef.current = mediaState
   }, [mediaState])
 
-  const card = BOOST_CARD_ORDER[index]
-  const total = BOOST_CARD_ORDER.length
+  const card = cards[index]
+  const total = cards.length
   const isLast = index === total - 1
 
   // Snapshot this card's fields on entry: the restore point Skip returns to.
@@ -99,7 +103,7 @@ export const BoostCards = ({
     if (saving) return
     setSaving(true)
     try {
-      const ok = await onSave()
+      const ok = await onSave(card)
       if (!ok) return // error already toasted by the caller; stay on the card
       lastCompletedRef.current = card
       onCardCompleted(card)

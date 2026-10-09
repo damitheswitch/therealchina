@@ -15,8 +15,14 @@ import {
   type ReviewEventName,
   type ReviewStage,
 } from '../lib/analytics'
-import { getOrCreateClaimToken } from '../lib/reviewClaim'
+import {
+  getOrCreateClaimToken,
+  createBoostToken,
+  storeBoostToken,
+  getBoostToken,
+} from '../lib/reviewClaim'
 import { updateReview } from '../lib/reviewManage'
+import { boostReview } from '../lib/reviewBoost'
 import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
 import { supabase } from '../lib/supabaseClient'
 import {
@@ -31,7 +37,14 @@ import {
   mapDraftStepToScreen,
   type ReviewDraftPayload,
 } from '../lib/reviewDrafts'
-import { buildReviewFields, draftPayloadFromState, fieldValuesFromDraft } from '../lib/reviewFlow'
+import {
+  ANON_BOOST_CARDS,
+  BOOST_CARD_ORDER,
+  buildBoostPatch,
+  buildReviewFields,
+  draftPayloadFromState,
+  fieldValuesFromDraft,
+} from '../lib/reviewFlow'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
 import { useProfileContext } from '../contexts/ProfileContext'
@@ -559,9 +572,15 @@ export const ReviewWizard = ({
 
       const isNotListed = values.selectedUni === '__not_listed'
 
+      // Phase 3: mint the per-review Boost capability before submit so the
+      // server can store its digest on the private context row. The legacy
+      // shared claim token still goes along for older claim matching.
+      const boostToken = !user ? createBoostToken() : null
+
       const result = await submitReview({
         cfToken,
         claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
+        boostToken: boostToken ?? undefined,
         universitySlug: !isNotListed && values.selectedUni ? values.selectedUni : undefined,
         universityName:
           !isNotListed && !values.selectedUni && values.selectedUniName.trim()
@@ -619,6 +638,7 @@ export const ReviewWizard = ({
       }
 
       const slug = result.universityCreated ? null : result.universitySlug
+      if (boostToken) storeBoostToken(result.reviewId, boostToken)
       setPublished({
         reviewId: result.reviewId,
         universitySlug: slug,
@@ -660,12 +680,18 @@ export const ReviewWizard = ({
 
   // ---- Boost ---------------------------------------------------------------------
 
-  // Every card's Save persists the whole current field set — review-manage
-  // rewrites all writable columns on each update, so merging happens here.
-  const saveBoost = async (): Promise<boolean> => {
-    if (!published || !user) return false
+  // Signed-in Boost keeps the full-field rewrite through review-manage. The
+  // anonymous path sends only the current card's fields — the server merges
+  // them into the stored row, so stale client state can never clobber columns
+  // a different card owns.
+  const saveBoost = async (card: BoostCard): Promise<boolean> => {
+    if (!published) return false
     try {
-      await updateReview(published.reviewId, buildReviewFields(values, mediaState.media))
+      if (user) {
+        await updateReview(published.reviewId, buildReviewFields(values, mediaState.media))
+      } else {
+        await boostReview(published.reviewId, buildBoostPatch(values, card))
+      }
       return true
     } catch (err) {
       console.error('Boost save failed:', err)
@@ -729,6 +755,7 @@ export const ReviewWizard = ({
             publishedAt={published.publishedAt}
             universitySlug={published.universitySlug}
             isAnonymous={!user}
+            canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
             onBoost={() => setPhase('boost')}
             onDone={finishFlow}
           />
@@ -755,6 +782,7 @@ export const ReviewWizard = ({
             form={form}
             mediaState={mediaState}
             onMediaStateChange={setMediaState}
+            cards={user ? BOOST_CARD_ORDER : ANON_BOOST_CARDS}
             initialIndex={boostIndex}
             onSave={saveBoost}
             onCardCompleted={trackBoostCompleted}

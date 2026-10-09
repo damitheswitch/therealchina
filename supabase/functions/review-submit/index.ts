@@ -19,6 +19,7 @@ import {
   jsonResponse,
 } from '../_shared/guard.ts'
 import { verifyTurnstile } from '../_shared/turnstile.ts'
+import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
 import {
   LIMITS,
   VALID_CURRENT_STATUS,
@@ -193,14 +194,18 @@ async function handleSubmit(req: Request): Promise<Response> {
     )
   }
 
-  // Anonymous reviews carry a browser-generated claim token so the same
-  // person can claim the review after signing up. Stored on the private
-  // reviewer_context row — a malformed token degrades to "not claimable",
-  // it never fails the review itself.
+  // Anonymous reviews carry browser-generated capabilities so the same person
+  // can claim the review after signing up, and Boost it anonymously during the
+  // first 24 hours. claimToken is the legacy shared UUID (older clients);
+  // boostToken is the per-review crypto-random capability — only its SHA-256
+  // digest is stored. Malformed tokens degrade to "not claimable/boostable";
+  // they never fail the review itself.
   const claimToken =
     isAnon && typeof body.claimToken === 'string' && UUID_RE.test(body.claimToken)
       ? body.claimToken
       : null
+  const boostToken = isAnon ? asBoostToken(body.boostToken) : null
+  const boostHash = boostToken ? await hashBoostToken(boostToken) : null
 
   // Anonymous reviewer context (optional): stored in the private
   // reviewer_context table, never exposed to clients.
@@ -307,7 +312,7 @@ async function handleSubmit(req: Request): Promise<Response> {
   // token exists — it is the claim link, so it must exist even when the
   // reviewer skipped every optional field. Best-effort: a context failure
   // must not fail the review that was just saved.
-  if (isAnon && (reviewerContext || claimToken)) {
+  if (isAnon && (reviewerContext || claimToken || boostHash)) {
     const hasContext =
       reviewerContext !== null &&
       (reviewerContext.email !== null ||
@@ -315,7 +320,7 @@ async function handleSubmit(req: Request): Promise<Response> {
         reviewerContext.homeCountry !== null ||
         reviewerContext.currentStatus !== null ||
         reviewerContext.languagesSpoken.length > 0)
-    if (hasContext || claimToken) {
+    if (hasContext || claimToken || boostHash) {
       const { error: contextError } = await supabaseAdmin.from('reviewer_context').insert({
         review_id: review.id,
         email: reviewerContext?.email ?? null,
@@ -324,6 +329,7 @@ async function handleSubmit(req: Request): Promise<Response> {
         current_status: reviewerContext?.currentStatus ?? null,
         languages_spoken: reviewerContext?.languagesSpoken ?? [],
         claim_token: claimToken,
+        boost_secret_hash: boostHash,
       })
       if (contextError) {
         console.error('Reviewer context insert error:', contextError)

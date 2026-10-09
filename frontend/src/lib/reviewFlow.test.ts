@@ -5,8 +5,10 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('./supabaseClient', () => ({ supabase: {} }))
 import { DRAFT_PAYLOAD_VERSION, type ReviewDraftPayload } from './reviewDrafts'
 import {
+  ANON_BOOST_CARDS,
   BOOST_CARD_META,
   BOOST_CARD_ORDER,
+  buildBoostPatch,
   buildReviewFields,
   draftPayloadFromState,
   emptyReviewFieldValues,
@@ -156,6 +158,51 @@ describe('boost card ordering', () => {
       expect(BOOST_CARD_META[card]).toBeDefined()
       expect(BOOST_CARD_META[card].title.length).toBeGreaterThan(0)
     }
+  })
+
+  it('anonymous Boost drops only the media card', () => {
+    expect(ANON_BOOST_CARDS).toEqual(['program', 'ratings', 'money', 'details', 'pros_cons'])
+  })
+})
+
+describe('buildBoostPatch', () => {
+  it('sends only the fields the card owns', () => {
+    const v = values({
+      program: ' MBBS ',
+      degreeLevel: 'Bachelor',
+      startYear: 2023,
+      tuitionRange: 'mid',
+      pros: 'nice',
+      rating: 5,
+      reviewText: 'long enough text',
+      selectedTags: ['Safe'],
+    })
+    expect(buildBoostPatch(v, 'program')).toEqual({
+      program: 'MBBS',
+      degreeLevel: 'Bachelor',
+    })
+    expect(buildBoostPatch(v, 'details')).toEqual({
+      enrollmentStatus: null,
+      startYear: 2023,
+      endYear: null,
+      languageOfInstruction: null,
+    })
+    // Never carries the protected fields.
+    expect(buildBoostPatch(v, 'pros_cons')).toEqual({ pros: 'nice', cons: null })
+  })
+
+  it('self-funded clears coverage the same way buildReviewFields does', () => {
+    const patch = buildBoostPatch(values({ fundingType: 'self', fundingCoverage: 'full' }), 'money')
+    expect(patch).toEqual({
+      tuitionRange: null,
+      livingCostRange: null,
+      fundingType: 'self',
+      fundingCoverage: null,
+    })
+  })
+
+  it('produces no patch for cards outside the allowlist', () => {
+    expect(buildBoostPatch(values(), 'media')).toEqual({})
   })
 })
 

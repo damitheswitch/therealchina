@@ -34,6 +34,9 @@ export interface ReviewPayload {
   // Anonymous-only: browser-held token that later links this review to an
   // account (stored privately, matched by review-claim after sign-in).
   claimToken?: string
+  // Anonymous-only: per-review capability for post-publish Boost — the server
+  // stores only its SHA-256 digest.
+  boostToken?: string
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string; province?: string }
