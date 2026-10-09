@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
 import { useToast } from '../contexts/ToastContext'
+import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
+import { ProvinceCityPicker } from '../components/ProvinceCityPicker'
 import { COMMUNITY_CATEGORIES } from '../lib/community'
 
 // /community/ask — new question form. PROTOTYPE: submit shows a toast and
@@ -105,32 +107,21 @@ export const AskQuestionPage = () => {
 
         <div className="ask-form-grid">
           <div className="form-group">
-            <label className="form-label" htmlFor="q-city">
+            <label className="form-label" htmlFor="q-city-province">
               City <span className="form-hint">(optional)</span>
             </label>
-            <input
-              id="q-city"
-              className="form-input"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="Shanghai"
-            />
+            <ProvinceCityPicker id="q-city" value={city} onChange={setCity} />
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="q-uni">
               University <span className="form-hint">(optional)</span>
             </label>
-            <select
+            <UniversityAutocomplete
               id="q-uni"
-              className="form-select"
               value={university}
-              onChange={(e) => setUniversity(e.target.value)}
-            >
-              <option value="">Not about a specific uni</option>
-              <option value="tsinghua-university">Tsinghua University</option>
-              <option value="peking-university">Peking University</option>
-              <option value="fudan-university">Fudan University</option>
-            </select>
+              placeholder="Start typing a university..."
+              onChange={setUniversity}
+            />
           </div>
         </div>
 
