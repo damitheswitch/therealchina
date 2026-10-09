@@ -5369,6 +5369,83 @@ a.claim-review-uni:hover {
   }
 }
 
+/* Post-publish success screen + Boost cards */
+.success-offer {
+  position: relative;
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+.success-offer-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+}
+.success-offer-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--ink-faint);
+  cursor: pointer;
+  padding: 0.3rem;
+}
+.success-offer-close:hover {
+  color: var(--ink);
+}
+.success-actions {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+}
+
+.boost {
+  margin-top: var(--sp-3);
+}
+.boost-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.boost-card {
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  animation: wizardFade 0.3s ease;
+}
+.boost-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.2rem;
+}
+.boost-card-sub {
+  color: var(--ink-faint);
+  font-size: 0.9rem;
+  margin-bottom: var(--sp-3);
+}
+.boost-aspect {
+  min-height: 9rem;
+}
+.boost-aspect-count {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  margin-bottom: 0.4rem;
+}
+.boost-ratings-done {
+  padding: var(--sp-2) 0;
+}
+
 /* Danger button (destructive confirms) */
 .btn-danger {
   background: var(--error);
