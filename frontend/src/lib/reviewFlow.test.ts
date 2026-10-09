@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// reviewFlow.ts pulls a runtime constant from reviewDrafts.ts, which imports
+// the Supabase client — mock it so CI (no env vars) can load the module.
+vi.mock('./supabaseClient', () => ({ supabase: {} }))
 import { DRAFT_PAYLOAD_VERSION, type ReviewDraftPayload } from './reviewDrafts'
 import {
   BOOST_CARD_META,
