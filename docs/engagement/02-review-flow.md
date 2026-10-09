@@ -216,7 +216,12 @@ anonymous sign-up offer on the success screen (needs an anon publish).
   passed `node scripts/smoke_live.mjs https://staging--therealchina.netlify.app --preview`
   on 2026-10-09. This verifies the observed site, not the Netlify deploy's
   commit identity or the signed-in workflows.
-- Still unchecked on staging: signed-in Boost and `?draft=` server resume
-  (a staging test sign-in is needed). Umami dashboard delivery remains unchecked
-  (staging has no site ID by design). The earlier preview checks above do not
-  establish that these paths work on the staging branch site.
+- Signed-in paths verified on staging services via the Phase 3 preview
+  (2026-10-09, test account `trc-e2e-stage2@proton.me`): signed-in publish →
+  success screen → Boost ("Card 1 of 6", media included) → `review-manage`
+  saved `program='Economics'`; `?draft=<id>` resumed a server-saved draft
+  (university prefilled). These exercised staging Supabase via the deploy
+  preview build, not a merged `staging` deploy.
+- Still unchecked: Umami dashboard delivery (staging has no site ID by
+  design). The earlier preview checks above do not establish deploy identity
+  on the staging branch site.

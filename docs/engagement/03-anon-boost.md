@@ -59,11 +59,17 @@ reviewers already have a claim token: a random secret kept in their browser
   values inside the transaction.
 
 **D3.4 Rate limit**
-- **Decided:** two counters on `reviewer_context`, both enforced inside the
-  same transaction so they can't be raced:
+- **Decided:** counters on `reviewer_context`, enforced inside the same
+  transaction so they can't be raced:
   - `boost_save_count` — 30 successful saves per review per window.
-  - `boost_fail_count` — 20 wrong-token attempts, then the anonymous path
-    locks (`locked`). Claim-by-sign-up remains as the recovery path.
+  - Wrong-token attempts are throttled by **exponential backoff** on
+    `boost_next_attempt_at` (migration 045): each failure sets the wait to
+    `min(2^fails, 600s)`. Attempts inside the backoff are rejected without
+    extending it, so a hostile caller who knows a public review ID can at
+    most keep the review throttled briefly — the legitimate reviewer waits
+    at most 10 minutes after the last bad attempt, never a lockout. A
+    successful save resets the counter. (The original 20-failure permanent
+    lock was replaced after review: it let anyone DoS the reviewer.)
 - No client-supplied header or IP participates in authorization or abuse
   decisions; every check runs on columns inside the locked rows. A failed
   or unreachable RPC rejects the request (fail closed).
@@ -82,28 +88,34 @@ reviewers already have a claim token: a random secret kept in their browser
    `buildBoostPatch`, `boostReview` payloads.
    - RPC behavior verified against the local Docker stack (psql battery):
      ok / bad_token / bad_fields / empty / not_found / claimed (named,
-     anonymous, dismissed) / expired / over_limit (30 saves) / locked
-     (20 fails) / grants / claim↔boost race both directions.
+     anonymous, dismissed) / expired / over_limit (30 saves) / backoff
+     locked-then-recovers / grants / claim↔boost race both directions.
 5. ✅ `deno check` on all three functions.
-6. ✅ Frontend: anonymous submissions mint `boostToken`; Boost cards call
-   `review-boost` with the per-card patch; `review-claim` accepts boost
-   tokens for device matching and clears the hash on resolution.
-7. ✅ Staging (`trc-staging`): migration 044 + `review-boost`/`review-submit`/
-   `review-claim` deployed; anonymous publish → Boost offer → two card saves
-   (program card, ratings card) verified live, `degree_level`/`rating_*`
-   persisted, `boost_save_count` incremented; a tampered token was rejected
-   (403, `boost_fail_count` incremented) and saving resumed with the real
-   token. Staging RPC grant + counter smoke also run directly.
-   ⏳ Claim-after-sign-up on staging pending — needs a staging test account.
+6. ✅ Frontend: anonymous submissions mint `boostToken`; the Boost offer is
+   gated on `boostAvailable` (true only when the context row with the digest
+   actually persisted, so a failed context insert never promises a save that
+   can only 403); Boost cards call `review-boost` with the per-card patch;
+   `review-claim` accepts boost tokens for device matching and clears the
+   hash on resolution.
+7. ✅ Staging (`trc-staging`): migrations 044+045 and `review-boost`/
+   `review-submit`/`review-claim` deployed; verified live end to end:
+   anonymous publish (digest on `reviewer_context`) → Boost offer (5 cards,
+   no media) → card saves persisted (`degree_level`, `rating_*`,
+   `boost_save_count` incremented) → tampered token 403 + 429 backoff →
+   real token saved again → signed in as a staging test account
+   (`trc-e2e-stage2@proton.me`) → claim prompt matched via the boost token →
+   anonymous claim set `owner_id`/`claimed_at` and cleared the hash →
+   post-claim Boost with the real token returns 404 (capability dead).
    ⏳ Signed-in Boost and `?draft=` resume on staging still unverified
-   (Phase 2 carry-over, same reason).
+   (Phase 2 carry-over — no signed-in session existed on the staging build
+   before this account was created; retest pending).
 8. ✅ `docs/security-audit.md` updated.
 
 ## Done when
 
 - All five rejection cases are covered by tests. (done, per task 4)
 - The anonymous path works end to end on staging: publish, Boost, then
-  claim after signing up. (publish + Boost done; claim pending test account)
+  claim after signing up. (done — see task 7)
 - The `docs/security-audit.md` notes are updated. (done)
 
 **Incident note (2026-10-09):** during staging verification,
@@ -112,10 +124,14 @@ the local-stack project label in `config.toml`), which redirected
 `supabase db query --linked` from the linked staging project to **prod**.
 Migration 044's objects (3 `reviewer_context` columns, the
 service-role-only `apply_anonymous_boost` function) and its
-`schema_migrations` row were applied to prod directly. No prod data was
-modified (the only row write was a fixture review inserted and deleted in
-one transaction; `reviewer_context` showed zero rows with boost data).
-With owner approval the objects and the migration row were reverted the
-same day — prod is back to its pre-044 state and Phase 3 will reach it
-normally through the release gate. `AGENTS.md` documents the env-var
-pitfall.
+`schema_migrations` row were applied to prod directly. Temporary writes on
+prod: one fixture review row inserted and deleted inside a single
+transaction (net zero rows; a sequence value was consumed), plus the
+schema objects and migration-history row above. With owner approval the
+objects and the migration row were reverted the same day. Final state
+verified read-only via the Management API (`POST /v1/projects/<ref>/
+database/query`, project ref explicit in the URL): prod has 0 boost
+functions/columns/constraints/indexes, no `044` migration row, 6 reviews,
+4 `reviewer_context` rows; staging has all 044+045 objects present.
+`AGENTS.md` documents the env-var pitfall; prod remains gated on the
+Phase 1 baseline and Phase 2's release.
