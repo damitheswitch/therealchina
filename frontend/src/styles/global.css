@@ -4724,6 +4724,7 @@ a.claim-review-uni:hover {
 .flight-contact-revealed {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.35rem;
 }
 
@@ -4796,6 +4797,60 @@ a.claim-review-uni:hover {
   justify-content: flex-end;
   padding-top: var(--sp-2);
   border-top: 1px solid var(--ink-line);
+}
+
+.contact-pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.contact-pick-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 0.88rem;
+  min-width: 0;
+}
+
+.contact-pick-icon {
+  display: inline-flex;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.contact-pick-platform {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.contact-pick-handles {
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.contact-add-row .form-select {
+  width: auto;
+  min-width: 130px;
+}
+
+.contact-add-row .form-input {
+  flex: 1;
+  min-width: 140px;
 }
 
 /* ===== Flight page heading ===== */
@@ -4902,8 +4957,22 @@ a.claim-review-uni:hover {
   }
 
   .flight-tabs {
+    display: flex;
     width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .flight-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .flight-tab-btn {
+    flex: 1 1 auto;
     justify-content: center;
+    padding: 0.35rem 0.5rem;
+  }
+  .flight-tab-word {
+    display: none;
   }
   .flight-sort-wrapper {
     width: 100%;

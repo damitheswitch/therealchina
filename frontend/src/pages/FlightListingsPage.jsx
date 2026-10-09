@@ -345,7 +345,8 @@ export const FlightListingsPage = () => {
                 className={`flight-tab-btn ${viewTab === 'past' ? 'active' : ''}`}
                 onClick={() => handleTabChange('past')}
               >
-                Past Flights <span className="flight-tab-count">({counts.past})</span>
+                Past <span className="flight-tab-word">Flights</span>{' '}
+                <span className="flight-tab-count">({counts.past})</span>
               </button>
               <button
                 type="button"
@@ -354,7 +355,8 @@ export const FlightListingsPage = () => {
                 className={`flight-tab-btn ${viewTab === 'my_flights' ? 'active' : ''}`}
                 onClick={() => handleTabChange('my_flights')}
               >
-                My Flights <span className="flight-tab-count">({counts.mine})</span>
+                My <span className="flight-tab-word">Flights</span>{' '}
+                <span className="flight-tab-count">({counts.mine})</span>
               </button>
               <button
                 type="button"
@@ -437,6 +439,7 @@ export const FlightListingsPage = () => {
                   key={listing.id}
                   listing={listing}
                   canDelete={user?.id === listing.user_id}
+                  showOwnerControls={viewTab === 'my_flights'}
                   onDelete={handleListingDeleted}
                   onEdit={handleEditListing}
                   onToggleActive={handleToggleActive}
