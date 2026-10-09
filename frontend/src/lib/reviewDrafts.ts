@@ -8,7 +8,11 @@ export type ReviewDraft = Tables<'review_drafts'> & {
 
 // Serializable snapshot of the ReviewWizard state. Kept in one JSONB column so
 // the wizard can resume without a column per field.
+// `v` is the payload layout version: absent means v1 (the legacy 5-step
+// wizard); 2 is the fast 2-screen flow. `step` means different things per
+// version — resolve it with mapDraftStepToScreen, never read it raw.
 export interface ReviewDraftPayload {
+  v?: number
   step: number
   selectedUni: string
   selectedUniName: string
@@ -43,6 +47,23 @@ export interface ReviewDraftPayload {
 
 const LOCAL_DRAFT_KEY = 'trc_review_draft'
 
+// Draft payload version written by the current flow. Payloads saved by the
+// old 5-step wizard have no `v` — they are v1 and their `step` refers to the
+// old layout.
+export const DRAFT_PAYLOAD_VERSION = 2
+
+// Maps a saved draft's stored step onto the screen it should resume on.
+// v2 drafts resume on their own screen; v1 drafts keep their content and land
+// on the screen that now owns the fields they had reached: old steps 1-3 to
+// screen 1, old steps 4-5 to screen 2 (D2.5).
+export const mapDraftStepToScreen = (
+  p: { v?: number; step?: number } | null | undefined
+): 1 | 2 => {
+  if (p?.v === DRAFT_PAYLOAD_VERSION) return p.step === 2 ? 2 : 1
+  const step = typeof p?.step === 'number' && Number.isFinite(p.step) ? p.step : 1
+  return step >= 4 ? 2 : 1
+}
+
 export const isDraftWorthSaving = (payload: ReviewDraftPayload | null): boolean => {
   if (!payload) return false
   if (payload.rating > 0) return true
@@ -66,10 +87,11 @@ export const draftUniversityLabel = (draft: ReviewDraft): string => {
 }
 
 export const draftProgressLabel = (draft: ReviewDraft): string => {
-  const step = draft.progress || 1
-  const total = 5
-  if (step >= total) return `Step ${total} of ${total}`
-  return `Step ${step} of ${total}`
+  // Every draft resumes in the 2-screen flow regardless of the layout it was
+  // saved under — label the screen it will actually open on.
+  const payload = draft.payload as unknown as ReviewDraftPayload | undefined
+  const screen = mapDraftStepToScreen({ step: draft.progress ?? 0, v: payload?.v })
+  return `Step ${screen} of 2`
 }
 
 // -- Server drafts -----------------------------------------------------------
