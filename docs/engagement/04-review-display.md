@@ -2,11 +2,18 @@
 
 **Depends on:** Phase 2. **Feeds:** Phase 7 (points and levels build on this).
 **Overview:** [00-overview.md](00-overview.md) §6 "Making Boost worth doing".
-**Status:** implementing on `feat/phase4-review-display` (worktree
-`.tmp/phase4-review-display`), branched from staging after PRs #56/#57 —
-Phase 3's PR #58 is still open, so anything touching `ReviewSuccess.tsx`,
-`BoostCards.tsx`, `ReviewWizard.tsx`, or `reviewFlow.ts` is deferred until
-it merges into staging.
+**Status:** see the ladder below. Branch `feat/phase4-review-display`
+(worktree `.tmp/phase4-review-display`), PR #60 into `staging`.
+
+| Stage | State |
+|---|---|
+| Implemented (isolated branch) | Done — commit `014afe9`, PR #60 open |
+| Verified on combined staging preview | Pending — needs PR #58 merged, then staging integrated here and the success-screen meter added; see "Integration after PR #58" |
+| Merged to staging | Pending — PR #60 stays open/unmerged until the combined check passes |
+| Released to production | Blocked — only after the dated Phase 1 baseline is captured and the scoped Phase 2 and Phase 3 production releases ship |
+
+Phase 5 (re-engagement) and Phase 7 (incentives) remain undecided and out
+of scope here.
 
 ## Goal
 
@@ -58,8 +65,9 @@ ranks higher. Readers find the most useful reviews first.
 **D4.4 Who sees the strength meter?**
 - **Decided:** author only. `ReviewStrengthMeter` (in `ReviewExtras.tsx`)
   renders on each card in My reviews today; the post-publish success screen
-  picks it up once PR #58 is merged (that file is Phase 3 territory until
-  then). Anonymous authors see it on the success screen when it lands —
+  picks it up when staging is integrated after PR #58 merges — see
+  "Integration after PR #58" for the exact recipe. Anonymous authors see
+  it on the success screen when it lands —
   they never reach My reviews. Nothing meter-like renders on public cards.
 
 ## Tasks (agent)
@@ -96,9 +104,37 @@ must not reach production before the Phase 1 baseline is captured and the
 Phase 2 flow is released. PR into `staging` for a deploy preview; do not
 merge `staging` into `master` carrying this.
 
-## Follow-up after PR #58
+## Integration after PR #58
 
-- Integrate staging into this branch (or rebase) once `feat/phase3-anon-boost`
-  merges, then add `ReviewStrengthMeter` to `ReviewSuccess.tsx` — including
-  for anonymous authors — and verify the combined result on the deploy
-  preview.
+PR #58 (`feat/phase3-anon-boost`, still open at time of writing) and this
+branch touch **zero shared files** — the merge is expected clean.
+
+1. Merge `origin/staging` into `feat/phase4-review-display` once #58 lands.
+2. In `ReviewSuccess.tsx` (the post-merge version, which adds `canBoost`):
+   - Hoist the `PreviewReview` mapping out of `PublishedReviewPreview`'s
+     `useMemo` into a shared builder (e.g. `previewReviewFromFields(values,
+     media)`) — `ReviewSuccess` needs the same mapped object for the meter.
+   - Render `<ReviewStrengthMeter review={preview} />` **unconditionally**
+     between `<PublishedReviewPreview>` and the `{canBoost && ...}` offer.
+     The success screen is only ever the publisher's view, so
+     "author-only" holds for signed-in (`canBoost = Boolean(user)`) and
+     anonymous (`canBoost = token held`) reviewers alike — anonymous
+     authors never reach My reviews, so this is their only strength
+     feedback.
+   - Do **not** put the meter inside `PublishedReviewPreview` — that
+     component is reused in the `boost` phase (live preview while cards
+     are answered) and the meter is scoped to the final screen.
+   - Extend the `../ReviewExtras` import with `ReviewStrengthMeter`.
+3. Tests: add a `ReviewSuccess` render test (no file exists today) — meter
+   renders for signed-in and anonymous publishers, `role="meter"` reports
+   the right score, no score leaks into the public preview card.
+4. Re-run the full gate on the integrated branch: `npm run lint`,
+   `npm run format`, `npm run typecheck`, `npm test`, `npm run build`
+   (fixture export), prerender, `npm run validate:seo`.
+5. Review the regenerated `frontend/src/routes.generated.ts` diff and the
+   PR's SEO-impact section after integration (new payload fields, ordering
+   changes, no markup additions).
+6. Push, wait for the deploy preview, run `scripts/smoke_live.mjs`, and
+   spot-check on preview: gold mark + helpful ordering unchanged, meter on
+   the success screen for both publish paths, Verified seal untouched, no
+   public strength score.
