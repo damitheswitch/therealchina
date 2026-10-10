@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
+  contactPlatformsToStore,
+  contactPlatformSelection,
   filterByTab,
   flightCounts,
   hasDeparted,
@@ -162,5 +164,42 @@ describe('sortListings', () => {
     const rows = [l('b', OTHER, '2026-11-01'), l('a', OTHER, '2026-10-01')]
     sortListings(rows, 'departure_asc', false, TODAY)
     expect(rows.map((x) => x.id)).toEqual(['b', 'a'])
+  })
+})
+
+describe('contactPlatformSelection', () => {
+  const current = ['wechat', 'whatsapp']
+
+  it('defaults to every current platform when nothing is stored', () => {
+    expect(contactPlatformSelection(null, current)).toEqual(new Set(current))
+    expect(contactPlatformSelection(undefined, current)).toEqual(new Set(current))
+  })
+
+  it('keeps only stored platforms that still exist on the profile', () => {
+    expect(contactPlatformSelection(['wechat', 'instagram'], current)).toEqual(new Set(['wechat']))
+  })
+
+  it('returns an empty set for a stored empty selection', () => {
+    expect(contactPlatformSelection([], current)).toEqual(new Set())
+  })
+})
+
+describe('contactPlatformsToStore', () => {
+  const all = ['wechat', 'whatsapp']
+
+  it('stores NULL when every platform is checked, in any order', () => {
+    expect(contactPlatformsToStore(new Set(['whatsapp', 'wechat']), all)).toBeNull()
+  })
+
+  it('stores a subset as an explicit array', () => {
+    expect(contactPlatformsToStore(new Set(['wechat']), all)).toEqual(['wechat'])
+  })
+
+  it('stores an empty selection as an empty array (contact hidden)', () => {
+    expect(contactPlatformsToStore(new Set(), all)).toEqual([])
+  })
+
+  it('passes NULL through untouched (failed picker load never rewrites)', () => {
+    expect(contactPlatformsToStore(null, all)).toBeNull()
   })
 })

@@ -109,6 +109,7 @@ export type Database = {
           arrival_country: string
           arrival_date: string
           available_kgs: number
+          contact_platforms: Json | null
           created_at: string | null
           currency: string | null
           departure_city: string | null
@@ -126,6 +127,7 @@ export type Database = {
           arrival_country: string
           arrival_date: string
           available_kgs: number
+          contact_platforms?: Json | null
           created_at?: string | null
           currency?: string | null
           departure_city?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           arrival_country?: string
           arrival_date?: string
           available_kgs?: number
+          contact_platforms?: Json | null
           created_at?: string | null
           currency?: string | null
           departure_city?: string | null
@@ -620,6 +623,7 @@ export type Database = {
           arrival_date: string | null
           available_kgs: number | null
           avatar_url: string | null
+          contact_platforms: Json | null
           created_at: string | null
           currency: string | null
           departure_city: string | null

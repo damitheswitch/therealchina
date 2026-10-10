@@ -5,7 +5,10 @@ import { useToast } from '../contexts/ToastContext'
 import { Icons } from './Icons'
 import { CountryAutocomplete } from './CountryAutocomplete'
 import { canonicalCountryName, isCountryName } from '../lib/constants'
-import { hasSocialHandles } from '../lib/socialHandles'
+import { getSocialHandles, hasSocialHandles } from '../lib/socialHandles'
+import { socialPlatforms, cleanHandle } from '../lib/socialPlatforms'
+import { contactPlatformsToStore, contactPlatformSelection } from '../lib/flightListings'
+import { PlatformIcon } from './SocialChip'
 
 export const FlightListingForm = ({
   listing = null,
@@ -30,6 +33,17 @@ export const FlightListingForm = ({
   const [pricePerKg, setPricePerKg] = useState('')
   const [currency, setCurrency] = useState('CNY')
   const [notes, setNotes] = useState('')
+
+  // Contact picker: which of the owner's profile handles this listing shows.
+  // selectedPlatforms stays null until the profile load finishes so a failed
+  // load never clobbers a stored selection on edit.
+  const [profileHandles, setProfileHandles] = useState([])
+  const [savedHandlesJson, setSavedHandlesJson] = useState('[]')
+  const [selectedPlatforms, setSelectedPlatforms] = useState(null)
+  const [profileHidesSocials, setProfileHidesSocials] = useState(false)
+  const [addingContact, setAddingContact] = useState(false)
+  const [newPlatform, setNewPlatform] = useState('wechat')
+  const [newHandle, setNewHandle] = useState('')
 
   // Local calendar date (YYYY-MM-DD), unlike toISOString() which is UTC
   const todayLocal = () => {
@@ -58,6 +72,65 @@ export const FlightListingForm = ({
       setArrivalDate(today)
     }
   }, [listing])
+
+  // Load the owner's profile handles for the picker. A stored selection
+  // (edit mode) is intersected with the handles still on the profile;
+  // listings without one default to every platform checked.
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    const loadContacts = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('social_handles, social_platform, social_handle, show_social_handle')
+        .eq('id', user.id)
+        .single()
+      if (cancelled) return
+      if (error) {
+        console.error('Error loading profile contacts:', error)
+        return
+      }
+      const handles = getSocialHandles(data).filter((h) => h.handle && h.handle.trim())
+      setProfileHandles(handles)
+      setSavedHandlesJson(JSON.stringify(handles))
+      setProfileHidesSocials(data.show_social_handle === false)
+      setSelectedPlatforms(
+        contactPlatformSelection(
+          listing?.contact_platforms,
+          handles.map((h) => h.platform)
+        )
+      )
+    }
+    loadContacts()
+    return () => {
+      cancelled = true
+    }
+  }, [user, listing])
+
+  const toggleContactPlatform = (platform) => {
+    setSelectedPlatforms((prev) => {
+      const next = new Set(prev || [])
+      if (next.has(platform)) next.delete(platform)
+      else next.add(platform)
+      return next
+    })
+  }
+
+  const handleAddContact = () => {
+    const cleaned = cleanHandle(newPlatform, newHandle)
+    if (!cleaned) {
+      showToast('Enter a handle or phone number first', 'error')
+      return
+    }
+    const entry = { platform: newPlatform, handle: cleaned }
+    setProfileHandles((prev) => [
+      ...prev.filter((h) => !(h.platform === entry.platform && h.handle === entry.handle)),
+      entry,
+    ])
+    setSelectedPlatforms((prev) => new Set(prev || []).add(entry.platform))
+    setNewHandle('')
+    setAddingContact(false)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -105,6 +178,29 @@ export const FlightListingForm = ({
         return
       }
 
+      // Contacts added inline live on the profile like the others, so save
+      // them there first. Runs before the social-handle gate below so a
+      // handle added right here counts toward it. Only runs when the handle
+      // list actually changed.
+      if (JSON.stringify(profileHandles) !== savedHandlesJson) {
+        const { error: handleError } = await supabase
+          .from('profiles')
+          .update({
+            social_handles: profileHandles,
+            social_platform: null,
+            social_handle: null,
+          })
+          .eq('id', user.id)
+
+        if (handleError) {
+          console.error('Error saving new contact:', handleError)
+          showToast('Failed to save your new contact', 'error')
+          setSaving(false)
+          return
+        }
+        setSavedHandlesJson(JSON.stringify(profileHandles))
+      }
+
       // Verify the user has at least one social handle so travelers can contact
       // them. Only enforced when posting — editing an existing listing must not
       // be blocked by the current profile state.
@@ -138,6 +234,15 @@ export const FlightListingForm = ({
         notes: notes.trim() || null,
       }
 
+      if (selectedPlatforms) {
+        // NULL keeps the legacy "every profile handle" behavior; a real
+        // subset (including none) is stored explicitly.
+        payload.contact_platforms = contactPlatformsToStore(
+          selectedPlatforms,
+          profileHandles.map((h) => h.platform)
+        )
+      }
+
       const { error } = isEditing
         ? await supabase.from('flight_listings').update(payload).eq('id', listing.id)
         : await supabase
@@ -165,6 +270,15 @@ export const FlightListingForm = ({
     } finally {
       setSaving(false)
     }
+  }
+
+  // Group profile handles by platform; platform is the stored selection
+  // granularity, so a platform with two handles renders as one option.
+  const platformGroups = []
+  for (const h of profileHandles) {
+    const group = platformGroups.find(([p]) => p === h.platform)
+    if (group) group[1].push(h.handle)
+    else platformGroups.push([h.platform, [h.handle]])
   }
 
   return (
@@ -335,10 +449,100 @@ export const FlightListingForm = ({
           />
           <p className="form-hint">
             <Icons.Info />
-            Interested travelers will see the social handle from your profile (WeChat, Instagram,
-            etc.), so make sure it is filled in there. Anything extra — restrictions, exact cities,
-            special instructions — belongs in the notes above.
+            Travelers see the contacts you pick in the section below. Anything extra, like
+            restrictions, exact cities, or special instructions, belongs in the notes above.
           </p>
+        </div>
+
+        <div className="form-group">
+          <span className="form-label">Contacts shown to travelers</span>
+          {selectedPlatforms === null ? (
+            <p className="form-hint">Loading your contacts...</p>
+          ) : (
+            <>
+              {platformGroups.length > 0 && (
+                <div className="contact-pick-list">
+                  {platformGroups.map(([platform, handles]) => {
+                    const platformData = socialPlatforms[platform] || socialPlatforms.other
+                    return (
+                      <label key={platform} className="contact-pick-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedPlatforms.has(platform)}
+                          onChange={() => toggleContactPlatform(platform)}
+                          className="form-checkbox"
+                        />
+                        <span className="contact-pick-icon">
+                          <PlatformIcon platform={platform} size={15} />
+                        </span>
+                        <span className="contact-pick-platform">{platformData.label}</span>
+                        <span className="contact-pick-handles">{handles.join(', ')}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+
+              {addingContact ? (
+                <div className="contact-add-row">
+                  <select
+                    value={newPlatform}
+                    onChange={(e) => setNewPlatform(e.target.value)}
+                    className="form-select"
+                    aria-label="New contact platform"
+                  >
+                    {Object.entries(socialPlatforms).map(([key, platform]) => (
+                      <option key={key} value={key}>
+                        {platform.label}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={newHandle}
+                    onChange={(e) => setNewHandle(e.target.value)}
+                    placeholder="Handle or phone number"
+                    className="form-input"
+                    aria-label="New contact handle"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddContact}
+                    className="btn btn-primary btn-sm"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddingContact(false)
+                      setNewHandle('')
+                    }}
+                    className="btn btn-outline btn-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAddingContact(true)}
+                  className="btn btn-outline btn-sm"
+                >
+                  <Icons.Plus /> Add a new contact
+                </button>
+              )}
+
+              <p className="form-hint">
+                <Icons.Info />
+                {selectedPlatforms.size === 0
+                  ? 'No contact selected. Travelers will not see a way to reach you on this listing.'
+                  : 'Only the checked contacts appear on this listing.'}
+                {profileHidesSocials &&
+                  ' Your profile currently hides social handles, so contacts will not show until you turn them back on in your profile.'}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="form-actions">
