@@ -27,7 +27,7 @@ export const Icons = {
     </svg>
   ),
 
-  Star: ({ filled = true, size }) => (
+  Star: ({ filled = true, size = 24 }) => (
     <svg
       viewBox="0 0 24 24"
       width={size}
