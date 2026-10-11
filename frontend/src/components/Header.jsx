@@ -12,6 +12,7 @@ export const Header = () => {
   const navLinks = [
     { to: '/universities', label: 'Universities', icon: <Icons.Book /> },
     { to: '/reviews', label: 'Reviews', icon: <Icons.Pen /> },
+    { to: '/community', label: 'Community', icon: <Icons.Chat /> },
     { to: '/flights', label: 'Flights', icon: <Icons.Plane /> },
     { to: '/users', label: 'Users', icon: <Icons.Users /> },
   ]

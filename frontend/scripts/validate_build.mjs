@@ -44,6 +44,7 @@ const APP_SHELL_PATHS = new Set([
   '/onboarding',
   '/settings',
   '/reset-password',
+  '/community',
 ])
 const MEDIA_EXTS = /\.(png|jpe?g|gif|webp|avif|svg|mp4|webm|mov|woff2?|ttf|otf)(\?|#|$)/i
 const HOTLINK_HOSTS =

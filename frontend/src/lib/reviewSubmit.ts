@@ -34,6 +34,9 @@ export interface ReviewPayload {
   // Anonymous-only: browser-held token that later links this review to an
   // account (stored privately, matched by review-claim after sign-in).
   claimToken?: string
+  // Anonymous-only: per-review capability for post-publish Boost — the server
+  // stores only its SHA-256 digest.
+  boostToken?: string
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string; province?: string }
@@ -63,6 +66,10 @@ export interface ReviewSubmitResult {
   reviewId: string
   universitySlug: string
   universityCreated: boolean
+  // Anonymous-only: the server persisted the Boost capability's digest. When
+  // false, the client must not store the token or offer Boost — saves would
+  // always 403.
+  boostAvailable?: boolean
 }
 
 export class ReviewSubmitError extends Error {

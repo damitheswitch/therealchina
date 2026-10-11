@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   getStoredClaimToken,
   getOrCreateClaimToken,
+  createBoostToken,
+  storeBoostToken,
+  getBoostToken,
+  listBoostTokens,
+  dropBoostToken,
+  BOOST_TOKEN_RE,
   listClaimableReviews,
   listAnonymousOwnedIds,
   resolveClaim,
@@ -50,16 +56,85 @@ describe('claim token', () => {
   })
 })
 
+const REVIEW_ID = '11111111-2222-4333-8444-555555555555'
+const BOOST_KEY = 'trc_boost_tokens'
+
+describe('boost token', () => {
+  it('mints a 43-char base64url token from the CSPRNG', () => {
+    const token = createBoostToken()
+    expect(token).toMatch(BOOST_TOKEN_RE)
+    expect(token).not.toBe(createBoostToken()) // per-review, not reused
+  })
+
+  it('returns null instead of a weak token when Web Crypto is missing', () => {
+    vi.stubGlobal('crypto', { subtle: undefined })
+    expect(createBoostToken()).toBeNull()
+    vi.unstubAllGlobals()
+  })
+
+  it('stores and reads tokens per review', () => {
+    const a = createBoostToken()!
+    const b = createBoostToken()!
+    storeBoostToken(REVIEW_ID, a)
+    storeBoostToken('99999999-9999-4999-8999-999999999999', b)
+
+    expect(getBoostToken(REVIEW_ID)).toBe(a)
+    expect(getBoostToken('99999999-9999-4999-8999-999999999999')).toBe(b)
+    expect(getBoostToken('00000000-0000-4000-8000-000000000001')).toBeNull()
+    expect(listBoostTokens().sort()).toEqual([a, b].sort())
+  })
+
+  it('rejects malformed review ids and tokens instead of storing them', () => {
+    const token = createBoostToken()!
+    storeBoostToken('not-a-review', token)
+    storeBoostToken(REVIEW_ID, 'too-short')
+    expect(getBoostToken(REVIEW_ID)).toBeNull()
+    expect(listBoostTokens()).toEqual([])
+  })
+
+  it('drops poisoned storage entries without trusting them', () => {
+    localStorage.setItem(
+      BOOST_KEY,
+      JSON.stringify({
+        [REVIEW_ID]: 'bad!token',
+        'not-an-id': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        '99999999-9999-4999-8999-999999999999': 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      })
+    )
+    expect(getBoostToken(REVIEW_ID)).toBeNull()
+    expect(listBoostTokens()).toEqual(['AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'])
+  })
+
+  it('tolerates corrupt JSON in storage', () => {
+    localStorage.setItem(BOOST_KEY, '{not json')
+    expect(getBoostToken(REVIEW_ID)).toBeNull()
+    expect(listBoostTokens()).toEqual([])
+  })
+
+  it('drops a single review token', () => {
+    storeBoostToken(REVIEW_ID, createBoostToken()!)
+    storeBoostToken('99999999-9999-4999-8999-999999999999', createBoostToken()!)
+    dropBoostToken(REVIEW_ID)
+    expect(getBoostToken(REVIEW_ID)).toBeNull()
+    expect(listBoostTokens()).toHaveLength(1)
+  })
+})
+
 describe('review-claim api', () => {
   it('list posts the stored token and returns the review set', async () => {
     localStorage.setItem(TOKEN_KEY, VALID_TOKEN)
+    storeBoostToken(REVIEW_ID, createBoostToken()!)
     const reviews = [{ reviewId: 'r1', rating: 5, text: 'x', matchedBy: 'device' }]
     invokeMock.mockResolvedValue({ data: { reviews }, error: null })
 
     const result = await listClaimableReviews()
 
     expect(invokeMock).toHaveBeenCalledWith('review-claim', {
-      body: { action: 'list', claimToken: VALID_TOKEN },
+      body: {
+        action: 'list',
+        claimToken: VALID_TOKEN,
+        boostTokens: [getBoostToken(REVIEW_ID)],
+      },
     })
     expect(result).toEqual(reviews)
   })
@@ -70,19 +145,29 @@ describe('review-claim api', () => {
     await listClaimableReviews()
 
     expect(invokeMock).toHaveBeenCalledWith('review-claim', {
-      body: { action: 'list', claimToken: null },
+      body: { action: 'list', claimToken: null, boostTokens: [] },
     })
   })
 
-  it('resolve sends reviewId + decision + token', async () => {
+  it('resolve sends reviewId + decision + tokens', async () => {
     localStorage.setItem(TOKEN_KEY, VALID_TOKEN)
+    const boostToken = createBoostToken()!
+    storeBoostToken(REVIEW_ID, boostToken)
     invokeMock.mockResolvedValue({ data: { resolved: true }, error: null })
 
-    await resolveClaim('r1', 'anonymous')
+    await resolveClaim(REVIEW_ID, 'anonymous')
 
     expect(invokeMock).toHaveBeenCalledWith('review-claim', {
-      body: { action: 'resolve', reviewId: 'r1', decision: 'anonymous', claimToken: VALID_TOKEN },
+      body: {
+        action: 'resolve',
+        reviewId: REVIEW_ID,
+        decision: 'anonymous',
+        claimToken: VALID_TOKEN,
+        boostToken,
+      },
     })
+    // A resolved review's capability is dead locally too.
+    expect(getBoostToken(REVIEW_ID)).toBeNull()
   })
 
   it('mine returns the owned review ids', async () => {

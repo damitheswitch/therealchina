@@ -9,7 +9,7 @@ import {
   type ReviewSort,
   type ReviewSortable,
 } from '../lib/reviewSort'
-import { REVIEW_COLUMNS, REVIEW_HEAD_COLUMNS } from '../lib/queryColumns'
+import { REVIEW_COLUMNS, REVIEW_DETAIL_COLUMNS } from '../lib/queryColumns'
 import type { Tables } from '../types/database.types'
 
 export type RecentReview = Tables<'reviews'>
@@ -87,7 +87,7 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
 
         if (sort === 'helpful') {
           const [headsRes, votesRes] = await Promise.all([
-            supabase.from('reviews').select(REVIEW_HEAD_COLUMNS).abortSignal(controller.signal),
+            supabase.from('reviews').select(REVIEW_DETAIL_COLUMNS).abortSignal(controller.signal),
             supabase.from('upvotes').select('review_id').abortSignal(controller.signal),
           ])
           if (headsRes.error) throw headsRes.error

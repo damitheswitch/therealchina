@@ -1,11 +1,14 @@
 -- seed_aliases.sql — adds common English abbreviations to universities.slug_aliases
 -- Append-only, deduped; safe to replay on any env.
+-- Canonical slug differs between envs for these two (staging 'zhejiang' /
+-- 'wuhan', prod long-form) — match by slug or existing alias so the UPDATE
+-- lands on either.
 UPDATE universities SET slug_aliases =
   (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{zju,zheda}')) x)
-  WHERE slug = 'zhejiang';
+  WHERE slug = 'zhejiang' OR slug = 'zhejiang-university' OR 'zhejiang-university' = ANY(slug_aliases);
 UPDATE universities SET slug_aliases =
   (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{whu,wuda}')) x)
-  WHERE slug = 'wuhan';
+  WHERE slug = 'wuhan' OR slug = 'wuhan-university' OR 'wuhan-university' = ANY(slug_aliases);
 UPDATE universities SET slug_aliases =
   (SELECT array_agg(DISTINCT x) FROM unnest(array_cat(slug_aliases, '{pku,beida}')) x)
   WHERE slug = 'peking-university';

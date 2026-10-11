@@ -47,6 +47,7 @@ export const FlightListingCard = ({
   onEdit,
   onToggleActive,
   canDelete = false,
+  showOwnerControls = false,
 }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
@@ -97,21 +98,19 @@ export const FlightListingCard = ({
     }
   }
 
-  const getPrimarySocialHandle = () => {
+  const getVisibleHandles = () => {
     let handles = listing.social_handles
     // Normalize legacy rows that stored a single object instead of an array
     if (handles && !Array.isArray(handles) && handles.platform) {
       handles = [handles]
     }
     if (!Array.isArray(handles) || handles.length === 0) {
-      return null
+      return []
     }
-    // Prefer WeChat, then first available
-    const wechatHandle = handles.find((sh) => sh.platform === 'wechat')
-    return wechatHandle || handles[0]
+    return handles
   }
 
-  const primarySocialHandle = getPrimarySocialHandle()
+  const visibleHandles = getVisibleHandles()
 
   const handleToggleActive = async () => {
     if (!onToggleActive) return
@@ -126,6 +125,11 @@ export const FlightListingCard = ({
   const dateRange = formatDateRange(listing.departure_date, listing.arrival_date)
   const isDeparted = hasDeparted(listing, todayLocal())
   const isClosed = listing.is_active !== true
+  // canDelete means "this is the viewer's own listing". Management controls
+  // (edit, close, delete, own contact reveal) only render in owner context
+  // like the My Flights tab; everywhere else the card looks like anyone
+  // else's listing.
+  const canManage = canDelete && showOwnerControls
 
   return (
     <div
@@ -225,20 +229,24 @@ export const FlightListingCard = ({
           <span className="author-name">{listing.display_name || 'Anonymous'}</span>
         </div>
 
-        {isClosed && !canDelete ? (
+        {isClosed && !canManage ? (
           <span className="closed-status-text">Flight Full</span>
         ) : (
           !isClosed &&
           user &&
+          (!canDelete || canManage) &&
           listing.show_social_handle &&
-          primarySocialHandle &&
+          visibleHandles.length > 0 &&
           (showContact ? (
             <div className="flight-contact-revealed">
-              <SocialChip
-                platform={primarySocialHandle.platform}
-                handle={primarySocialHandle.handle}
-                variant="compact"
-              />
+              {visibleHandles.map((sh) => (
+                <SocialChip
+                  key={`${sh.platform}-${sh.handle}`}
+                  platform={sh.platform}
+                  handle={sh.handle}
+                  variant="compact"
+                />
+              ))}
               <button
                 type="button"
                 onClick={() => setShowContact(false)}
@@ -259,7 +267,7 @@ export const FlightListingCard = ({
           ))
         )}
 
-        {canDelete && onEdit && (
+        {canManage && onEdit && (
           <button
             onClick={() => onEdit(listing)}
             className="btn btn-outline btn-sm edit-btn"
@@ -270,7 +278,7 @@ export const FlightListingCard = ({
           </button>
         )}
 
-        {canDelete && onToggleActive && (
+        {canManage && onToggleActive && (
           <button
             onClick={handleToggleActive}
             disabled={toggling}
@@ -281,7 +289,7 @@ export const FlightListingCard = ({
           </button>
         )}
 
-        {canDelete && (
+        {canManage && (
           <button
             onClick={handleDelete}
             disabled={deleting}

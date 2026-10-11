@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { useUniversityReviews, REVIEW_PAGE_SIZE } from './useUniversityReviews'
+import { REVIEW_DETAIL_COLUMNS } from '../lib/queryColumns'
 
 // Chainable supabase stub: every builder call returns the same chain and
 // records its args; awaiting the chain resolves `result` (or the table-scoped
@@ -64,11 +65,12 @@ const makeReview = (i: number) => ({
 
 // Newest-first, like the real prerender payload (export orders created_at
 // desc). makeReview's created_at rises with its index, so ids count down.
-const seededPayload = (reviewCount: number) => ({
+const seededPayload = (reviewCount: number, upvoteCounts: Record<string, number> = {}) => ({
   university: { id: 'uni-1', slug: 'tsinghua-university' },
   reviews: Array.from({ length: reviewCount }, (_, i) => makeReview(reviewCount - i)),
   authors: {},
   stats: null,
+  upvoteCounts,
 })
 
 describe('useUniversityReviews', () => {
@@ -91,7 +93,7 @@ describe('useUniversityReviews', () => {
     calls.length = 0
     setResult({ data: [makeReview(11)], error: null, count: 21 })
 
-    const { result } = renderHook(() => useUniversityReviews('uni-1', 3))
+    const { result } = renderHook(() => useUniversityReviews('uni-1', 3, 'newest'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     expect(calls).toContainEqual(
@@ -117,7 +119,7 @@ describe('useUniversityReviews', () => {
     calls.length = 0
     setResult({ data: [makeReview(1), makeReview(2)], error: null, count: 2 })
 
-    const { result } = renderHook(() => useUniversityReviews('uni-1', 1))
+    const { result } = renderHook(() => useUniversityReviews('uni-1', 1, 'newest'))
     await waitFor(() => expect(result.current.loading).toBe(false))
     await waitFor(() => expect(result.current.upvotes['r1']).toEqual({ count: 0, upvoted: false }))
 
@@ -151,7 +153,7 @@ describe('useUniversityReviews', () => {
     )
   })
 
-  it('ranks by upvote count via heads → votes → page-rows fetch for helpful', async () => {
+  it('ranks by upvotes + detail via heads → votes → page-rows fetch for helpful', async () => {
     pdMock.payload = null
     calls.length = 0
     clearTableResults()
@@ -166,13 +168,14 @@ describe('useUniversityReviews', () => {
     const { result } = renderHook(() => useUniversityReviews('uni-1', 1, 'helpful'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
-    // Light heads query, upvotes batch for the full set, then full rows for
-    // the page ids — no range/count pagination on the helpful path.
+    // Detail-bearing heads query (the helpful rank reads detail areas), an
+    // upvotes batch for the full set, then full rows for the page ids — no
+    // range/count pagination on the ranking path.
     expect(calls).toContainEqual(
       expect.objectContaining({
         table: 'reviews',
         method: 'select',
-        args: ['id, rating, created_at'],
+        args: [REVIEW_DETAIL_COLUMNS],
       })
     )
     expect(calls).toContainEqual(
@@ -187,21 +190,86 @@ describe('useUniversityReviews', () => {
     expect(result.current.totalCount).toBe(3)
   })
 
-  it('sorts the hydrated payload by upvotes with one votes batch — no reviews fetch', async () => {
-    pdMock.payload = seededPayload(3)
+  it('ranks the hydrated payload by exported upvoteCounts — zero fetches', async () => {
+    pdMock.payload = seededPayload(3, { r3: 2 })
     calls.length = 0
     clearTableResults()
-    setTableResult('upvotes', {
-      data: [{ review_id: 'r3' }, { review_id: 'r3' }],
-      error: null,
-      count: null,
-    })
 
     const { result } = renderHook(() => useUniversityReviews('uni-1', 1, 'helpful'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
+    // The payload's exported counts drive the rank — no reviews or votes
+    // query is needed for ordering at all.
     expect(calls.filter((c) => c.table === 'reviews' && c.method === 'select')).toHaveLength(0)
-    expect(result.current.reviews[0].id).toBe('r3')
     expect(result.current.reviews.map((r) => r.id)).toEqual(['r3', 'r2', 'r1'])
+  })
+
+  it('auto default resolves to helpful at >=5 seeded reviews', async () => {
+    // r1 is the oldest review — only the helpful rank would put it first.
+    pdMock.payload = seededPayload(6, { r1: 3 })
+    calls.length = 0
+    clearTableResults()
+
+    const { result } = renderHook(() => useUniversityReviews('uni-1', 1))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.resolvedSort).toBe('helpful')
+    expect(result.current.reviews[0].id).toBe('r1')
+    expect(calls.filter((c) => c.table === 'reviews' && c.method === 'select')).toHaveLength(0)
+  })
+
+  it('auto default stays newest below 5 seeded reviews', async () => {
+    pdMock.payload = seededPayload(3)
+    calls.length = 0
+    clearTableResults()
+
+    const { result } = renderHook(() => useUniversityReviews('uni-1', 1))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(result.current.resolvedSort).toBe('newest')
+    expect(result.current.reviews.map((r) => r.id)).toEqual(['r3', 'r2', 'r1'])
+    expect(calls.filter((c) => c.table === 'reviews' && c.method === 'select')).toHaveLength(0)
+  })
+
+  it('unseeded auto probes heads, resolves helpful at >=5 and batches votes', async () => {
+    pdMock.payload = null
+    calls.length = 0
+    clearTableResults()
+    const heads = Array.from({ length: 6 }, (_, i) => makeReview(i + 1))
+    setTableResult('reviews', { data: heads, error: null, count: 6 })
+
+    const { result } = renderHook(() => useUniversityReviews('uni-1', 1))
+    await waitFor(() => expect(result.current.resolvedSort).toBe('helpful'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // Heads select for the corpus + the rank's votes batch + the visible
+    // page's engagement votes batch = two upvotes .in calls.
+    const upvoteBatches = calls.filter((c) => c.table === 'upvotes' && c.method === 'in')
+    expect(upvoteBatches).toHaveLength(2)
+    expect(calls).toContainEqual(
+      expect.objectContaining({
+        table: 'reviews',
+        method: 'select',
+        args: [REVIEW_DETAIL_COLUMNS],
+      })
+    )
+  })
+
+  it('unseeded auto resolves newest below 5 heads and skips the rank votes batch', async () => {
+    pdMock.payload = null
+    calls.length = 0
+    clearTableResults()
+    const heads = [makeReview(1), makeReview(2), makeReview(3)]
+    setTableResult('reviews', { data: heads, error: null, count: 3 })
+
+    const { result } = renderHook(() => useUniversityReviews('uni-1', 1))
+    await waitFor(() => expect(result.current.resolvedSort).toBe('newest'))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    // No ranking votes batch — only the engagement-counts batch for the
+    // hydrated page rows fires.
+    const upvoteBatches = calls.filter((c) => c.table === 'upvotes' && c.method === 'in')
+    expect(upvoteBatches).toHaveLength(1)
+    expect(result.current.totalCount).toBe(3)
   })
 })

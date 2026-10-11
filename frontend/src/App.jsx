@@ -43,6 +43,15 @@ const UserDirectoryPage = lazy(() =>
 const FlightListingsPage = lazy(() =>
   import('./pages/FlightListingsPage').then((m) => ({ default: m.FlightListingsPage }))
 )
+const CommunityPage = lazy(() =>
+  import('./pages/CommunityPage').then((m) => ({ default: m.CommunityPage }))
+)
+const CommunityQuestionPage = lazy(() =>
+  import('./pages/CommunityQuestionPage').then((m) => ({ default: m.CommunityQuestionPage }))
+)
+const AskQuestionPage = lazy(() =>
+  import('./pages/AskQuestionPage').then((m) => ({ default: m.AskQuestionPage }))
+)
 const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 )
@@ -119,6 +128,9 @@ function App() {
               <Route path="/profile/:userId" element={<ProfilePage />} />
               <Route path="/users" element={<UserDirectoryPage />} />
               <Route path="/flights" element={<FlightListingsPage />} />
+              <Route path="/community" element={<CommunityPage />} />
+              <Route path="/community/ask" element={<AskQuestionPage />} />
+              <Route path="/community/q/:slug" element={<CommunityQuestionPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>

@@ -4,7 +4,7 @@ import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { ReviewCard } from './ReviewCard'
 import { ReviewSortSelect } from './ReviewSortSelect'
 import { Icons } from './Icons'
-import { DEFAULT_REVIEW_SORT, type ReviewSort } from '../lib/reviewSort'
+import { type ReviewSort, type ReviewSortChoice } from '../lib/reviewSort'
 import type { Tables } from '../types/database.types'
 
 type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
@@ -15,7 +15,9 @@ type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
 // flashing the previous university's reviews under the new header.
 export const UniversityReviews = ({ university }: { university: UniversityRef }) => {
   const [page, setPage] = useState(1)
-  const [sort, setSort] = useState<ReviewSort>(DEFAULT_REVIEW_SORT)
+  // 'auto' lets the hook pick the default: 'helpful' once the page has
+  // enough reviews for a ranking to mean something, 'newest' below that.
+  const [sort, setSort] = useState<ReviewSortChoice>('auto')
   const {
     reviews,
     authors,
@@ -26,6 +28,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
     refetch,
     commentCounts,
     upvotes,
+    resolvedSort,
   } = useUniversityReviews(university.id, page, sort)
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -54,7 +57,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
     <div className="section uni-reviews" style={{ paddingTop: 'var(--sp-2)' }} ref={sectionRef}>
       <div className="reviews-head">
         <h2 className="section-title">Student Reviews{totalCount > 0 ? ` (${totalCount})` : ''}</h2>
-        {totalCount > 1 && <ReviewSortSelect value={sort} onChange={handleSortChange} />}
+        {totalCount > 1 && <ReviewSortSelect value={resolvedSort} onChange={handleSortChange} />}
       </div>
 
       {loading ? (

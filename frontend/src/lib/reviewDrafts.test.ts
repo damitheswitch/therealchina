@@ -11,6 +11,8 @@ import {
   saveLocalDraft,
   clearLocalDraft,
   hasLocalDraftForUniversity,
+  mapDraftStepToScreen,
+  DRAFT_PAYLOAD_VERSION,
   type ReviewDraft,
   type ReviewDraftPayload,
 } from './reviewDrafts'
@@ -88,7 +90,7 @@ describe('draft labels', () => {
       progress: 2,
     })
     expect(draftUniversityLabel(draft)).toBe('Tsinghua University')
-    expect(draftProgressLabel(draft)).toBe('Step 2 of 5')
+    expect(draftProgressLabel(draft)).toBe('Step 1 of 2')
   })
 
   it('falls back to payload names and a safe label', () => {
@@ -98,7 +100,7 @@ describe('draft labels', () => {
       progress: 4,
     })
     expect(draftUniversityLabel(named)).toBe('Fudan')
-    expect(draftProgressLabel(named)).toBe('Step 4 of 5')
+    expect(draftProgressLabel(named)).toBe('Step 2 of 2')
 
     const empty = makeDraft({
       payload: emptyPayload,
@@ -106,7 +108,29 @@ describe('draft labels', () => {
       progress: 0,
     })
     expect(draftUniversityLabel(empty)).toBe('Unknown university')
-    expect(draftProgressLabel(empty)).toBe('Step 1 of 5')
+    expect(draftProgressLabel(empty)).toBe('Step 1 of 2')
+  })
+})
+
+describe('mapDraftStepToScreen', () => {
+  it('maps legacy 5-step drafts onto the two screens', () => {
+    expect(mapDraftStepToScreen({ step: 1 })).toBe(1)
+    expect(mapDraftStepToScreen({ step: 3 })).toBe(1)
+    expect(mapDraftStepToScreen({ step: 4 })).toBe(2)
+    expect(mapDraftStepToScreen({ step: 5 })).toBe(2)
+  })
+
+  it('resumes v2 drafts on their own screen', () => {
+    expect(mapDraftStepToScreen({ step: 1, v: DRAFT_PAYLOAD_VERSION })).toBe(1)
+    expect(mapDraftStepToScreen({ step: 2, v: DRAFT_PAYLOAD_VERSION })).toBe(2)
+    expect(mapDraftStepToScreen({ step: 5, v: DRAFT_PAYLOAD_VERSION })).toBe(1)
+  })
+
+  it('treats missing or malformed payloads as screen 1', () => {
+    expect(mapDraftStepToScreen(null)).toBe(1)
+    expect(mapDraftStepToScreen(undefined)).toBe(1)
+    expect(mapDraftStepToScreen({})).toBe(1)
+    expect(mapDraftStepToScreen({ step: Number.NaN })).toBe(1)
   })
 })
 

@@ -8,7 +8,8 @@ import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { MediaGallery } from './MediaGallery'
 import { Icons } from './Icons'
-import { RecommendPill, ReviewContext, ReviewExtras } from './ReviewExtras'
+import { RecommendPill, ReviewContext, ReviewExtras, ReviewStrengthMeter } from './ReviewExtras'
+import { isDetailedReview } from '../lib/reviewDetail'
 import { ConfirmDialog } from './ConfirmDialog'
 import { ReviewWizard } from './ReviewWizard'
 
@@ -36,8 +37,12 @@ const MyReviewCard = ({
     review.created_at != null &&
     new Date(review.updated_at).getTime() - new Date(review.created_at).getTime() > 60_000
 
+  // The same gold accent public readers see — plus the author-only
+  // strength meter below (D4.4: the meter never renders on public cards).
+  const detailed = isDetailedReview(review)
+
   return (
-    <div className="review-card fade-in my-review-card">
+    <div className={`review-card fade-in my-review-card${detailed ? ' detailed' : ''}`}>
       <div className="review-header">
         <StarRating rating={review.rating} />
         <div className="review-meta">
@@ -63,6 +68,7 @@ const MyReviewCard = ({
       {Array.isArray(review.media) && review.media.length > 0 && (
         <MediaGallery media={review.media} />
       )}
+      <ReviewStrengthMeter review={review} />
       <div className="review-actions">
         <button type="button" className="edit-btn" onClick={onEdit}>
           Edit review

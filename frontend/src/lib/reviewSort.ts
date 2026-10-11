@@ -1,11 +1,22 @@
 import type { Tables } from '../types/database.types'
+import { detailScore, type ReviewDetailInput } from './reviewDetail'
 
-// Shared review sort model. 'helpful' ranks by upvote count — PostgREST can't
-// ORDER BY a related-row count, so hooks rank that one client-side; the other
-// options map to real columns and can run server-side.
+// Shared review sort model. 'helpful' ranks by upvotes + filled detail
+// areas — PostgREST can't ORDER BY a related-row count, so hooks rank that
+// one client-side; the other options map to real columns and can run
+// server-side.
 export type ReviewSort = 'newest' | 'highest' | 'lowest' | 'helpful'
 
 export const DEFAULT_REVIEW_SORT: ReviewSort = 'newest'
+
+// D4.3 (owner decision 2026-10-09): on university pages the default sort is
+// 'auto' — resolved to 'helpful' once the page has at least this many
+// reviews, 'newest' below that. Lives here (not in the hook) so the
+// prerender pipeline can order payloads to match the hydrated default view.
+export const HELPFUL_DEFAULT_MIN_REVIEWS = 5
+export type ReviewSortChoice = ReviewSort | 'auto'
+export const resolveAutoSort = (sort: ReviewSortChoice, reviewCount: number): ReviewSort =>
+  sort === 'auto' ? (reviewCount >= HELPFUL_DEFAULT_MIN_REVIEWS ? 'helpful' : 'newest') : sort
 
 export const REVIEW_SORT_OPTIONS: { value: ReviewSort; label: string }[] = [
   { value: 'newest', label: 'Newest first' },
@@ -17,9 +28,11 @@ export const REVIEW_SORT_OPTIONS: { value: ReviewSort; label: string }[] = [
 export const isReviewSort = (value: unknown): value is ReviewSort =>
   REVIEW_SORT_OPTIONS.some((o) => o.value === value)
 
-// The fields every sort needs — full review rows satisfy this, and the light
-// "heads" select (id, rating, created_at) used by two-phase fetches does too.
-export type ReviewSortable = Pick<Tables<'reviews'>, 'id' | 'rating' | 'created_at'>
+// The fields every sort needs — full review rows satisfy this, and the
+// "heads" selects used by two-phase fetches do too (REVIEW_DETAIL_COLUMNS
+// adds the detail fields 'helpful' reads; absent keys score zero).
+export type ReviewSortable = Pick<Tables<'reviews'>, 'id' | 'rating' | 'created_at'> &
+  ReviewDetailInput
 
 // Stable tiebreak for every sort: newest first, id desc last. Mirrors the
 // server ORDER BY so client- and server-sorted pages agree at boundaries.
@@ -37,8 +50,13 @@ export const compareReviews = (
       return b.rating - a.rating || byRecency(a, b)
     case 'lowest':
       return a.rating - b.rating || byRecency(a, b)
-    case 'helpful':
-      return (upvoteCounts[b.id] ?? 0) - (upvoteCounts[a.id] ?? 0) || byRecency(a, b)
+    case 'helpful': {
+      // Each filled detail area counts like one upvote (D4.3): a review that
+      // answers more of the reader's questions ranks with one that earned
+      // the same vote count. Recency stays the final tiebreak.
+      const score = (r: ReviewSortable) => (upvoteCounts[r.id] ?? 0) + detailScore(r)
+      return score(b) - score(a) || byRecency(a, b)
+    }
     case 'newest':
       return byRecency(a, b)
   }

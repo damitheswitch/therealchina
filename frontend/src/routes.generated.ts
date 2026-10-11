@@ -3298,41 +3298,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-            user_id: null,
-            rating: 4,
-            text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
-            program: "Mechanical Engineering",
-            degree_level: "Bachelor",
-            media: [],
-            created_at: "2026-09-15T13:53:48.160506+00:00",
-            enrollment_status: "alumni",
-            start_year: 2018,
-            end_year: 2022,
-            language_of_instruction: "Bilingual",
-            tuition_range: "¥20k–¥40k",
-            living_cost_range: "¥2k–¥4k",
-            funding_type: "self",
-            funding_coverage: null,
-            recommend: "yes",
-            pros: null,
-            cons: null,
-            tags: [
-              "Strong academics",
-              "Hard grading",
-              "Good career support"
-            ],
-            rating_academics: 5,
-            rating_campus: 4,
-            rating_accommodation: 3,
-            rating_cost: 4,
-            rating_intl_office: null,
-            rating_social: 3,
-            rating_extracurricular: null,
-            rating_career: 5
-          },
-          {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
             university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
             user_id: null,
@@ -3392,6 +3357,41 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_intl_office: 4,
             rating_social: 4,
             rating_extracurricular: 5,
+            rating_career: 5
+          },
+          {
+            id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            user_id: null,
+            rating: 4,
+            text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
+            program: "Mechanical Engineering",
+            degree_level: "Bachelor",
+            media: [],
+            created_at: "2026-09-15T13:53:48.160506+00:00",
+            enrollment_status: "alumni",
+            start_year: 2018,
+            end_year: 2022,
+            language_of_instruction: "Bilingual",
+            tuition_range: "¥20k–¥40k",
+            living_cost_range: "¥2k–¥4k",
+            funding_type: "self",
+            funding_coverage: null,
+            recommend: "yes",
+            pros: null,
+            cons: null,
+            tags: [
+              "Strong academics",
+              "Hard grading",
+              "Good career support"
+            ],
+            rating_academics: 5,
+            rating_campus: 4,
+            rating_accommodation: 3,
+            rating_cost: 4,
+            rating_intl_office: null,
+            rating_social: 3,
+            rating_extracurricular: null,
             rating_career: 5
           },
           {
@@ -3467,7 +3467,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           recommend_maybe_count: 1,
           recommend_no_count: 0,
           updated_at: "2026-09-24T13:53:48.160506+00:00"
-        }
+        },
+        upvoteCounts: {}
       }
     }
   },
@@ -3624,7 +3625,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           recommend_maybe_count: 0,
           recommend_no_count: 2,
           updated_at: "2026-09-24T13:53:48.160506+00:00"
-        }
+        },
+        upvoteCounts: {}
       }
     }
   }

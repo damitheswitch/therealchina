@@ -1,5 +1,5 @@
 import { assertEquals } from 'jsr:@std/assert'
-import { asCallerEmail, asClaimToken, claimMatcher } from './matcher.ts'
+import { asBoostHash, asCallerEmail, asClaimToken, claimMatcher } from './matcher.ts'
 
 // Low-entropy fixture: a real-looking UUID secret would trip secret scanners.
 const TOKEN = '00000000-0000-4000-8000-000000000001'
@@ -46,4 +46,32 @@ Deno.test('claimMatcher cannot be widened by a crafted email', () => {
   // Commas/parens would otherwise let an email smuggle extra .or() terms into
   // the PostgREST filter — the email regex rejects them outright.
   assertEquals(claimMatcher(null, 'x@y.co),owner_id.eq.z'), null)
+})
+
+const HASH = 'a'.repeat(64)
+
+Deno.test('asBoostHash accepts lowercase sha256 hex only', () => {
+  assertEquals(asBoostHash(HASH), HASH)
+  assertEquals(asBoostHash(HASH.toUpperCase()), HASH)
+  assertEquals(asBoostHash('z'.repeat(64)), null)
+  assertEquals(asBoostHash('a'.repeat(63)), null)
+  assertEquals(asBoostHash(null), null)
+})
+
+Deno.test('claimMatcher adds boost_secret_hash atoms for valid hashes', () => {
+  const other = 'b'.repeat(64)
+  assertEquals(
+    claimMatcher(null, null, [HASH]),
+    `boost_secret_hash.eq.${HASH}`
+  )
+  assertEquals(
+    claimMatcher(null, null, [HASH, other]),
+    `boost_secret_hash.in.(${HASH},${other})`
+  )
+  assertEquals(
+    claimMatcher(TOKEN, 'a@b.co', [HASH]),
+    `claim_token.eq.${TOKEN},boost_secret_hash.eq.${HASH},email.ilike.a@b.co`
+  )
+  // Malformed hashes are dropped, never concatenated into the filter.
+  assertEquals(claimMatcher(null, null, ['not-a-hash', HASH, 'x)']), `boost_secret_hash.eq.${HASH}`)
 })

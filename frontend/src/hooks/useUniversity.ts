@@ -10,6 +10,10 @@ export interface UniversityPageData {
   reviews?: Tables<'reviews'>[]
   authors?: Record<string, { id: string; display_name: string | null; avatar_url: string | null }>
   stats?: Tables<'university_stats'> | null
+  // review_id → public upvote count at export time (voter identity is never
+  // exported). Drives the seeded 'helpful' rank with zero extra queries;
+  // absent in payloads built before Phase 4, treated as all-zero counts.
+  upvoteCounts?: Record<string, number>
 }
 
 export const useUniversity = (slug: string | undefined) => {
