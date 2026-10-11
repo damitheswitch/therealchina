@@ -7,7 +7,7 @@ import type { MediaItem } from '../../lib/reviewSubmit'
 import { StarRating } from '../StarRating'
 import { SealBadge } from '../SealBadge'
 import { MediaGallery } from '../MediaGallery'
-import { RecommendPill, ReviewContext, ReviewExtras } from '../ReviewExtras'
+import { RecommendPill, ReviewContext, ReviewExtras, ReviewStrengthMeter } from '../ReviewExtras'
 import { useAuth } from '../../contexts/AuthContext'
 import { useProfileContext } from '../../contexts/ProfileContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
@@ -15,6 +15,36 @@ import { useAuthModal } from '../../contexts/AuthModalContext'
 // The card needs `rating` on top of the display-fields shape ReviewCardData
 // describes (the real card reads it off the full reviews row).
 type PreviewReview = ReviewCardData & { rating: number }
+
+// Maps live form values to the card shape — shared by the preview card and
+// the success screen's strength meter, so both score the same review.
+const previewReviewFromFields = (values: ReviewFieldValues, media: MediaItem[]): PreviewReview => ({
+  rating: values.rating,
+  recommend: values.recommend || null,
+  program: values.program || null,
+  degree_level: values.degreeLevel || null,
+  enrollment_status: values.enrollmentStatus || null,
+  start_year: values.startYear || null,
+  end_year: values.endYear || null,
+  language_of_instruction: values.languageOfInstruction || null,
+  tuition_range: values.tuitionRange || null,
+  living_cost_range: values.livingCostRange || null,
+  funding_type: values.fundingType || null,
+  funding_coverage:
+    values.fundingType && values.fundingType !== 'self' ? values.fundingCoverage || null : null,
+  pros: values.pros || null,
+  cons: values.cons || null,
+  tags: values.selectedTags,
+  media: media as unknown as PreviewReview['media'],
+  rating_academics: values.subscores.rating_academics ?? null,
+  rating_campus: values.subscores.rating_campus ?? null,
+  rating_accommodation: values.subscores.rating_accommodation ?? null,
+  rating_cost: values.subscores.rating_cost ?? null,
+  rating_intl_office: values.subscores.rating_intl_office ?? null,
+  rating_social: values.subscores.rating_social ?? null,
+  rating_extracurricular: values.subscores.rating_extracurricular ?? null,
+  rating_career: values.subscores.rating_career ?? null,
+})
 
 // Renders the just-published review the way it appears on the university
 // page. Driven straight off form values, so it fills in live while the
@@ -32,33 +62,7 @@ export const PublishedReviewPreview = ({
   const { profile } = useProfileContext()
 
   const review = useMemo<PreviewReview>(
-    () => ({
-      rating: values.rating,
-      recommend: values.recommend || null,
-      program: values.program || null,
-      degree_level: values.degreeLevel || null,
-      enrollment_status: values.enrollmentStatus || null,
-      start_year: values.startYear || null,
-      end_year: values.endYear || null,
-      language_of_instruction: values.languageOfInstruction || null,
-      tuition_range: values.tuitionRange || null,
-      living_cost_range: values.livingCostRange || null,
-      funding_type: values.fundingType || null,
-      funding_coverage:
-        values.fundingType && values.fundingType !== 'self' ? values.fundingCoverage || null : null,
-      pros: values.pros || null,
-      cons: values.cons || null,
-      tags: values.selectedTags,
-      media: media as unknown as PreviewReview['media'],
-      rating_academics: values.subscores.rating_academics ?? null,
-      rating_campus: values.subscores.rating_campus ?? null,
-      rating_accommodation: values.subscores.rating_accommodation ?? null,
-      rating_cost: values.subscores.rating_cost ?? null,
-      rating_intl_office: values.subscores.rating_intl_office ?? null,
-      rating_social: values.subscores.rating_social ?? null,
-      rating_extracurricular: values.subscores.rating_extracurricular ?? null,
-      rating_career: values.subscores.rating_career ?? null,
-    }),
+    () => previewReviewFromFields(values, media),
     [values, media]
   )
 
@@ -118,12 +122,21 @@ export const ReviewSuccess = ({
     timeZone: 'UTC',
   })
 
+  // The success screen is only ever the publisher's own view, so the
+  // author-only meter is safe here for signed-in and anonymous reviewers
+  // alike (anonymous authors never reach My reviews — this is their only
+  // strength feedback). It stays out of PublishedReviewPreview on purpose:
+  // that component is reused live inside the Boost card stack.
+  const preview = previewReviewFromFields(form.values, media)
+
   return (
     <div className="wizard-step active">
       <h2 className="step-title">Your review is live.</h2>
       <p className="step-sub">This is how it looks on the page.</p>
 
       <PublishedReviewPreview values={form.values} media={media} date={date} />
+
+      <ReviewStrengthMeter review={preview} />
 
       {canBoost && (
         <div className="success-offer">

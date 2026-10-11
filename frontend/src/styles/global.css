@@ -772,6 +772,57 @@ h3 {
     0 0 14px rgba(201, 162, 39, 0.4);
 }
 
+/* "Detailed" reviews (3+ of the 7 detail areas — lib/reviewDetail) extend
+   the expand pill's gold signal to the whole card: gold border + a soft
+   halo. Deliberately glow-only — no badge, no icon, nothing that could be
+   mistaken for the red Verified seal (D4.2). */
+.review-card.detailed {
+  border-color: var(--gold);
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 3px rgba(201, 162, 39, 0.18),
+    0 0 14px rgba(201, 162, 39, 0.22);
+}
+
+/* Author-only strength meter (My reviews / success screen). Reuses the
+   gold fill language of the rating histogram. */
+.strength-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.strength-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+.strength-meter-label {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.strength-meter-count {
+  color: var(--ink-faint);
+}
+.strength-meter-track {
+  height: 0.45rem;
+  background: var(--rice-warm);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+.strength-meter-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  border-radius: var(--r-full);
+  transition: width var(--t-mid);
+}
+.strength-meter-hint {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
 /* Engagement row: compact vote + comment pills side by side. */
 .review-actions {
   display: flex;

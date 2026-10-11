@@ -168,3 +168,40 @@ describe('ReviewCard collapsible behaviour', () => {
     expect(document.querySelector('.review-media-gallery')).toBeInTheDocument()
   })
 })
+
+// The Phase 4 "Detailed" mark (lib/reviewDetail): 3+ filled detail areas
+// carry a gold accent on the card and the expand pill's halo — glow only,
+// no badge, and a screen-reader label so the mark isn't sighted-only.
+describe('ReviewCard detailed mark', () => {
+  // 3 areas without any photos: program + costs + pros.
+  const detailedReview = {
+    ...baseReview,
+    program: 'Computer Science',
+    tuition_range: '¥20k-¥40k',
+    pros: 'Great campus food',
+  }
+
+  it('marks a detailed review with the gold accent and an sr-only label', () => {
+    renderCard(detailedReview)
+    expect(document.querySelector('.review-card.detailed')).toBeInTheDocument()
+    expect(screen.getByText('Detailed review')).toBeInTheDocument()
+  })
+
+  it('leaves a publish-minimum review unmarked', () => {
+    renderCard(baseReview)
+    expect(document.querySelector('.review-card.detailed')).not.toBeInTheDocument()
+    expect(screen.queryByText('Detailed review')).not.toBeInTheDocument()
+  })
+
+  it('glows the collapsed expand pill on detailed reviews', () => {
+    renderCard(detailedReview)
+    expect(document.querySelector('.review-expand-btn.rich')).toBeInTheDocument()
+  })
+
+  it('keeps the Verified seal distinct — no gold mark comes from user_id alone', () => {
+    renderCard({ ...baseReview, user_id: 'u-1' }, { display_name: 'Alex', avatar_url: null })
+    expect(screen.getByText('Verified')).toBeInTheDocument()
+    expect(document.querySelector('.review-card.detailed')).not.toBeInTheDocument()
+    expect(screen.queryByText('Detailed review')).not.toBeInTheDocument()
+  })
+})
