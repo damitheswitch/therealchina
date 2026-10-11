@@ -6,6 +6,7 @@ import { Icons } from './Icons'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { useProfileContext } from '../contexts/ProfileContext'
+import { usePwaInstall } from '../hooks/usePwaInstall'
 
 // UserDropdown component - Dropdown menu in header with user avatar
 export const UserDropdown = () => {
@@ -14,21 +15,8 @@ export const UserDropdown = () => {
   const { profile } = useProfileContext()
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
-  const [installPrompt, setInstallPrompt] = useState(null)
+  const { canInstall, promptInstall } = usePwaInstall()
   const dropdownRef = useRef(null)
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault()
-      setInstallPrompt(event)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    }
-  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -61,12 +49,8 @@ export const UserDropdown = () => {
   }
 
   const handleInstall = async () => {
-    if (!installPrompt) return
-
     setIsOpen(false)
-    installPrompt.prompt()
-    await installPrompt.userChoice
-    setInstallPrompt(null)
+    await promptInstall()
   }
 
   if (loading) return null
@@ -178,7 +162,7 @@ export const UserDropdown = () => {
               </button>
             )}
 
-            {installPrompt && (
+            {canInstall && (
               <button className="user-dropdown-item" onClick={handleInstall}>
                 <Icons.Download />
                 <span>Install app</span>

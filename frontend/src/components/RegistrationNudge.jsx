@@ -1,26 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
+import { usePwaInstall } from '../hooks/usePwaInstall'
 
 // RegistrationNudge component - dismissible banner shown once per session
 export const RegistrationNudge = () => {
   const { user, loading } = useAuth()
   const { openAuthModal, closeAuthModal } = useAuthModal()
   const [visible, setVisible] = useState(false)
-  const [installPrompt, setInstallPrompt] = useState(null)
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (event) => {
-      event.preventDefault()
-      setInstallPrompt(event)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    }
-  }, [])
+  const { canInstall, promptInstall } = usePwaInstall()
 
   useEffect(() => {
     // Wait for the session to load and never nudge signed-in users
@@ -54,12 +42,9 @@ export const RegistrationNudge = () => {
   }
 
   const handleInstall = async () => {
-    if (!installPrompt) return
     setVisible(false)
     sessionStorage.setItem('trc_nudge_shown', 'true')
-    installPrompt.prompt()
-    await installPrompt.userChoice
-    setInstallPrompt(null)
+    await promptInstall()
   }
 
   return (
@@ -97,19 +82,19 @@ export const RegistrationNudge = () => {
             ×
           </button>
           <h4 style={{ marginBottom: 'var(--sp-1)' }}>
-            {installPrompt ? 'Add The Real China to your home screen' : 'Create a free account'}
+            {canInstall ? 'Add The Real China to your home screen' : 'Create a free account'}
           </h4>
           <p style={{ marginBottom: 'var(--sp-2)', fontSize: '0.9rem' }}>
-            {installPrompt
+            {canInstall
               ? 'Get a faster, app-like experience and keep access to reviews on the go.'
               : 'Sign up to upvote reviews, leave comments, and connect with other students'}
           </p>
           <button
-            onClick={installPrompt ? handleInstall : handleSignUp}
+            onClick={canInstall ? handleInstall : handleSignUp}
             className="btn btn-outline"
             style={{ color: '#fff', borderColor: '#fff' }}
           >
-            {installPrompt ? 'Install App' : 'Sign Up'}
+            {canInstall ? 'Install App' : 'Sign Up'}
           </button>
         </div>
       )}
