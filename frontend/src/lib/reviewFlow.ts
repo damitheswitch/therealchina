@@ -6,9 +6,10 @@ import type { BoostCard } from './analytics'
 
 // ---- Fast review flow (Phase 2) --------------------------------------------------
 // Two publish screens: essentials (university + rating) then story (text + tags).
-// Everything else is optional and moves to the post-publish Boost card stack.
-// The server minimum is already university + rating + text (see
-// _shared/reviewFields.ts), so publishing never needs more than that.
+// Everything else is optional — offered pre-publish by the "speak up" section
+// on screen 2 and post-publish by the Boost card stack. The server minimum is
+// already university + rating + text (see _shared/reviewFields.ts), so
+// publishing never needs more than that.
 
 export const FAST_FLOW_SCREENS = 2
 
@@ -117,14 +118,7 @@ export const buildReviewFields = (v: ReviewFieldValues, media: MediaItem[]): Rev
 
 // ---- Boost ---------------------------------------------------------------------
 
-export const BOOST_CARD_ORDER: BoostCard[] = [
-  'program',
-  'ratings',
-  'money',
-  'details',
-  'pros_cons',
-  'media',
-]
+export const BOOST_CARD_ORDER: BoostCard[] = ['program', 'ratings', 'money', 'details', 'media']
 
 // Anonymous Boost (Phase 3) can only write the columns the review-boost
 // function allowlists — no media card (uploads are a separate surface) and no
@@ -157,11 +151,6 @@ export const buildBoostPatch = (values: ReviewFieldValues, card: BoostCard): Boo
         endYear: values.endYear === '' ? null : values.endYear,
         languageOfInstruction: values.languageOfInstruction || null,
       }
-    case 'pros_cons':
-      return {
-        pros: values.pros.trim() || null,
-        cons: values.cons.trim() || null,
-      }
     default:
       return {}
   }
@@ -184,10 +173,6 @@ export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> 
     title: 'When were you there?',
     sub: 'So students know how current your experience is.',
   },
-  pros_cons: {
-    title: 'Best and worst',
-    sub: 'One line each is plenty.',
-  },
   media: {
     title: 'Got a photo?',
     sub: 'Dorm, campus, canteen. Real photos beat every rating.',
@@ -196,7 +181,45 @@ export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> 
 
 // Starter chips for the writing screen: one tap inserts a sentence opening so
 // the textarea never starts blank.
-export const STORY_STARTERS = ['The best part is ', 'The worst part is ', 'I wish I knew ']
+export const STORY_STARTERS = ['Honestly, ', 'I wish I knew ', 'What surprised me: ']
+
+// The optional detail the speak-up section collects on screen 2. Anything in
+// here means a resumed draft should reopen the section rather than publish
+// detail the reviewer can no longer see. Legacy pros/cons count too: old
+// drafts can still carry them even though the flow no longer asks.
+export const hasOptionalDetails = (v: ReviewFieldValues): boolean =>
+  Boolean(
+    v.program.trim() ||
+    v.degreeLevel ||
+    Object.keys(v.subscores).length > 0 ||
+    v.enrollmentStatus ||
+    v.startYear !== '' ||
+    v.endYear !== '' ||
+    v.languageOfInstruction ||
+    v.tuitionRange ||
+    v.livingCostRange ||
+    v.fundingType ||
+    v.pros.trim() ||
+    v.cons.trim()
+  )
+
+// Clears the speak-up section's fields. Collapsing the section means "keep it
+// short", so filled detail must not leak into the publish payload invisibly.
+export const clearedOptionalDetails = (): Partial<ReviewFieldValues> => ({
+  program: '',
+  degreeLevel: '',
+  subscores: {},
+  enrollmentStatus: '',
+  startYear: '',
+  endYear: '',
+  languageOfInstruction: '',
+  tuitionRange: '',
+  livingCostRange: '',
+  fundingType: '',
+  fundingCoverage: '',
+  pros: '',
+  cons: '',
+})
 
 // ---- Field option lists --------------------------------------------------------
 

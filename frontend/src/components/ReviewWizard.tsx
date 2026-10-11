@@ -42,8 +42,10 @@ import {
   BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
+  clearedOptionalDetails,
   draftPayloadFromState,
   fieldValuesFromDraft,
+  hasOptionalDetails,
 } from '../lib/reviewFlow'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
@@ -51,10 +53,12 @@ import { useProfileContext } from '../contexts/ProfileContext'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
+import { ReviewDetails } from './review/ReviewDetails'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
@@ -96,6 +100,7 @@ export const ReviewWizard = ({
   const { user, loading: authLoading } = useAuth()
   const { profile } = useProfileContext()
   const { showToast } = useToast()
+  const { openAuthModal } = useAuthModal()
 
   const editMode = !!editReview
   // Stored values mapped once at mount — the editor is only opened with the
@@ -145,6 +150,9 @@ export const ReviewWizard = ({
   const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
   const [boostIndex, setBoostIndex] = useState(0)
 
+  // Screen 2's "speak up" expansion: the whole optional field set, pre-publish.
+  const [detailsOpen, setDetailsOpen] = useState(false)
+
   // Set once publish succeeds: the row id (Boost writes against it), the
   // canonical slug for links, and the timestamp shown on the preview card.
   const [published, setPublished] = useState<{
@@ -184,6 +192,7 @@ export const ReviewWizard = ({
   const storyViewedRef = useRef(false)
   const reportedValidationScreensRef = useRef(new Set<number>())
   const submitInFlightRef = useRef(false)
+  const detailsOpenedTrackedRef = useRef(false)
   // Set the moment submitReview succeeds — a debounced autosave can still fire
   // during the stamp animation (phase is still 'form' until it finishes), and
   // without this it would re-create the draft row publish just deleted.
@@ -202,6 +211,9 @@ export const ReviewWizard = ({
       setStep(mapDraftStepToScreen(p))
       applyValues(fieldValuesFromDraft(p))
       setMediaState({ media: p.media ?? [], uploading: false, errorCount: 0 })
+      // A draft carrying speak-up detail reopens the section so nothing is
+      // published the reviewer can no longer see.
+      setDetailsOpen(hasOptionalDetails(p) || (p.media ?? []).length > 0)
       lastSavedPayloadRef.current = p
     },
     [applyValues]
@@ -510,6 +522,25 @@ export const ReviewWizard = ({
     clearError()
     setStep((s) => Math.max(s - 1, 1))
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const openDetails = () => {
+    setDetailsOpen(true)
+    if (!detailsOpenedTrackedRef.current) {
+      detailsOpenedTrackedRef.current = true
+      void trackReviewEvent({
+        name: 'review_details_opened',
+        data: { flow: FLOW, entry: reviewEntry, auth: reviewAuth },
+      })
+    }
+  }
+
+  // Collapsing means "keep it short": detail filled inside the section must
+  // not publish invisibly, so it is cleared rather than merely hidden.
+  const closeDetails = () => {
+    applyValues(clearedOptionalDetails())
+    setMediaState((m) => ({ ...m, media: [] }))
+    setDetailsOpen(false)
   }
 
   // ---- Publish -------------------------------------------------------------------
@@ -833,6 +864,31 @@ export const ReviewWizard = ({
 
         {step === 2 && <ReviewStory form={form} isAnonymous={!user} />}
 
+        {/* Speak up: the whole optional field set, before publishing instead
+            of after. Collapsing clears it (see closeDetails). */}
+        {step === 2 && !detailsOpen && (
+          <div className="speak-up">
+            <button type="button" className="btn btn-lg speak-up-btn" onClick={openDetails}>
+              🔥 I want to speak up! 🔥
+            </button>
+            <p className="speak-up-hint">
+              Say more: program, costs, ratings, photos. The detail students search for.
+            </p>
+          </div>
+        )}
+
+        {step === 2 && detailsOpen && (
+          <div className="speak-up-open">
+            <div className="speak-up-open-head">
+              <h3 className="boost-card-title">Tell them everything</h3>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={closeDetails}>
+                Keep it short
+              </button>
+            </div>
+            <ReviewDetails form={form} mediaState={mediaState} onMediaStateChange={setMediaState} />
+          </div>
+        )}
+
         {/* Anonymous Turnstile — lives on the publish screen now */}
         {!user && step === 2 && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -853,6 +909,27 @@ export const ReviewWizard = ({
               }}
             />
           </div>
+        )}
+
+        {/* Anonymous reviewers see what the card will say before they commit. */}
+        {step === 2 && !user && (
+          <p className="posting-as">
+            Posting as Anonymous.{' '}
+            <button
+              type="button"
+              className="btn-text"
+              onClick={() =>
+                openAuthModal('register', {
+                  title: 'Put your name on it',
+                  subtitle:
+                    'Create a free account and this review shows your name. What you wrote is saved.',
+                  closable: true,
+                })
+              }
+            >
+              Sign in to put your name on it.
+            </button>
+          </p>
         )}
 
         <div className="wizard-nav">

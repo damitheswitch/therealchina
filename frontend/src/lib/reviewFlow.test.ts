@@ -10,9 +10,11 @@ import {
   BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
+  clearedOptionalDetails,
   draftPayloadFromState,
   emptyReviewFieldValues,
   fieldValuesFromDraft,
+  hasOptionalDetails,
   recentYearChips,
   STORY_STARTERS,
   type ReviewFieldValues,
@@ -161,7 +163,7 @@ describe('boost card ordering', () => {
   })
 
   it('anonymous Boost drops only the media card', () => {
-    expect(ANON_BOOST_CARDS).toEqual(['program', 'ratings', 'money', 'details', 'pros_cons'])
+    expect(ANON_BOOST_CARDS).toEqual(['program', 'ratings', 'money', 'details'])
   })
 })
 
@@ -187,8 +189,6 @@ describe('buildBoostPatch', () => {
       endYear: null,
       languageOfInstruction: null,
     })
-    // Never carries the protected fields.
-    expect(buildBoostPatch(v, 'pros_cons')).toEqual({ pros: 'nice', cons: null })
   })
 
   it('self-funded clears coverage the same way buildReviewFields does', () => {
@@ -209,6 +209,46 @@ describe('buildBoostPatch', () => {
 describe('story starters', () => {
   it('ends with a space so text can continue the sentence', () => {
     for (const s of STORY_STARTERS) expect(s.endsWith(' ')).toBe(true)
+  })
+})
+
+describe('speak-up detail detection', () => {
+  it('is false for a minimal review', () => {
+    expect(hasOptionalDetails(values({ rating: 5, reviewText: 'good' }))).toBe(false)
+  })
+
+  it('is true once any optional detail is filled', () => {
+    expect(hasOptionalDetails(values({ program: 'CS' }))).toBe(true)
+    expect(hasOptionalDetails(values({ subscores: { rating_campus: 4 } }))).toBe(true)
+    expect(hasOptionalDetails(values({ endYear: 2024 }))).toBe(true)
+    expect(hasOptionalDetails(values({ fundingType: 'self' }))).toBe(true)
+  })
+
+  it('counts legacy pros/cons so old drafts reopen the section', () => {
+    expect(hasOptionalDetails(values({ pros: 'cheap canteen' }))).toBe(true)
+    expect(hasOptionalDetails(values({ cons: 'loud dorms' }))).toBe(true)
+  })
+
+  it('clears every optional field including legacy pros/cons', () => {
+    const filled = values({
+      rating: 5,
+      reviewText: 'long enough text',
+      selectedTags: ['Safe'],
+      program: 'CS',
+      degreeLevel: 'Bachelor',
+      subscores: { rating_campus: 4 },
+      startYear: 2021,
+      endYear: 2024,
+      tuitionRange: '10-20k',
+      fundingType: 'self',
+      pros: 'nice',
+      cons: 'loud',
+    })
+    const cleared = { ...filled, ...clearedOptionalDetails() }
+    expect(hasOptionalDetails(cleared)).toBe(false)
+    expect(cleared.rating).toBe(5)
+    expect(cleared.reviewText).toBe('long enough text')
+    expect(cleared.selectedTags).toEqual(['Safe'])
   })
 })
 

@@ -16,7 +16,6 @@ import {
   MediaField,
   MoneyFields,
   ProgramField,
-  ProsConsField,
   YearsField,
   type MediaState,
 } from './fields'
@@ -33,7 +32,6 @@ const CARD_FIELDS: Record<BoostCard, (keyof ReviewFieldValues)[]> = {
   ratings: ['subscores'],
   money: ['tuitionRange', 'livingCostRange', 'fundingType', 'fundingCoverage'],
   details: ['enrollmentStatus', 'startYear', 'endYear', 'languageOfInstruction'],
-  pros_cons: ['pros', 'cons'],
   media: [],
 }
 
@@ -168,7 +166,6 @@ export const BoostCards = ({
             <LanguageField form={form} />
           </>
         )}
-        {card === 'pros_cons' && <ProsConsField form={form} />}
         {card === 'media' && (
           <MediaField
             mediaState={mediaState}

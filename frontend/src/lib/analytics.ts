@@ -24,7 +24,9 @@ export type ReviewFailureReason =
 export type PublishDurationBand = 'under_1m' | '1_to_2m' | '2_to_5m' | 'over_5m' | 'unknown'
 // Post-publish Boost cards (Phase 2): one logical card per unit of optional
 // detail. The ratings card is the 8-aspect sub-score stack saved as a whole.
-export type BoostCard = 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
+// 'pros_cons' is retired from the card stack; the validators below still
+// accept it so events from stale cached clients are not dropped.
+export type BoostCard = 'program' | 'ratings' | 'money' | 'details' | 'media'
 // For boost_exited, `after_card` is the last card completed before leaving;
 // 'none' means Boost was exited before any card saved.
 export type BoostAfterCard = BoostCard | 'none'
@@ -55,6 +57,7 @@ export type ReviewEventName =
   | 'review_submit_attempted'
   | 'review_submit_failed'
   | 'review_published'
+  | 'review_details_opened'
   | 'boost_card_completed'
   | 'boost_exited'
 
@@ -96,6 +99,7 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_submit_attempted',
   'review_submit_failed',
   'review_published',
+  'review_details_opened',
   'boost_card_completed',
   'boost_exited',
 ])
@@ -112,6 +116,7 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
   review_submit_attempted: ['flow', 'entry', 'auth'],
   review_submit_failed: ['flow', 'entry', 'auth', 'reason'],
   review_published: ['flow', 'entry', 'auth', 'duration_band'],
+  review_details_opened: ['flow', 'entry', 'auth'],
   boost_card_completed: ['flow', 'auth', 'card'],
   boost_exited: ['flow', 'auth', 'after_card'],
 }
