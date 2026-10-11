@@ -89,7 +89,10 @@ export const ReviewClaimPrompt = () => {
       if (decision === 'named') {
         showToast('Done. It now shows your name and the Verified seal.', 'success')
       } else if (decision === 'anonymous') {
-        showToast('Added to your reviews. It stays anonymous publicly.', 'success')
+        showToast(
+          'Added to your reviews. It stays anonymous publicly, and you can put your name on it later.',
+          'success'
+        )
       }
       setItems((prev) => {
         const next = (prev ?? []).filter((r) => r.reviewId !== item.reviewId)
@@ -178,7 +181,7 @@ export const ReviewClaimPrompt = () => {
                     type="button"
                     className="btn btn-outline"
                     disabled={busyId !== null}
-                    title="Saved to your account, publicly it stays Anonymous"
+                    title="Saved to your account. Publicly it stays Anonymous, and you can put your name on it later from My reviews."
                     onClick={() => decide(item, 'anonymous')}
                   >
                     Keep it anonymous
@@ -201,7 +204,7 @@ export const ReviewClaimPrompt = () => {
 
         <p className="claim-caption muted">
           Your name earns the Verified seal. Anonymous claims still land in your account, they just
-          stay nameless publicly.
+          stay nameless publicly. You can put your name on one anytime from My reviews.
         </p>
 
         <div className="auth-modal-actions">

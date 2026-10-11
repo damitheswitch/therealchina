@@ -12,9 +12,13 @@
 // `user_id IS NULL` in the query so a concurrent public claim can never be
 // silently overwritten.
 //
-// Payload: { action: 'update' | 'delete', reviewId: string, ...reviewFields }
+// Payload: { action: 'update' | 'delete' | 'reveal', reviewId: string, ...reviewFields }
 // Update accepts the same field set as review-submit (minus university and
-// reviewerContext) and runs the identical shared validation.
+// reviewerContext) and runs the identical shared validation. 'reveal' is the
+// one-way flip from anonymously-claimed to named: it only exists for reviews
+// where reviews.user_id IS NULL and reviewer_context.owner_id = caller, and
+// it re-checks `user_id IS NULL` inside the write so a concurrent public
+// claim can never be overwritten.
 
 import {
   supabaseAdmin,
@@ -88,8 +92,8 @@ async function handleManage(req: Request): Promise<Response> {
 
   const action = body.action
   const reviewId = body.reviewId
-  if (action !== 'update' && action !== 'delete') {
-    return jsonResponse(req, { error: 'action must be "update" or "delete"' }, 400)
+  if (action !== 'update' && action !== 'delete' && action !== 'reveal') {
+    return jsonResponse(req, { error: 'action must be "update", "delete" or "reveal"' }, 400)
   }
   if (typeof reviewId !== 'string' || !UUID_RE.test(reviewId)) {
     return jsonResponse(req, { error: 'Invalid review id' }, 400)
@@ -138,6 +142,36 @@ async function handleManage(req: Request): Promise<Response> {
   >(
     q: T
   ): T => (ownsAnonymously ? q.is('user_id', null) : q.eq('user_id', caller.sub!))
+
+  // ---- Reveal (one-way: put the caller's name on an anon-claimed review) ---------
+  if (action === 'reveal') {
+    // Only the anonymous shape can reveal: public-owned rows (user_id =
+    // caller) and other people's reviews already 404'd above, and a second
+    // reveal lands on review.user_id = caller, so it is a safe no-op 404.
+    if (!ownsAnonymously) {
+      return jsonResponse(req, { error: 'Review not found' }, 404)
+    }
+    if (review.deleted_at) {
+      return jsonResponse(req, { error: 'This review was deleted' }, 409)
+    }
+    // user_id IS NULL stays in the write predicate: if a public claim set a
+    // user_id between the read and this update, zero rows match instead of
+    // overwriting someone else's attribution.
+    const { data: revealed, error: revealError } = await supabaseAdmin
+      .from('reviews')
+      .update({ user_id: caller.sub })
+      .eq('id', reviewId)
+      .is('user_id', null)
+      .select('id')
+    if (revealError) {
+      console.error('Review reveal error:', revealError)
+      return jsonResponse(req, { error: 'Could not update the review. Please try again.' }, 500)
+    }
+    if (!revealed || revealed.length === 0) {
+      return jsonResponse(req, { error: 'Review not found' }, 404)
+    }
+    return jsonResponse(req, { revealed: true }, 200)
+  }
 
   // ---- Delete (soft) -------------------------------------------------------------
   if (action === 'delete') {

@@ -15,7 +15,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         rows: [
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -23,11 +23,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -38,14 +35,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           },
           {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             name_zh: "复旦大学",
             city: "Shanghai",
@@ -53,9 +55,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "fudan-university",
-            slug_aliases: [
-              "fudan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
             is_verified: false,
             uni_type: "public",
@@ -68,14 +67,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
               shanghai_national: 5
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "fudan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 3,
             recommendYesPct: 0,
             recommendAnswered: 2
           },
           {
-            id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+            id: "8298af38-ab35-443d-9bad-c24129519cb8",
             name: "Peking University",
             name_zh: "北京大学",
             city: "Beijing",
@@ -83,9 +85,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "peking-university",
-            slug_aliases: [
-              "peking"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/86350223.png",
             is_verified: false,
             uni_type: "public",
@@ -98,14 +97,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/peking-university",
               shanghai_national: 2
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beida",
+              "peking",
+              "pku"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4.5,
             review_count: 2,
             recommendYesPct: 0,
             recommendAnswered: 1
           },
           {
-            id: "f702bbe4-db0f-43be-a63f-04623f006f26",
+            id: "d00a8a8f-a919-44d6-b683-26f308da9b9a",
             name: "Nanjing University",
             name_zh: "南京大学",
             city: "Nanjing",
@@ -113,9 +117,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Jiangsu",
             uni_category: "comprehensive",
             slug: "nanjing-university",
-            slug_aliases: [
-              "nju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/44696062.png",
             is_verified: false,
             uni_type: "public",
@@ -128,14 +129,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/nanjing-university",
               shanghai_national: 6
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "nanda",
+              "nju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             name: "Shanghai Jiao Tong University",
             name_zh: "上海交通大学",
             city: "Shanghai",
@@ -143,9 +148,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "shanghai-jiao-tong-university",
-            slug_aliases: [
-              "sjtu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27403919.png",
             is_verified: false,
             uni_type: "public",
@@ -158,14 +160,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university",
               shanghai_national: 4
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "sjtu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+            id: "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1",
             name: "Sichuan University",
             name_zh: "四川大学",
             city: "Chengdu",
@@ -173,9 +178,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Sichuan",
             uni_category: "comprehensive",
             slug: "sichuan-university",
-            slug_aliases: [
-              "scu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/75651370.png",
             is_verified: false,
             uni_type: "public",
@@ -187,14 +189,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/sichuan-university",
               shanghai_national: 15
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "scu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             name: "Wuhan University",
             name_zh: "武汉大学",
             city: "Wuhan",
@@ -202,10 +207,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Hubei",
             uni_category: "comprehensive",
             slug: "wuhan-university",
-            slug_aliases: [
-              "whu",
-              "wuhan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/46182017.png",
             is_verified: false,
             uni_type: "public",
@@ -218,14 +219,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/wuhan-university",
               shanghai_national: 8
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "whu",
+              "wuda",
+              "wuhan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "292593e2-4346-4a33-8d83-b8658aa7066e",
+            id: "a7e66d92-741a-4edf-9e41-e653d4a8d4d6",
             name: "Xiamen University",
             name_zh: "厦门大学",
             city: "Xiamen",
@@ -233,9 +239,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Fujian",
             uni_category: "comprehensive",
             slug: "xiamen-university",
-            slug_aliases: [
-              "xmu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/14008229.png",
             is_verified: false,
             uni_type: "public",
@@ -248,14 +251,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/xiamen-university",
               shanghai_national: 24
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "xiada",
+              "xmu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+            id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             name: "Zhejiang University",
             name_zh: "浙江大学",
             city: "Hangzhou",
@@ -263,10 +270,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Zhejiang",
             uni_category: "comprehensive",
             slug: "zhejiang-university",
-            slug_aliases: [
-              "zhejiang",
-              "zju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/88311656.png",
             is_verified: false,
             uni_type: "public",
@@ -279,14 +282,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/zhejiang-university",
               shanghai_national: 3
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "zheda",
+              "zhejiang",
+              "zju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "51e91a8b-085e-43e0-b08f-60314582b3f0",
+            id: "f65341be-5b29-4d51-bd5f-1f7c0d6ee322",
             name: "Beihang University",
             name_zh: "北京航空航天大学",
             city: "Beijing",
@@ -294,9 +302,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "stem",
             slug: "beihang-university",
-            slug_aliases: [
-              "buaa"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/22403670.png",
             is_verified: false,
             uni_type: "public",
@@ -309,14 +314,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/beihang-university",
               shanghai_national: 11
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beihang",
+              "buaa"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "a1b2c3d4-0000-4000-8000-0000000000ff",
+            id: "020a0b62-3500-4a20-8263-6061eaf2c12e",
             name: "Hexi University",
             name_zh: "河西学院",
             city: null,
@@ -324,7 +333,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Gansu",
             uni_category: "comprehensive",
             slug: "hexi-university",
-            slug_aliases: [],
             logo_url: null,
             is_verified: false,
             uni_type: "public",
@@ -333,14 +341,15 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             ],
             website: null,
             rankings: {},
-            created_at: "2026-09-26T00:00:00+00:00",
+            slug_aliases: [],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "edff55bf-bcd7-4d99-b4f8-d5baccb0c8c6",
+            id: "3731269c-0632-43a1-a03a-a0044b8a48ea",
             name: "Hunan University",
             name_zh: "湖南大学",
             city: "Changsha",
@@ -348,9 +357,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Hunan",
             uni_category: "comprehensive",
             slug: "hunan-university",
-            slug_aliases: [
-              "hnu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/79015808.png",
             is_verified: false,
             uni_type: "public",
@@ -362,14 +368,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/hunan-university",
               shanghai_national: 29
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "hnu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "ea22d114-513d-4702-8e9f-4c188a87b083",
+            id: "9afb566d-c5a9-4d43-97b7-9b627bd42b86",
             name: "Tianjin University",
             name_zh: "天津大学",
             city: "Tianjin",
@@ -377,9 +386,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Tianjin",
             uni_category: "comprehensive",
             slug: "tianjin-university",
-            slug_aliases: [
-              "tju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/74813674.png",
             is_verified: false,
             uni_type: "public",
@@ -392,7 +398,10 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tianjin-university",
               shanghai_national: 20
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "tju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
@@ -475,7 +484,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         rows: [
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -483,11 +492,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -498,14 +504,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           },
           {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             name_zh: "复旦大学",
             city: "Shanghai",
@@ -513,9 +524,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "fudan-university",
-            slug_aliases: [
-              "fudan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
             is_verified: false,
             uni_type: "public",
@@ -528,14 +536,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
               shanghai_national: 5
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "fudan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 3,
             recommendYesPct: 0,
             recommendAnswered: 2
           },
           {
-            id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+            id: "8298af38-ab35-443d-9bad-c24129519cb8",
             name: "Peking University",
             name_zh: "北京大学",
             city: "Beijing",
@@ -543,9 +554,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "peking-university",
-            slug_aliases: [
-              "peking"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/86350223.png",
             is_verified: false,
             uni_type: "public",
@@ -558,14 +566,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/peking-university",
               shanghai_national: 2
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beida",
+              "peking",
+              "pku"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4.5,
             review_count: 2,
             recommendYesPct: 0,
             recommendAnswered: 1
           },
           {
-            id: "f702bbe4-db0f-43be-a63f-04623f006f26",
+            id: "d00a8a8f-a919-44d6-b683-26f308da9b9a",
             name: "Nanjing University",
             name_zh: "南京大学",
             city: "Nanjing",
@@ -573,9 +586,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Jiangsu",
             uni_category: "comprehensive",
             slug: "nanjing-university",
-            slug_aliases: [
-              "nju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/44696062.png",
             is_verified: false,
             uni_type: "public",
@@ -588,14 +598,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/nanjing-university",
               shanghai_national: 6
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "nanda",
+              "nju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             name: "Shanghai Jiao Tong University",
             name_zh: "上海交通大学",
             city: "Shanghai",
@@ -603,9 +617,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "shanghai-jiao-tong-university",
-            slug_aliases: [
-              "sjtu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27403919.png",
             is_verified: false,
             uni_type: "public",
@@ -618,14 +629,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university",
               shanghai_national: 4
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "sjtu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+            id: "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1",
             name: "Sichuan University",
             name_zh: "四川大学",
             city: "Chengdu",
@@ -633,9 +647,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Sichuan",
             uni_category: "comprehensive",
             slug: "sichuan-university",
-            slug_aliases: [
-              "scu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/75651370.png",
             is_verified: false,
             uni_type: "public",
@@ -647,14 +658,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/sichuan-university",
               shanghai_national: 15
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "scu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             name: "Wuhan University",
             name_zh: "武汉大学",
             city: "Wuhan",
@@ -662,10 +676,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Hubei",
             uni_category: "comprehensive",
             slug: "wuhan-university",
-            slug_aliases: [
-              "whu",
-              "wuhan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/46182017.png",
             is_verified: false,
             uni_type: "public",
@@ -678,14 +688,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/wuhan-university",
               shanghai_national: 8
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "whu",
+              "wuda",
+              "wuhan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "292593e2-4346-4a33-8d83-b8658aa7066e",
+            id: "a7e66d92-741a-4edf-9e41-e653d4a8d4d6",
             name: "Xiamen University",
             name_zh: "厦门大学",
             city: "Xiamen",
@@ -693,9 +708,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Fujian",
             uni_category: "comprehensive",
             slug: "xiamen-university",
-            slug_aliases: [
-              "xmu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/14008229.png",
             is_verified: false,
             uni_type: "public",
@@ -708,14 +720,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/xiamen-university",
               shanghai_national: 24
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "xiada",
+              "xmu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+            id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             name: "Zhejiang University",
             name_zh: "浙江大学",
             city: "Hangzhou",
@@ -723,10 +739,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Zhejiang",
             uni_category: "comprehensive",
             slug: "zhejiang-university",
-            slug_aliases: [
-              "zhejiang",
-              "zju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/88311656.png",
             is_verified: false,
             uni_type: "public",
@@ -739,14 +751,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/zhejiang-university",
               shanghai_national: 3
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "zheda",
+              "zhejiang",
+              "zju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "51e91a8b-085e-43e0-b08f-60314582b3f0",
+            id: "f65341be-5b29-4d51-bd5f-1f7c0d6ee322",
             name: "Beihang University",
             name_zh: "北京航空航天大学",
             city: "Beijing",
@@ -754,9 +771,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "stem",
             slug: "beihang-university",
-            slug_aliases: [
-              "buaa"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/22403670.png",
             is_verified: false,
             uni_type: "public",
@@ -769,14 +783,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/beihang-university",
               shanghai_national: 11
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beihang",
+              "buaa"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "a1b2c3d4-0000-4000-8000-0000000000ff",
+            id: "020a0b62-3500-4a20-8263-6061eaf2c12e",
             name: "Hexi University",
             name_zh: "河西学院",
             city: null,
@@ -784,7 +802,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Gansu",
             uni_category: "comprehensive",
             slug: "hexi-university",
-            slug_aliases: [],
             logo_url: null,
             is_verified: false,
             uni_type: "public",
@@ -793,14 +810,15 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             ],
             website: null,
             rankings: {},
-            created_at: "2026-09-26T00:00:00+00:00",
+            slug_aliases: [],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "edff55bf-bcd7-4d99-b4f8-d5baccb0c8c6",
+            id: "3731269c-0632-43a1-a03a-a0044b8a48ea",
             name: "Hunan University",
             name_zh: "湖南大学",
             city: "Changsha",
@@ -808,9 +826,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Hunan",
             uni_category: "comprehensive",
             slug: "hunan-university",
-            slug_aliases: [
-              "hnu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/79015808.png",
             is_verified: false,
             uni_type: "public",
@@ -822,14 +837,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/hunan-university",
               shanghai_national: 29
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "hnu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "ea22d114-513d-4702-8e9f-4c188a87b083",
+            id: "9afb566d-c5a9-4d43-97b7-9b627bd42b86",
             name: "Tianjin University",
             name_zh: "天津大学",
             city: "Tianjin",
@@ -837,9 +855,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Tianjin",
             uni_category: "comprehensive",
             slug: "tianjin-university",
-            slug_aliases: [
-              "tju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/74813674.png",
             is_verified: false,
             uni_type: "public",
@@ -852,7 +867,10 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tianjin-university",
               shanghai_national: 20
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "tju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
@@ -929,8 +947,70 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
       reviewsPage: {
         reviews: [
           {
+            id: "786551ed-427b-416e-87aa-99c596616721",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: "92958afd-b3f4-4ab2-8038-d745c814fe88",
+            rating: 4,
+            text: "Signed-in e2e review mv3is8ia883.",
+            program: null,
+            degree_level: null,
+            media: [],
+            created_at: "2026-10-11T07:46:53.133161+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: "yes",
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
+            id: "3f3fc8a0-4e07-4a16-8f93-9391810c78f2",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: "92958afd-b3f4-4ab2-8038-d745c814fe88",
+            rating: 4,
+            text: "Reveal e2e review mv3is8ia883. Dorms are fine, food is better.",
+            program: null,
+            degree_level: null,
+            media: [],
+            created_at: "2026-10-11T07:46:52.481551+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: "yes",
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "One-semester exchange. The language classes were excellent and the campus is genuinely beautiful, but the international office was slow with paperwork — start your visa admin early.",
@@ -943,7 +1023,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-20T13:53:48.160506+00:00",
+            created_at: "2026-10-07T04:05:20.544062+00:00",
             enrollment_status: "exchange",
             start_year: 2024,
             end_year: 2025,
@@ -972,14 +1052,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
-            university_id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+            university_id: "8298af38-ab35-443d-9bad-c24129519cb8",
             user_id: null,
             rating: 4,
             text: "Great name and brilliant classmates, but the admin is a maze — every form needs three stamps and two offices. Worth it if you are patient and your Chinese is solid.",
             program: "Economics",
             degree_level: "Bachelor",
             media: [],
-            created_at: "2026-09-18T13:53:48.160506+00:00",
+            created_at: "2026-10-05T04:05:20.544062+00:00",
             enrollment_status: "current",
             start_year: 2022,
             end_year: null,
@@ -1007,14 +1087,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
             program: "Mechanical Engineering",
             degree_level: "Bachelor",
             media: [],
-            created_at: "2026-09-15T13:53:48.160506+00:00",
+            created_at: "2026-10-02T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2018,
             end_year: 2022,
@@ -1042,7 +1122,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 3,
             text: "Fun semester and the food scene is unbeatable, but everything near campus is expensive and my dorm had mold. Come for the city, not the facilities.",
@@ -1060,7 +1140,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-13T13:53:48.160506+00:00",
+            created_at: "2026-09-30T04:05:20.544062+00:00",
             enrollment_status: "exchange",
             start_year: 2022,
             end_year: 2023,
@@ -1088,7 +1168,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 5,
             text: "Two years into my master's and the research access here is unreal — my lab publishes constantly and professors actually reply to emails. The workload is heavy but the campus feels like its own small city.",
@@ -1121,7 +1201,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-08T13:53:48.160506+00:00",
+            created_at: "2026-09-25T04:05:20.544062+00:00",
             enrollment_status: "current",
             start_year: 2023,
             end_year: null,
@@ -1150,14 +1230,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 2,
             text: "Shanghai is an amazing city but the program felt overpriced for what you get. International office support was thin when I needed visa help, and nobody warned me about the living costs.",
             program: "Journalism",
             degree_level: "Master",
             media: [],
-            created_at: "2026-09-03T13:53:48.160506+00:00",
+            created_at: "2026-09-20T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2019,
             end_year: 2021,
@@ -1183,8 +1263,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: 2
           },
           {
-            id: "7f7b809b-2bd7-43a6-95cd-76a2d9f54c87",
-            university_id: "292593e2-4346-4a33-8d83-b8658aa7066e",
+            id: "b4159012-0a9e-4ed4-a690-dc70d60d5460",
+            university_id: "a7e66d92-741a-4edf-9e41-e653d4a8d4d6",
             user_id: null,
             rating: 5,
             text: "Xiamen University is right on the beach — literally. The architecture is gorgeous, the seafood is cheap, and the people are warm. One of the most underrated campuses in China.",
@@ -1214,8 +1294,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "301c9a6d-7bd8-42a2-af58-43db7513c827",
-            university_id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+            id: "51fd1392-22dd-4b7a-ba07-6cff0807f797",
+            university_id: "8298af38-ab35-443d-9bad-c24129519cb8",
             user_id: null,
             rating: 5,
             text: "PKU has the most beautiful campus I have ever seen — Weiming Lake in autumn is unreal. The Chinese language program for international students is excellent and very affordable.",
@@ -1245,8 +1325,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "1f252913-e8a8-45db-8366-9a6a3ef09191",
-            university_id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "e76b5ab3-7baa-49ac-a51b-08edbf6e2cba",
+            university_id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             user_id: null,
             rating: 5,
             text: "Wuhan University during cherry blossom season is one of the most beautiful places on earth. The sociology department is very welcoming to international researchers.",
@@ -1276,8 +1356,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "225efe38-8851-4a55-8708-9714630723cd",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "92adeba1-f8a9-4e4f-809d-a3e9f00d5ee5",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 5,
             text: "The campus is stunning and the engineering faculty is world-class. Professors genuinely care about international students and there are tons of English-taught programs. The dorm situation is tight but manageable.",
@@ -1307,8 +1387,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "3c9cdff4-217f-4723-85b1-6858c6c97f70",
-            university_id: "f702bbe4-db0f-43be-a63f-04623f006f26",
+            id: "2e4518bb-934c-4bf7-b9d7-3b50537335e3",
+            university_id: "d00a8a8f-a919-44d6-b683-26f308da9b9a",
             user_id: null,
             rating: 4,
             text: "Nanjing University has a strong liberal arts tradition. The history department is fantastic and the city of Nanjing is rich in culture. Cost of living is much lower than Beijing or Shanghai.",
@@ -1338,8 +1418,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "4276882e-9525-4128-a50b-1c963349a882",
-            university_id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "083bc286-4a79-4364-a3e1-a8a98097defe",
+            university_id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             user_id: null,
             rating: 4,
             text: "SJTU has a massive, modern campus in Minhang. The engineering labs are top-notch. Commute to downtown Shanghai is long but the campus itself has everything you need.",
@@ -1369,8 +1449,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "038960cd-6083-484a-bc7c-027d2f728aa6",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "f4f2485f-7f1a-46ef-882d-1ab876f6fe90",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 4,
             text: "Shanghai life is unbeatable. Fudan has strong international programs and the career fairs are well-connected. Cafeteria food could be better but there are cheap eats everywhere nearby.",
@@ -1400,8 +1480,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "2c208a57-926c-404f-a519-3176986e9818",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "8d5137f4-e9af-49c5-8670-5be00c1ec9ba",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "Great academics, but the workload is no joke. Be prepared to study hard. The international office was helpful with my visa extension though.",
@@ -1431,8 +1511,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "57cb7a67-fd21-47e0-9c87-8a5e14f4863f",
-            university_id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+            id: "488b1427-de45-4ba9-aee2-024e068f54d2",
+            university_id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             user_id: null,
             rating: 4,
             text: "Zhejiang has a huge campus in Hangzhou with great facilities. The CS program is competitive but the professors are approachable. Close to Alibaba HQ which means good internship opportunities.",
@@ -1462,8 +1542,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "322bcd7b-5165-4dbe-95b7-3436d4f5fe87",
-            university_id: "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+            id: "684ff606-3010-4f1f-b08d-0d6802fe5a8a",
+            university_id: "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1",
             user_id: null,
             rating: 3,
             text: "Sichuan University has good medical programs but the international student support was hit or miss. Chengdu itself is amazing though — the food scene is incredible and rent is very affordable.",
@@ -1494,53 +1574,59 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           }
         ],
         universities: {
-          "eef9ff77-314f-40e8-b121-d2c609aa472f": {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+          "5731b5a1-b36c-42ee-8486-b4e64fa90428": {
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             slug: "tsinghua-university"
           },
-          "77c0c50f-913d-4d56-a9c5-c1b655d86bd7": {
-            id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+          "8298af38-ab35-443d-9bad-c24129519cb8": {
+            id: "8298af38-ab35-443d-9bad-c24129519cb8",
             name: "Peking University",
             slug: "peking-university"
           },
-          "45808a80-001c-47d8-a726-83a07fdde5ce": {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+          "b210af55-0b46-45a2-956d-1ad7d00271d9": {
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             slug: "fudan-university"
           },
-          "9fee7be5-4c12-46f5-b3d7-66ca1d607e40": {
-            id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+          "36cce051-ef3b-4037-8b79-69a9530c46bd": {
+            id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             name: "Shanghai Jiao Tong University",
             slug: "shanghai-jiao-tong-university"
           },
-          "1bf99127-d308-43e4-8629-9cab5981a12a": {
-            id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+          "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8": {
+            id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             name: "Zhejiang University",
             slug: "zhejiang-university"
           },
-          "d8334826-9bf7-490f-ba38-d93e8a9e5aeb": {
-            id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+          "4f4fc871-a902-47c4-9d09-3ca332fcc5a5": {
+            id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             name: "Wuhan University",
             slug: "wuhan-university"
           },
-          "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c": {
-            id: "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+          "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1": {
+            id: "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1",
             name: "Sichuan University",
             slug: "sichuan-university"
           },
-          "292593e2-4346-4a33-8d83-b8658aa7066e": {
-            id: "292593e2-4346-4a33-8d83-b8658aa7066e",
+          "a7e66d92-741a-4edf-9e41-e653d4a8d4d6": {
+            id: "a7e66d92-741a-4edf-9e41-e653d4a8d4d6",
             name: "Xiamen University",
             slug: "xiamen-university"
           },
-          "f702bbe4-db0f-43be-a63f-04623f006f26": {
-            id: "f702bbe4-db0f-43be-a63f-04623f006f26",
+          "d00a8a8f-a919-44d6-b683-26f308da9b9a": {
+            id: "d00a8a8f-a919-44d6-b683-26f308da9b9a",
             name: "Nanjing University",
             slug: "nanjing-university"
           }
         },
-        authors: {},
+        authors: {
+          "92958afd-b3f4-4ab2-8038-d745c814fe88": {
+            id: "92958afd-b3f4-4ab2-8038-d745c814fe88",
+            display_name: "Reveal A mv3is8ia883",
+            avatar_url: null
+          }
+        },
         upvoteCounts: {}
       }
     }
@@ -1552,7 +1638,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         city: "Beijing",
         universities: [
           {
-            id: "51e91a8b-085e-43e0-b08f-60314582b3f0",
+            id: "f65341be-5b29-4d51-bd5f-1f7c0d6ee322",
             name: "Beihang University",
             name_zh: "北京航空航天大学",
             city: "Beijing",
@@ -1560,9 +1646,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "stem",
             slug: "beihang-university",
-            slug_aliases: [
-              "buaa"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/22403670.png",
             is_verified: false,
             uni_type: "public",
@@ -1575,14 +1658,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/beihang-university",
               shanghai_national: 11
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beihang",
+              "buaa"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 0,
             review_count: 0,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+            id: "8298af38-ab35-443d-9bad-c24129519cb8",
             name: "Peking University",
             name_zh: "北京大学",
             city: "Beijing",
@@ -1590,9 +1677,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "peking-university",
-            slug_aliases: [
-              "peking"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/86350223.png",
             is_verified: false,
             uni_type: "public",
@@ -1605,14 +1689,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/peking-university",
               shanghai_national: 2
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beida",
+              "peking",
+              "pku"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4.5,
             review_count: 2,
             recommendYesPct: 0,
             recommendAnswered: 1
           },
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -1620,11 +1709,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -1635,14 +1721,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           }
         ],
-        reviewCount: 7
+        reviewCount: 9
       }
     }
   },
@@ -1653,7 +1744,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         city: "Shanghai",
         universities: [
           {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             name_zh: "复旦大学",
             city: "Shanghai",
@@ -1661,9 +1752,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "fudan-university",
-            slug_aliases: [
-              "fudan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
             is_verified: false,
             uni_type: "public",
@@ -1676,14 +1764,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
               shanghai_national: 5
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "fudan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 3,
             recommendYesPct: 0,
             recommendAnswered: 2
           },
           {
-            id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             name: "Shanghai Jiao Tong University",
             name_zh: "上海交通大学",
             city: "Shanghai",
@@ -1691,9 +1782,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "shanghai-jiao-tong-university",
-            slug_aliases: [
-              "sjtu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27403919.png",
             is_verified: false,
             uni_type: "public",
@@ -1706,7 +1794,10 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university",
               shanghai_national: 4
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "sjtu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
@@ -1743,7 +1834,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         universities: [
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -1751,11 +1842,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -1766,14 +1854,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           },
           {
-            id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+            id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             name: "Zhejiang University",
             name_zh: "浙江大学",
             city: "Hangzhou",
@@ -1781,10 +1874,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Zhejiang",
             uni_category: "comprehensive",
             slug: "zhejiang-university",
-            slug_aliases: [
-              "zhejiang",
-              "zju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/88311656.png",
             is_verified: false,
             uni_type: "public",
@@ -1797,7 +1886,12 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/zhejiang-university",
               shanghai_national: 3
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "zheda",
+              "zhejiang",
+              "zju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
@@ -1806,39 +1900,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         ],
         reviews: [
           {
-            id: "225efe38-8851-4a55-8708-9714630723cd",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-            user_id: null,
-            rating: 5,
-            text: "The campus is stunning and the engineering faculty is world-class. Professors genuinely care about international students and there are tons of English-taught programs. The dorm situation is tight but manageable.",
-            program: "Computer Science",
-            degree_level: "Master",
-            media: [],
-            created_at: "2025-03-14T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
-            funding_coverage: null,
-            recommend: null,
-            pros: null,
-            cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
-            rating_intl_office: null,
-            rating_social: null,
-            rating_extracurricular: null,
-            rating_career: null
-          },
-          {
-            id: "57cb7a67-fd21-47e0-9c87-8a5e14f4863f",
-            university_id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+            id: "488b1427-de45-4ba9-aee2-024e068f54d2",
+            university_id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             user_id: null,
             rating: 4,
             text: "Zhejiang has a huge campus in Hangzhou with great facilities. The CS program is competitive but the professors are approachable. Close to Alibaba HQ which means good internship opportunities.",
@@ -1868,8 +1931,39 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
+            id: "92adeba1-f8a9-4e4f-809d-a3e9f00d5ee5",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: null,
+            rating: 5,
+            text: "The campus is stunning and the engineering faculty is world-class. Professors genuinely care about international students and there are tons of English-taught programs. The dorm situation is tight but manageable.",
+            program: "Computer Science",
+            degree_level: "Master",
+            media: [],
+            created_at: "2025-03-14T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 5,
             text: "Two years into my master's and the research access here is unreal — my lab publishes constantly and professors actually reply to emails. The workload is heavy but the campus feels like its own small city.",
@@ -1902,7 +1996,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-08T13:53:48.160506+00:00",
+            created_at: "2026-09-25T04:05:20.544062+00:00",
             enrollment_status: "current",
             start_year: 2023,
             end_year: null,
@@ -1959,7 +2053,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         universities: [
           {
-            id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             name: "Shanghai Jiao Tong University",
             name_zh: "上海交通大学",
             city: "Shanghai",
@@ -1967,9 +2061,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "shanghai-jiao-tong-university",
-            slug_aliases: [
-              "sjtu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27403919.png",
             is_verified: false,
             uni_type: "public",
@@ -1982,14 +2073,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university",
               shanghai_national: 4
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "sjtu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -1997,11 +2091,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -2012,48 +2103,22 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           }
         ],
         reviews: [
           {
-            id: "2c208a57-926c-404f-a519-3176986e9818",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-            user_id: null,
-            rating: 4,
-            text: "Great academics, but the workload is no joke. Be prepared to study hard. The international office was helpful with my visa extension though.",
-            program: "Environmental Engineering",
-            degree_level: "PhD",
-            media: [],
-            created_at: "2025-01-22T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
-            funding_coverage: null,
-            recommend: null,
-            pros: null,
-            cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
-            rating_intl_office: null,
-            rating_social: null,
-            rating_extracurricular: null,
-            rating_career: null
-          },
-          {
-            id: "4276882e-9525-4128-a50b-1c963349a882",
-            university_id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "083bc286-4a79-4364-a3e1-a8a98097defe",
+            university_id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             user_id: null,
             rating: 4,
             text: "SJTU has a massive, modern campus in Minhang. The engineering labs are top-notch. Commute to downtown Shanghai is long but the campus itself has everything you need.",
@@ -2083,15 +2148,46 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
+            id: "8d5137f4-e9af-49c5-8670-5be00c1ec9ba",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: null,
+            rating: 4,
+            text: "Great academics, but the workload is no joke. Be prepared to study hard. The international office was helpful with my visa extension though.",
+            program: "Environmental Engineering",
+            degree_level: "PhD",
+            media: [],
+            created_at: "2025-01-22T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
             program: "Mechanical Engineering",
             degree_level: "Bachelor",
             media: [],
-            created_at: "2026-09-15T13:53:48.160506+00:00",
+            created_at: "2026-10-02T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2018,
             end_year: 2022,
@@ -2145,7 +2241,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         universities: [
           {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             name_zh: "复旦大学",
             city: "Shanghai",
@@ -2153,9 +2249,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "fudan-university",
-            slug_aliases: [
-              "fudan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
             is_verified: false,
             uni_type: "public",
@@ -2168,14 +2261,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
               shanghai_national: 5
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "fudan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 3,
             recommendYesPct: 0,
             recommendAnswered: 2
           },
           {
-            id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             name: "Wuhan University",
             name_zh: "武汉大学",
             city: "Wuhan",
@@ -2183,10 +2279,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Hubei",
             uni_category: "comprehensive",
             slug: "wuhan-university",
-            slug_aliases: [
-              "whu",
-              "wuhan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/46182017.png",
             is_verified: false,
             uni_type: "public",
@@ -2199,7 +2291,12 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/wuhan-university",
               shanghai_national: 8
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "whu",
+              "wuda",
+              "wuhan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
@@ -2208,39 +2305,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         ],
         reviews: [
           {
-            id: "038960cd-6083-484a-bc7c-027d2f728aa6",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
-            user_id: null,
-            rating: 4,
-            text: "Shanghai life is unbeatable. Fudan has strong international programs and the career fairs are well-connected. Cafeteria food could be better but there are cheap eats everywhere nearby.",
-            program: "International Relations",
-            degree_level: "Bachelor",
-            media: [],
-            created_at: "2025-02-11T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
-            funding_coverage: null,
-            recommend: null,
-            pros: null,
-            cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
-            rating_intl_office: null,
-            rating_social: null,
-            rating_extracurricular: null,
-            rating_career: null
-          },
-          {
-            id: "1f252913-e8a8-45db-8366-9a6a3ef09191",
-            university_id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "e76b5ab3-7baa-49ac-a51b-08edbf6e2cba",
+            university_id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             user_id: null,
             rating: 5,
             text: "Wuhan University during cherry blossom season is one of the most beautiful places on earth. The sociology department is very welcoming to international researchers.",
@@ -2270,15 +2336,46 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
+            id: "f4f2485f-7f1a-46ef-882d-1ab876f6fe90",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
+            user_id: null,
+            rating: 4,
+            text: "Shanghai life is unbeatable. Fudan has strong international programs and the career fairs are well-connected. Cafeteria food could be better but there are cheap eats everywhere nearby.",
+            program: "International Relations",
+            degree_level: "Bachelor",
+            media: [],
+            created_at: "2025-02-11T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 2,
             text: "Shanghai is an amazing city but the program felt overpriced for what you get. International office support was thin when I needed visa help, and nobody warned me about the living costs.",
             program: "Journalism",
             degree_level: "Master",
             media: [],
-            created_at: "2026-09-03T13:53:48.160506+00:00",
+            created_at: "2026-09-20T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2019,
             end_year: 2021,
@@ -2330,7 +2427,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         universities: [
           {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             name_zh: "复旦大学",
             city: "Shanghai",
@@ -2338,9 +2435,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "fudan-university",
-            slug_aliases: [
-              "fudan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
             is_verified: false,
             uni_type: "public",
@@ -2353,14 +2447,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
               shanghai_national: 5
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "fudan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 3,
             recommendYesPct: 0,
             recommendAnswered: 2
           },
           {
-            id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
+            id: "8298af38-ab35-443d-9bad-c24129519cb8",
             name: "Peking University",
             name_zh: "北京大学",
             city: "Beijing",
@@ -2368,9 +2465,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "peking-university",
-            slug_aliases: [
-              "peking"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/86350223.png",
             is_verified: false,
             uni_type: "public",
@@ -2383,14 +2477,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/peking-university",
               shanghai_national: 2
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "beida",
+              "peking",
+              "pku"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4.5,
             review_count: 2,
             recommendYesPct: 0,
             recommendAnswered: 1
           },
           {
-            id: "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+            id: "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1",
             name: "Sichuan University",
             name_zh: "四川大学",
             city: "Chengdu",
@@ -2398,9 +2497,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Sichuan",
             uni_category: "comprehensive",
             slug: "sichuan-university",
-            slug_aliases: [
-              "scu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/75651370.png",
             is_verified: false,
             uni_type: "public",
@@ -2412,14 +2508,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/sichuan-university",
               shanghai_national: 15
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "scu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -2427,11 +2526,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -2442,14 +2538,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           },
           {
-            id: "292593e2-4346-4a33-8d83-b8658aa7066e",
+            id: "a7e66d92-741a-4edf-9e41-e653d4a8d4d6",
             name: "Xiamen University",
             name_zh: "厦门大学",
             city: "Xiamen",
@@ -2457,9 +2558,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Fujian",
             uni_category: "comprehensive",
             slug: "xiamen-university",
-            slug_aliases: [
-              "xmu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/14008229.png",
             is_verified: false,
             uni_type: "public",
@@ -2472,7 +2570,11 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/xiamen-university",
               shanghai_national: 24
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "xiada",
+              "xmu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
@@ -2481,39 +2583,78 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         ],
         reviews: [
           {
-            id: "038960cd-6083-484a-bc7c-027d2f728aa6",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
-            text: "Shanghai life is unbeatable. Fudan has strong international programs and the career fairs are well-connected. Cafeteria food could be better but there are cheap eats everywhere nearby.",
-            program: "International Relations",
+            text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
+            program: "Mechanical Engineering",
             degree_level: "Bachelor",
             media: [],
-            created_at: "2025-02-11T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
+            created_at: "2026-10-02T04:05:20.544062+00:00",
+            enrollment_status: "alumni",
+            start_year: 2018,
+            end_year: 2022,
+            language_of_instruction: "Bilingual",
+            tuition_range: "¥20k–¥40k",
+            living_cost_range: "¥2k–¥4k",
+            funding_type: "self",
             funding_coverage: null,
-            recommend: null,
+            recommend: "yes",
             pros: null,
             cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
+            tags: [
+              "Strong academics",
+              "Hard grading",
+              "Good career support"
+            ],
+            rating_academics: 5,
+            rating_campus: 4,
+            rating_accommodation: 3,
+            rating_cost: 4,
             rating_intl_office: null,
-            rating_social: null,
+            rating_social: 3,
             rating_extracurricular: null,
-            rating_career: null
+            rating_career: 5
           },
           {
-            id: "7f7b809b-2bd7-43a6-95cd-76a2d9f54c87",
-            university_id: "292593e2-4346-4a33-8d83-b8658aa7066e",
+            id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
+            university_id: "8298af38-ab35-443d-9bad-c24129519cb8",
+            user_id: null,
+            rating: 4,
+            text: "Great name and brilliant classmates, but the admin is a maze — every form needs three stamps and two offices. Worth it if you are patient and your Chinese is solid.",
+            program: "Economics",
+            degree_level: "Bachelor",
+            media: [],
+            created_at: "2026-10-05T04:05:20.544062+00:00",
+            enrollment_status: "current",
+            start_year: 2022,
+            end_year: null,
+            language_of_instruction: "Chinese (Mandarin)",
+            tuition_range: "¥20k–¥40k",
+            living_cost_range: "¥4k–¥8k",
+            funding_type: "province",
+            funding_coverage: "partial",
+            recommend: "maybe",
+            pros: null,
+            cons: null,
+            tags: [
+              "Strong academics",
+              "Great food",
+              "Hard bureaucracy"
+            ],
+            rating_academics: 5,
+            rating_campus: 4,
+            rating_accommodation: 2,
+            rating_cost: 3,
+            rating_intl_office: 3,
+            rating_social: 4,
+            rating_extracurricular: null,
+            rating_career: 4
+          },
+          {
+            id: "b4159012-0a9e-4ed4-a690-dc70d60d5460",
+            university_id: "a7e66d92-741a-4edf-9e41-e653d4a8d4d6",
             user_id: null,
             rating: 5,
             text: "Xiamen University is right on the beach — literally. The architecture is gorgeous, the seafood is cheap, and the people are warm. One of the most underrated campuses in China.",
@@ -2543,8 +2684,39 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "322bcd7b-5165-4dbe-95b7-3436d4f5fe87",
-            university_id: "7f7c1e96-c0c3-4aaf-9989-36f222c62c8c",
+            id: "f4f2485f-7f1a-46ef-882d-1ab876f6fe90",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
+            user_id: null,
+            rating: 4,
+            text: "Shanghai life is unbeatable. Fudan has strong international programs and the career fairs are well-connected. Cafeteria food could be better but there are cheap eats everywhere nearby.",
+            program: "International Relations",
+            degree_level: "Bachelor",
+            media: [],
+            created_at: "2025-02-11T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
+            id: "684ff606-3010-4f1f-b08d-0d6802fe5a8a",
+            university_id: "d59ef306-a3c6-4b33-bc55-d36e7e9d2ba1",
             user_id: null,
             rating: 3,
             text: "Sichuan University has good medical programs but the international student support was hit or miss. Chengdu itself is amazing though — the food scene is incredible and rent is very affordable.",
@@ -2572,76 +2744,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_social: null,
             rating_extracurricular: null,
             rating_career: null
-          },
-          {
-            id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-            user_id: null,
-            rating: 4,
-            text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
-            program: "Mechanical Engineering",
-            degree_level: "Bachelor",
-            media: [],
-            created_at: "2026-09-15T13:53:48.160506+00:00",
-            enrollment_status: "alumni",
-            start_year: 2018,
-            end_year: 2022,
-            language_of_instruction: "Bilingual",
-            tuition_range: "¥20k–¥40k",
-            living_cost_range: "¥2k–¥4k",
-            funding_type: "self",
-            funding_coverage: null,
-            recommend: "yes",
-            pros: null,
-            cons: null,
-            tags: [
-              "Strong academics",
-              "Hard grading",
-              "Good career support"
-            ],
-            rating_academics: 5,
-            rating_campus: 4,
-            rating_accommodation: 3,
-            rating_cost: 4,
-            rating_intl_office: null,
-            rating_social: 3,
-            rating_extracurricular: null,
-            rating_career: 5
-          },
-          {
-            id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14",
-            university_id: "77c0c50f-913d-4d56-a9c5-c1b655d86bd7",
-            user_id: null,
-            rating: 4,
-            text: "Great name and brilliant classmates, but the admin is a maze — every form needs three stamps and two offices. Worth it if you are patient and your Chinese is solid.",
-            program: "Economics",
-            degree_level: "Bachelor",
-            media: [],
-            created_at: "2026-09-18T13:53:48.160506+00:00",
-            enrollment_status: "current",
-            start_year: 2022,
-            end_year: null,
-            language_of_instruction: "Chinese (Mandarin)",
-            tuition_range: "¥20k–¥40k",
-            living_cost_range: "¥4k–¥8k",
-            funding_type: "province",
-            funding_coverage: "partial",
-            recommend: "maybe",
-            pros: null,
-            cons: null,
-            tags: [
-              "Strong academics",
-              "Great food",
-              "Hard bureaucracy"
-            ],
-            rating_academics: 5,
-            rating_campus: 4,
-            rating_accommodation: 2,
-            rating_cost: 3,
-            rating_intl_office: 3,
-            rating_social: 4,
-            rating_extracurricular: null,
-            rating_career: 4
           }
         ],
         authors: {},
@@ -2670,7 +2772,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         universities: [
           {
-            id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             name: "Fudan University",
             name_zh: "复旦大学",
             city: "Shanghai",
@@ -2678,9 +2780,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "fudan-university",
-            slug_aliases: [
-              "fudan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
             is_verified: false,
             uni_type: "public",
@@ -2693,14 +2792,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
               shanghai_national: 5
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "fudan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 3,
             review_count: 3,
             recommendYesPct: 0,
             recommendAnswered: 2
           },
           {
-            id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             name: "Shanghai Jiao Tong University",
             name_zh: "上海交通大学",
             city: "Shanghai",
@@ -2708,9 +2810,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Shanghai",
             uni_category: "comprehensive",
             slug: "shanghai-jiao-tong-university",
-            slug_aliases: [
-              "sjtu"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27403919.png",
             is_verified: false,
             uni_type: "public",
@@ -2723,14 +2822,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/shanghai-jiao-tong-university",
               shanghai_national: 4
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "sjtu"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -2738,11 +2840,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -2753,14 +2852,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           },
           {
-            id: "1bf99127-d308-43e4-8629-9cab5981a12a",
+            id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
             name: "Zhejiang University",
             name_zh: "浙江大学",
             city: "Hangzhou",
@@ -2768,10 +2872,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Zhejiang",
             uni_category: "comprehensive",
             slug: "zhejiang-university",
-            slug_aliases: [
-              "zhejiang",
-              "zju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/88311656.png",
             is_verified: false,
             uni_type: "public",
@@ -2784,7 +2884,12 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/zhejiang-university",
               shanghai_national: 3
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "zheda",
+              "zhejiang",
+              "zju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
@@ -2793,70 +2898,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         ],
         reviews: [
           {
-            id: "225efe38-8851-4a55-8708-9714630723cd",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-            user_id: null,
-            rating: 5,
-            text: "The campus is stunning and the engineering faculty is world-class. Professors genuinely care about international students and there are tons of English-taught programs. The dorm situation is tight but manageable.",
-            program: "Computer Science",
-            degree_level: "Master",
-            media: [],
-            created_at: "2025-03-14T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
-            funding_coverage: null,
-            recommend: null,
-            pros: null,
-            cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
-            rating_intl_office: null,
-            rating_social: null,
-            rating_extracurricular: null,
-            rating_career: null
-          },
-          {
-            id: "57cb7a67-fd21-47e0-9c87-8a5e14f4863f",
-            university_id: "1bf99127-d308-43e4-8629-9cab5981a12a",
-            user_id: null,
-            rating: 4,
-            text: "Zhejiang has a huge campus in Hangzhou with great facilities. The CS program is competitive but the professors are approachable. Close to Alibaba HQ which means good internship opportunities.",
-            program: "Data Science",
-            degree_level: "Master",
-            media: [],
-            created_at: "2025-01-15T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
-            funding_coverage: null,
-            recommend: null,
-            pros: null,
-            cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
-            rating_intl_office: null,
-            rating_social: null,
-            rating_extracurricular: null,
-            rating_career: null
-          },
-          {
-            id: "4276882e-9525-4128-a50b-1c963349a882",
-            university_id: "9fee7be5-4c12-46f5-b3d7-66ca1d607e40",
+            id: "083bc286-4a79-4364-a3e1-a8a98097defe",
+            university_id: "36cce051-ef3b-4037-8b79-69a9530c46bd",
             user_id: null,
             rating: 4,
             text: "SJTU has a massive, modern campus in Minhang. The engineering labs are top-notch. Commute to downtown Shanghai is long but the campus itself has everything you need.",
@@ -2886,8 +2929,70 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
+            id: "488b1427-de45-4ba9-aee2-024e068f54d2",
+            university_id: "40d202d5-2bdc-4e56-9a9b-ad8cafaa1aa8",
+            user_id: null,
+            rating: 4,
+            text: "Zhejiang has a huge campus in Hangzhou with great facilities. The CS program is competitive but the professors are approachable. Close to Alibaba HQ which means good internship opportunities.",
+            program: "Data Science",
+            degree_level: "Master",
+            media: [],
+            created_at: "2025-01-15T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
+            id: "92adeba1-f8a9-4e4f-809d-a3e9f00d5ee5",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: null,
+            rating: 5,
+            text: "The campus is stunning and the engineering faculty is world-class. Professors genuinely care about international students and there are tons of English-taught programs. The dorm situation is tight but manageable.",
+            program: "Computer Science",
+            degree_level: "Master",
+            media: [],
+            created_at: "2025-03-14T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 5,
             text: "Two years into my master's and the research access here is unreal — my lab publishes constantly and professors actually reply to emails. The workload is heavy but the campus feels like its own small city.",
@@ -2920,7 +3025,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-08T13:53:48.160506+00:00",
+            created_at: "2026-09-25T04:05:20.544062+00:00",
             enrollment_status: "current",
             start_year: 2023,
             end_year: null,
@@ -2949,14 +3054,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 2,
             text: "Shanghai is an amazing city but the program felt overpriced for what you get. International office support was thin when I needed visa help, and nobody warned me about the living costs.",
             program: "Journalism",
             degree_level: "Master",
             media: [],
-            created_at: "2026-09-03T13:53:48.160506+00:00",
+            created_at: "2026-09-20T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2019,
             end_year: 2021,
@@ -3005,7 +3110,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         },
         universities: [
           {
-            id: "f702bbe4-db0f-43be-a63f-04623f006f26",
+            id: "d00a8a8f-a919-44d6-b683-26f308da9b9a",
             name: "Nanjing University",
             name_zh: "南京大学",
             city: "Nanjing",
@@ -3013,9 +3118,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Jiangsu",
             uni_category: "comprehensive",
             slug: "nanjing-university",
-            slug_aliases: [
-              "nju"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/44696062.png",
             is_verified: false,
             uni_type: "public",
@@ -3028,14 +3130,18 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/nanjing-university",
               shanghai_national: 6
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "nanda",
+              "nju"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 4,
             review_count: 1,
             recommendYesPct: null,
             recommendAnswered: 0
           },
           {
-            id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             name: "Tsinghua University",
             name_zh: "清华大学",
             city: "Beijing",
@@ -3043,11 +3149,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Beijing",
             uni_category: "comprehensive",
             slug: "tsinghua-university",
-            slug_aliases: [
-              "tsinghua"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
-            is_verified: false,
+            is_verified: true,
             uni_type: "public",
             languages_of_instruction: [
               "Chinese",
@@ -3058,14 +3161,19 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
               shanghai_national: 1
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
-            avg_rating: 4.4,
-            review_count: 5,
-            recommendYesPct: 67,
-            recommendAnswered: 3
+            slug_aliases: [
+              "qinghua",
+              "thu",
+              "tsinghua"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
+            avg_rating: 4.29,
+            review_count: 7,
+            recommendYesPct: 80,
+            recommendAnswered: 5
           },
           {
-            id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             name: "Wuhan University",
             name_zh: "武汉大学",
             city: "Wuhan",
@@ -3073,10 +3181,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             province: "Hubei",
             uni_category: "comprehensive",
             slug: "wuhan-university",
-            slug_aliases: [
-              "whu",
-              "wuhan"
-            ],
             logo_url: "https://www.shanghairanking.cn/_uni/logo/46182017.png",
             is_verified: false,
             uni_type: "public",
@@ -3089,7 +3193,12 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
               shanghai_url: "https://www.shanghairanking.cn/institution/wuhan-university",
               shanghai_national: 8
             },
-            created_at: "2026-09-24T13:53:48.160506+00:00",
+            slug_aliases: [
+              "whu",
+              "wuda",
+              "wuhan"
+            ],
+            created_at: "2026-10-11T04:05:20.544062+00:00",
             avg_rating: 5,
             review_count: 1,
             recommendYesPct: null,
@@ -3098,39 +3207,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         ],
         reviews: [
           {
-            id: "2c208a57-926c-404f-a519-3176986e9818",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-            user_id: null,
-            rating: 4,
-            text: "Great academics, but the workload is no joke. Be prepared to study hard. The international office was helpful with my visa extension though.",
-            program: "Environmental Engineering",
-            degree_level: "PhD",
-            media: [],
-            created_at: "2025-01-22T00:00:00+00:00",
-            enrollment_status: null,
-            start_year: null,
-            end_year: null,
-            language_of_instruction: null,
-            tuition_range: null,
-            living_cost_range: null,
-            funding_type: null,
-            funding_coverage: null,
-            recommend: null,
-            pros: null,
-            cons: null,
-            tags: [],
-            rating_academics: null,
-            rating_campus: null,
-            rating_accommodation: null,
-            rating_cost: null,
-            rating_intl_office: null,
-            rating_social: null,
-            rating_extracurricular: null,
-            rating_career: null
-          },
-          {
-            id: "1f252913-e8a8-45db-8366-9a6a3ef09191",
-            university_id: "d8334826-9bf7-490f-ba38-d93e8a9e5aeb",
+            id: "e76b5ab3-7baa-49ac-a51b-08edbf6e2cba",
+            university_id: "4f4fc871-a902-47c4-9d09-3ca332fcc5a5",
             user_id: null,
             rating: 5,
             text: "Wuhan University during cherry blossom season is one of the most beautiful places on earth. The sociology department is very welcoming to international researchers.",
@@ -3160,8 +3238,39 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "3c9cdff4-217f-4723-85b1-6858c6c97f70",
-            university_id: "f702bbe4-db0f-43be-a63f-04623f006f26",
+            id: "8d5137f4-e9af-49c5-8670-5be00c1ec9ba",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: null,
+            rating: 4,
+            text: "Great academics, but the workload is no joke. Be prepared to study hard. The international office was helpful with my visa extension though.",
+            program: "Environmental Engineering",
+            degree_level: "PhD",
+            media: [],
+            created_at: "2025-01-22T00:00:00+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: null,
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
+            id: "2e4518bb-934c-4bf7-b9d7-3b50537335e3",
+            university_id: "d00a8a8f-a919-44d6-b683-26f308da9b9a",
             user_id: null,
             rating: 4,
             text: "Nanjing University has a strong liberal arts tradition. The history department is fantastic and the city of Nanjing is rich in culture. Cost of living is much lower than Beijing or Shanghai.",
@@ -3229,7 +3338,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
     data: {
       universityPage: {
         university: {
-          id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+          id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
           name: "Tsinghua University",
           name_zh: "清华大学",
           city: "Beijing",
@@ -3237,9 +3346,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           province: "Beijing",
           uni_category: "comprehensive",
           slug: "tsinghua-university",
-          slug_aliases: [
-            "tsinghua"
-          ],
           logo_url: "https://www.shanghairanking.cn/_uni/logo/27532357.png",
           is_verified: false,
           uni_type: "public",
@@ -3252,12 +3358,17 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             shanghai_url: "https://www.shanghairanking.cn/institution/tsinghua-university",
             shanghai_national: 1
           },
-          created_at: "2026-09-24T13:53:48.160506+00:00"
+          slug_aliases: [
+            "qinghua",
+            "thu",
+            "tsinghua"
+          ],
+          created_at: "2026-10-11T04:05:20.544062+00:00"
         },
         reviews: [
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "One-semester exchange. The language classes were excellent and the campus is genuinely beautiful, but the international office was slow with paperwork — start your visa admin early.",
@@ -3270,7 +3381,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-20T13:53:48.160506+00:00",
+            created_at: "2026-10-07T04:05:20.544062+00:00",
             enrollment_status: "exchange",
             start_year: 2024,
             end_year: 2025,
@@ -3299,7 +3410,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 5,
             text: "Two years into my master's and the research access here is unreal — my lab publishes constantly and professors actually reply to emails. The workload is heavy but the campus feels like its own small city.",
@@ -3332,7 +3443,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-08T13:53:48.160506+00:00",
+            created_at: "2026-09-25T04:05:20.544062+00:00",
             enrollment_status: "current",
             start_year: 2023,
             end_year: null,
@@ -3361,14 +3472,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "Studied here 2018–2022. Brutal grading but employers across Asia know the name — it opened doors everywhere. Dorms are basic; bring your own kettle and lower your expectations.",
             program: "Mechanical Engineering",
             degree_level: "Bachelor",
             media: [],
-            created_at: "2026-09-15T13:53:48.160506+00:00",
+            created_at: "2026-10-02T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2018,
             end_year: 2022,
@@ -3395,8 +3506,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: 5
           },
           {
-            id: "225efe38-8851-4a55-8708-9714630723cd",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "92adeba1-f8a9-4e4f-809d-a3e9f00d5ee5",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 5,
             text: "The campus is stunning and the engineering faculty is world-class. Professors genuinely care about international students and there are tons of English-taught programs. The dorm situation is tight but manageable.",
@@ -3426,8 +3537,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: null
           },
           {
-            id: "2c208a57-926c-404f-a519-3176986e9818",
-            university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
+            id: "8d5137f4-e9af-49c5-8670-5be00c1ec9ba",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
             user_id: null,
             rating: 4,
             text: "Great academics, but the workload is no joke. Be prepared to study hard. The international office was helpful with my visa extension though.",
@@ -3455,18 +3566,86 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_social: null,
             rating_extracurricular: null,
             rating_career: null
+          },
+          {
+            id: "786551ed-427b-416e-87aa-99c596616721",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: "92958afd-b3f4-4ab2-8038-d745c814fe88",
+            rating: 4,
+            text: "Signed-in e2e review mv3is8ia883.",
+            program: null,
+            degree_level: null,
+            media: [],
+            created_at: "2026-10-11T07:46:53.133161+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: "yes",
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
+          },
+          {
+            id: "3f3fc8a0-4e07-4a16-8f93-9391810c78f2",
+            university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+            user_id: "92958afd-b3f4-4ab2-8038-d745c814fe88",
+            rating: 4,
+            text: "Reveal e2e review mv3is8ia883. Dorms are fine, food is better.",
+            program: null,
+            degree_level: null,
+            media: [],
+            created_at: "2026-10-11T07:46:52.481551+00:00",
+            enrollment_status: null,
+            start_year: null,
+            end_year: null,
+            language_of_instruction: null,
+            tuition_range: null,
+            living_cost_range: null,
+            funding_type: null,
+            funding_coverage: null,
+            recommend: "yes",
+            pros: null,
+            cons: null,
+            tags: [],
+            rating_academics: null,
+            rating_campus: null,
+            rating_accommodation: null,
+            rating_cost: null,
+            rating_intl_office: null,
+            rating_social: null,
+            rating_extracurricular: null,
+            rating_career: null
           }
         ],
-        authors: {},
+        authors: {
+          "92958afd-b3f4-4ab2-8038-d745c814fe88": {
+            id: "92958afd-b3f4-4ab2-8038-d745c814fe88",
+            display_name: "Reveal A mv3is8ia883",
+            avatar_url: null
+          }
+        },
         stats: {
-          university_id: "eef9ff77-314f-40e8-b121-d2c609aa472f",
-          avg_rating: 4.4,
-          review_count: 5,
-          has_verified_review: false,
-          recommend_yes_count: 2,
+          university_id: "5731b5a1-b36c-42ee-8486-b4e64fa90428",
+          avg_rating: 4.29,
+          review_count: 7,
+          has_verified_review: true,
+          recommend_yes_count: 4,
           recommend_maybe_count: 1,
           recommend_no_count: 0,
-          updated_at: "2026-09-24T13:53:48.160506+00:00"
+          updated_at: "2026-10-11T07:46:53.133161+00:00"
         },
         upvoteCounts: {}
       }
@@ -3477,7 +3656,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
     data: {
       universityPage: {
         university: {
-          id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+          id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
           name: "Fudan University",
           name_zh: "复旦大学",
           city: "Shanghai",
@@ -3485,9 +3664,6 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           province: "Shanghai",
           uni_category: "comprehensive",
           slug: "fudan-university",
-          slug_aliases: [
-            "fudan"
-          ],
           logo_url: "https://www.shanghairanking.cn/_uni/logo/28312850.png",
           is_verified: false,
           uni_type: "public",
@@ -3500,12 +3676,15 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             shanghai_url: "https://www.shanghairanking.cn/institution/fudan-university",
             shanghai_national: 5
           },
-          created_at: "2026-09-24T13:53:48.160506+00:00"
+          slug_aliases: [
+            "fudan"
+          ],
+          created_at: "2026-10-11T04:05:20.544062+00:00"
         },
         reviews: [
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 3,
             text: "Fun semester and the food scene is unbeatable, but everything near campus is expensive and my dorm had mold. Come for the city, not the facilities.",
@@ -3523,7 +3702,7 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
                 type: "image"
               }
             ],
-            created_at: "2026-09-13T13:53:48.160506+00:00",
+            created_at: "2026-09-30T04:05:20.544062+00:00",
             enrollment_status: "exchange",
             start_year: 2022,
             end_year: 2023,
@@ -3551,14 +3730,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
           },
           {
             id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 2,
             text: "Shanghai is an amazing city but the program felt overpriced for what you get. International office support was thin when I needed visa help, and nobody warned me about the living costs.",
             program: "Journalism",
             degree_level: "Master",
             media: [],
-            created_at: "2026-09-03T13:53:48.160506+00:00",
+            created_at: "2026-09-20T04:05:20.544062+00:00",
             enrollment_status: "alumni",
             start_year: 2019,
             end_year: 2021,
@@ -3584,8 +3763,8 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
             rating_career: 2
           },
           {
-            id: "038960cd-6083-484a-bc7c-027d2f728aa6",
-            university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+            id: "f4f2485f-7f1a-46ef-882d-1ab876f6fe90",
+            university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
             user_id: null,
             rating: 4,
             text: "Shanghai life is unbeatable. Fudan has strong international programs and the career fairs are well-connected. Cafeteria food could be better but there are cheap eats everywhere nearby.",
@@ -3617,14 +3796,14 @@ export const PRERENDER_ROUTES: { path: string; data: Record<string, unknown> }[]
         ],
         authors: {},
         stats: {
-          university_id: "45808a80-001c-47d8-a726-83a07fdde5ce",
+          university_id: "b210af55-0b46-45a2-956d-1ad7d00271d9",
           avg_rating: 3,
           review_count: 3,
           has_verified_review: false,
           recommend_yes_count: 0,
           recommend_maybe_count: 0,
           recommend_no_count: 2,
-          updated_at: "2026-09-24T13:53:48.160506+00:00"
+          updated_at: "2026-10-11T04:05:20.544062+00:00"
         },
         upvoteCounts: {}
       }

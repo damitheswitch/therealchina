@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useMyReviews } from '../hooks/useMyReviews'
 import { useToast } from '../contexts/ToastContext'
-import { deleteReview } from '../lib/reviewManage'
+import { deleteReview, revealReview } from '../lib/reviewManage'
 import type { EditableReview } from '../lib/reviewEdit'
 import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
@@ -19,10 +19,12 @@ const MyReviewCard = ({
   review,
   onEdit,
   onDelete,
+  onReveal,
 }: {
   review: EditableReview
   onEdit: () => void
   onDelete: () => void
+  onReveal: () => void
 }) => {
   const date = new Date(review.created_at ?? '').toLocaleDateString('en-US', {
     year: 'numeric',
@@ -73,6 +75,11 @@ const MyReviewCard = ({
         <button type="button" className="edit-btn" onClick={onEdit}>
           Edit review
         </button>
+        {!review.user_id && (
+          <button type="button" className="edit-btn" onClick={onReveal}>
+            Show my name
+          </button>
+        )}
         <button type="button" className="delete-btn" onClick={onDelete}>
           Delete
         </button>
@@ -91,6 +98,8 @@ export const MyReviews = () => {
   const [editing, setEditing] = useState<EditableReview | null>(null)
   const [deleting, setDeleting] = useState<EditableReview | null>(null)
   const [deleteBusy, setDeleteBusy] = useState(false)
+  const [revealing, setRevealing] = useState<EditableReview | null>(null)
+  const [revealBusy, setRevealBusy] = useState(false)
   const editPanelRef = useRef<HTMLDivElement>(null)
 
   // Edit overlay behaves like a dialog: focus moves inside on open, Tab cycles
@@ -136,6 +145,22 @@ export const MyReviews = () => {
     }
   }
 
+  const handleReveal = async () => {
+    if (!revealing) return
+    setRevealBusy(true)
+    try {
+      await revealReview(revealing.id)
+      showToast('Done. It now shows your name and the Verified seal.', 'success')
+      setRevealing(null)
+      refetch()
+    } catch (err) {
+      console.error('Error revealing review:', err)
+      showToast(err instanceof Error ? err.message : 'Could not update the review.', 'error')
+    } finally {
+      setRevealBusy(false)
+    }
+  }
+
   if (loading) return null
 
   return (
@@ -158,6 +183,7 @@ export const MyReviews = () => {
                 review={review}
                 onEdit={() => setEditing(review)}
                 onDelete={() => setDeleting(review)}
+                onReveal={() => setRevealing(review)}
               />
             </div>
           ))}
@@ -183,6 +209,18 @@ export const MyReviews = () => {
           danger
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
+        />
+      )}
+
+      {revealing && (
+        <ConfirmDialog
+          title="Put your name on this review?"
+          body="It will show your display name and the Verified seal publicly, like a review you posted signed in. There is no way back to anonymous."
+          confirmLabel={revealBusy ? 'Updating...' : 'Show my name'}
+          cancelLabel="Stay anonymous"
+          busy={revealBusy}
+          onConfirm={handleReveal}
+          onCancel={() => setRevealing(null)}
         />
       )}
 
