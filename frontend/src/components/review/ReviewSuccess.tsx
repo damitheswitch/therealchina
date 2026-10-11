@@ -86,15 +86,16 @@ export const PublishedReviewPreview = ({
 }
 
 // The post-publish landing: the review card as it now appears on the
-// university page, then the two offers — Boost (signed-in) and a closable
-// sign-up invite (anonymous). Anonymous Boost is Phase 3, so anonymous users
-// get the sign-up offer only.
+// university page, then the offers — Boost for anyone holding the write
+// capability (JWT or per-review token), plus a closable sign-up invite for
+// anonymous reviewers.
 export const ReviewSuccess = ({
   form,
   media,
   publishedAt,
   universitySlug,
   isAnonymous,
+  canBoost,
   onBoost,
   onDone,
 }: {
@@ -103,6 +104,7 @@ export const ReviewSuccess = ({
   publishedAt: string
   universitySlug: string | null
   isAnonymous: boolean
+  canBoost: boolean
   onBoost: () => void
   onDone: () => void
 }) => {
@@ -123,7 +125,7 @@ export const ReviewSuccess = ({
 
       <PublishedReviewPreview values={form.values} media={media} date={date} />
 
-      {!isAnonymous && (
+      {canBoost && (
         <div className="success-offer">
           <h3 className="success-offer-title">Make it more useful in 60 seconds?</h3>
           <p className="step-sub" style={{ marginBottom: 'var(--sp-2)' }}>

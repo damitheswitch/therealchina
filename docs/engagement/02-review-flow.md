@@ -3,12 +3,10 @@
 **Depends on:** Phase 1 baseline recorded (production tracker working + dated
 pre-change baseline captured — not done yet; see `01-measurement.md`).
 **Blocks:** Phases 3 to 7.
-**Status:** implemented on `feat/phase2-fast-review-flow-clean` (unreleased —
-do not merge to `staging` or `master` until the Phase 1 gate opens). The
-earlier working branch `feat/phase2-fast-review-flow` collected two unrelated
-commits from a parallel session (seed backfill `649641c`, column drop
-`bda005a`) because it was checked out in the shared worktree; the `-clean`
-branch cherry-picks only the Phase 2 commits and is the one to review.
+**Status:** merged into `staging` via PR #56 (`2246e9f`); not released to
+production. The staging site serves the two-screen flow, but signed-in Boost
+and server-draft resume have not yet been verified there. The Phase 1 baseline
+still gates the production release.
 **Overview:** [00-overview.md](00-overview.md) §3 (diagnosis) and §6 (target flow).
 
 ## Goal
@@ -97,15 +95,18 @@ The agent drafts the wording. You approve it, because it's user-facing and the `
 - Success screen (`ReviewSuccess`): the published review card rendered live
   from form state, the Boost offer (signed-in), the closable sign-up offer
   (anonymous).
-- Boost cards (`BoostCards`, signed-in only): `program` (program + degree
+- Boost cards (`BoostCards`): `program` (program + degree
   level), `ratings` (8-aspect sub-score stack, one save), `money`, `details`
   (enrollment, years, language), `pros_cons`, `media`. Card order and copy in
   `BOOST_CARD_ORDER`/`BOOST_CARD_META`.
-  - Each card saves immediately through `review-manage` (`updateReview`)
-    with the full merged field set, since the server rewrites all writable
-    columns on each update. A skipped card restores its fields to the values
-    they had when the card opened, so unsaved input can't leak into a later
-    card's save.
+  - Signed-in: each card saves immediately through `review-manage`
+    (`updateReview`) with the full merged field set, since the server
+    rewrites all writable columns on each update. A skipped card restores
+    its fields to the values they had when the card opened, so unsaved
+    input can't leak into a later card's save.
+  - Anonymous (Phase 3): same component on a subset (`ANON_BOOST_CARDS`,
+    media excluded), saving through `review-boost` with only the current
+    card's fields — see `03-anon-boost.md`.
   - Deviation from the original card list: `home_country` is a profile field,
     not a review field, so it has no Boost card (onboarding owns it).
 - Draft compatibility per D2.5 (`v` payload + `mapDraftStepToScreen`).
@@ -161,11 +162,10 @@ ReviewStory,ReviewSuccess,BoostCards,ReviewEditForm}.tsx`,
 
 ## Release gate (owner)
 
-This branch must not reach production until the Phase 1 gate opens: the
-production Umami tracker verified delivering events **and** a dated
-pre-change baseline captured. Merge `feat/phase2-fast-review-flow-clean` into
-`staging` only for a deploy preview; do not merge `staging` into `master`
-with it. The legacy 5-step flow keeps serving production until then.
+Phase 2 is merged into `staging`, not `master`. Do not release it to
+production until the Phase 1 gate opens: the production Umami tracker is
+verified delivering events **and** a dated pre-change baseline is captured.
+The legacy 5-step flow keeps serving production until then.
 
 ## Local verification (2026-10-09, dev + local Supabase)
 
@@ -212,6 +212,16 @@ anonymous sign-up offer on the success screen (needs an anon publish).
   a modal.
 - Anonymous localStorage draft autosaves on screen 1 and auto-resumes
   after reload; `?uni=` prefill takes precedence over the local draft.
-- Not checked on the preview: signed-in Boost and `?draft=` server resume
-  (no staging account provisioned; the code path is the one verified
-  locally), Umami dashboard delivery (staging has no site ID — by design).
+- Current `staging` branch site serves the two-screen `/review` flow and
+  passed `node scripts/smoke_live.mjs https://staging--therealchina.netlify.app --preview`
+  on 2026-10-09. This verifies the observed site, not the Netlify deploy's
+  commit identity or the signed-in workflows.
+- Signed-in paths verified on staging services via the Phase 3 preview
+  (2026-10-09, test account `trc-e2e-stage2@proton.me`): signed-in publish →
+  success screen → Boost ("Card 1 of 6", media included) → `review-manage`
+  saved `program='Economics'`; `?draft=<id>` resumed a server-saved draft
+  (university prefilled). These exercised staging Supabase via the deploy
+  preview build, not a merged `staging` deploy.
+- Still unchecked: Umami dashboard delivery (staging has no site ID by
+  design). The earlier preview checks above do not establish deploy identity
+  on the staging branch site.

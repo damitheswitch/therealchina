@@ -96,6 +96,66 @@ export interface ValidatedReviewFields {
   tags: string[]
 }
 
+function validateSubscoreColumns(
+  value: unknown,
+  out: Record<string, number | null>,
+  { partial = false }: { partial?: boolean } = {}
+): void {
+  if (value === null || value === undefined) {
+    if (!partial) {
+      for (const key of VALID_SUBSCORES) out[key] = null
+    }
+    return
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('subscores must be an object')
+  }
+  const obj = value as Record<string, unknown>
+  for (const key of VALID_SUBSCORES) {
+    const val = obj[key]
+    if (val === undefined) {
+      if (!partial) out[key] = null
+      continue
+    }
+    if (val === null) {
+      out[key] = null
+      continue
+    }
+    if (typeof val !== 'number' || !Number.isInteger(val) || val < 1 || val > 5) {
+      throw new Error(`${key} must be a whole number between 1 and 5`)
+    }
+    out[key] = val
+  }
+}
+
+function validateYearField(value: unknown, label: string): number | null {
+  if (value === null || value === undefined) return null
+  if (
+    typeof value !== 'number' ||
+    !Number.isInteger(value) ||
+    value < 1990 ||
+    value > new Date().getFullYear() + 1
+  ) {
+    throw new Error(`Invalid ${label} year`)
+  }
+  return value
+}
+
+function validateFundingCoverage(
+  rawCoverage: unknown,
+  fundingType: string | null
+): string | null {
+  let coverage = asTrimmedString(rawCoverage, 20)
+  if (coverage && !VALID_COVERAGE.includes(coverage as (typeof VALID_COVERAGE)[number])) {
+    throw new Error('Invalid funding coverage')
+  }
+  // Coverage only valid when funding is not self-funded
+  if (coverage && fundingType === 'self') {
+    coverage = null
+  }
+  return coverage
+}
+
 export function validateReviewFields(
   body: Record<string, unknown>,
   mediaUrlPrefix: string
@@ -120,20 +180,8 @@ export function validateReviewFields(
   const media = validateMedia(body.media, mediaUrlPrefix)
 
   // Sub-scores (optional, 1-5)
-  const subscores: Record<string, number> = {}
-  if (body.subscores !== null && body.subscores !== undefined) {
-    if (typeof body.subscores !== 'object' || Array.isArray(body.subscores)) {
-      throw new Error('subscores must be an object')
-    }
-    for (const key of VALID_SUBSCORES) {
-      const val = (body.subscores as Record<string, unknown>)[key]
-      if (val === null || val === undefined) continue
-      if (typeof val !== 'number' || !Number.isInteger(val) || val < 1 || val > 5) {
-        throw new Error(`${key} must be a whole number between 1 and 5`)
-      }
-      subscores[key] = val
-    }
-  }
+  const subscores: Record<string, number | null> = {}
+  validateSubscoreColumns(body.subscores, subscores)
 
   const enrollmentStatus = asTrimmedString(body.enrollmentStatus, 20)
   if (
@@ -143,31 +191,8 @@ export function validateReviewFields(
     throw new Error('Invalid enrollment status')
   }
 
-  let startYear: number | null = null
-  if (body.startYear !== null && body.startYear !== undefined) {
-    if (
-      typeof body.startYear !== 'number' ||
-      !Number.isInteger(body.startYear) ||
-      body.startYear < 1990 ||
-      body.startYear > new Date().getFullYear() + 1
-    ) {
-      throw new Error('Invalid start year')
-    }
-    startYear = body.startYear
-  }
-
-  let endYear: number | null = null
-  if (body.endYear !== null && body.endYear !== undefined) {
-    if (
-      typeof body.endYear !== 'number' ||
-      !Number.isInteger(body.endYear) ||
-      body.endYear < 1990 ||
-      body.endYear > new Date().getFullYear() + 1
-    ) {
-      throw new Error('Invalid end year')
-    }
-    endYear = body.endYear
-  }
+  const startYear = validateYearField(body.startYear, 'start')
+  const endYear = validateYearField(body.endYear, 'end')
 
   if (startYear !== null && endYear !== null && endYear < startYear) {
     throw new Error('End year cannot be before start year')
@@ -181,17 +206,7 @@ export function validateReviewFields(
   if (fundingType && !VALID_FUNDING.includes(fundingType as (typeof VALID_FUNDING)[number])) {
     throw new Error('Invalid funding type')
   }
-  let fundingCoverage = asTrimmedString(body.fundingCoverage, 20)
-  if (
-    fundingCoverage &&
-    !VALID_COVERAGE.includes(fundingCoverage as (typeof VALID_COVERAGE)[number])
-  ) {
-    throw new Error('Invalid funding coverage')
-  }
-  // Coverage only valid when funding is not self-funded
-  if (fundingCoverage && fundingType === 'self') {
-    fundingCoverage = null
-  }
+  const fundingCoverage = validateFundingCoverage(body.fundingCoverage, fundingType)
 
   const recommend = asTrimmedString(body.recommend, 10)
   if (recommend && !VALID_RECOMMEND.includes(recommend as (typeof VALID_RECOMMEND)[number])) {
@@ -239,4 +254,111 @@ export function validateReviewFields(
     cons,
     tags,
   }
+}
+
+// ---- Anonymous Boost -------------------------------------------------------------
+// The optional fields a post-publish Boost may set, keyed by request name to the
+// reviews column it writes. Everything else — rating, text, university, owner,
+// recommend, tags, media, deleted_at — is absent on purpose: this map is the
+// allowlist the RPC also enforces.
+export const BOOST_FIELD_COLUMNS = {
+  program: 'program',
+  degreeLevel: 'degree_level',
+  enrollmentStatus: 'enrollment_status',
+  startYear: 'start_year',
+  endYear: 'end_year',
+  languageOfInstruction: 'language_of_instruction',
+  tuitionRange: 'tuition_range',
+  livingCostRange: 'living_cost_range',
+  fundingType: 'funding_type',
+  fundingCoverage: 'funding_coverage',
+  pros: 'pros',
+  cons: 'cons',
+} as const
+
+export const BOOST_PATCH_MAX_FIELDS = Object.keys(BOOST_FIELD_COLUMNS).length + 1 // + subscores
+
+// Validates a partial Boost update into a reviews-column patch. Only the keys
+// the caller sends land in the patch — absent columns keep their stored values.
+// Any key outside the allowlist rejects the whole request rather than being
+// silently dropped. Throws Error with a user-safe message.
+export function validateBoostPatch(body: Record<string, unknown>): Record<string, unknown> {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    throw new Error('fields must be an object')
+  }
+  const keys = Object.keys(body)
+  if (keys.length === 0) throw new Error('No fields to save')
+  if (keys.length > BOOST_PATCH_MAX_FIELDS) throw new Error('Too many fields')
+
+  const patch: Record<string, unknown> = {}
+  for (const key of keys) {
+    if (key === 'subscores') {
+      validateSubscoreColumns(body.subscores, patch as Record<string, number | null>, {
+        partial: true,
+      })
+      continue
+    }
+    const column = BOOST_FIELD_COLUMNS[key as keyof typeof BOOST_FIELD_COLUMNS]
+    if (!column) throw new Error('That field cannot be changed here')
+
+    const value = body[key]
+    switch (key) {
+      case 'program':
+        patch[column] = asTrimmedString(value, LIMITS.program.max)
+        break
+      case 'degreeLevel':
+        patch[column] = asTrimmedString(value, LIMITS.degreeLevel.max)
+        break
+      case 'enrollmentStatus': {
+        const v = asTrimmedString(value, 20)
+        if (v && !VALID_ENROLLMENT.includes(v as (typeof VALID_ENROLLMENT)[number])) {
+          throw new Error('Invalid enrollment status')
+        }
+        patch[column] = v
+        break
+      }
+      case 'startYear':
+        patch[column] = validateYearField(value, 'start')
+        break
+      case 'endYear':
+        patch[column] = validateYearField(value, 'end')
+        break
+      case 'languageOfInstruction':
+        patch[column] = asTrimmedString(value, 60)
+        break
+      case 'pros':
+        patch[column] = asTrimmedString(value, LIMITS.pros.max)
+        break
+      case 'cons':
+        patch[column] = asTrimmedString(value, LIMITS.cons.max)
+        break
+      case 'tuitionRange':
+      case 'livingCostRange':
+        patch[column] = asTrimmedString(value, 40)
+        break
+      case 'fundingType': {
+        const v = asTrimmedString(value, 20)
+        if (v && !VALID_FUNDING.includes(v as (typeof VALID_FUNDING)[number])) {
+          throw new Error('Invalid funding type')
+        }
+        patch[column] = v
+        break
+      }
+      case 'fundingCoverage': {
+        const v = asTrimmedString(value, 20)
+        if (v && !VALID_COVERAGE.includes(v as (typeof VALID_COVERAGE)[number])) {
+          throw new Error('Invalid funding coverage')
+        }
+        patch[column] = v
+        break
+      }
+    }
+  }
+
+  if (Object.keys(patch).length === 0) throw new Error('No fields to save')
+
+  // Year ordering and self-funded coverage depend on the stored values too —
+  // the RPC evaluates both rules against the post-patch row, so a partial
+  // patch can never create a state a full update would reject.
+  return patch
 }
