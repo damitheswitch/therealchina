@@ -8,9 +8,9 @@
 | Stage | State |
 |---|---|
 | Implemented (isolated branch) | Done — commit `014afe9`, PR #60 open |
-| Verified on combined staging preview | Pending — needs PR #58 merged, then staging integrated here and the success-screen meter added; see "Integration after PR #58" |
-| Merged to staging | Pending — PR #60 stays open/unmerged until the combined check passes |
-| Released to production | Blocked — only after the dated Phase 1 baseline is captured and the scoped Phase 2 and Phase 3 production releases ship |
+| Verified on combined staging preview | Done on the integrated branch — rebased onto staging after PR #58 merged (2026-10-11), success-screen meter added per the recipe below; lint/format/typecheck/tests/build/validate:seo all pass locally |
+| Merged to staging | Pending — PR #60 |
+| Released to production | Pending — the dated Phase 1 baseline requirement was waived by the owner on 2026-10-11 (recorded in `01-measurement.md`); ships with the coordinated production release |
 
 Phase 5 (re-engagement) and Phase 7 (incentives) remain undecided and out
 of scope here.
@@ -85,8 +85,11 @@ ranks higher. Readers find the most useful reviews first.
    unchanged; `useRecentReviews`/`useHubData` get the new ranking free via
    the shared comparator.
 4. Strength meter on the success screen and in `MyReviews.tsx`.
-   **Half done** — `MyReviews` done; success screen deferred until PR #58
-   merges, then this section is revisited.
+   **Done** — `MyReviews` plus the post-publish success screen. The meter
+   landed via the "Integration after PR #58" recipe on 2026-10-11:
+   `previewReviewFromFields` is the shared builder, `ReviewStrengthMeter`
+   renders unconditionally on `ReviewSuccess`, and `ReviewSuccess.test.tsx`
+   covers the signed-in, anonymous, and no-capability paths.
 5. SEO check: no new review markup, and `universitySchema` rules unchanged.
    **Done** — no JSON-LD touched; the mark is CSS classes on existing card
    markup and renders in prerendered HTML like everything else.
@@ -99,10 +102,10 @@ ranks higher. Readers find the most useful reviews first.
 
 ## Release gate (owner)
 
-Phase 2 is on staging but not production — this branch builds on it and
-must not reach production before the Phase 1 baseline is captured and the
-Phase 2 flow is released. PR into `staging` for a deploy preview; do not
-merge `staging` into `master` carrying this.
+Phase 2 is on staging but not production — this branch builds on it. The
+pre-change Phase 1 baseline requirement was explicitly waived by the owner on
+2026-10-11 (recorded in `01-measurement.md`); this phase ships with the
+coordinated staging-to-master production release, not before it.
 
 ## Integration after PR #58
 

@@ -91,9 +91,9 @@ export const ReviewExtras = ({ review }: { review: ReviewDisplayData }) => {
 }
 
 // Author-facing completeness gauge (D4.4 — owner decision: authors only, a
-// public score would invite gaming). Shown in My reviews; the post-publish
-// success screen picks it up when the Phase 3 branch lands. Nothing here
-// renders on public cards — their mark is the gold accent alone.
+// public score would invite gaming). Shown in My reviews and on the
+// post-publish success screen. Nothing here renders on public cards — their
+// mark is the gold accent alone.
 export const ReviewStrengthMeter = ({ review }: { review: ReviewCardData }) => {
   const score = detailScore(review)
   const missing = missingDetailAreas(review)
