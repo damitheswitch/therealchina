@@ -9,6 +9,7 @@ import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
 import { RecommendPill, ReviewContext, ReviewExtras } from './ReviewExtras'
 import { getReviewTeaserItems, hasReviewExtras } from '../lib/reviewDisplay'
+import { isDetailedReview } from '../lib/reviewDetail'
 
 // ~3 rendered lines of .review-text (16px × 1.65) with a 1px epsilon so an
 // exactly-3-line review never false-positives as overflowing.
@@ -48,10 +49,11 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
   const teaserItems = getReviewTeaserItems(review)
   const isCollapsible = textOverflows || hasExtras
   const showClamped = clamped && !expanded
-  // "Rich" = reviewer filled almost everything (≥3 of the 4 teaser
-  // categories: pros&cons, category ratings, photos, tags). The expand pill
-  // gets a gold halo so the hidden value visibly advertises itself.
-  const isRich = teaserItems.length >= 3
+  // "Detailed" = the review fills DETAILED_THRESHOLD+ of the seven detail
+  // areas (lib/reviewDetail). It carries the gold signal: a halo on the
+  // card plus the glowing expand pill while collapsed. Glow only, no badge
+  // — it must never read as the Verified seal (D4.2).
+  const detailed = isDetailedReview(review)
 
   // Measures the unclamped text height against the preview line count. Runs
   // inside useLayoutEffect so a needed clamp lands before the first paint —
@@ -102,7 +104,12 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
   })
 
   return (
-    <div id={`review-${id}`} className="review-card fade-in" ref={cardRef}>
+    <div
+      id={`review-${id}`}
+      className={`review-card fade-in${detailed ? ' detailed' : ''}`}
+      ref={cardRef}
+    >
+      {detailed && <span className="sr-only">Detailed review</span>}
       <div className="review-header">
         <StarRating rating={rating} />
         <div className="review-meta">
@@ -151,7 +158,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
           )}
           <button
             type="button"
-            className={`review-expand-btn${expanded ? ' open' : ''}${isRich && !expanded ? ' rich' : ''}`}
+            className={`review-expand-btn${expanded ? ' open' : ''}${detailed && !expanded ? ' rich' : ''}`}
             onClick={toggleExpanded}
             aria-expanded={expanded}
             aria-controls={expanded && hasExtras ? regionId : undefined}

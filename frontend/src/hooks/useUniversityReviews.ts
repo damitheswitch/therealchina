@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { useAuth } from '../contexts/AuthContext'
 import {
   countByReviewId,
+  resolveAutoSort,
   sortReviews,
   REVIEW_SERVER_ORDER,
   type ReviewSort,
+  type ReviewSortChoice,
   type ReviewSortable,
 } from '../lib/reviewSort'
-import { REVIEW_COLUMNS, REVIEW_HEAD_COLUMNS } from '../lib/queryColumns'
+import { REVIEW_COLUMNS, REVIEW_DETAIL_COLUMNS } from '../lib/queryColumns'
 import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
@@ -19,36 +21,50 @@ export type ReviewUpvote = { count: number; upvoted: boolean }
 
 export const REVIEW_PAGE_SIZE = 5
 
-// Paginated fetch of one university's reviews. `sort` is the ReviewSort model
-// from lib/reviewSort: column-backed sorts run as server ORDER BYs with an
-// `id` desc tail so ties can't drift across page boundaries; 'helpful' is
-// ranked client-side in a two-phase fetch (PostgREST can't ORDER BY a
-// related-row count). `refetch` re-runs the current page (error retry).
-// Hydrated pages ship ALL reviews in the prerender payload, so the seeded
-// path sorts/slices client-side — no extra request for column sorts, and the
+// Paginated fetch of one university's reviews. `sort` is the ReviewSort
+// model from lib/reviewSort plus 'auto' (D4.3): the page default, which
+// resolves to 'helpful' at HELPFUL_DEFAULT_MIN_REVIEWS+ reviews and
+// 'newest' below. Column-backed sorts run as server ORDER BYs with an `id`
+// desc tail; 'helpful' is ranked client-side (PostgREST can't ORDER BY a
+// related-row count) over REVIEW_DETAIL_COLUMNS heads. `resolvedSort`
+// reports what 'auto' landed on so the picker can show the real order.
+// Hydrated pages ship ALL reviews plus exported upvoteCounts, so the seeded
+// path sorts/slices client-side for every sort — zero requests, and the
 // prerendered HTML keeps its full content for SEO.
 export const useUniversityReviews = (
   universityId: string,
   page: number,
-  sort: ReviewSort = 'newest'
+  sort: ReviewSortChoice = 'auto'
 ) => {
   const pd = usePrerenderData<UniversityPageData>('universityPage')
   const seeded = pd?.university?.id === universityId ? pd : null
+  // useMemo keeps `all` referentially stable across renders — a fresh []
+  // fallback per render would retrigger the fetch effect in a loop.
+  const all = useMemo(() => seeded?.reviews ?? [], [seeded])
   const { user } = useAuth()
   const userId = user?.id ?? null
   const [reviews, setReviews] = useState<ReviewRow[]>(() =>
-    (seeded?.reviews ?? []).slice((page - 1) * REVIEW_PAGE_SIZE, page * REVIEW_PAGE_SIZE)
+    all.slice((page - 1) * REVIEW_PAGE_SIZE, page * REVIEW_PAGE_SIZE)
   )
   const [authors, setAuthors] = useState<Record<string, AuthorProfile>>(seeded?.authors ?? {})
-  const [totalCount, setTotalCount] = useState<number>(seeded?.reviews?.length ?? 0)
+  const [totalCount, setTotalCount] = useState<number>(all.length)
   const [pageCount, setPageCount] = useState<number>(() =>
-    Math.max(1, Math.ceil((seeded?.reviews?.length ?? 0) / REVIEW_PAGE_SIZE))
+    Math.max(1, Math.ceil(all.length / REVIEW_PAGE_SIZE))
   )
   const [loading, setLoading] = useState<boolean>(!!universityId && !seeded)
   const [error, setError] = useState<Error | null>(null)
   const [reloadTick, setReloadTick] = useState(0)
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({})
   const [upvotes, setUpvotes] = useState<Record<string, ReviewUpvote>>({})
+  // Set once an unseeded 'auto' fetch measures the corpus — seeded pages
+  // resolve synchronously and never need it.
+  const [autoResolved, setAutoResolved] = useState<ReviewSort | null>(null)
+  const resolvedSort: ReviewSort =
+    sort !== 'auto'
+      ? sort
+      : seeded
+        ? resolveAutoSort('auto', all.length)
+        : (autoResolved ?? 'newest')
 
   useEffect(() => {
     if (!universityId) {
@@ -61,15 +77,15 @@ export const useUniversityReviews = (
       return
     }
 
-    const all = seeded?.reviews ?? []
     const start = (page - 1) * REVIEW_PAGE_SIZE
 
-    // Hydration + a column-backed sort: reviews + author profiles came baked
-    // into the page and the payload holds them all — sort and slice purely
-    // client-side, no fetch. 'helpful' still needs an upvotes batch (the
-    // payload doesn't ship vote counts), so it falls through to run().
-    if (seeded && sort !== 'helpful') {
-      const sorted = sortReviews(all, sort)
+    // Seeded pages resolve every sort client-side: the payload ships all
+    // rows plus the exported upvoteCounts, so 'helpful' ranks by build-time
+    // counts (same convention as hub pages — votes cast since the last
+    // deploy still display on cards, only the rank is as-of-build).
+    if (seeded) {
+      const resolved = resolveAutoSort(sort, all.length)
+      const sorted = sortReviews(all, resolved, seeded.upvoteCounts)
       setReviews(sorted.slice(start, start + REVIEW_PAGE_SIZE))
       setAuthors(seeded.authors ?? {})
       setTotalCount(all.length)
@@ -102,57 +118,54 @@ export const useUniversityReviews = (
       setLoading(true)
       setError(null)
       try {
-        if (sort === 'helpful') {
-          // Rank every review by upvotes, then hydrate only the page slice.
-          // Seeded pages reuse the payload rows as heads, so the single extra
-          // request is the upvotes batch for this university's reviews.
-          const heads: ReviewSortable[] = seeded
-            ? all
-            : await (async () => {
-                const { data, error: headError } = await supabase
-                  .from('reviews')
-                  .select(REVIEW_HEAD_COLUMNS)
-                  .eq('university_id', universityId)
-                  .abortSignal(controller.signal)
-                if (headError) throw headError
-                return (data as ReviewSortable[] | null) || []
-              })()
+        // Ranking path for 'helpful' and unresolved 'auto': pull light
+        // detail-bearing heads, count the corpus, then hydrate only the
+        // page slice. 'auto' lands on 'newest' under the threshold and
+        // skips the votes batch entirely.
+        if (sort === 'helpful' || sort === 'auto') {
+          const { data: headRows, error: headError } = await supabase
+            .from('reviews')
+            .select(REVIEW_DETAIL_COLUMNS)
+            .eq('university_id', universityId)
+            .abortSignal(controller.signal)
+          if (headError) throw headError
+          const heads = (headRows as ReviewSortable[] | null) || []
 
-          const headIds = heads.map((h) => h.id)
-          const { data: voteRows, error: voteError } = headIds.length
-            ? await supabase
-                .from('upvotes')
-                .select('review_id')
-                .in('review_id', headIds)
-                .abortSignal(controller.signal)
-            : { data: [] as { review_id: string }[], error: null }
-          if (voteError) throw voteError
+          const resolved = resolveAutoSort(sort, heads.length)
+          setAutoResolved(resolved)
 
-          const ordered = sortReviews(heads, 'helpful', countByReviewId(voteRows))
+          let counts: Record<string, number> = {}
+          if (resolved === 'helpful' && heads.length) {
+            const { data: voteRows, error: voteError } = await supabase
+              .from('upvotes')
+              .select('review_id')
+              .in(
+                'review_id',
+                heads.map((h) => h.id)
+              )
+              .abortSignal(controller.signal)
+            if (voteError) throw voteError
+            counts = countByReviewId(voteRows)
+          }
+
+          const ordered = sortReviews(heads, resolved, counts)
           const pageIds = ordered.slice(start, start + REVIEW_PAGE_SIZE).map((h) => h.id)
 
-          let rows: ReviewRow[]
-          if (seeded) {
-            const byId = new Map(all.map((r) => [r.id, r]))
-            rows = pageIds.map((id) => byId.get(id)).filter((r): r is ReviewRow => !!r)
-            setAuthors(seeded.authors ?? {})
-          } else {
-            const { data, error: rowsError } = pageIds.length
-              ? await supabase
-                  .from('reviews')
-                  .select(REVIEW_COLUMNS)
-                  .in('id', pageIds)
-                  .abortSignal(controller.signal)
-              : { data: [] as ReviewRow[], error: null }
-            if (rowsError) throw rowsError
-            const byId = new Map(((data as ReviewRow[] | null) || []).map((r) => [r.id, r]))
-            rows = pageIds.map((id) => byId.get(id)).filter((r): r is ReviewRow => !!r)
-            await loadAuthors(rows)
-          }
+          const { data, error: rowsError } = pageIds.length
+            ? await supabase
+                .from('reviews')
+                .select(REVIEW_COLUMNS)
+                .in('id', pageIds)
+                .abortSignal(controller.signal)
+            : { data: [] as ReviewRow[], error: null }
+          if (rowsError) throw rowsError
+          const byId = new Map(((data as ReviewRow[] | null) || []).map((r) => [r.id, r]))
+          const rows = pageIds.map((id) => byId.get(id)).filter((r): r is ReviewRow => !!r)
 
           setReviews(rows)
           setTotalCount(ordered.length)
           setPageCount(Math.max(1, Math.ceil(ordered.length / REVIEW_PAGE_SIZE)))
+          await loadAuthors(rows)
           return
         }
 
@@ -198,7 +211,7 @@ export const useUniversityReviews = (
 
     run()
     return () => controller.abort()
-  }, [universityId, page, sort, seeded, reloadTick])
+  }, [universityId, page, sort, seeded, all, reloadTick])
 
   // Engagement counts for the visible page — batched `.in()` queries so the
   // cards show "Comments (n)" / "Upvote (n)" without each fetching per-row
@@ -272,6 +285,7 @@ export const useUniversityReviews = (
     error,
     commentCounts,
     upvotes,
+    resolvedSort,
     refetch: () => setReloadTick((tick) => tick + 1),
   }
 }

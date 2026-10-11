@@ -10,12 +10,7 @@ export type Database = {
     }
     Functions: {
       graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
+        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json }
         Returns: Json
       }
     }
@@ -39,6 +34,51 @@ export type Database = {
           domain?: string
         }
         Relationships: []
+      }
+      comment_email_log: {
+        Row: {
+          comment_id: string
+          created_at: string
+          detail: string | null
+          recipient_email: string | null
+          recipient_user_id: string | null
+          review_id: string
+          status: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          detail?: string | null
+          recipient_email?: string | null
+          recipient_user_id?: string | null
+          review_id: string
+          status?: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          detail?: string | null
+          recipient_email?: string | null
+          recipient_user_id?: string | null
+          review_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'comment_email_log_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: true
+            referencedRelation: 'comments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'comment_email_log_review_id_fkey'
+            columns: ['review_id']
+            isOneToOne: false
+            referencedRelation: 'reviews'
+            referencedColumns: ['id']
+          },
+        ]
       }
       comments: {
         Row: {
@@ -109,6 +149,7 @@ export type Database = {
           arrival_country: string
           arrival_date: string
           available_kgs: number
+          contact_platforms: Json | null
           created_at: string | null
           currency: string | null
           departure_city: string | null
@@ -126,6 +167,7 @@ export type Database = {
           arrival_country: string
           arrival_date: string
           available_kgs: number
+          contact_platforms?: Json | null
           created_at?: string | null
           currency?: string | null
           departure_city?: string | null
@@ -143,6 +185,7 @@ export type Database = {
           arrival_country?: string
           arrival_date?: string
           available_kgs?: number
+          contact_platforms?: Json | null
           created_at?: string | null
           currency?: string | null
           departure_city?: string | null
@@ -226,8 +269,349 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_answer_votes: {
+        Row: {
+          answer_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          answer_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_answer_votes_answer_id_fkey'
+            columns: ['answer_id']
+            isOneToOne: false
+            referencedRelation: 'qa_answers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_answer_votes_answer_id_fkey'
+            columns: ['answer_id']
+            isOneToOne: false
+            referencedRelation: 'qa_answers_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      qa_answers: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_anonymous: boolean
+          question_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_anonymous?: boolean
+          question_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_anonymous?: boolean
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_answers_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_answers_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      qa_email_log: {
+        Row: {
+          answer_id: string
+          created_at: string
+          detail: string | null
+          question_id: string
+          recipient_email: string | null
+          recipient_user_id: string | null
+          status: string
+        }
+        Insert: {
+          answer_id: string
+          created_at?: string
+          detail?: string | null
+          question_id: string
+          recipient_email?: string | null
+          recipient_user_id?: string | null
+          status?: string
+        }
+        Update: {
+          answer_id?: string
+          created_at?: string
+          detail?: string | null
+          question_id?: string
+          recipient_email?: string | null
+          recipient_user_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_email_log_answer_id_fkey'
+            columns: ['answer_id']
+            isOneToOne: true
+            referencedRelation: 'qa_answers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_email_log_answer_id_fkey'
+            columns: ['answer_id']
+            isOneToOne: true
+            referencedRelation: 'qa_answers_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_email_log_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_email_log_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      qa_question_votes: {
+        Row: {
+          created_at: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_question_votes_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_question_votes_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      qa_questions: {
+        Row: {
+          accepted_answer_id: string | null
+          author_id: string
+          body: string
+          category: string
+          city: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_anonymous: boolean
+          notify_on_answer: boolean
+          slug: string
+          title: string
+          university_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_answer_id?: string | null
+          author_id: string
+          body: string
+          category: string
+          city?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_anonymous?: boolean
+          notify_on_answer?: boolean
+          slug: string
+          title: string
+          university_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_answer_id?: string | null
+          author_id?: string
+          body?: string
+          category?: string
+          city?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_anonymous?: boolean
+          notify_on_answer?: boolean
+          slug?: string
+          title?: string
+          university_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_questions_accepted_fk'
+            columns: ['accepted_answer_id']
+            isOneToOne: false
+            referencedRelation: 'qa_answers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_questions_accepted_fk'
+            columns: ['accepted_answer_id']
+            isOneToOne: false
+            referencedRelation: 'qa_answers_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_questions_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      qa_reports: {
+        Row: {
+          answer_id: string | null
+          created_at: string
+          id: string
+          question_id: string | null
+          reason: string | null
+          reporter_id: string
+        }
+        Insert: {
+          answer_id?: string | null
+          created_at?: string
+          id?: string
+          question_id?: string | null
+          reason?: string | null
+          reporter_id: string
+        }
+        Update: {
+          answer_id?: string | null
+          created_at?: string
+          id?: string
+          question_id?: string | null
+          reason?: string | null
+          reporter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_reports_answer_id_fkey'
+            columns: ['answer_id']
+            isOneToOne: false
+            referencedRelation: 'qa_answers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_reports_answer_id_fkey'
+            columns: ['answer_id']
+            isOneToOne: false
+            referencedRelation: 'qa_answers_public'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_reports_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_reports_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      review_drafts: {
+        Row: {
+          created_at: string
+          id: string
+          payload: NonNullable<Json>
+          progress: number
+          university_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload: NonNullable<Json>
+          progress?: number
+          university_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: NonNullable<Json>
+          progress?: number
+          university_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'review_drafts_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       reviewer_context: {
         Row: {
+          boost_fail_count: number
+          boost_next_attempt_at: string | null
+          boost_save_count: number
+          boost_secret_hash: string | null
           claim_dismissed: boolean
           claim_token: string | null
           claimed_at: string | null
@@ -241,6 +625,10 @@ export type Database = {
           review_id: string
         }
         Insert: {
+          boost_fail_count?: number
+          boost_next_attempt_at?: string | null
+          boost_save_count?: number
+          boost_secret_hash?: string | null
           claim_dismissed?: boolean
           claim_token?: string | null
           claimed_at?: string | null
@@ -254,6 +642,10 @@ export type Database = {
           review_id: string
         }
         Update: {
+          boost_fail_count?: number
+          boost_next_attempt_at?: string | null
+          boost_save_count?: number
+          boost_secret_hash?: string | null
           claim_dismissed?: boolean
           claim_token?: string | null
           claimed_at?: string | null
@@ -272,44 +664,6 @@ export type Database = {
             columns: ['review_id']
             isOneToOne: true
             referencedRelation: 'reviews'
-            referencedColumns: ['id']
-          },
-        ]
-      }
-      review_drafts: {
-        Row: {
-          created_at: string | null
-          id: string
-          payload: Json
-          progress: number | null
-          university_id: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          payload: Json
-          progress?: number | null
-          university_id?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          payload?: Json
-          progress?: number | null
-          university_id?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'review_drafts_university_id_fkey'
-            columns: ['university_id']
-            isOneToOne: false
-            referencedRelation: 'universities'
             referencedColumns: ['id']
           },
         ]
@@ -436,7 +790,7 @@ export type Database = {
           name: string
           name_zh: string | null
           province: string | null
-          rankings: Json
+          rankings: NonNullable<Json>
           search_text: string | null
           slug: string
           slug_aliases: string[]
@@ -456,8 +810,8 @@ export type Database = {
           name: string
           name_zh?: string | null
           province?: string | null
-          rankings?: Json
-          search_text?: string | null
+          rankings?: NonNullable<Json>
+          search_text?: never
           slug: string
           slug_aliases?: string[]
           uni_category?: string | null
@@ -476,8 +830,8 @@ export type Database = {
           name?: string
           name_zh?: string | null
           province?: string | null
-          rankings?: Json
-          search_text?: string | null
+          rankings?: NonNullable<Json>
+          search_text?: never
           slug?: string
           slug_aliases?: string[]
           uni_category?: string | null
@@ -620,6 +974,7 @@ export type Database = {
           arrival_date: string | null
           available_kgs: number | null
           avatar_url: string | null
+          contact_platforms: Json | null
           created_at: string | null
           currency: string | null
           departure_city: string | null
@@ -709,22 +1064,124 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_answers_public: {
+        Row: {
+          accepted: boolean | null
+          author_id: string | null
+          body: string | null
+          created_at: string | null
+          id: string | null
+          is_author: boolean | null
+          question_id: string | null
+          upvote_count: number | null
+          viewer_upvoted: boolean | null
+        }
+        Insert: {
+          accepted?: never
+          author_id?: never
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_author?: never
+          question_id?: string | null
+          upvote_count?: never
+          viewer_upvoted?: never
+        }
+        Update: {
+          accepted?: never
+          author_id?: never
+          body?: string | null
+          created_at?: string | null
+          id?: string | null
+          is_author?: never
+          question_id?: string | null
+          upvote_count?: never
+          viewer_upvoted?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_answers_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'qa_answers_question_id_fkey'
+            columns: ['question_id']
+            isOneToOne: false
+            referencedRelation: 'qa_questions_public'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      qa_questions_public: {
+        Row: {
+          accepted_answer_id: string | null
+          answer_count: number | null
+          author_id: string | null
+          body: string | null
+          category: string | null
+          city: string | null
+          created_at: string | null
+          id: string | null
+          is_author: boolean | null
+          notify_on_answer: boolean | null
+          slug: string | null
+          title: string | null
+          university_id: string | null
+          university_name: string | null
+          university_slug: string | null
+          upvote_count: number | null
+          viewer_upvoted: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'qa_questions_university_id_fkey'
+            columns: ['university_id']
+            isOneToOne: false
+            referencedRelation: 'universities'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Functions: {
-      cleanup_upload_rate_limits: { Args: never; Returns: undefined }
-      hook_reject_disposable_email: { Args: { event: Json }; Returns: Json }
-      is_email_allowed: { Args: { p_email: string }; Returns: boolean }
-      profile_has_social_handle: {
-        Args: { p_user_id: string }
-        Returns: boolean
+      apply_anonymous_boost: {
+        Args: { p_boost_hash: string; p_patch: Json; p_review_id: string }
+        Returns: string
       }
+      cleanup_upload_rate_limits: { Args: Record<PropertyKey, never>; Returns: undefined }
+      hook_reject_disposable_email: { Args: { event: Json }; Returns: Json }
+      immutable_array_to_string: { Args: { arr: string[]; sep: string }; Returns: string }
+      is_email_allowed: { Args: { p_email: string }; Returns: boolean }
+      profile_has_social_handle: { Args: { p_user_id: string }; Returns: boolean }
       record_upload_attempt: { Args: { p_key: string }; Returns: number }
-      refresh_university_stats: {
-        Args: { p_university_id: string }
+      refresh_university_stats: { Args: { p_university_id: string }; Returns: undefined }
+      set_accepted_answer: {
+        Args: { p_answer_id: string; p_question_id: string }
         Returns: undefined
       }
-      show_limit: { Args: never; Returns: number }
+      set_question_notify: {
+        Args: { p_enabled: boolean; p_question_id: string }
+        Returns: undefined
+      }
+      show_limit: { Args: Record<PropertyKey, never>; Returns: number }
       show_trgm: { Args: { '': string }; Returns: string[] }
+      toggle_answer_upvote: {
+        Args: { p_answer_id: string }
+        Returns: {
+          upvote_count: number
+          upvoted: boolean
+        }[]
+      }
+      toggle_question_upvote: {
+        Args: { p_question_id: string }
+        Returns: {
+          upvote_count: number
+          upvoted: boolean
+        }[]
+      }
       toggle_upvote: {
         Args: { p_review_id: string }
         Returns: {
@@ -767,9 +1224,7 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
@@ -792,9 +1247,7 @@ export type TablesInsert<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
@@ -816,9 +1269,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never) = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
@@ -840,9 +1291,7 @@ export type Enums<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never) = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
     ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
@@ -856,9 +1305,7 @@ export type CompositeTypes<
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never) = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
     ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]

@@ -176,7 +176,16 @@ CREATE TABLE IF NOT EXISTS public.reviewer_context (
   claim_token UUID,
   owner_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   claimed_at TIMESTAMPTZ,
-  claim_dismissed BOOLEAN NOT NULL DEFAULT FALSE
+  claim_dismissed BOOLEAN NOT NULL DEFAULT FALSE,
+  -- Phase 3 anonymous Boost: only the SHA-256 digest of the per-review
+  -- capability lives here — never the raw token. boost_save_count bounds
+  -- successful saves (30); wrong-token probes are throttled by
+  -- boost_next_attempt_at exponential backoff inside apply_anonymous_boost.
+  boost_secret_hash TEXT
+    CHECK (boost_secret_hash IS NULL OR boost_secret_hash ~ '^[0-9a-f]{64}$'),
+  boost_save_count INT NOT NULL DEFAULT 0,
+  boost_fail_count INT NOT NULL DEFAULT 0,
+  boost_next_attempt_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS public.comments (
@@ -266,6 +275,9 @@ CREATE TABLE IF NOT EXISTS public.flight_listings (
   currency TEXT DEFAULT 'CNY',
   notes TEXT,
   is_active BOOLEAN DEFAULT TRUE,
+  -- Platforms the owner chose to expose on this listing (migration 047).
+  -- NULL = all profile handles, [] = none. Keys only, never handle values.
+  contact_platforms JSONB DEFAULT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -275,6 +287,12 @@ ALTER TABLE public.flight_listings
 DROP CONSTRAINT IF EXISTS chk_flight_listings_notes_length,
 ADD CONSTRAINT chk_flight_listings_notes_length
   CHECK (notes IS NULL OR char_length(notes) <= 1000)
+  NOT VALID;
+
+ALTER TABLE public.flight_listings
+DROP CONSTRAINT IF EXISTS chk_flight_listings_contact_platforms_array,
+ADD CONSTRAINT chk_flight_listings_contact_platforms_array
+  CHECK (contact_platforms IS NULL OR jsonb_typeof(contact_platforms) = 'array')
   NOT VALID;
 
 -- Disposable/temp-mail domains rejected at signup and on email change.
@@ -315,6 +333,9 @@ CREATE INDEX IF NOT EXISTS idx_reviewer_context_claim_token
 CREATE INDEX IF NOT EXISTS idx_reviewer_context_owner_id
   ON public.reviewer_context(owner_id)
   WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_reviewer_context_boost_secret_hash
+  ON public.reviewer_context(boost_secret_hash)
+  WHERE boost_secret_hash IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_upvotes_review_id ON public.upvotes(review_id);
 CREATE INDEX IF NOT EXISTS idx_upvotes_user_id ON public.upvotes(user_id);
@@ -768,6 +789,141 @@ AS $$
   SELECT pg_catalog.array_to_string(arr, sep)
 $$;
 
+-- Migration 044: anonymous Boost — authorization and update in one
+-- transaction. Locks the review then the context row FOR UPDATE (claim writes
+-- serialize against these locks), enforces the 24h window, the 30-save budget,
+-- the 20 wrong-token lockout, and the column allowlist; returns a status code
+-- the review-boost Edge Function maps to HTTP. Service-role only.
+CREATE OR REPLACE FUNCTION public.apply_anonymous_boost(
+  p_review_id UUID,
+  p_boost_hash TEXT,
+  p_patch JSONB
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+DECLARE
+  v_review public.reviews%ROWTYPE;
+  v_ctx public.reviewer_context%ROWTYPE;
+  v_new_start INT;
+  v_new_end INT;
+  v_new_funding TEXT;
+BEGIN
+  IF p_boost_hash IS NULL OR p_boost_hash !~ '^[0-9a-f]{64}$' THEN
+    RETURN 'bad_token';
+  END IF;
+  IF p_patch IS NULL OR jsonb_typeof(p_patch) <> 'object' OR p_patch = '{}'::jsonb THEN
+    RETURN 'empty';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM jsonb_object_keys(p_patch) AS k
+    WHERE k NOT IN (
+      'program', 'degree_level',
+      'rating_academics', 'rating_campus', 'rating_accommodation',
+      'rating_cost', 'rating_intl_office', 'rating_social',
+      'rating_extracurricular', 'rating_career',
+      'enrollment_status', 'start_year', 'end_year',
+      'language_of_instruction', 'tuition_range', 'living_cost_range',
+      'funding_type', 'funding_coverage', 'pros', 'cons'
+    )
+  ) THEN
+    RETURN 'bad_fields';
+  END IF;
+
+  SELECT * INTO v_review
+    FROM public.reviews
+    WHERE id = p_review_id
+    FOR UPDATE;
+  IF NOT FOUND OR v_review.deleted_at IS NOT NULL THEN
+    RETURN 'not_found';
+  END IF;
+
+  SELECT * INTO v_ctx
+    FROM public.reviewer_context
+    WHERE review_id = p_review_id
+    FOR UPDATE;
+  IF NOT FOUND OR v_ctx.boost_secret_hash IS NULL THEN
+    RETURN 'not_found';
+  END IF;
+
+  IF v_ctx.boost_secret_hash <> p_boost_hash THEN
+    IF v_ctx.boost_next_attempt_at IS NOT NULL AND now() < v_ctx.boost_next_attempt_at THEN
+      RETURN 'locked';
+    END IF;
+    UPDATE public.reviewer_context
+      SET boost_fail_count = boost_fail_count + 1,
+          boost_next_attempt_at =
+            now() + LEAST(power(2, LEAST(boost_fail_count + 1, 10))::int, 600)
+              * INTERVAL '1 second'
+      WHERE review_id = p_review_id;
+    RETURN 'bad_token';
+  END IF;
+
+  IF v_review.user_id IS NOT NULL
+     OR v_ctx.owner_id IS NOT NULL
+     OR v_ctx.claim_dismissed THEN
+    RETURN 'claimed';
+  END IF;
+
+  IF v_review.created_at + INTERVAL '24 hours' <= NOW() THEN
+    RETURN 'expired';
+  END IF;
+
+  IF v_ctx.boost_save_count >= 30 THEN
+    RETURN 'over_limit';
+  END IF;
+
+  v_new_start := CASE WHEN p_patch ? 'start_year'
+    THEN (p_patch->>'start_year')::int ELSE v_review.start_year END;
+  v_new_end := CASE WHEN p_patch ? 'end_year'
+    THEN (p_patch->>'end_year')::int ELSE v_review.end_year END;
+  IF v_new_start IS NOT NULL AND v_new_end IS NOT NULL AND v_new_end < v_new_start THEN
+    RETURN 'bad_fields';
+  END IF;
+
+  v_new_funding := CASE WHEN p_patch ? 'funding_type'
+    THEN p_patch->>'funding_type' ELSE v_review.funding_type END;
+
+  UPDATE public.reviews SET
+    program                 = CASE WHEN p_patch ? 'program'                 THEN p_patch->>'program'                          ELSE program END,
+    degree_level            = CASE WHEN p_patch ? 'degree_level'            THEN p_patch->>'degree_level'                     ELSE degree_level END,
+    rating_academics        = CASE WHEN p_patch ? 'rating_academics'        THEN (p_patch->>'rating_academics')::int          ELSE rating_academics END,
+    rating_campus           = CASE WHEN p_patch ? 'rating_campus'           THEN (p_patch->>'rating_campus')::int             ELSE rating_campus END,
+    rating_accommodation    = CASE WHEN p_patch ? 'rating_accommodation'    THEN (p_patch->>'rating_accommodation')::int      ELSE rating_accommodation END,
+    rating_cost             = CASE WHEN p_patch ? 'rating_cost'             THEN (p_patch->>'rating_cost')::int               ELSE rating_cost END,
+    rating_intl_office      = CASE WHEN p_patch ? 'rating_intl_office'      THEN (p_patch->>'rating_intl_office')::int        ELSE rating_intl_office END,
+    rating_social           = CASE WHEN p_patch ? 'rating_social'           THEN (p_patch->>'rating_social')::int             ELSE rating_social END,
+    rating_extracurricular  = CASE WHEN p_patch ? 'rating_extracurricular'  THEN (p_patch->>'rating_extracurricular')::int    ELSE rating_extracurricular END,
+    rating_career           = CASE WHEN p_patch ? 'rating_career'           THEN (p_patch->>'rating_career')::int             ELSE rating_career END,
+    enrollment_status       = CASE WHEN p_patch ? 'enrollment_status'       THEN p_patch->>'enrollment_status'                ELSE enrollment_status END,
+    start_year              = CASE WHEN p_patch ? 'start_year'              THEN (p_patch->>'start_year')::int                ELSE start_year END,
+    end_year                = CASE WHEN p_patch ? 'end_year'                THEN (p_patch->>'end_year')::int                  ELSE end_year END,
+    language_of_instruction = CASE WHEN p_patch ? 'language_of_instruction' THEN p_patch->>'language_of_instruction'          ELSE language_of_instruction END,
+    tuition_range           = CASE WHEN p_patch ? 'tuition_range'           THEN p_patch->>'tuition_range'                    ELSE tuition_range END,
+    living_cost_range       = CASE WHEN p_patch ? 'living_cost_range'       THEN p_patch->>'living_cost_range'                ELSE living_cost_range END,
+    funding_type            = CASE WHEN p_patch ? 'funding_type'            THEN p_patch->>'funding_type'                     ELSE funding_type END,
+    funding_coverage        = CASE
+                                WHEN v_new_funding = 'self' THEN NULL
+                                WHEN p_patch ? 'funding_coverage' THEN p_patch->>'funding_coverage'
+                                ELSE funding_coverage
+                              END,
+    pros                    = CASE WHEN p_patch ? 'pros'                    THEN p_patch->>'pros'                             ELSE pros END,
+    cons                    = CASE WHEN p_patch ? 'cons'                    THEN p_patch->>'cons'                             ELSE cons END
+  WHERE id = p_review_id;
+
+  UPDATE public.reviewer_context
+    SET boost_save_count = boost_save_count + 1,
+        boost_fail_count = 0,
+        boost_next_attempt_at = NULL
+    WHERE review_id = p_review_id;
+
+  RETURN 'ok';
+END;
+$$;
+
 -- ---------------------------------------------------------
 -- 5. Triggers
 -- ---------------------------------------------------------
@@ -1098,11 +1254,20 @@ SELECT
     WHEN p.id IS NOT NULL
       AND auth.role() = 'authenticated'
       AND COALESCE(p.show_social_handle, true) = true THEN
-      CASE
-        WHEN jsonb_typeof(p.social_handles) = 'array' THEN p.social_handles
-        WHEN jsonb_typeof(p.social_handles) = 'object' THEN jsonb_build_array(p.social_handles)
-        ELSE '[]'::jsonb
-      END
+      (
+        SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+        FROM jsonb_array_elements(
+          CASE
+            WHEN jsonb_typeof(p.social_handles) = 'array' THEN p.social_handles
+            WHEN jsonb_typeof(p.social_handles) = 'object' THEN jsonb_build_array(p.social_handles)
+            ELSE '[]'::jsonb
+          END
+        ) AS elem
+        WHERE fl.contact_platforms IS NULL
+          OR elem ->> 'platform' IN (
+            SELECT jsonb_array_elements_text(fl.contact_platforms)
+          )
+      )
     ELSE '[]'::jsonb
   END AS social_handles,
   CASE
@@ -1110,7 +1275,8 @@ SELECT
       AND auth.role() = 'authenticated'
       AND COALESCE(p.show_social_handle, true) = true THEN true
     ELSE false
-  END AS show_social_handle
+  END AS show_social_handle,
+  CASE WHEN auth.uid() = fl.user_id THEN fl.contact_platforms END AS contact_platforms
 FROM public.flight_listings fl
 LEFT JOIN public.profiles p
   ON fl.user_id = p.id
@@ -1148,6 +1314,11 @@ GRANT EXECUTE ON FUNCTION public.immutable_array_to_string(TEXT[], TEXT) TO serv
 
 REVOKE ALL ON FUNCTION public.is_email_allowed(TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;
+
+-- apply_anonymous_boost is the anonymous-Boost authorization boundary
+-- (migration 044) — callable only through the review-boost Edge Function.
+REVOKE ALL ON FUNCTION public.apply_anonymous_boost(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.apply_anonymous_boost(UUID, TEXT, JSONB) TO service_role;
 
 -- Auth calls the before-user-created hook as supabase_auth_admin.
 REVOKE ALL ON FUNCTION public.hook_reject_disposable_email(JSONB) FROM PUBLIC, anon, authenticated;
@@ -1425,7 +1596,371 @@ CREATE TRIGGER comment_notify_inserted
   EXECUTE FUNCTION public.enqueue_comment_notification();
 
 -- ---------------------------------------------------------
--- 13. PostgREST schema reload
+-- 13. Community Q&A (migration 048)
+-- ---------------------------------------------------------
+
+-- Tables are fully locked down (RLS on, no policies, grants revoked): reads
+-- go through the qa_*_public views so anonymous authorship stays masked at
+-- the database level; writes go through the community-submit Edge Function
+-- or the security-definer RPCs (vote toggles, accept answer, notify opt-out).
+
+CREATE TABLE IF NOT EXISTS public.qa_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  category TEXT NOT NULL,
+  city TEXT,
+  university_id UUID REFERENCES public.universities(id) ON DELETE SET NULL,
+  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
+  notify_on_answer BOOLEAN NOT NULL DEFAULT TRUE,
+  accepted_answer_id UUID,
+  deleted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT qa_questions_slug_format
+    CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND char_length(slug) <= 140),
+  CONSTRAINT qa_questions_title_length
+    CHECK (char_length(btrim(title)) BETWEEN 10 AND 160),
+  CONSTRAINT qa_questions_body_length
+    CHECK (char_length(btrim(body)) BETWEEN 20 AND 5000),
+  CONSTRAINT qa_questions_category
+    CHECK (category IN (
+      'visas', 'driving', 'money', 'housing', 'academics',
+      'work', 'health', 'tech', 'life', 'other'
+    )),
+  CONSTRAINT qa_questions_city_length
+    CHECK (city IS NULL OR char_length(city) <= 120)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS qa_questions_slug_key ON public.qa_questions(slug);
+CREATE INDEX IF NOT EXISTS idx_qa_questions_created_at ON public.qa_questions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_qa_questions_category ON public.qa_questions(category);
+CREATE INDEX IF NOT EXISTS idx_qa_questions_university ON public.qa_questions(university_id);
+CREATE INDEX IF NOT EXISTS idx_qa_questions_author ON public.qa_questions(author_id);
+CREATE INDEX IF NOT EXISTS idx_qa_questions_active ON public.qa_questions(deleted_at) WHERE deleted_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS public.qa_answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
+  body TEXT NOT NULL,
+  deleted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT qa_answers_body_length
+    CHECK (char_length(btrim(body)) BETWEEN 10 AND 5000)
+);
+
+CREATE INDEX IF NOT EXISTS idx_qa_answers_question ON public.qa_answers(question_id);
+CREATE INDEX IF NOT EXISTS idx_qa_answers_author ON public.qa_answers(author_id);
+CREATE INDEX IF NOT EXISTS idx_qa_answers_active ON public.qa_answers(deleted_at) WHERE deleted_at IS NULL;
+
+ALTER TABLE public.qa_questions
+  DROP CONSTRAINT IF EXISTS qa_questions_accepted_fk,
+  ADD CONSTRAINT qa_questions_accepted_fk
+  FOREIGN KEY (accepted_answer_id) REFERENCES public.qa_answers(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS public.qa_question_votes (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, question_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.qa_answer_votes (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  answer_id UUID NOT NULL REFERENCES public.qa_answers(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, answer_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_qa_question_votes_question ON public.qa_question_votes(question_id);
+CREATE INDEX IF NOT EXISTS idx_qa_answer_votes_answer ON public.qa_answer_votes(answer_id);
+
+CREATE TABLE IF NOT EXISTS public.qa_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  question_id UUID REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  answer_id UUID REFERENCES public.qa_answers(id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT qa_reports_one_target
+    CHECK (num_nonnulls(question_id, answer_id) = 1),
+  CONSTRAINT qa_reports_reason_length
+    CHECK (reason IS NULL OR char_length(reason) <= 500)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS qa_reports_unique_question
+  ON public.qa_reports(reporter_id, question_id) WHERE question_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS qa_reports_unique_answer
+  ON public.qa_reports(reporter_id, answer_id) WHERE answer_id IS NOT NULL;
+
+ALTER TABLE public.qa_questions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.qa_answers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.qa_question_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.qa_answer_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.qa_reports ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON public.qa_questions FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.qa_answers FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.qa_question_votes FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.qa_answer_votes FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.qa_reports FROM PUBLIC, anon, authenticated;
+
+GRANT ALL ON public.qa_questions TO service_role;
+GRANT ALL ON public.qa_answers TO service_role;
+GRANT ALL ON public.qa_question_votes TO service_role;
+GRANT ALL ON public.qa_answer_votes TO service_role;
+GRANT ALL ON public.qa_reports TO service_role;
+
+CREATE OR REPLACE VIEW public.qa_questions_public AS
+SELECT
+  q.id,
+  q.slug,
+  q.title,
+  q.body,
+  q.category,
+  q.city,
+  q.university_id,
+  u.name AS university_name,
+  u.slug AS university_slug,
+  CASE WHEN q.is_anonymous THEN NULL ELSE q.author_id END AS author_id,
+  (auth.uid() IS NOT NULL AND auth.uid() = q.author_id) AS is_author,
+  CASE WHEN auth.uid() = q.author_id THEN q.notify_on_answer END AS notify_on_answer,
+  CASE WHEN ans.deleted_at IS NULL THEN q.accepted_answer_id END AS accepted_answer_id,
+  q.created_at,
+  (SELECT count(*) FROM public.qa_answers a
+    WHERE a.question_id = q.id AND a.deleted_at IS NULL) AS answer_count,
+  (SELECT count(*) FROM public.qa_question_votes v
+    WHERE v.question_id = q.id) AS upvote_count,
+  EXISTS (
+    SELECT 1 FROM public.qa_question_votes v
+    WHERE v.question_id = q.id AND v.user_id = auth.uid()
+  ) AS viewer_upvoted
+FROM public.qa_questions q
+LEFT JOIN public.universities u ON u.id = q.university_id
+LEFT JOIN public.qa_answers ans ON ans.id = q.accepted_answer_id
+WHERE q.deleted_at IS NULL;
+
+GRANT SELECT ON public.qa_questions_public TO anon;
+GRANT SELECT ON public.qa_questions_public TO authenticated;
+
+CREATE OR REPLACE VIEW public.qa_answers_public AS
+SELECT
+  a.id,
+  a.question_id,
+  a.body,
+  CASE WHEN a.is_anonymous THEN NULL ELSE a.author_id END AS author_id,
+  (auth.uid() IS NOT NULL AND auth.uid() = a.author_id) AS is_author,
+  a.created_at,
+  (SELECT count(*) FROM public.qa_answer_votes v
+    WHERE v.answer_id = a.id) AS upvote_count,
+  EXISTS (
+    SELECT 1 FROM public.qa_answer_votes v
+    WHERE v.answer_id = a.id AND v.user_id = auth.uid()
+  ) AS viewer_upvoted,
+  EXISTS (
+    SELECT 1 FROM public.qa_questions q
+    WHERE q.accepted_answer_id = a.id AND q.deleted_at IS NULL
+  ) AS accepted
+FROM public.qa_answers a
+WHERE a.deleted_at IS NULL;
+
+GRANT SELECT ON public.qa_answers_public TO anon;
+GRANT SELECT ON public.qa_answers_public TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.update_qa_questions_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_qa_questions_updated_at_trigger ON public.qa_questions;
+CREATE TRIGGER update_qa_questions_updated_at_trigger
+  BEFORE UPDATE ON public.qa_questions
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_qa_questions_updated_at();
+
+CREATE OR REPLACE FUNCTION public.toggle_question_upvote(p_question_id UUID)
+RETURNS TABLE(upvoted boolean, upvote_count bigint)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_count BIGINT;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated to upvote';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.qa_questions
+    WHERE id = p_question_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Question not found';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.qa_question_votes
+    WHERE user_id = v_user_id AND question_id = p_question_id
+  ) THEN
+    DELETE FROM public.qa_question_votes
+    WHERE user_id = v_user_id AND question_id = p_question_id;
+    SELECT count(*) INTO v_count FROM public.qa_question_votes
+      WHERE question_id = p_question_id;
+    RETURN QUERY SELECT FALSE, v_count;
+  ELSE
+    INSERT INTO public.qa_question_votes (user_id, question_id)
+    VALUES (v_user_id, p_question_id)
+    ON CONFLICT (user_id, question_id) DO NOTHING;
+    SELECT count(*) INTO v_count FROM public.qa_question_votes
+      WHERE question_id = p_question_id;
+    RETURN QUERY SELECT TRUE, v_count;
+  END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.toggle_answer_upvote(p_answer_id UUID)
+RETURNS TABLE(upvoted boolean, upvote_count bigint)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_count BIGINT;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated to upvote';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.qa_answers
+    WHERE id = p_answer_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Answer not found';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.qa_answer_votes
+    WHERE user_id = v_user_id AND answer_id = p_answer_id
+  ) THEN
+    DELETE FROM public.qa_answer_votes
+    WHERE user_id = v_user_id AND answer_id = p_answer_id;
+    SELECT count(*) INTO v_count FROM public.qa_answer_votes
+      WHERE answer_id = p_answer_id;
+    RETURN QUERY SELECT FALSE, v_count;
+  ELSE
+    INSERT INTO public.qa_answer_votes (user_id, answer_id)
+    VALUES (v_user_id, p_answer_id)
+    ON CONFLICT (user_id, answer_id) DO NOTHING;
+    SELECT count(*) INTO v_count FROM public.qa_answer_votes
+      WHERE answer_id = p_answer_id;
+    RETURN QUERY SELECT TRUE, v_count;
+  END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_accepted_answer(p_question_id UUID, p_answer_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.qa_questions
+    WHERE id = p_question_id AND author_id = v_user_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Question not found';
+  END IF;
+
+  IF p_answer_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.qa_answers
+    WHERE id = p_answer_id AND question_id = p_question_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Answer not found';
+  END IF;
+
+  UPDATE public.qa_questions
+    SET accepted_answer_id = p_answer_id
+    WHERE id = p_question_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_question_notify(p_question_id UUID, p_enabled BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User must be authenticated';
+  END IF;
+
+  UPDATE public.qa_questions
+    SET notify_on_answer = p_enabled
+    WHERE id = p_question_id
+      AND author_id = v_user_id
+      AND deleted_at IS NULL;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Question not found';
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.toggle_question_upvote(UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.toggle_answer_upvote(UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.set_accepted_answer(UUID, UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.set_question_notify(UUID, BOOLEAN) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.toggle_question_upvote(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.toggle_answer_upvote(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_accepted_answer(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.set_question_notify(UUID, BOOLEAN) TO authenticated;
+REVOKE ALL ON FUNCTION public.update_qa_questions_updated_at() FROM PUBLIC, anon, authenticated;
+
+CREATE TABLE IF NOT EXISTS public.qa_email_log (
+  answer_id UUID PRIMARY KEY REFERENCES public.qa_answers(id) ON DELETE CASCADE,
+  question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  recipient_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  recipient_email TEXT,
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'sent', 'skipped', 'failed')),
+  detail TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_qa_email_log_recipient
+  ON public.qa_email_log (recipient_user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_qa_email_log_question_recipient
+  ON public.qa_email_log (question_id, recipient_user_id, created_at);
+
+ALTER TABLE public.qa_email_log ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.qa_email_log FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.qa_email_log TO service_role;
+
+-- ---------------------------------------------------------
+-- 14. PostgREST schema reload
 -- ---------------------------------------------------------
 
 NOTIFY pgrst, 'reload schema';

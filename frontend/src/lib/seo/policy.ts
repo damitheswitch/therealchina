@@ -32,6 +32,7 @@ export const NOINDEX_FOLLOW_PATTERNS: RegExp[] = [
   /^\/guide$/, // bare /guide only redirects to /guides — never a landing page
   /^\/profile/, // /profile, /profile/:id
   /^\/reset-password/, // auth flow
+  /^\/community/, // Q&A is real but stays noindex until indexing criteria are approved (D6.3)
 ]
 
 export const NOFOLLOW_PATTERNS: RegExp[] = [

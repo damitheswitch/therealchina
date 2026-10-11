@@ -22,6 +22,12 @@ export type ReviewFailureReason =
   | 'network_or_unknown'
   | 'server_error'
 export type PublishDurationBand = 'under_1m' | '1_to_2m' | '2_to_5m' | 'over_5m' | 'unknown'
+// Post-publish Boost cards (Phase 2): one logical card per unit of optional
+// detail. The ratings card is the 8-aspect sub-score stack saved as a whole.
+export type BoostCard = 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
+// For boost_exited, `after_card` is the last card completed before leaving;
+// 'none' means Boost was exited before any card saved.
+export type BoostAfterCard = BoostCard | 'none'
 
 type AnalyticsPrimitive = string | number | boolean
 
@@ -33,6 +39,8 @@ export interface ReviewEventData {
   stage?: ReviewStage
   reason?: ReviewFailureReason
   duration_band?: PublishDurationBand
+  card?: BoostCard
+  after_card?: BoostAfterCard
 }
 
 export type ReviewEventName =
@@ -47,6 +55,8 @@ export type ReviewEventName =
   | 'review_submit_attempted'
   | 'review_submit_failed'
   | 'review_published'
+  | 'boost_card_completed'
+  | 'boost_exited'
 
 export interface ReviewAnalyticsEvent {
   name: ReviewEventName
@@ -86,6 +96,8 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_submit_attempted',
   'review_submit_failed',
   'review_published',
+  'boost_card_completed',
+  'boost_exited',
 ])
 
 const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[]> = {
@@ -100,6 +112,8 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
   review_submit_attempted: ['flow', 'entry', 'auth'],
   review_submit_failed: ['flow', 'entry', 'auth', 'reason'],
   review_published: ['flow', 'entry', 'auth', 'duration_band'],
+  boost_card_completed: ['flow', 'auth', 'card'],
+  boost_exited: ['flow', 'auth', 'after_card'],
 }
 
 const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive) => boolean> = {
@@ -127,6 +141,21 @@ const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive)
     value === '2_to_5m' ||
     value === 'over_5m' ||
     value === 'unknown',
+  card: (value) =>
+    value === 'program' ||
+    value === 'ratings' ||
+    value === 'money' ||
+    value === 'details' ||
+    value === 'pros_cons' ||
+    value === 'media',
+  after_card: (value) =>
+    value === 'program' ||
+    value === 'ratings' ||
+    value === 'money' ||
+    value === 'details' ||
+    value === 'pros_cons' ||
+    value === 'media' ||
+    value === 'none',
 }
 
 const isPrimitive = (value: unknown): value is AnalyticsPrimitive =>

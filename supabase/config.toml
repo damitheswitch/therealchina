@@ -32,6 +32,23 @@ verify_jwt = false
 [functions.review-claim]
 verify_jwt = false
 
+# review-boost authorizes by the per-review capability token, not a user JWT —
+# it must accept the publishable key from anonymous callers.
+[functions.review-boost]
+verify_jwt = false
+
+# community-submit verifies the caller's JWT inside the function itself
+# (authenticated + onboarded only; anonymous Q&A writes are disabled by
+# decision), like review-manage.
+[functions.community-submit]
+verify_jwt = false
+
+# qa-notify is invoked server-to-server by community-submit and authenticates
+# via the shared-secret x-notify-secret header (QA_NOTIFY_SECRET). There is
+# no user JWT to verify, so the gateway check would reject it.
+[functions.qa-notify]
+verify_jwt = false
+
 # Email-link redirects (signup confirmation, password recovery) must land on
 # the Vite dev server. site_url is the base Supabase falls back to when an
 # email link has no redirect_to, so point it at the dev origin.

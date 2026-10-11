@@ -28,6 +28,10 @@ import {
   jsonResponse,
 } from '../_shared/guard.ts'
 import { UUID_RE, asCallerEmail, asClaimToken, claimMatcher } from './matcher.ts'
+import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
+
+// Cap the token list so a huge body can't turn hashing into work for us.
+const MAX_BOOST_TOKENS = 50
 
 const CLAIM_LIMIT_PER_HOUR = 30
 
@@ -80,7 +84,22 @@ async function handleClaim(req: Request): Promise<Response> {
   // ---- shared matcher ------------------------------------------------------------
   const claimToken = asClaimToken(body.claimToken)
   const callerEmail = asCallerEmail(caller.email)
-  const matcher = claimMatcher(claimToken, callerEmail)
+
+  // Per-review Boost capabilities (Phase 3): raw tokens arrive in the body and
+  // are hashed before they can match the stored digest. `boostToken` (single)
+  // is what resolve sends; `boostTokens` (array) lets list check every review
+  // this browser boosted.
+  const boostHashes: string[] = []
+  if (Array.isArray(body.boostTokens)) {
+    for (const t of body.boostTokens.slice(0, MAX_BOOST_TOKENS)) {
+      const token = asBoostToken(t)
+      if (token) boostHashes.push(await hashBoostToken(token))
+    }
+  }
+  const singleBoost = asBoostToken(body.boostToken)
+  if (singleBoost) boostHashes.push(await hashBoostToken(singleBoost))
+
+  const matcher = claimMatcher(claimToken, callerEmail, boostHashes)
   if (!matcher) {
     // No token and no usable email → nothing can match.
     if (action === 'list') return jsonResponse(req, { reviews: [] }, 200)
@@ -92,7 +111,7 @@ async function handleClaim(req: Request): Promise<Response> {
     const { data, error } = await supabaseAdmin
       .from('reviewer_context')
       .select(
-        'claim_token, reviews!inner(id, rating, text, program, created_at, user_id, deleted_at, universities(name, slug))'
+        'claim_token, boost_secret_hash, reviews!inner(id, rating, text, program, created_at, user_id, deleted_at, universities(name, slug))'
       )
       .or(matcher)
       .is('owner_id', null)
@@ -123,7 +142,12 @@ async function handleClaim(req: Request): Promise<Response> {
           createdAt: r.created_at,
           universityName: r.universities?.name ?? null,
           universitySlug: r.universities?.slug ?? null,
-          matchedBy: claimToken && row.claim_token === claimToken ? 'device' : 'email',
+          matchedBy:
+            (claimToken && row.claim_token === claimToken) ||
+            (typeof row.boost_secret_hash === 'string' &&
+              boostHashes.includes(row.boost_secret_hash))
+              ? 'device'
+              : 'email',
         }
       })
       .filter(Boolean)
@@ -171,7 +195,7 @@ async function handleClaim(req: Request): Promise<Response> {
   if (decision === 'not_mine') {
     const { error } = await supabaseAdmin
       .from('reviewer_context')
-      .update({ claim_token: null, claim_dismissed: true })
+      .update({ claim_token: null, boost_secret_hash: null, claim_dismissed: true })
       .eq('review_id', reviewId)
       .or(matcher)
     if (error) {
@@ -189,6 +213,7 @@ async function handleClaim(req: Request): Promise<Response> {
       .update({
         owner_id: caller.sub,
         claim_token: null,
+        boost_secret_hash: null,
         claimed_at: new Date().toISOString(),
       })
       .eq('review_id', reviewId)
@@ -228,7 +253,7 @@ async function handleClaim(req: Request): Promise<Response> {
   // is best-effort: clear the token and stamp the claim.
   const { error: ctxError } = await supabaseAdmin
     .from('reviewer_context')
-    .update({ claim_token: null, claimed_at: new Date().toISOString() })
+    .update({ claim_token: null, boost_secret_hash: null, claimed_at: new Date().toISOString() })
     .eq('review_id', reviewId)
   if (ctxError) {
     console.error('Claim context update error:', ctxError)
