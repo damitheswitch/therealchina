@@ -1,6 +1,8 @@
 # Phase 1: Measurement
 
-**Status:** implemented and merged to `staging` in PR #51. Production instrumentation was merged in PR #53 using the single available Umami website, but the production CSP initially blocked the tracker. The CSP fix is merged in PR #54 and is waiting for a Netlify production deploy because the account is out of build credits. Staging Umami verification was not performed because only the production Umami site exists. Baseline collection has not started. Last updated 2026-10-08.
+**Status:** implemented and merged to `staging` in PR #51. Production instrumentation was merged in PR #53 using the single available Umami website, but the production CSP initially blocked the tracker. The CSP fix is merged in PR #54 and reached production via the daily-rebuild deploy on 2026-10-10 (commit `1b88d22`), so production tracking is live. Staging Umami verification was not performed because only the production Umami site exists.
+
+**2026-10-11 owner decision — baseline requirement waived.** The owner explicitly waived the dated pre-change baseline ("The pre-change Phase 1 baseline requirement is explicitly waived by the owner"). No pre-Phase-2 observation week was captured, and none will be backfilled — Umami keeps measuring, but no baseline numbers are claimed anywhere, and Phase 2+ effectiveness notes use post-change data only. The "Done when" gates below that depended on a pre-change baseline are superseded by this waiver; the instrumentation-verification gate stands and is met.
 
 **Depends on:** nothing. **Blocks:** Phase 2 (the dated baseline must exist before the flow changes).
 
@@ -187,12 +189,12 @@ order by progress;
 
 | Capture date/time (UTC) | Observation window (UTC) | Umami starts | Umami publishes | Published rows | Anonymous rows | Signed-in rows | Optional-field results | Idle-draft snapshot | Notes        |
 | ----------------------- | ------------------------ | -----------: | --------------: | -------------: | -------------: | -------------: | ---------------------- | ------------------- | ------------ |
-| pending                 | pending                  |      pending |         pending |        pending |        pending |        pending | pending                | pending             | Not captured |
+| n/a                     | n/a                      |          n/a |             n/a |            n/a |            n/a |            n/a | n/a                    | n/a                 | Waived by owner 2026-10-11 — never captured, not claimed |
 
 ## Done when
 
-- Staging verification is complete if a separate staging website exists; otherwise it is explicitly recorded as not performed.
-- Production instrumentation is deployed and verified with actual request and dashboard evidence.
-- At least one complete pre-Phase-2 observation week is recorded with raw sample sizes.
-- Dated read-only Supabase outcomes and idle-draft snapshots are recorded above.
-- Phase 2 remains unreleased until the baseline exists.
+- Staging verification is complete if a separate staging website exists; otherwise it is explicitly recorded as not performed. *(Not performed — single Umami website exists, production only.)*
+- Production instrumentation is deployed and verified with actual request and dashboard evidence. *(Live via the 2026-10-10 daily-rebuild deploy carrying the PR #54 CSP fix.)*
+- ~~At least one complete pre-Phase-2 observation week is recorded with raw sample sizes.~~ **Waived by owner 2026-10-11.**
+- ~~Dated read-only Supabase outcomes and idle-draft snapshots are recorded above.~~ **Waived by owner 2026-10-11.**
+- ~~Phase 2 remains unreleased until the baseline exists.~~ **Waived by owner 2026-10-11** — Phase 2+ ships with the coordinated release; nothing is claimed about the missing baseline.

@@ -5,18 +5,46 @@ import { Icons } from '../components/Icons'
 import { VotePill } from '../components/community/VotePill'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
-import { useProfileContext } from '../contexts/ProfileContext'
 import { useToast } from '../contexts/ToastContext'
+import { useCommunityQuestion } from '../hooks/useCommunity'
+import {
+  setAcceptedAnswer,
+  setQuestionNotify,
+  submitAnswer,
+  submitReport,
+} from '../lib/communityApi'
 import { categoryLabel, type CommunityAnswer, type CommunityQuestion } from '../lib/community'
-import { MOCK_QUESTIONS } from '../lib/communityMock'
 
-// /community/q/:slug — question + answers. PROTOTYPE: communityMock.ts only,
-// votes/accepts/posts mutate local state and nothing is persisted.
+// /community/q/:slug — question + answers, all persisted in qa_* tables via
+// the qa_*_public views, community-submit, and the vote/accept RPCs.
 export const CommunityQuestionPage = () => {
   const { slug } = useParams<{ slug: string }>()
-  const question = MOCK_QUESTIONS.find((q) => q.slug === slug)
+  const { question, answers, loading, notFound, error, refetch } = useCommunityQuestion(slug)
 
-  if (!question) {
+  if (loading) {
+    return (
+      <div className="container qa-detail">
+        <div className="empty-state">
+          <p>Loading…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container qa-detail">
+        <div className="empty-state">
+          <p>Could not load that question right now.</p>
+          <button type="button" className="btn btn-outline" onClick={() => refetch()}>
+            Try again
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (notFound || !question) {
     return (
       <div className="container qa-detail">
         <div className="empty-state">
@@ -31,19 +59,30 @@ export const CommunityQuestionPage = () => {
 
   // key remounts the view per slug — router reuses this route for any
   // /community/q/* navigation, so answers/draft must not bleed across.
-  return <QuestionView key={question.slug} question={question} />
+  return (
+    <QuestionView key={question.slug} question={question} answers={answers} refetch={refetch} />
+  )
 }
 
-const QuestionView = ({ question }: { question: CommunityQuestion }) => {
+const QuestionView = ({
+  question,
+  answers,
+  refetch,
+}: {
+  question: CommunityQuestion
+  answers: CommunityAnswer[]
+  refetch: () => Promise<void>
+}) => {
   const { showToast } = useToast()
   const { user } = useAuth()
   const { openAuthModal } = useAuthModal()
-  const { profile } = useProfileContext()
 
-  const [answers, setAnswers] = useState<CommunityAnswer[]>(question.answers)
   const [acceptedId, setAcceptedId] = useState<string | null>(question.acceptedAnswerId)
+  const [notifyOn, setNotifyOn] = useState(question.notifyOnAnswer ?? true)
   const [draft, setDraft] = useState('')
   const [postAnon, setPostAnon] = useState(false)
+  const [posting, setPosting] = useState(false)
+  const [reported, setReported] = useState<Set<string>>(new Set())
 
   const sorted = useMemo(
     () =>
@@ -55,35 +94,66 @@ const QuestionView = ({ question }: { question: CommunityQuestion }) => {
     [answers, acceptedId]
   )
 
-  const flag = () => showToast('Report noted. Our team will take a look.', 'success')
-
-  const accept = (a: CommunityAnswer) => {
-    setAcceptedId(a.id)
-    showToast('Marked as the accepted answer.', 'success')
+  const report = async (targetType: 'question' | 'answer', targetId: string) => {
+    if (!user) {
+      openAuthModal('login')
+      return
+    }
+    try {
+      await submitReport({ targetType, targetId })
+      setReported((prev) => new Set(prev).add(`${targetType}:${targetId}`))
+      showToast('Report noted. Our team will take a look.', 'success')
+    } catch (err) {
+      console.error('Report failed:', err)
+      showToast('Could not send that report. Try again.', 'error')
+    }
   }
 
-  const postAnswer = () => {
+  const accept = async (a: CommunityAnswer) => {
+    if (!question.mine) return
+    try {
+      await setAcceptedAnswer(question.id, a.id)
+      setAcceptedId(a.id)
+      showToast('Marked as the accepted answer.', 'success')
+    } catch (err) {
+      console.error('Accept failed:', err)
+      showToast('Could not mark that. Try again.', 'error')
+    }
+  }
+
+  const toggleNotify = async (enabled: boolean) => {
+    setNotifyOn(enabled)
+    try {
+      await setQuestionNotify(question.id, enabled)
+    } catch (err) {
+      console.error('Notify toggle failed:', err)
+      setNotifyOn(!enabled)
+      showToast('Could not save that. Try again.', 'error')
+    }
+  }
+
+  const postAnswer = async () => {
     const text = draft.trim()
     if (!text) return
     if (!user) {
       openAuthModal('login')
       return
     }
-    setAnswers((prev) => [
-      ...prev,
-      {
-        id: `a-new-${prev.length}`,
-        author: postAnon
-          ? null
-          : { id: user.id, displayName: profile?.display_name ?? 'Anonymous' },
-        body: [text],
-        upvotes: 0,
-        ago: 'just now',
-      },
-    ])
-    setDraft('')
-    setPostAnon(false)
-    showToast('Answer posted. Preview only, nothing was saved.', 'success')
+    if (posting) return
+    setPosting(true)
+    try {
+      await submitAnswer({ questionSlug: question.slug, body: text, anonymous: postAnon })
+      setDraft('')
+      setPostAnon(false)
+      showToast('Answer posted.', 'success')
+      // Reload from the database — what renders is what persisted.
+      await refetch()
+    } catch (err) {
+      console.error('Answer post failed:', err)
+      showToast(err instanceof Error ? err.message : 'Could not post that. Try again.', 'error')
+    } finally {
+      setPosting(false)
+    }
   }
 
   return (
@@ -91,7 +161,7 @@ const QuestionView = ({ question }: { question: CommunityQuestion }) => {
       <Seo
         path={`/community/q/${question.slug}`}
         title={question.title}
-        description={question.body[0].slice(0, 155)}
+        description={question.body[0]?.slice(0, 155) ?? question.excerpt}
         type="article"
       />
       <nav className="qa-crumb" aria-label="Breadcrumb">
@@ -121,27 +191,39 @@ const QuestionView = ({ question }: { question: CommunityQuestion }) => {
       </header>
 
       <div className="qa-body">
-        {question.body.map((p) => (
-          <p key={p}>{p}</p>
+        {question.body.map((p, i) => (
+          <p key={`${i}-${p.slice(0, 16)}`}>{p}</p>
         ))}
       </div>
 
       <div className="qa-actions">
-        <VotePill count={question.upvotes} label="Me too" />
-        <button type="button" className="flag-btn" onClick={flag}>
-          <Icons.Flag /> Report
+        <VotePill
+          targetType="question"
+          targetId={question.id}
+          count={question.upvotes}
+          initialUpvoted={question.viewerUpvoted}
+          label="Me too"
+        />
+        {question.mine && question.notifyOnAnswer !== undefined && (
+          <label className="form-checkbox-label qa-notify-toggle">
+            <input
+              type="checkbox"
+              className="form-checkbox"
+              checked={notifyOn}
+              onChange={(e) => toggleNotify(e.target.checked)}
+            />
+            Email me when someone answers
+          </label>
+        )}
+        <button
+          type="button"
+          className="flag-btn"
+          onClick={() => report('question', question.id)}
+          disabled={reported.has(`question:${question.id}`)}
+        >
+          <Icons.Flag /> {reported.has(`question:${question.id}`) ? 'Reported' : 'Report'}
         </button>
       </div>
-
-      {question.relatedGuide && (
-        <Link className="qa-guide-chip" to={`/guide/${question.relatedGuide.slug}`}>
-          <Icons.Book />
-          <span>
-            Related guide: <strong>{question.relatedGuide.title}</strong>
-          </span>
-          <Icons.ArrowRight />
-        </Link>
-      )}
 
       <section className="answers" aria-label="Answers">
         <h2 className="answers-head">
@@ -160,12 +242,17 @@ const QuestionView = ({ question }: { question: CommunityQuestion }) => {
               </div>
             )}
             <div className="a-body">
-              {a.body.map((p) => (
-                <p key={p}>{p}</p>
+              {a.body.map((p, i) => (
+                <p key={`${i}-${p.slice(0, 16)}`}>{p}</p>
               ))}
             </div>
             <div className="a-foot">
-              <VotePill count={a.upvotes} />
+              <VotePill
+                targetType="answer"
+                targetId={a.id}
+                count={a.upvotes}
+                initialUpvoted={a.viewerUpvoted}
+              />
               <span className="a-author">{a.author?.displayName ?? 'Anonymous'}</span>
               <span aria-hidden="true">·</span>
               <span>{a.ago}</span>
@@ -177,7 +264,8 @@ const QuestionView = ({ question }: { question: CommunityQuestion }) => {
               <button
                 type="button"
                 className="flag-btn icon-only"
-                onClick={flag}
+                onClick={() => report('answer', a.id)}
+                disabled={reported.has(`answer:${a.id}`)}
                 aria-label="Report this answer"
               >
                 <Icons.Flag />
@@ -212,8 +300,13 @@ const QuestionView = ({ question }: { question: CommunityQuestion }) => {
                 />
                 Post anonymously
               </label>
-              <button type="button" className="btn btn-primary" onClick={postAnswer}>
-                Post answer
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={postAnswer}
+                disabled={posting}
+              >
+                {posting ? 'Posting…' : 'Post answer'}
               </button>
             </div>
             {postAnon && (

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
 import { COMMUNITY_CATEGORIES, categoryLabel } from '../lib/community'
-import { MOCK_QUESTIONS } from '../lib/communityMock'
+import { useCommunityQuestions } from '../hooks/useCommunity'
 
 type View = 'newest' | 'unanswered' | 'top'
 
@@ -15,41 +15,43 @@ const VIEWS: { id: View; label: string }[] = [
 
 const viewFromParam = (v: string | null): View => (v === 'unanswered' || v === 'top' ? v : 'newest')
 
-// /community — Q&A feed. PROTOTYPE: renders communityMock.ts, no DB yet.
-// Layout follows the SO/Discourse convention: left nav for views +
-// categories, main feed column, right rail for utility cards. On narrow
-// screens the nav collapses into a filter drawer (Discourse hamburger).
+// /community — Q&A feed backed by qa_questions_public. Layout follows the
+// SO/Discourse convention: left nav for views + categories, main feed
+// column, right rail for utility cards. On narrow screens the nav collapses
+// into a filter drawer (Discourse hamburger).
 export const CommunityPage = () => {
   const [params, setParams] = useSearchParams()
   const view = viewFromParam(params.get('tab'))
   const cat = params.get('c')
   const [catsOpen, setCatsOpen] = useState(true)
   const [navOpen, setNavOpen] = useState(false)
+  const { questions: allQuestions, loading, error, refetch } = useCommunityQuestions()
 
   const catCounts = useMemo(() => {
     const m = new Map<string, number>()
-    for (const q of MOCK_QUESTIONS) m.set(q.category, (m.get(q.category) ?? 0) + 1)
+    for (const q of allQuestions) m.set(q.category, (m.get(q.category) ?? 0) + 1)
     return m
-  }, [])
+  }, [allQuestions])
   const unansweredTotal = useMemo(
-    () => MOCK_QUESTIONS.filter((q) => q.answers.length === 0).length,
-    []
+    () => allQuestions.filter((q) => q.answerCount === 0).length,
+    [allQuestions]
   )
   const needsAnswers = useMemo(
     () =>
-      MOCK_QUESTIONS.filter((q) => q.answers.length === 0)
+      allQuestions
+        .filter((q) => q.answerCount === 0)
         .sort((a, b) => b.upvotes - a.upvotes)
         .slice(0, 3),
-    []
+    [allQuestions]
   )
 
   const questions = useMemo(() => {
-    const list = MOCK_QUESTIONS.filter((q) => !cat || q.category === cat)
+    const list = allQuestions.filter((q) => !cat || q.category === cat)
     if (view === 'unanswered')
-      return list.filter((q) => q.answers.length === 0).sort((a, b) => b.upvotes - a.upvotes)
+      return list.filter((q) => q.answerCount === 0).sort((a, b) => b.upvotes - a.upvotes)
     if (view === 'top') return [...list].sort((a, b) => b.upvotes - a.upvotes)
     return [...list].sort((a, b) => a.postedHoursAgo - b.postedHoursAgo)
-  }, [view, cat])
+  }, [allQuestions, view, cat])
 
   const go = (updates: { tab?: string | null; c?: string | null }) => {
     const next = new URLSearchParams(params)
@@ -119,7 +121,7 @@ export const CommunityPage = () => {
                   onClick={() => go({ c: null })}
                 >
                   <span>All categories</span>
-                  <span className="community-nav-count">{MOCK_QUESTIONS.length}</span>
+                  <span className="community-nav-count">{allQuestions.length}</span>
                 </button>
                 {COMMUNITY_CATEGORIES.map((c) => (
                   <button
@@ -154,7 +156,18 @@ export const CommunityPage = () => {
             </Link>
           </header>
 
-          {questions.length === 0 ? (
+          {loading ? (
+            <div className="empty-state">
+              <p>Loading questions…</p>
+            </div>
+          ) : error ? (
+            <div className="empty-state">
+              <p>Could not load questions right now.</p>
+              <button type="button" className="btn btn-outline" onClick={() => refetch()}>
+                Try again
+              </button>
+            </div>
+          ) : questions.length === 0 ? (
             <div className="empty-state">
               <p>No questions here yet.</p>
               <Link to="/community/ask" className="btn btn-outline">
@@ -173,7 +186,7 @@ export const CommunityPage = () => {
                       </span>
                       <span className={`q-stat${q.acceptedAnswerId ? ' answered' : ''}`}>
                         <span className="q-stat-num">
-                          {q.acceptedAnswerId ? <Icons.Check size={15} /> : q.answers.length}
+                          {q.acceptedAnswerId ? <Icons.Check size={15} /> : q.answerCount}
                         </span>
                         <span>{q.acceptedAnswerId ? 'answered' : 'answers'}</span>
                       </span>
@@ -181,7 +194,7 @@ export const CommunityPage = () => {
                     <span className="q-card-main">
                       <span className="guide-tag">{categoryLabel(q.category)}</span>
                       <span className="q-card-title">{q.title}</span>
-                      <span className="q-card-excerpt">{q.body[0]}</span>
+                      <span className="q-card-excerpt">{q.excerpt}</span>
                       <span className="q-card-meta">
                         <span>{q.author?.displayName ?? 'Anonymous'}</span>
                         <span aria-hidden="true">·</span>
@@ -218,6 +231,9 @@ export const CommunityPage = () => {
                 <span className="rail-item-meta">👍 {q.upvotes}</span>
               </Link>
             ))}
+            {needsAnswers.length === 0 && !loading && (
+              <p className="rail-blurb">Nothing waiting on answers right now.</p>
+            )}
             <Link to="/community?tab=unanswered" className="rail-more">
               All unanswered <Icons.ArrowRight />
             </Link>

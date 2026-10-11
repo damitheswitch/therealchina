@@ -1,5 +1,6 @@
-// Community Q&A — shared types + taxonomy.
-// PROTOTYPE: data comes from communityMock.ts until the real tables land.
+// Community Q&A — shared types + taxonomy. Data comes from the qa_questions /
+// qa_answers tables via communityApi.ts; COMMUNITY_CATEGORIES is mirrored by
+// a CHECK constraint in migration 048 — update both together.
 
 export interface CommunityCategory {
   id: string
@@ -55,11 +56,17 @@ export interface CommunityAnswer {
   body: string[]
   upvotes: number
   ago: string
+  postedHoursAgo: number
+  accepted?: boolean
+  mine?: boolean
+  viewerUpvoted?: boolean
 }
 
 export interface CommunityQuestion {
+  id: string
   slug: string
   title: string
+  excerpt: string
   body: string[]
   category: string
   city?: string
@@ -68,8 +75,11 @@ export interface CommunityQuestion {
   upvotes: number
   ago: string
   postedHoursAgo: number
+  answerCount: number
   acceptedAnswerId: string | null
+  // True for the signed-in author — drives owner controls (accept, notify).
   mine?: boolean
-  relatedGuide?: { title: string; slug: string }
-  answers: CommunityAnswer[]
+  // Author-only: current email-on-answer preference (null for everyone else).
+  notifyOnAnswer?: boolean
+  viewerUpvoted?: boolean
 }

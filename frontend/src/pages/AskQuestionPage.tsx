@@ -8,9 +8,10 @@ import { useAuthModal } from '../contexts/AuthModalContext'
 import { UniversityAutocomplete } from '../components/UniversityAutocomplete'
 import { ProvinceCityPicker } from '../components/ProvinceCityPicker'
 import { COMMUNITY_CATEGORIES } from '../lib/community'
+import { submitQuestion } from '../lib/communityApi'
 
-// /community/ask — new question form. PROTOTYPE: submit shows a toast and
-// returns to the feed; nothing is persisted.
+// /community/ask — new question form. Posts through community-submit
+// (authenticated + onboarded + rate limited) and lands on the saved thread.
 export const AskQuestionPage = () => {
   const { showToast } = useToast()
   const { user } = useAuth()
@@ -20,10 +21,13 @@ export const AskQuestionPage = () => {
   const [category, setCategory] = useState('')
   const [city, setCity] = useState('')
   const [university, setUniversity] = useState('')
+  const [uniSlug, setUniSlug] = useState('')
   const [body, setBody] = useState('')
   const [postAnon, setPostAnon] = useState(false)
+  const [notifyOnAnswer, setNotifyOnAnswer] = useState(true)
+  const [posting, setPosting] = useState(false)
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!user) {
       openAuthModal('login')
@@ -41,8 +45,26 @@ export const AskQuestionPage = () => {
       showToast('Add a bit more detail so people can actually help.', 'error')
       return
     }
-    showToast('Question posted. Preview only, nothing was saved.', 'success')
-    navigate('/community')
+    if (posting) return
+    setPosting(true)
+    try {
+      const { slug } = await submitQuestion({
+        title: title.trim(),
+        body: body.trim(),
+        category,
+        city: city || undefined,
+        universitySlug: uniSlug || undefined,
+        anonymous: postAnon,
+        notifyOnAnswer,
+      })
+      showToast('Question posted.', 'success')
+      navigate(`/community/q/${slug}`)
+    } catch (err) {
+      console.error('Question post failed:', err)
+      showToast(err instanceof Error ? err.message : 'Could not post that. Try again.', 'error')
+    } finally {
+      setPosting(false)
+    }
   }
 
   return (
@@ -133,7 +155,11 @@ export const AskQuestionPage = () => {
                 id="q-uni"
                 value={university}
                 placeholder="Start typing a university..."
-                onChange={setUniversity}
+                onChange={(v: string) => {
+                  setUniversity(v)
+                  setUniSlug('')
+                }}
+                onSelect={(opt: { key?: string }) => setUniSlug(opt.key ?? '')}
               />
             </div>
           </div>
@@ -155,9 +181,19 @@ export const AskQuestionPage = () => {
                   Your name is hidden from everyone. Moderators can still trace abuse.
                 </p>
               )}
+              <label className="form-checkbox-label" htmlFor="q-notify">
+                <input
+                  id="q-notify"
+                  type="checkbox"
+                  className="form-checkbox"
+                  checked={notifyOnAnswer}
+                  onChange={(e) => setNotifyOnAnswer(e.target.checked)}
+                />
+                Email me when someone answers
+              </label>
             </div>
-            <button type="submit" className="btn btn-primary">
-              Post question
+            <button type="submit" className="btn btn-primary" disabled={posting}>
+              {posting ? 'Posting…' : 'Post question'}
             </button>
           </div>
         </form>
