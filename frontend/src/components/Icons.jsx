@@ -27,9 +27,11 @@ export const Icons = {
     </svg>
   ),
 
-  Star: ({ filled = true }) => (
+  Star: ({ filled = true, size }) => (
     <svg
       viewBox="0 0 24 24"
+      width={size}
+      height={size}
       fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth="1.5"

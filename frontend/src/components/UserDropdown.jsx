@@ -79,6 +79,8 @@ export const UserDropdown = () => {
   const menuLinks = [
     { to: '/review', label: 'Leave a Review', icon: <Icons.Pen /> },
     { to: '/', label: 'Universities', icon: <Icons.Book /> },
+    { to: '/reviews', label: 'Reviews', icon: <Icons.Star size={16} /> },
+    { to: '/community', label: 'Community', icon: <Icons.Chat /> },
     { to: '/flights?post=1', label: 'Get paid to fly', icon: <Icons.Plane />, active: '/flights' },
     { to: '/users', label: 'Members', icon: <Icons.Users /> },
     { to: '/guides', label: 'Guides', icon: <Icons.Info /> },
@@ -92,14 +94,9 @@ export const UserDropdown = () => {
         aria-label={user ? 'User menu' : 'Menu'}
         aria-expanded={isOpen}
       >
-        {user ? (
-          <SealAvatar displayName={displayName} size={36} />
-        ) : (
-          <>
-            <GuestSeal size={40} />
-            <Icons.Chevron />
-          </>
-        )}
+        {user ? <SealAvatar displayName={displayName} size={36} /> : <GuestSeal size={40} />}
+        <span className="user-dropdown-trigger-label">Menu</span>
+        <Icons.Chevron />
       </button>
 
       {isOpen && (

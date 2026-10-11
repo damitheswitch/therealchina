@@ -3390,11 +3390,12 @@ a.claim-review-uni:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   background: none;
   border: none;
-  padding: 0;
+  padding: 2px 6px 2px 2px;
   cursor: pointer;
-  border-radius: var(--r-full);
+  border-radius: var(--r-md);
   transition:
     transform var(--t-fast),
     box-shadow var(--t-fast);
@@ -3404,6 +3405,41 @@ a.claim-review-uni:hover {
 .user-dropdown-trigger:hover {
   transform: translateY(-1px) scale(1.02);
   box-shadow: 0 4px 14px rgba(166, 25, 46, 0.12);
+}
+
+.user-dropdown-trigger .chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--ink-faint);
+  transition:
+    transform var(--t-fast),
+    color var(--t-fast);
+}
+.user-dropdown-trigger:hover .chevron {
+  color: var(--seal-red);
+}
+.user-dropdown-trigger[aria-expanded='true'] .chevron {
+  transform: rotate(180deg);
+}
+
+/* The seal alone doesn't read as a button, so on mobile (where this menu is
+   the only nav) we spell it out. Hidden on desktop, where the inline nav
+   links already advertise the rest of the site. */
+.user-dropdown-trigger-label {
+  display: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.user-dropdown-trigger:hover .user-dropdown-trigger-label {
+  color: var(--seal-red);
+}
+
+@media (max-width: 768px) {
+  .user-dropdown-trigger-label {
+    display: inline;
+  }
 }
 
 .user-dropdown-menu {
@@ -3506,7 +3542,7 @@ a.claim-review-uni:hover {
   color: var(--seal-red);
 }
 
-/* Guest variant: outlined "unclaimed" seal mark + chevron (no floating head) */
+/* Guest variant: outlined "unclaimed" seal mark (no floating head) */
 .guest-seal {
   display: inline-flex;
   align-items: center;
@@ -3522,30 +3558,8 @@ a.claim-review-uni:hover {
   transition: border-color var(--t-fast);
 }
 
-.user-dropdown-trigger--guest {
-  gap: 6px;
-  border-radius: var(--r-md);
-  box-shadow: none;
-}
-.user-dropdown-trigger--guest:hover {
-  box-shadow: none;
-}
 .user-dropdown-trigger--guest:hover .guest-seal {
   border-color: var(--seal-red);
-}
-.user-dropdown-trigger--guest .chevron {
-  width: 14px;
-  height: 14px;
-  color: var(--ink-faint);
-  transition:
-    transform var(--t-fast),
-    color var(--t-fast);
-}
-.user-dropdown-trigger--guest:hover .chevron {
-  color: var(--seal-red);
-}
-.user-dropdown-trigger--guest[aria-expanded='true'] .chevron {
-  transform: rotate(180deg);
 }
 
 .user-dropdown-header--guest {
