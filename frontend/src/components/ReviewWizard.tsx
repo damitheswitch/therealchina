@@ -51,6 +51,7 @@ import { useProfileContext } from '../contexts/ProfileContext'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useAuthModal } from '../contexts/AuthModalContext'
 import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
@@ -94,6 +95,7 @@ export const ReviewWizard = ({
 }) => {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const { profile } = useProfileContext()
   const { showToast } = useToast()
 
@@ -832,6 +834,18 @@ export const ReviewWizard = ({
         {step === 1 && <ReviewEssentials form={form} />}
 
         {step === 2 && <ReviewStory form={form} isAnonymous={!user} />}
+
+        {/* Guest identity notice — anonymous stays one click; signing in is a
+            modal, so the draft in state + localStorage survives either way. */}
+        {!user && step === 2 && (
+          <p className="form-hint" style={{ textAlign: 'center' }}>
+            You&apos;re posting as Anonymous.{' '}
+            <button type="button" className="link-inline" onClick={() => openAuthModal('login')}>
+              Sign in first
+            </button>{' '}
+            if you want your name and the Verified seal on it. Your draft stays saved.
+          </p>
+        )}
 
         {/* Anonymous Turnstile — lives on the publish screen now */}
         {!user && step === 2 && (
