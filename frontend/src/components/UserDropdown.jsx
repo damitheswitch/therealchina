@@ -15,7 +15,7 @@ export const UserDropdown = () => {
   const { profile } = useProfileContext()
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
-  const { canInstall, promptInstall } = usePwaInstall()
+  const { showInstall, canInstall, promptInstall, openProdInstall } = usePwaInstall()
   const dropdownRef = useRef(null)
 
   // Close dropdown when clicking outside
@@ -50,7 +50,8 @@ export const UserDropdown = () => {
 
   const handleInstall = async () => {
     setIsOpen(false)
-    await promptInstall()
+    if (canInstall) await promptInstall()
+    else openProdInstall()
   }
 
   if (loading) return null
@@ -159,7 +160,7 @@ export const UserDropdown = () => {
               </button>
             )}
 
-            {canInstall && (
+            {showInstall && (
               <button className="user-dropdown-item" onClick={handleInstall}>
                 <Icons.Download />
                 <span>Install app</span>
