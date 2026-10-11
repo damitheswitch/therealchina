@@ -46,3 +46,15 @@ export const deleteReview = async (reviewId: string): Promise<void> => {
     throw new Error(msg)
   }
 }
+
+// One-way: puts the caller's display name + Verified seal on a review they
+// claimed anonymously. There is no un-reveal — the UI confirms first.
+export const revealReview = async (reviewId: string): Promise<void> => {
+  const { error } = await supabase.functions.invoke('review-manage', {
+    body: { action: 'reveal', reviewId },
+  })
+  if (error) {
+    const msg = await parseFunctionError(error)
+    throw new Error(msg)
+  }
+}
