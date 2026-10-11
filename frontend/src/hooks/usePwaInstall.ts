@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { isProdSite } from '../lib/pwa'
+import { isProdSite, prodUrlFor } from '../lib/pwa'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -31,5 +31,23 @@ export const usePwaInstall = () => {
     setInstallPrompt(null)
   }
 
-  return { canInstall: installPrompt !== null, promptInstall }
+  // A real install prompt can't exist on non-prod origins without binding the
+  // app to that origin forever — so the CTA opens prod, where install works.
+  const openProdInstall = () => {
+    window.open(
+      prodUrlFor(window.location.pathname, window.location.search),
+      '_blank',
+      'noopener,noreferrer'
+    )
+  }
+
+  const canInstall = installPrompt !== null
+
+  return {
+    // prod: only when Chrome offers the prompt. non-prod: always — it opens prod.
+    showInstall: canInstall || !isProdSite(),
+    canInstall,
+    promptInstall,
+    openProdInstall,
+  }
 }
