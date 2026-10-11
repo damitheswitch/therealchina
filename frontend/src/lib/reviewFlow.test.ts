@@ -10,7 +10,6 @@ import {
   BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
-  clearedOptionalDetails,
   draftPayloadFromState,
   emptyReviewFieldValues,
   fieldValuesFromDraft,
@@ -224,31 +223,9 @@ describe('speak-up detail detection', () => {
     expect(hasOptionalDetails(values({ fundingType: 'self' }))).toBe(true)
   })
 
-  it('counts legacy pros/cons so old drafts reopen the section', () => {
+  it('counts legacy pros/cons so old drafts reopen the pager', () => {
     expect(hasOptionalDetails(values({ pros: 'cheap canteen' }))).toBe(true)
     expect(hasOptionalDetails(values({ cons: 'loud dorms' }))).toBe(true)
-  })
-
-  it('clears every optional field including legacy pros/cons', () => {
-    const filled = values({
-      rating: 5,
-      reviewText: 'long enough text',
-      selectedTags: ['Safe'],
-      program: 'CS',
-      degreeLevel: 'Bachelor',
-      subscores: { rating_campus: 4 },
-      startYear: 2021,
-      endYear: 2024,
-      tuitionRange: '10-20k',
-      fundingType: 'self',
-      pros: 'nice',
-      cons: 'loud',
-    })
-    const cleared = { ...filled, ...clearedOptionalDetails() }
-    expect(hasOptionalDetails(cleared)).toBe(false)
-    expect(cleared.rating).toBe(5)
-    expect(cleared.reviewText).toBe('long enough text')
-    expect(cleared.selectedTags).toEqual(['Safe'])
   })
 })
 

@@ -207,7 +207,13 @@ export const BoostCards = ({
 // The ratings card walks the eight aspects one at a time (tap a score to move
 // on, "Not sure" skips it). Picks write straight into form state so the
 // preview fills in live; the card's single Save persists the whole stack.
-const RatingsCard = ({ form }: { form: ReviewForm }) => {
+export const RatingsCard = ({
+  form,
+  doneHint = 'Save to add them to your review.',
+}: {
+  form: ReviewForm
+  doneHint?: string
+}) => {
   const [aspectIndex, setAspectIndex] = useState(0)
 
   const scores = form.values.subscores
@@ -226,7 +232,7 @@ const RatingsCard = ({ form }: { form: ReviewForm }) => {
           {Object.keys(scores).length > 0
             ? `${Object.keys(scores).length} of ${SUBSCORE_INPUT_FIELDS.length} rated.`
             : 'Nothing rated.'}{' '}
-          Save to add them to your review.
+          {doneHint}
         </p>
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setAspectIndex(0)}>
           Go through again

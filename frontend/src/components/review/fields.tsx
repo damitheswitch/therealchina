@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import type { MediaItem, SubScores } from '../../lib/reviewSubmit'
-import { TUITION_RANGES, LIVING_COSTS } from '../../lib/constants'
+import { COUNTRIES, TUITION_RANGES, LIVING_COSTS } from '../../lib/constants'
 import { ENROLLMENT_OPTIONS, FUNDING_OPTIONS } from '../../lib/reviewDisplay'
 import { formatLocation } from '../../lib/chinaDivisions'
 import {
@@ -331,70 +331,82 @@ export const LanguageField = ({ form }: { form: ReviewForm }) => (
 
 // ---- Money ---------------------------------------------------------------------
 
-export const MoneyFields = ({ form }: { form: ReviewForm }) => {
+export const TuitionField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">Tuition per year</label>
+    <ChipSelect
+      options={TUITION_RANGES}
+      value={form.values.tuitionRange}
+      onSelect={(v) => form.set('tuitionRange', v)}
+    />
+  </div>
+)
+
+export const LivingCostField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">Monthly living cost</label>
+    <ChipSelect
+      options={LIVING_COSTS}
+      value={form.values.livingCostRange}
+      onSelect={(v) => form.set('livingCostRange', v)}
+    />
+  </div>
+)
+
+export const FundingField = ({ form }: { form: ReviewForm }) => {
   const { values, set } = form
   return (
-    <>
-      <div className="form-group">
-        <label className="form-label">Tuition per year</label>
-        <ChipSelect
-          options={TUITION_RANGES}
-          value={values.tuitionRange}
-          onSelect={(v) => set('tuitionRange', v)}
-        />
+    <div className="form-group" style={{ marginBottom: 0 }}>
+      <label className="form-label">Funding</label>
+      <div className="segmented">
+        {FUNDING_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className={`seg ${values.fundingType === opt.value ? 'selected' : ''}`}
+            onClick={() => {
+              set('fundingType', values.fundingType === opt.value ? '' : opt.value)
+              if (opt.value === 'self') set('fundingCoverage', '')
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
-      <div className="form-group">
-        <label className="form-label">Monthly living cost</label>
-        <ChipSelect
-          options={LIVING_COSTS}
-          value={values.livingCostRange}
-          onSelect={(v) => set('livingCostRange', v)}
-        />
-      </div>
-      <div className="form-group" style={{ marginBottom: 0 }}>
-        <label className="form-label">Funding</label>
-        <div className="segmented">
-          {FUNDING_OPTIONS.map((opt) => (
+      {values.fundingType && values.fundingType !== 'self' && (
+        <div style={{ marginTop: '.6rem' }}>
+          <label className="form-label" style={{ marginBottom: '.3rem' }}>
+            Coverage
+          </label>
+          <div className="segmented">
             <button
-              key={opt.value}
               type="button"
-              className={`seg ${values.fundingType === opt.value ? 'selected' : ''}`}
-              onClick={() => {
-                set('fundingType', values.fundingType === opt.value ? '' : opt.value)
-                if (opt.value === 'self') set('fundingCoverage', '')
-              }}
+              className={`seg ${values.fundingCoverage === 'partial' ? 'selected' : ''}`}
+              onClick={() => set('fundingCoverage', 'partial')}
             >
-              {opt.label}
+              Partial
             </button>
-          ))}
-        </div>
-        {values.fundingType && values.fundingType !== 'self' && (
-          <div style={{ marginTop: '.6rem' }}>
-            <label className="form-label" style={{ marginBottom: '.3rem' }}>
-              Coverage
-            </label>
-            <div className="segmented">
-              <button
-                type="button"
-                className={`seg ${values.fundingCoverage === 'partial' ? 'selected' : ''}`}
-                onClick={() => set('fundingCoverage', 'partial')}
-              >
-                Partial
-              </button>
-              <button
-                type="button"
-                className={`seg ${values.fundingCoverage === 'full' ? 'selected' : ''}`}
-                onClick={() => set('fundingCoverage', 'full')}
-              >
-                Full
-              </button>
-            </div>
+            <button
+              type="button"
+              className={`seg ${values.fundingCoverage === 'full' ? 'selected' : ''}`}
+              onClick={() => set('fundingCoverage', 'full')}
+            >
+              Full
+            </button>
           </div>
-        )}
-      </div>
-    </>
+        </div>
+      )}
+    </div>
   )
 }
+
+export const MoneyFields = ({ form }: { form: ReviewForm }) => (
+  <>
+    <TuitionField form={form} />
+    <LivingCostField form={form} />
+    <FundingField form={form} />
+  </>
+)
 
 // ---- Story ---------------------------------------------------------------------
 
@@ -596,6 +608,32 @@ export const MediaField = ({
 )
 
 // ---- About you (anonymous only) ---------------------------------------------------
+
+// Asked on the story screen whenever the reviewer has no stored home
+// country — always for anonymous visitors (context lands on the private
+// reviewer_context row), and for signed-in users whose profile lacks it
+// (the answer updates profiles.home_country on publish).
+export const HomeCountryField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label" htmlFor="home-country">
+      Where are you from? <span className="form-hint-inline">optional</span>
+    </label>
+    <select
+      id="home-country"
+      className="form-select"
+      value={form.values.homeCountry}
+      onChange={(e) => form.set('homeCountry', e.target.value)}
+    >
+      <option value="">Prefer not to say</option>
+      {COUNTRIES.map((c) => (
+        <option key={c} value={c}>
+          {c}
+        </option>
+      ))}
+    </select>
+    <span className="form-hint">Helps other students place your experience.</span>
+  </div>
+)
 
 export const AnonEmailField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">

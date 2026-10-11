@@ -42,11 +42,11 @@ import {
   BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
-  clearedOptionalDetails,
   draftPayloadFromState,
   fieldValuesFromDraft,
   hasOptionalDetails,
 } from '../lib/reviewFlow'
+import { canonicalCountryName } from '../lib/constants'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
 import { useProfileContext } from '../contexts/ProfileContext'
@@ -58,7 +58,7 @@ import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
-import { ReviewDetails } from './review/ReviewDetails'
+import { SpeakUpPages } from './review/SpeakUpPages'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
@@ -98,7 +98,7 @@ export const ReviewWizard = ({
 }) => {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
-  const { profile } = useProfileContext()
+  const { profile, refetch: refetchProfile } = useProfileContext()
   const { showToast } = useToast()
   const { openAuthModal } = useAuthModal()
 
@@ -535,13 +535,10 @@ export const ReviewWizard = ({
     }
   }
 
-  // Collapsing means "keep it short": detail filled inside the section must
-  // not publish invisibly, so it is cleared rather than merely hidden.
-  const closeDetails = () => {
-    applyValues(clearedOptionalDetails())
-    setMediaState((m) => ({ ...m, media: [] }))
-    setDetailsOpen(false)
-  }
+  // Origin country is asked only when there's no stored answer: always for
+  // anonymous reviewers (lands on the private reviewer_context row), and for
+  // signed-in users once the profile has loaded and still lacks home_country.
+  const showHomeCountry = !user ? true : Boolean(profile && !profile.home_country)
 
   // ---- Publish -------------------------------------------------------------------
 
@@ -666,6 +663,20 @@ export const ReviewWizard = ({
         }
       } else {
         clearLocalDraft()
+      }
+
+      // The origin question only asks when the profile lacks one — a
+      // signed-in answer is saved to the profile so it's never asked twice.
+      if (user && !profile?.home_country && values.homeCountry) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ home_country: canonicalCountryName(values.homeCountry) })
+            .eq('id', user.id)
+          void refetchProfile()
+        } catch (err) {
+          console.error('Could not save home country to profile:', err)
+        }
       }
 
       const slug = result.universityCreated ? null : result.universitySlug
@@ -862,34 +873,23 @@ export const ReviewWizard = ({
 
         {step === 1 && <ReviewEssentials form={form} />}
 
-        {step === 2 && <ReviewStory form={form} isAnonymous={!user} />}
-
-        {/* Speak up: the whole optional field set, before publishing instead
-            of after. Collapsing clears it (see closeDetails). */}
+        {/* The speak-up pager takes over screen 2 when opened; the story and
+            publish row come back when it exits. */}
         {step === 2 && !detailsOpen && (
-          <div className="speak-up">
-            <button type="button" className="btn btn-lg speak-up-btn" onClick={openDetails}>
-              🔥 I want to speak up! 🔥
-            </button>
-            <p className="speak-up-hint">
-              Say more: program, costs, ratings, photos. The detail students search for.
-            </p>
-          </div>
+          <ReviewStory form={form} isAnonymous={!user} showHomeCountry={showHomeCountry} />
         )}
-
         {step === 2 && detailsOpen && (
-          <div className="speak-up-open">
-            <div className="speak-up-open-head">
-              <h3 className="boost-card-title">Tell them everything</h3>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={closeDetails}>
-                Keep it short
-              </button>
-            </div>
-            <ReviewDetails form={form} mediaState={mediaState} onMediaStateChange={setMediaState} />
-          </div>
+          <SpeakUpPages
+            form={form}
+            mediaState={mediaState}
+            onMediaStateChange={setMediaState}
+            onExit={() => setDetailsOpen(false)}
+          />
         )}
 
-        {/* Anonymous Turnstile — lives on the publish screen now */}
+        {/* Anonymous Turnstile — lives on the publish screen now. It stays
+            mounted while the speak-up pager runs so the verified token
+            survives the swap. */}
         {!user && step === 2 && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
@@ -912,7 +912,7 @@ export const ReviewWizard = ({
         )}
 
         {/* Anonymous reviewers see what the card will say before they commit. */}
-        {step === 2 && !user && (
+        {step === 2 && !user && !detailsOpen && (
           <p className="posting-as">
             Posting as Anonymous.{' '}
             <button
@@ -932,36 +932,46 @@ export const ReviewWizard = ({
           </p>
         )}
 
-        <div className="wizard-nav">
-          {step === 1 ? (
-            <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
-              ← Back
-            </button>
-          ) : (
-            <button type="button" className="btn btn-ghost" onClick={goBack}>
-              ← Back
-            </button>
-          )}
-          {step === 1 && (
-            <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
-              Continue →
-            </button>
-          )}
-          {step === 2 && (
-            <button
-              type="button"
-              className="btn btn-primary btn-lg"
-              disabled={loading || (!user && !reviewTurnstileReady)}
-              onClick={handlePublish}
-            >
-              {loading
-                ? 'Publishing...'
-                : !user && !reviewTurnstileReady
-                  ? 'Verifying you are human...'
-                  : 'Publish review 📜'}
-            </button>
-          )}
-        </div>
+        {/* The pager owns its own nav row while it runs. */}
+        {!(step === 2 && detailsOpen) && (
+          <div className="wizard-nav">
+            {step === 1 ? (
+              <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+                ← Back
+              </button>
+            ) : (
+              <button type="button" className="btn btn-ghost" onClick={goBack}>
+                ← Back
+              </button>
+            )}
+            <div className="wizard-nav-actions">
+              {step === 2 && (
+                <button type="button" className="btn btn-lg speak-up-btn" onClick={openDetails}>
+                  🔥 I want to speak up! 🔥
+                </button>
+              )}
+              {step === 1 && (
+                <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
+                  Continue →
+                </button>
+              )}
+              {step === 2 && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg"
+                  disabled={loading || (!user && !reviewTurnstileReady)}
+                  onClick={handlePublish}
+                >
+                  {loading
+                    ? 'Publishing...'
+                    : !user && !reviewTurnstileReady
+                      ? 'Verifying you are human...'
+                      : 'Publish review 📜'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <RegistrationNudge />

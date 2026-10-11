@@ -183,8 +183,8 @@ export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> 
 // the textarea never starts blank.
 export const STORY_STARTERS = ['Honestly, ', 'I wish I knew ', 'What surprised me: ']
 
-// The optional detail the speak-up section collects on screen 2. Anything in
-// here means a resumed draft should reopen the section rather than publish
+// The optional detail the speak-up pager collects on screen 2. Anything in
+// here means a resumed draft should reopen the pager rather than publish
 // detail the reviewer can no longer see. Legacy pros/cons count too: old
 // drafts can still carry them even though the flow no longer asks.
 export const hasOptionalDetails = (v: ReviewFieldValues): boolean =>
@@ -202,24 +202,6 @@ export const hasOptionalDetails = (v: ReviewFieldValues): boolean =>
     v.pros.trim() ||
     v.cons.trim()
   )
-
-// Clears the speak-up section's fields. Collapsing the section means "keep it
-// short", so filled detail must not leak into the publish payload invisibly.
-export const clearedOptionalDetails = (): Partial<ReviewFieldValues> => ({
-  program: '',
-  degreeLevel: '',
-  subscores: {},
-  enrollmentStatus: '',
-  startYear: '',
-  endYear: '',
-  languageOfInstruction: '',
-  tuitionRange: '',
-  livingCostRange: '',
-  fundingType: '',
-  fundingCoverage: '',
-  pros: '',
-  cons: '',
-})
 
 // ---- Field option lists --------------------------------------------------------
 
