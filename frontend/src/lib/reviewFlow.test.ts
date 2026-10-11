@@ -10,6 +10,7 @@ import {
   BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
+  clearedOptionalDetails,
   draftPayloadFromState,
   emptyReviewFieldValues,
   fieldValuesFromDraft,
@@ -223,9 +224,31 @@ describe('speak-up detail detection', () => {
     expect(hasOptionalDetails(values({ fundingType: 'self' }))).toBe(true)
   })
 
-  it('counts legacy pros/cons so old drafts reopen the pager', () => {
+  it('counts legacy pros/cons so old drafts reopen the section', () => {
     expect(hasOptionalDetails(values({ pros: 'cheap canteen' }))).toBe(true)
     expect(hasOptionalDetails(values({ cons: 'loud dorms' }))).toBe(true)
+  })
+
+  it('clearedOptionalDetails empties the optional set but keeps the review', () => {
+    const filled = values({
+      rating: 5,
+      reviewText: 'long enough text',
+      selectedTags: ['Safe'],
+      homeCountry: 'Vietnam',
+      program: 'CS',
+      subscores: { rating_campus: 4 },
+      endYear: 2024,
+      fundingType: 'self',
+      pros: 'nice',
+      cons: 'loud',
+    })
+    const cleared = { ...filled, ...clearedOptionalDetails() }
+    expect(hasOptionalDetails(cleared)).toBe(false)
+    // Essentials and the inline screen-2 asks survive the clear.
+    expect(cleared.rating).toBe(5)
+    expect(cleared.reviewText).toBe('long enough text')
+    expect(cleared.selectedTags).toEqual(['Safe'])
+    expect(cleared.homeCountry).toBe('Vietnam')
   })
 })
 

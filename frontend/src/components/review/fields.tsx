@@ -331,82 +331,70 @@ export const LanguageField = ({ form }: { form: ReviewForm }) => (
 
 // ---- Money ---------------------------------------------------------------------
 
-export const TuitionField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label">Tuition per year</label>
-    <ChipSelect
-      options={TUITION_RANGES}
-      value={form.values.tuitionRange}
-      onSelect={(v) => form.set('tuitionRange', v)}
-    />
-  </div>
-)
-
-export const LivingCostField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label">Monthly living cost</label>
-    <ChipSelect
-      options={LIVING_COSTS}
-      value={form.values.livingCostRange}
-      onSelect={(v) => form.set('livingCostRange', v)}
-    />
-  </div>
-)
-
-export const FundingField = ({ form }: { form: ReviewForm }) => {
+export const MoneyFields = ({ form }: { form: ReviewForm }) => {
   const { values, set } = form
   return (
-    <div className="form-group" style={{ marginBottom: 0 }}>
-      <label className="form-label">Funding</label>
-      <div className="segmented">
-        {FUNDING_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            className={`seg ${values.fundingType === opt.value ? 'selected' : ''}`}
-            onClick={() => {
-              set('fundingType', values.fundingType === opt.value ? '' : opt.value)
-              if (opt.value === 'self') set('fundingCoverage', '')
-            }}
-          >
-            {opt.label}
-          </button>
-        ))}
+    <>
+      <div className="form-group">
+        <label className="form-label">Tuition per year</label>
+        <ChipSelect
+          options={TUITION_RANGES}
+          value={values.tuitionRange}
+          onSelect={(v) => set('tuitionRange', v)}
+        />
       </div>
-      {values.fundingType && values.fundingType !== 'self' && (
-        <div style={{ marginTop: '.6rem' }}>
-          <label className="form-label" style={{ marginBottom: '.3rem' }}>
-            Coverage
-          </label>
-          <div className="segmented">
+      <div className="form-group">
+        <label className="form-label">Monthly living cost</label>
+        <ChipSelect
+          options={LIVING_COSTS}
+          value={values.livingCostRange}
+          onSelect={(v) => set('livingCostRange', v)}
+        />
+      </div>
+      <div className="form-group" style={{ marginBottom: 0 }}>
+        <label className="form-label">Funding</label>
+        <div className="segmented">
+          {FUNDING_OPTIONS.map((opt) => (
             <button
+              key={opt.value}
               type="button"
-              className={`seg ${values.fundingCoverage === 'partial' ? 'selected' : ''}`}
-              onClick={() => set('fundingCoverage', 'partial')}
+              className={`seg ${values.fundingType === opt.value ? 'selected' : ''}`}
+              onClick={() => {
+                set('fundingType', values.fundingType === opt.value ? '' : opt.value)
+                if (opt.value === 'self') set('fundingCoverage', '')
+              }}
             >
-              Partial
+              {opt.label}
             </button>
-            <button
-              type="button"
-              className={`seg ${values.fundingCoverage === 'full' ? 'selected' : ''}`}
-              onClick={() => set('fundingCoverage', 'full')}
-            >
-              Full
-            </button>
-          </div>
+          ))}
         </div>
-      )}
-    </div>
+        {values.fundingType && values.fundingType !== 'self' && (
+          <div style={{ marginTop: '.6rem' }}>
+            <label className="form-label" style={{ marginBottom: '.3rem' }}>
+              Coverage
+            </label>
+            <div className="segmented">
+              <button
+                type="button"
+                className={`seg ${values.fundingCoverage === 'partial' ? 'selected' : ''}`}
+                onClick={() => set('fundingCoverage', 'partial')}
+              >
+                Partial
+              </button>
+              <button
+                type="button"
+                className={`seg ${values.fundingCoverage === 'full' ? 'selected' : ''}`}
+                onClick={() => set('fundingCoverage', 'full')}
+              >
+                Full
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   )
 }
-
-export const MoneyFields = ({ form }: { form: ReviewForm }) => (
-  <>
-    <TuitionField form={form} />
-    <LivingCostField form={form} />
-    <FundingField form={form} />
-  </>
-)
 
 // ---- Story ---------------------------------------------------------------------
 

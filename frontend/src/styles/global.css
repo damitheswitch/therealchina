@@ -5569,7 +5569,7 @@ a.claim-review-uni:hover {
   padding: var(--sp-2) 0;
 }
 
-/* Speak-up: the fiery pre-publish CTA and the one-datapoint-per-page walk */
+/* Speak-up: the fiery pre-publish CTA and its inline details expansion */
 .wizard-nav-actions {
   display: flex;
   align-items: center;
@@ -5598,17 +5598,21 @@ a.claim-review-uni:hover {
     box-shadow: 0 0 16px 2px rgba(201, 162, 39, 0.5);
   }
 }
-.speak-up-page {
+.speak-up-open {
   animation: wizardFade 0.3s ease;
 }
-.speak-up-count {
-  font-size: 0.75rem;
-  color: var(--ink-faint);
-  letter-spacing: 0.04em;
-  margin: 0 0 0.4rem;
+.speak-up-open-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0 var(--sp-1);
 }
-.speak-up-input {
-  margin: var(--sp-2) 0;
+.speak-up-open-head .boost-card-title {
+  margin-bottom: 0;
+}
+.speak-up-details {
+  margin-bottom: var(--sp-2);
 }
 .posting-as {
   text-align: center;

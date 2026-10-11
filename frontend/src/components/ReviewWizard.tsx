@@ -42,6 +42,7 @@ import {
   BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
+  clearedOptionalDetails,
   draftPayloadFromState,
   fieldValuesFromDraft,
   hasOptionalDetails,
@@ -58,7 +59,7 @@ import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
-import { SpeakUpPages } from './review/SpeakUpPages'
+import { ReviewDetails } from './review/ReviewDetails'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
@@ -81,7 +82,7 @@ const SCREEN_STAGES: Record<number, ReviewStage> = {
   1: 'basics',
   2: 'story',
 }
-const SCREEN_LABELS = ['The essentials', 'Your story']
+const SCREEN_LABELS = ['The essentials', 'The details']
 
 type Phase = 'form' | 'success' | 'boost'
 
@@ -480,9 +481,9 @@ export const ReviewWizard = ({
     [reviewAuth]
   )
 
-  // The publish minimum is exactly what the server requires: a university and
-  // a rating on screen 1, one real sentence on screen 2. Everything else is
-  // optional input, never a gate.
+  // The publish minimum is exactly what the server requires, all on screen 1:
+  // a university, a rating, and one real sentence. Leaving then still leaves a
+  // complete review in the draft. Screen 2 is optional input, never a gate.
   const validateScreen = (s: number): string | null => {
     if (s === 1) {
       if (!values.selectedUni && !values.selectedUniName.trim()) {
@@ -494,11 +495,8 @@ export const ReviewWizard = ({
       if (!values.rating) {
         return "Pick a star rating. It's the first thing every student looks at."
       }
-      return null
-    }
-    if (s === 2) {
       if (values.reviewText.trim().length < 10) {
-        return 'One honest sentence is enough — but other students do need that much.'
+        return 'One honest sentence is enough, but other students do need that much.'
       }
       return null
     }
@@ -533,6 +531,14 @@ export const ReviewWizard = ({
         data: { flow: FLOW, entry: reviewEntry, auth: reviewAuth },
       })
     }
+  }
+
+  // Collapsing means "keep it short": detail filled inside the section must
+  // not publish invisibly, so it is cleared rather than merely hidden.
+  const closeDetails = () => {
+    applyValues(clearedOptionalDetails())
+    setMediaState((m) => ({ ...m, media: [] }))
+    setDetailsOpen(false)
   }
 
   // Origin country is asked only when there's no stored answer: always for
@@ -873,23 +879,25 @@ export const ReviewWizard = ({
 
         {step === 1 && <ReviewEssentials form={form} />}
 
-        {/* The speak-up pager takes over screen 2 when opened; the story and
-            publish row come back when it exits. */}
-        {step === 2 && !detailsOpen && (
+        {step === 2 && (
           <ReviewStory form={form} isAnonymous={!user} showHomeCountry={showHomeCountry} />
         )}
+
+        {/* Speak up: the whole optional field set, expandable in place before
+            publishing. Collapsing clears it (see closeDetails). */}
         {step === 2 && detailsOpen && (
-          <SpeakUpPages
-            form={form}
-            mediaState={mediaState}
-            onMediaStateChange={setMediaState}
-            onExit={() => setDetailsOpen(false)}
-          />
+          <div className="speak-up-open">
+            <div className="speak-up-open-head">
+              <h3 className="boost-card-title">Tell them everything</h3>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={closeDetails}>
+                Keep it short
+              </button>
+            </div>
+            <ReviewDetails form={form} mediaState={mediaState} onMediaStateChange={setMediaState} />
+          </div>
         )}
 
-        {/* Anonymous Turnstile — lives on the publish screen now. It stays
-            mounted while the speak-up pager runs so the verified token
-            survives the swap. */}
+        {/* Anonymous Turnstile — lives on the publish screen now */}
         {!user && step === 2 && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
@@ -912,7 +920,7 @@ export const ReviewWizard = ({
         )}
 
         {/* Anonymous reviewers see what the card will say before they commit. */}
-        {step === 2 && !user && !detailsOpen && (
+        {step === 2 && !user && (
           <p className="posting-as">
             Posting as Anonymous.{' '}
             <button
@@ -932,46 +940,43 @@ export const ReviewWizard = ({
           </p>
         )}
 
-        {/* The pager owns its own nav row while it runs. */}
-        {!(step === 2 && detailsOpen) && (
-          <div className="wizard-nav">
-            {step === 1 ? (
-              <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
-                ← Back
-              </button>
-            ) : (
-              <button type="button" className="btn btn-ghost" onClick={goBack}>
-                ← Back
+        <div className="wizard-nav">
+          {step === 1 ? (
+            <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+              ← Back
+            </button>
+          ) : (
+            <button type="button" className="btn btn-ghost" onClick={goBack}>
+              ← Back
+            </button>
+          )}
+          <div className="wizard-nav-actions">
+            {step === 2 && !detailsOpen && (
+              <button type="button" className="btn btn-lg speak-up-btn" onClick={openDetails}>
+                🔥 I want to speak up! 🔥
               </button>
             )}
-            <div className="wizard-nav-actions">
-              {step === 2 && (
-                <button type="button" className="btn btn-lg speak-up-btn" onClick={openDetails}>
-                  🔥 I want to speak up! 🔥
-                </button>
-              )}
-              {step === 1 && (
-                <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
-                  Continue →
-                </button>
-              )}
-              {step === 2 && (
-                <button
-                  type="button"
-                  className="btn btn-primary btn-lg"
-                  disabled={loading || (!user && !reviewTurnstileReady)}
-                  onClick={handlePublish}
-                >
-                  {loading
-                    ? 'Publishing...'
-                    : !user && !reviewTurnstileReady
-                      ? 'Verifying you are human...'
-                      : 'Publish review 📜'}
-                </button>
-              )}
-            </div>
+            {step === 1 && (
+              <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
+                Continue →
+              </button>
+            )}
+            {step === 2 && (
+              <button
+                type="button"
+                className="btn btn-primary btn-lg"
+                disabled={loading || (!user && !reviewTurnstileReady)}
+                onClick={handlePublish}
+              >
+                {loading
+                  ? 'Publishing...'
+                  : !user && !reviewTurnstileReady
+                    ? 'Verifying you are human...'
+                    : 'Publish review 📜'}
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       <RegistrationNudge />
