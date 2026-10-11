@@ -15,6 +15,9 @@ export default defineConfig({
         'pwa-512x512.png',
       ],
       manifest: {
+        // Stable app identity (matches the default start_url-derived id) so
+        // installs never fork into duplicates if start_url ever changes.
+        id: '/',
         name: 'The Real China',
         short_name: 'TRC',
         description: 'Authentic student reviews for universities in China.',
