@@ -25,7 +25,10 @@ VALUES
   ('Beihang University', '北京航空航天大学', 'Beijing', 'China', 'Beijing', 'stem', 'beihang-university', '{buaa,beihang}', 'https://www.shanghairanking.cn/_uni/logo/22403670.png', false, 'public', '{Chinese,English}', 'https://ev.buaa.edu.cn/', '{"shanghai_national": 11, "shanghai_url": "https://www.shanghairanking.cn/institution/beihang-university"}'),
   -- Real uni in Zhangye, Gansu whose true city is unknown in our dataset —
   -- exercises the province-only (NULL city) rendering path.
-  ('Hexi University', '河西学院', NULL, 'China', 'Gansu', 'comprehensive', 'hexi-university', '{}', NULL, false, 'public', '{Chinese}', NULL, '{}')
+  ('Hexi University', '河西学院', NULL, 'China', 'Gansu', 'comprehensive', 'hexi-university', '{}', NULL, false, 'public', '{Chinese}', NULL, '{}'),
+  -- Off the 软科 main list: ranked #7 in the separate 中国中医药大学排名 2026
+  -- (127 = 全国参考排名 national reference rank; list rank rides in shanghai_tcm).
+  ('Zhejiang Chinese Medical University', '浙江中医药大学', 'Hangzhou', 'China', 'Zhejiang', 'medicine', 'zhejiang-chinese-medical-university', '{zcmu,zjcmu}', 'https://www.shanghairanking.cn/_uni/logo/35945029.png', false, NULL, '{}', 'https://www.zcmu.edu.cn/', '{"shanghai_national": 127, "shanghai_url": "https://www.shanghairanking.cn/institution/zhejiang-chinese-medical-university", "shanghai_score": 214.2, "shanghai_tcm": 7}')
 ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================
