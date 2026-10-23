@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   compareReviews,
   countByReviewId,
+  upvoteCountsFromRows,
   HELPFUL_DEFAULT_MIN_REVIEWS,
   isReviewSort,
   isServerSortable,
@@ -114,5 +115,23 @@ describe('countByReviewId', () => {
       countByReviewId([{ review_id: 'r1' }, { review_id: 'r2' }, { review_id: 'r1' }])
     ).toEqual({ r1: 2, r2: 1 })
     expect(countByReviewId(null)).toEqual({})
+  })
+})
+
+describe('upvoteCountsFromRows', () => {
+  it('maps review ids to their upvote_count, defaulting to zero', () => {
+    expect(
+      upvoteCountsFromRows([
+        { id: 'r1', upvote_count: 3 },
+        { id: 'r2', upvote_count: 0 },
+        { id: 'r3' },
+        { id: 'r4', upvote_count: null },
+      ])
+    ).toEqual({ r1: 3, r2: 0, r3: 0, r4: 0 })
+  })
+
+  it('handles empty input', () => {
+    expect(upvoteCountsFromRows(null)).toEqual({})
+    expect(upvoteCountsFromRows([])).toEqual({})
   })
 })

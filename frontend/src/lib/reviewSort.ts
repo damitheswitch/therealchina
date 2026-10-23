@@ -84,6 +84,17 @@ export const REVIEW_SERVER_ORDER: Record<
 export const isServerSortable = (sort: ReviewSort): sort is Exclude<ReviewSort, 'helpful'> =>
   sort !== 'helpful'
 
+// Review rows → review_id → count, from the trigger-maintained
+// reviews.upvote_count column (migration 050). Rows without the column
+// (older prerender payloads) count as zero.
+export const upvoteCountsFromRows = (
+  rows: readonly { id: string; upvote_count?: number | null }[] | null | undefined
+): Record<string, number> => {
+  const counts: Record<string, number> = {}
+  for (const row of rows ?? []) counts[row.id] = row.upvote_count ?? 0
+  return counts
+}
+
 // upvotes rows → review_id → count. Batched `.in()` rows, never per-row
 // queries (same convention as the engagement-counts effects).
 export const countByReviewId = (
