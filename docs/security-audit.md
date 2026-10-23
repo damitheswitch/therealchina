@@ -74,3 +74,21 @@ New anonymous write surface: `review-boost` Edge Function + `apply_anonymous_boo
 | Slug fallbacks: a non-Latin "not listed" university name slugified to `university` and every later one reused that row; non-Latin or repeated Q&A titles ran out of `-2…-4` suffixes and returned 500. | `_shared/slug.ts`: weak slugs (empty, tiny, or only generic words) never match existing rows by slug; universities match by exact `name`/`name_zh` instead. New rows get a random suffix on weak slugs and on collisions. | `slug_test.ts`. |
 
 Edge Function changes take effect only after `supabase functions deploy` per environment.
+
+## Audit follow-ups, part 2 (migration 050, 2026-10-24)
+
+| Finding | Fix |
+|---|---|
+| Upvote counts came from downloading the `upvotes` table, which truncated silently past PostgREST's 1000-row cap. | `reviews.upvote_count`, kept in sync by a trigger on `upvotes` and backfilled. The frontend and prerender pipeline read counts from review rows. **Open finding #5 (voter identity readable by anon) is now the contract step:** once this frontend is live everywhere, a later migration replaces the public `upvotes` SELECT policy with own-rows only. |
+| Comments and flight listings had no write rate limit. | `BEFORE INSERT` triggers: 20 comments per user per hour, 10 listings per user per 24h. They only apply to API callers (`auth.uid()` set). |
+| No way to report reviews or comments; Q&A reports were never surfaced. | `content_reports` table (service role only) + `content-report` Edge Function (signed-in, 30/h) + Report buttons. New reports from both paths email `REPORT_ALERT_EMAIL`. |
+| Comment emails had no opt-out. | `profiles.notify_on_comments` + profile toggle; `comment-notify` skips opted-out owners and links to the setting. |
+| Uploads never attached to a review stayed public forever. | `list_orphan_media()` + `media-cleanup` Edge Function, run daily by pg_cron through Vault-stored URL + secret. Objects referenced by any review or draft are kept; only objects older than 2 days are removed. |
+| Expired flight listings stayed visible; Q&A answers under deleted questions stayed readable; `toggle_upvote` accepted soft-deleted reviews; the stats trigger recomputed on every review update; upload tables kept default client grants; notify secrets were compared with `!==`. | All fixed in 050 / the functions (`safeEqual` for shared secrets). |
+
+Verified locally with `supabase/verify/050_audit_followups.sql` (14 probes); CI now rebuilds the DB from migrations and runs every `supabase/verify/*.sql` file.
+
+**Owner setup needed per environment:**
+- `REPORT_ALERT_EMAIL` (function secret) to receive report alerts.
+- `MEDIA_CLEANUP_SECRET` (function secret), plus Vault secrets `media_cleanup_url` (`https://<ref>.supabase.co/functions/v1/media-cleanup`) and `media_cleanup_secret` (same value). Until both Vault secrets exist the cron job does nothing.
+- `SUPABASE_ACCESS_TOKEN` GitHub secret to turn on `deploy-functions.yml`.

@@ -35,12 +35,12 @@ This repository is public as a **portfolio reference and technical spec** for re
 
 | Layer           | Technology                                                              |
 | --------------- | ----------------------------------------------------------------------- |
-| Frontend        | React 18, Vite 5, React Router 6, vanilla CSS design system             |
+| Frontend        | React 18, Vite 6, React Router 7, vanilla CSS design system             |
 | Backend / DBaaS | Supabase — Postgres 15, Auth, Storage, Edge Functions (Deno)            |
 | Auth            | Supabase Auth (JWT-based, session managed by SDK)                       |
 | Bot mitigation  | Cloudflare Turnstile (managed mode, `@marsidev/react-turnstile`)        |
 | File storage    | Supabase Storage for review media with RLS policies                     |
-| Hosting         | Netlify (SPA redirects, Node 20 build environment)                      |
+| Hosting         | Netlify (prerendered pages + generated redirects, Node 22 build)        |
 | PWA             | Vite PWA plugin, custom manifest, maskable icons                        |
 | Testing         | Vitest + Testing Library + jsdom (frontend), Deno test (Edge Functions) |
 | CI              | GitHub Actions — lint, format check, tests, build, Deno type-check      |
@@ -49,7 +49,7 @@ This repository is public as a **portfolio reference and technical spec** for re
 
 - **Supabase** replaces a separate backend/ORM with Postgres + real-time subscriptions + built-in auth, letting a solo builder ship fast while staying production-grade.
 - **Vite + React** gives a modern DX with fast HMR and a small production bundle.
-- **Netlify** provides zero-config static hosting with SPA fallback routing.
+- **Netlify** serves the prerendered pages and the generated `_redirects`. Unknown URLs return real 404s.
 - **Custom CSS** keeps the bundle dependency-light and the design system fully controlled.
 
 ---
@@ -60,9 +60,9 @@ This repository is public as a **portfolio reference and technical spec** for re
 
 All data access is enforced at the database level:
 
-- Public read on `universities`, `reviews`, `comments`, and `upvotes`.
+- Public read on `universities`, `reviews` (including the trigger-maintained `upvote_count`), `comments`, and `upvotes`.
 - **No direct anonymous inserts.** All review submissions (and "not listed" university creation) route through the `review-submit` Edge Function, which verifies Cloudflare Turnstile for anonymous callers, rate-limits every caller, and writes with the service role key.
-- Authenticated users can only modify their own `comments`, `upvotes`, and `profiles`.
+- Authenticated users can create and delete their own `comments` (rate limited, no edits), toggle their own `upvotes`, and update their own `profiles`. Review edits and deletes go through `review-manage`.
 - The `review-media` Storage bucket is **public-read-only**; direct uploads and deletes are denied at the RLS layer.
 
 ### Database design
@@ -135,7 +135,7 @@ All media (images and videos) route through the `media-upload` Supabase Edge Fun
 frontend/src/
 ├── components/    # UI pieces (ReviewCard, UniversityCard, AuthModal, MediaUploader, etc.)
 ├── contexts/      # AuthContext, AuthModalContext, ToastContext
-├── hooks/         # useDebounce
+├── hooks/         # Data-fetching hooks (useUniversityReviews, useRecentReviews, useProfile, ...)
 ├── lib/           # Supabase client, media upload, review submit, social handles, display-name validation
 ├── pages/         # LandingPage, UniversityPage, ReviewPage, ProfilePage, UserDirectoryPage, FlightListingsPage, OnboardingPage, NotFoundPage
 ├── styles/        # Global CSS + design tokens
@@ -147,18 +147,26 @@ supabase/
 ├── functions/review-submit/   # Edge Function for gated review submissions
 ├── functions/review-manage/   # Edge Function for editing/deleting own reviews
 ├── functions/review-claim/    # Edge Function for claiming anonymous reviews after sign-in
+├── functions/review-boost/    # Edge Function for anonymous Boost edits (capability token)
+├── functions/community-submit/ # Edge Function for Q&A questions, answers and reports
+├── functions/content-report/  # Edge Function for reporting reviews and comments
+├── functions/comment-notify/  # Comment notification emails (pg_net trigger, shared secret)
+├── functions/qa-notify/       # Q&A answer notification emails
+├── functions/media-cleanup/   # Daily removal of unreferenced uploads (pg_cron, shared secret)
+├── verify/                    # SQL probes run by CI after rebuilding the DB from migrations
 ├── migrations/                # Numbered schema migrations (do not rename or delete)
 ├── schema_snapshot.sql        # Canonical current schema (single source of truth)
 └── config.toml                # Edge Function config (e.g., verify_jwt)
 
-.github/workflows/ci.yml       # CI: lint, format:check, test, build (frontend) + deno check/test (Edge Functions)
-scripts/normalize_universities.py  # One-off data prep for the university seed CSVs
+.github/workflows/ci.yml       # CI: lint, format, types, tests, build + SEO validator; Deno check/test; DB rebuild + verify probes
+.github/workflows/deploy-functions.yml # Deploys Edge Functions on push to staging/master (needs SUPABASE_ACCESS_TOKEN)
+scripts/normalize_universities.py  # One-off data prep for the university seed CSVs in data/
 ```
 
 ### Notable UX patterns
 
 - **Anonymous-to-auth handoff:** an anonymous reviewer who then signs up is redirected back to the university they just reviewed.
-- **One-time registration nudge** — shown once per session, dismissible.
+- **One-time registration nudge** — shown once per session on university pages, dismissible. Never shown while writing a review.
 - **Onboarding guard** — blocks non-onboarded users from core pages until profile setup is complete.
 - **Autocomplete everywhere** — city, country, program, and university inputs use fuzzy matching.
 - **Route-level code splitting** — every page except the landing page is `React.lazy`-loaded with a `Suspense` fallback, so the entry chunk stays small and each route is fetched on first navigation.
@@ -185,6 +193,9 @@ Values are set in Netlify (frontend) and Supabase Edge Function secrets (backend
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile server-side secret                                                                                                        |
 | `TURNSTILE_HOSTNAMES`  | Optional: comma-separated frontend hostname allowlist validated against the siteverify response (skip in local dev; never include `localhost`) |
 | `CORS_ORIGIN`          | Optional: comma-separated origin allowlist; supports `*` globs (e.g. `https://*.netlify.app`)                                                  |
+| `RESEND_API_KEY`       | Resend key for notification and owner alert emails                                                                                             |
+| `REPORT_ALERT_EMAIL`   | Optional: where new content reports are emailed. Unset = reports are stored but no email                                                       |
+| `MEDIA_CLEANUP_SECRET` | Shared secret for `media-cleanup`. The cron reads the same value plus the function URL from Vault (`media_cleanup_secret`, `media_cleanup_url`) |
 
 ---
 
@@ -195,7 +206,7 @@ The frontend builds to `dist/` and deploys on Netlify:
 ```toml
 [build]
   base = "frontend"
-  command = "npm run build"
+  command = "npm run build && node scripts/validate_build.mjs"
   publish = "dist"
 
 [build.environment]
