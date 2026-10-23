@@ -8,6 +8,7 @@ import {
 } from '../_shared/guard.ts'
 import { asTrimmedString } from '../_shared/reviewFields.ts'
 import { isWeakSlug, slugify, withRandomSuffix } from '../_shared/slug.ts'
+import { SITE_URL, sendOwnerAlert } from '../_shared/alert.ts'
 
 // Gated write path for Community Q&A (Phase 6). All three actions require a
 // signed-in caller whose profile has completed onboarding — anonymous
@@ -245,6 +246,19 @@ Deno.serve(async (req) => {
     if (error && error.code !== '23505') {
       console.error('Report insert error:', error)
       return jsonResponse(req, { error: 'Could not send that. Please try again.' }, 500)
+    }
+    // First report from this user on this target: tell the owner. Repeats
+    // (23505) were already alerted.
+    if (!error) {
+      await sendOwnerAlert(`Reported Q&A ${targetType} on The Real China`, [
+        `A signed-in user reported a Q&A ${targetType}.`,
+        ``,
+        `Reason: ${reason ?? '(none given)'}`,
+        `${targetType === 'question' ? 'Question' : 'Answer'} id: ${targetId}`,
+        `Reporter id: ${caller.sub}`,
+        ``,
+        `Community: ${SITE_URL}/community`,
+      ])
     }
     return jsonResponse(req, { ok: true }, 200)
   }

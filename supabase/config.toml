@@ -49,6 +49,16 @@ verify_jwt = false
 [functions.qa-notify]
 verify_jwt = false
 
+# content-report verifies the caller's JWT inside the function (signed-in
+# users only), like community-submit.
+[functions.content-report]
+verify_jwt = false
+
+# media-cleanup is invoked server-to-server by pg_cron (pg_net) with the
+# x-cleanup-secret header (MEDIA_CLEANUP_SECRET). No user JWT to verify.
+[functions.media-cleanup]
+verify_jwt = false
+
 # Email-link redirects (signup confirmation, password recovery) must land on
 # the Vite dev server. site_url is the base Supabase falls back to when an
 # email link has no redirect_to, so point it at the dev origin.
