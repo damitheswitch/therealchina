@@ -116,9 +116,10 @@ CREATE TABLE IF NOT EXISTS public.reviews (
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
 
--- Length caps mirroring _shared/reviewFields.ts (migration 041): the direct
--- authenticated INSERT path bypasses edge validation, so the table enforces
--- the same bounds. NOT VALID keeps existing rows out of the check.
+-- Length caps mirroring _shared/reviewFields.ts (migration 041): defense in
+-- depth behind edge validation (the direct authenticated INSERT path these
+-- were added for was closed in migration 049). NOT VALID keeps existing rows
+-- out of the check.
 ALTER TABLE public.reviews
 DROP CONSTRAINT IF EXISTS chk_reviews_text_length,
 ADD CONSTRAINT chk_reviews_text_length
@@ -509,6 +510,12 @@ BEGIN
 
     IF parent_comment.parent_id IS NOT NULL THEN
       RAISE EXCEPTION 'Replies to replies are not allowed. Maximum nesting depth is 1.';
+    END IF;
+
+    -- A reply must live on the same review as the comment it answers
+    -- (migration 049).
+    IF parent_comment.review_id IS DISTINCT FROM NEW.review_id THEN
+      RAISE EXCEPTION 'A reply must belong to the same review as its parent comment.';
     END IF;
   END IF;
 
@@ -996,7 +1003,7 @@ CREATE TRIGGER validate_display_name_trigger
 
 DROP TRIGGER IF EXISTS enforce_comment_nesting_trigger ON public.comments;
 CREATE TRIGGER enforce_comment_nesting_trigger
-  BEFORE INSERT ON public.comments
+  BEFORE INSERT OR UPDATE OF parent_id, review_id ON public.comments
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_comment_nesting();
 
@@ -1036,19 +1043,13 @@ CREATE POLICY "Public read access to reviews"
   ON public.reviews FOR SELECT
   TO public USING (deleted_at IS NULL);
 
+-- No INSERT policy for any client role (migration 049): every review, signed
+-- in or anonymous, is submitted through the review-submit Edge Function
+-- (Turnstile for anonymous callers, rate limits, media URL allowlist,
+-- service-role write). Write privileges are revoked per role as well.
 DROP POLICY IF EXISTS "Public insert access to reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Authenticated users can insert reviews after onboarding" ON public.reviews;
-CREATE POLICY "Authenticated users can insert reviews after onboarding"
-  ON public.reviews FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    auth.uid() = user_id
-    AND (SELECT onboarding_completed FROM public.profiles WHERE id = auth.uid()) = true
-  );
-
--- No anonymous INSERT policy: anonymous reviews are submitted through the
--- review-submit Edge Function (Turnstile + per-IP rate limit, service-role
--- write) instead of direct table inserts.
+REVOKE INSERT, UPDATE, DELETE ON public.reviews FROM PUBLIC, anon, authenticated;
 
 -- reviewer_context: no policies at all — anonymous reviewer context is
 -- written and read only by the review-submit Edge Function (service role).
@@ -1099,12 +1100,10 @@ CREATE POLICY "Authenticated users can insert comments after onboarding"
     AND (SELECT onboarding_completed FROM public.profiles WHERE id = auth.uid()) = true
   );
 
+-- No UPDATE policy (migration 049): there is no comment edit feature, and
+-- the old policy let authors rewrite review_id/parent_id/created_at.
 DROP POLICY IF EXISTS "Authenticated update access to own comments" ON public.comments;
-CREATE POLICY "Authenticated update access to own comments"
-  ON public.comments FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+REVOKE UPDATE ON public.comments FROM PUBLIC, anon, authenticated;
 
 DROP POLICY IF EXISTS "Authenticated delete access to own comments" ON public.comments;
 CREATE POLICY "Authenticated delete access to own comments"

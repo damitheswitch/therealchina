@@ -20,6 +20,13 @@ import {
 } from '../_shared/guard.ts'
 import { verifyTurnstile } from '../_shared/turnstile.ts'
 import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
+import { anonRateKey } from '../_shared/rateKey.ts'
+import {
+  GENERIC_UNIVERSITY_WORDS,
+  isWeakSlug,
+  slugify,
+  withRandomSuffix,
+} from '../_shared/slug.ts'
 import {
   LIMITS,
   VALID_CURRENT_STATUS,
@@ -44,17 +51,36 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 // ---- University resolution ------------------------------------------------------
 
-function slugify(name: string): string {
-  // Mirrors frontend/src/lib/seo/slugify.ts — keep in sync (slug has a DB
-  // CHECK: ^[a-z0-9]+(-[a-z0-9]+)*$, max 120 chars).
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 120)
-    .replace(/-+$/g, '')
-  return slug || 'university'
+const UNI_SLUG_MAX = 120
+const NEW_UNI_INSERT_ATTEMPTS = 3
+
+// A weak slug (no Latin characters, or only generic words) says nothing about
+// which university this is, so match on the exact name instead.
+async function findUniversityByExactName(
+  name: string
+): Promise<{ id: string; slug: string } | null> {
+  for (const column of ['name', 'name_zh']) {
+    const { data, error } = await supabaseAdmin
+      .from('universities')
+      .select('id, slug')
+      .eq(column, name)
+      .limit(1)
+      .maybeSingle()
+    if (error) throw error
+    if (data) return data
+  }
+  return null
+}
+
+async function findUniversityBySlug(slug: string): Promise<{ id: string; slug: string } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('universities')
+    .select('id, slug')
+    .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data
 }
 
 async function resolveUniversityId(body: {
@@ -92,38 +118,36 @@ async function resolveUniversityId(body: {
 
   if (body.newUniversity) {
     const { name, city } = body.newUniversity
-    const slug = slugify(name)
-    // Reuse an existing row when the slugified name is already a canonical
-    // slug or a known alias — avoids duplicate universities.
-    const { data: found, error: findError } = await supabaseAdmin
-      .from('universities')
-      .select('id, slug')
-      .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
-      .limit(1)
-      .maybeSingle()
-    if (findError) throw findError
+    const base = slugify(name, UNI_SLUG_MAX)
+    const weak = isWeakSlug(base, GENERIC_UNIVERSITY_WORDS)
+
+    // Reuse an existing row instead of creating a duplicate: by canonical slug
+    // or alias when the slug identifies the name, by exact name when it
+    // can't (a non-Latin name would otherwise collapse to one shared slug).
+    const found = weak ? await findUniversityByExactName(name) : await findUniversityBySlug(base)
     if (found) return { ...found, created: false }
 
-    const { data, error } = await supabaseAdmin
-      .from('universities')
-      .insert({ name, city, slug })
-      .select('id, slug')
-      .single()
-
-    if (!error && data) return { ...data, created: true }
-
-    // Slug race / duplicate: reuse the existing row for this slug.
-    if (error?.code === '23505') {
-      const { data: existing, error: lookupError } = await supabaseAdmin
+    for (let attempt = 0; attempt < NEW_UNI_INSERT_ATTEMPTS; attempt++) {
+      const slug =
+        !weak && attempt === 0 ? base : withRandomSuffix(base, UNI_SLUG_MAX, 'university')
+      const { data, error } = await supabaseAdmin
         .from('universities')
+        .insert({ name, city, slug })
         .select('id, slug')
-        .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
-        .limit(1)
         .single()
-      if (lookupError || !existing) throw lookupError || new Error('University lookup failed')
-      return { ...existing, created: false }
+
+      if (!error && data) return { ...data, created: true }
+      if (error?.code !== '23505') throw error
+
+      // Slug race on an identifying slug: someone just created this
+      // university, so reuse their row.
+      if (!weak && attempt === 0) {
+        const existing = await findUniversityBySlug(base)
+        if (existing) return { ...existing, created: false }
+      }
+      // Random-suffix collision: try another suffix.
     }
-    throw error
+    throw new Error('Could not create the university. Please try again.')
   }
 
   throw new Error('A university is required')
@@ -172,14 +196,13 @@ async function handleSubmit(req: Request): Promise<Response> {
   }
 
   // Rate limit by verified identity: user id for authenticated callers,
-  // trusted request IP for anonymous ones.
-  const rateKey = isAnon ? `review-ip:${ip}` : `review-user:${caller.sub}`
+  // trusted request IP for anonymous ones. An unknown IP shares one bucket
+  // instead of skipping the limiter.
+  const rateKey = isAnon ? anonRateKey('review-ip:', ip) : `review-user:${caller.sub}`
   const rateLimit = isAnon ? ANON_REVIEW_LIMIT_PER_HOUR : AUTH_REVIEW_LIMIT_PER_HOUR
-  if (!isAnon || ip !== 'unknown') {
-    const allowed = await checkRateLimit(rateKey, rateLimit)
-    if (!allowed) {
-      return jsonResponse(req, { error: RATE_LIMIT_MESSAGE }, 429)
-    }
+  const allowed = await checkRateLimit(rateKey, rateLimit)
+  if (!allowed) {
+    return jsonResponse(req, { error: RATE_LIMIT_MESSAGE }, 429)
   }
 
   // ---- Validate the payload ----
