@@ -4,6 +4,7 @@ import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { UpvoteButton } from './UpvoteButton'
 import { CommentSection } from './CommentSection'
+import { ReportButton } from './ReportButton'
 import { MediaGallery } from './MediaGallery'
 import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
@@ -194,6 +195,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
       <div className="review-actions">
         <UpvoteButton reviewId={id} initialCount={upvote?.count} initialUpvoted={upvote?.upvoted} />
         <CommentSection reviewId={id} initialCount={commentCount} />
+        <ReportButton targetType="review" targetId={id} />
       </div>
     </div>
   )

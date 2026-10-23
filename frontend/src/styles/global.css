@@ -6338,3 +6338,12 @@ a.claim-review-uni:hover {
     font-size: 1.35rem;
   }
 }
+
+/* Flight board safety and customs notice (FlightSafetyNotice). */
+.flight-safety-notice {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2);
+  border-left: 3px solid var(--seal-red);
+  background: var(--paper, #faf6ef);
+  text-align: left;
+}

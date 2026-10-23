@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
 
+const FLIGHT_LISTINGS_LIMIT = 200
+
 type FlightListing = Tables<'flight_listings_with_profile'>
 
 export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}) => {
@@ -42,6 +44,9 @@ export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}
         // No client-side is_active filter: the view already returns
         // active rows plus the viewer's own closed listings
         .order('created_at', { ascending: false })
+        // Explicit cap instead of PostgREST's silent max-rows truncation.
+        // The view already hides trips whose departure date has passed.
+        .limit(FLIGHT_LISTINGS_LIMIT)
 
       if (fetchError) throw fetchError
       if (mounted.current) setListings((data as FlightListing[] | null) || [])

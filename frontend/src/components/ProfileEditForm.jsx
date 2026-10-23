@@ -29,6 +29,7 @@ export const ProfileEditForm = () => {
   const [socialHandles, setSocialHandles] = useState([])
   const [showSocialHandle, setShowSocialHandle] = useState(true)
   const [isDiscoverable, setIsDiscoverable] = useState(true)
+  const [notifyOnComments, setNotifyOnComments] = useState(true)
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState('')
@@ -67,6 +68,7 @@ export const ProfileEditForm = () => {
     setSocialHandles(handles.length > 0 ? handles : [{ platform: 'wechat', handle: '' }])
     setShowSocialHandle(profile.show_social_handle !== false)
     setIsDiscoverable(profile.is_discoverable !== false)
+    setNotifyOnComments(profile.notify_on_comments !== false)
   }, [profile])
 
   // Surface fetch errors as a toast (preserves previous inline behavior).
@@ -101,6 +103,7 @@ export const ProfileEditForm = () => {
           social_handle: null,
           show_social_handle: showSocialHandle,
           is_discoverable: isDiscoverable,
+          notify_on_comments: notifyOnComments,
         })
         .eq('id', user.id)
 
@@ -276,6 +279,25 @@ export const ProfileEditForm = () => {
             <p className="form-hint">
               When enabled, other students can find you in the directory. Turn this off to stay
               unlisted.
+            </p>
+          </div>
+        </div>
+
+        <div className="form-section">
+          <h3 className="form-section-title">Email</h3>
+
+          <div className="form-group">
+            <label className="form-checkbox-label">
+              <input
+                type="checkbox"
+                checked={notifyOnComments}
+                onChange={(e) => setNotifyOnComments(e.target.checked)}
+                className="form-checkbox"
+              />
+              <span>Email me when someone comments on my reviews</span>
+            </label>
+            <p className="form-hint">
+              We send at most one email per review every 30 minutes. Turn this off to stop them.
             </p>
           </div>
         </div>

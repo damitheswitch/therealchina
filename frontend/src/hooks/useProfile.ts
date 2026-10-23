@@ -20,6 +20,7 @@ export type Profile = Pick<
   | 'current_status'
   | 'languages_spoken'
   | 'email_consent'
+  | 'notify_on_comments'
 >
 
 export const useProfile = (

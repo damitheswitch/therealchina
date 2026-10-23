@@ -68,6 +68,7 @@ const profileRow = (display_name: string): Profile => ({
   current_status: null,
   languages_spoken: null,
   email_consent: null,
+  notify_on_comments: true,
 })
 
 // Captures the live ProfileContext value (incl. refetch) from the same provider
