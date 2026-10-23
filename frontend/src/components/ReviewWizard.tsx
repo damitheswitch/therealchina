@@ -52,7 +52,6 @@ import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
-import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
@@ -488,7 +487,7 @@ export const ReviewWizard = ({
     }
     if (s === 2) {
       if (values.reviewText.trim().length < 10) {
-        return 'One honest sentence is enough — but other students do need that much.'
+        return 'One honest sentence is enough, but other students do need that much.'
       }
       return null
     }
@@ -900,8 +899,6 @@ export const ReviewWizard = ({
           )}
         </div>
       </div>
-
-      <RegistrationNudge />
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>

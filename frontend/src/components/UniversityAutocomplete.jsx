@@ -20,7 +20,7 @@ const loadUniversities = async (query) => {
     .map((u) => ({
       key: u.slug,
       value: u.name,
-      label: `${u.name} — ${u.city || u.province || ''}`,
+      label: [u.name, u.city || u.province].filter(Boolean).join(', '),
       data: u,
     }))
 }

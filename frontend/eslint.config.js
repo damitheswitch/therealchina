@@ -7,6 +7,20 @@ import prettier from 'eslint-config-prettier'
 import { defineConfig } from 'eslint/config'
 import tseslint from 'typescript-eslint'
 
+// Context modules export their provider plus the hook that reads it. That
+// pairing is intentional; the hooks are named here so fast refresh warnings
+// only flag genuinely mixed modules.
+const REFRESH_EXPORT_RULE = {
+  allowConstantExport: true,
+  allowExportNames: [
+    'useAuth',
+    'useAuthModal',
+    'useProfileContext',
+    'useToast',
+    'usePrerenderData',
+  ],
+}
+
 export default defineConfig(
   {
     ignores: [
@@ -35,7 +49,7 @@ export default defineConfig(
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': ['warn', REFRESH_EXPORT_RULE],
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^[A-Z_]' }],
       'react-hooks/immutability': 'off',
       'react-hooks/set-state-in-effect': 'off',
@@ -61,7 +75,7 @@ export default defineConfig(
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'react-refresh/only-export-components': ['warn', REFRESH_EXPORT_RULE],
       'no-undef': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',

@@ -119,7 +119,7 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
           console.warn('Email domain pre-flight check failed:', emailCheckError)
         } else if (emailAllowed === false) {
           setErrorMsg(
-            'Please use a permanent email address — disposable email domains are not allowed.'
+            'Please use a permanent email address. Disposable email domains are not allowed.'
           )
           return
         }

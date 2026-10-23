@@ -66,11 +66,11 @@ describe('buildContextLine', () => {
       start_year: 2019,
       end_year: 2022,
     })
-    expect(line).toBe('Studied Computer Science · Master · Alumni · 2019–2022')
+    expect(line).toBe('Studied Computer Science · Master · Alumni · 2019 to 2022')
   })
 
   it('uses "present" when end_year is null', () => {
-    expect(buildContextLine({ ...base, start_year: 2023 })).toBe('2023–present')
+    expect(buildContextLine({ ...base, start_year: 2023 })).toBe('2023 to present')
   })
 
   it('handles a lone end_year', () => {

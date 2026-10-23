@@ -170,7 +170,7 @@ export const ProfileView = ({ userId }) => {
                       to={`/university/${review.universities.slug}/`}
                       className="profile-review-university"
                     >
-                      <Icons.Book /> {review.universities.name} —{' '}
+                      <Icons.Book /> {review.universities.name},{' '}
                       {review.universities.city || review.universities.province}
                     </Link>
                   )}

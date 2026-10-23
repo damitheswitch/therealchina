@@ -166,7 +166,7 @@ export const MyReviews = () => {
   return (
     <div className="profile-section" style={{ marginTop: 'var(--sp-4)' }}>
       <h3 className="profile-section-title">My reviews ({reviews.length})</h3>
-      {error && <p className="form-hint">Couldn&apos;t load your reviews — try refreshing.</p>}
+      {error && <p className="form-hint">Couldn&apos;t load your reviews. Try refreshing.</p>}
       {reviews.length > 0 ? (
         <div className="profile-reviews">
           {reviews.map((review) => (
@@ -176,7 +176,7 @@ export const MyReviews = () => {
                   to={`/university/${review.universities.slug}/`}
                   className="profile-review-university"
                 >
-                  <Icons.Book /> {review.universities.name} — {review.universities.city}
+                  <Icons.Book /> {review.universities.name}, {review.universities.city}
                 </Link>
               )}
               <MyReviewCard
@@ -192,7 +192,7 @@ export const MyReviews = () => {
         !error && (
           <div className="empty-state">
             <p>
-              No reviews yet. <Link to="/review">Share your experience</Link> — it takes two minutes
+              No reviews yet. <Link to="/review">Share your experience</Link>. It takes two minutes
               and helps the next student more than you think.
             </p>
           </div>
@@ -202,7 +202,7 @@ export const MyReviews = () => {
       {deleting && (
         <ConfirmDialog
           title="Delete this review?"
-          body="It disappears from the university page for good — along with every upvote and comment it picked up. Once it's gone, it's gone."
+          body="It disappears from the university page for good, along with every upvote and comment it picked up. Once it's gone, it's gone."
           confirmLabel={deleteBusy ? 'Deleting...' : 'Delete it'}
           cancelLabel="Keep it"
           busy={deleteBusy}
