@@ -143,6 +143,48 @@ export type Database = {
           },
         ]
       }
+      content_reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          reporter_id: string
+          review_id: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_id: string
+          review_id?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_id?: string
+          review_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'content_reports_comment_id_fkey'
+            columns: ['comment_id']
+            isOneToOne: false
+            referencedRelation: 'comments'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'content_reports_review_id_fkey'
+            columns: ['review_id']
+            isOneToOne: false
+            referencedRelation: 'reviews'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       flight_listings: {
         Row: {
           arrival_city: string | null
@@ -214,6 +256,7 @@ export type Database = {
           languages_spoken: string[] | null
           location: string | null
           monthly_budget: string | null
+          notify_on_comments: boolean
           onboarding_completed: boolean | null
           program: string | null
           show_social_handle: boolean | null
@@ -236,6 +279,7 @@ export type Database = {
           languages_spoken?: string[] | null
           location?: string | null
           monthly_budget?: string | null
+          notify_on_comments?: boolean
           onboarding_completed?: boolean | null
           program?: string | null
           show_social_handle?: boolean | null
@@ -258,6 +302,7 @@ export type Database = {
           languages_spoken?: string[] | null
           location?: string | null
           monthly_budget?: string | null
+          notify_on_comments?: boolean
           onboarding_completed?: boolean | null
           program?: string | null
           show_social_handle?: boolean | null
@@ -700,6 +745,7 @@ export type Database = {
           tuition_range: string | null
           university_id: string
           updated_at: string | null
+          upvote_count: number
           user_id: string | null
         }
         Insert: {
@@ -733,6 +779,7 @@ export type Database = {
           tuition_range?: string | null
           university_id: string
           updated_at?: string | null
+          upvote_count?: number
           user_id?: string | null
         }
         Update: {
@@ -766,6 +813,7 @@ export type Database = {
           tuition_range?: string | null
           university_id?: string
           updated_at?: string | null
+          upvote_count?: number
           user_id?: string | null
         }
         Relationships: [
@@ -1155,6 +1203,12 @@ export type Database = {
       hook_reject_disposable_email: { Args: { event: Json }; Returns: Json }
       immutable_array_to_string: { Args: { arr: string[]; sep: string }; Returns: string }
       is_email_allowed: { Args: { p_email: string }; Returns: boolean }
+      list_orphan_media: {
+        Args: { p_limit: number; p_min_age: string }
+        Returns: {
+          name: string
+        }[]
+      }
       profile_has_social_handle: { Args: { p_user_id: string }; Returns: boolean }
       record_upload_attempt: { Args: { p_key: string }; Returns: number }
       refresh_university_stats: { Args: { p_university_id: string }; Returns: undefined }
@@ -1189,6 +1243,7 @@ export type Database = {
           upvoted: boolean
         }[]
       }
+      trigger_media_cleanup: { Args: Record<PropertyKey, never>; Returns: undefined }
       use_upload_session: {
         Args: { p_session_id: string }
         Returns: {

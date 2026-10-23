@@ -112,6 +112,8 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   -- Soft delete: set by review-manage; row hidden by RLS, kept for audit.
   deleted_at TIMESTAMPTZ,
+  -- Maintained by sync_review_upvote_count on upvotes (migration 050).
+  upvote_count INT NOT NULL DEFAULT 0,
   CONSTRAINT chk_reviews_end_after_start
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
@@ -234,6 +236,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   monthly_budget TEXT,
   languages_spoken TEXT[] DEFAULT '{}',
   email_consent BOOLEAN DEFAULT FALSE,
+  -- Comment notification emails opt-out (migration 050).
+  notify_on_comments BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT profiles_display_name_ci_unique UNIQUE (display_name_lower)
@@ -322,10 +326,15 @@ CREATE INDEX IF NOT EXISTS idx_reviews_university_active
 
 -- Owner lookups: my-reviews and member-profile queries (migration 041).
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON public.reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_upvote_count
+  ON public.reviews (upvote_count DESC, created_at DESC)
+  WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON public.comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_created
+  ON public.comments (user_id, created_at DESC);
 
 -- Claim lookups always filter to a present token / owner.
 CREATE INDEX IF NOT EXISTS idx_reviewer_context_claim_token
@@ -351,6 +360,8 @@ CREATE INDEX IF NOT EXISTS idx_flight_listings_arrival_date ON public.flight_lis
 CREATE INDEX IF NOT EXISTS idx_flight_listings_user_id ON public.flight_listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_flight_listings_is_active ON public.flight_listings(is_active);
 CREATE INDEX IF NOT EXISTS idx_flight_listings_created_at ON public.flight_listings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_flight_listings_user_created
+  ON public.flight_listings (user_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_universities_search_trgm
   ON public.universities USING gin (search_text gin_trgm_ops);
@@ -383,6 +394,11 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION public.update_reviews_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Vote-count bookkeeping is not an edit of the review.
+  IF (to_jsonb(NEW) - 'upvote_count' - 'updated_at')
+     = (to_jsonb(OLD) - 'upvote_count' - 'updated_at') THEN
+    RETURN NEW;
+  END IF;
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
@@ -612,8 +628,7 @@ SET search_path = ''
 AS $$
 DECLARE
   v_user_id UUID;
-  v_existing_upvote public.upvotes;
-  v_count BIGINT;
+  v_deleted BOOLEAN;
 BEGIN
   v_user_id := auth.uid();
 
@@ -621,30 +636,98 @@ BEGIN
     RAISE EXCEPTION 'User must be authenticated to upvote';
   END IF;
 
-  SELECT * INTO v_existing_upvote
-  FROM public.upvotes
+  IF NOT EXISTS (
+    SELECT 1 FROM public.reviews
+    WHERE id = p_review_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Review not found';
+  END IF;
+
+  DELETE FROM public.upvotes
   WHERE user_id = v_user_id AND review_id = p_review_id;
+  v_deleted := FOUND;
 
-  IF v_existing_upvote IS NOT NULL THEN
-    DELETE FROM public.upvotes
-    WHERE id = v_existing_upvote.id;
-
-    SELECT COUNT(*) INTO v_count
-    FROM public.upvotes
-    WHERE review_id = p_review_id;
-
-    RETURN QUERY SELECT FALSE::BOOLEAN AS upvoted, v_count AS upvote_count;
-  ELSE
+  IF NOT v_deleted THEN
     INSERT INTO public.upvotes (user_id, review_id)
     VALUES (v_user_id, p_review_id)
     ON CONFLICT (user_id, review_id) DO NOTHING;
-
-    SELECT COUNT(*) INTO v_count
-    FROM public.upvotes
-    WHERE review_id = p_review_id;
-
-    RETURN QUERY SELECT TRUE::BOOLEAN AS upvoted, v_count AS upvote_count;
   END IF;
+
+  RETURN QUERY
+    SELECT NOT v_deleted, r.upvote_count::BIGINT
+    FROM public.reviews AS r
+    WHERE r.id = p_review_id;
+END;
+$$;
+
+-- Migration 050: reviews.upvote_count bookkeeping.
+CREATE OR REPLACE FUNCTION public.sync_review_upvote_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.reviews
+      SET upvote_count = upvote_count + 1
+      WHERE id = NEW.review_id;
+    RETURN NEW;
+  END IF;
+
+  UPDATE public.reviews
+    SET upvote_count = GREATEST(upvote_count - 1, 0)
+    WHERE id = OLD.review_id;
+  RETURN OLD;
+END;
+$$;
+
+-- Migration 050: per-user limits on direct API inserts (auth.uid() set);
+-- seeds and admin SQL run without a JWT and pass.
+CREATE OR REPLACE FUNCTION public.enforce_comment_rate_limit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  -- Only API callers are limited; seeds and admin SQL run without a JWT.
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF (
+    SELECT COUNT(*) FROM public.comments
+    WHERE user_id = NEW.user_id
+      AND created_at > NOW() - INTERVAL '1 hour'
+  ) >= 20 THEN
+    RAISE EXCEPTION 'You have posted a lot of comments in the last hour. Please wait a little and try again.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.enforce_flight_listing_rate_limit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF (
+    SELECT COUNT(*) FROM public.flight_listings
+    WHERE user_id = NEW.user_id
+      AND created_at > NOW() - INTERVAL '24 hours'
+  ) >= 10 THEN
+    RAISE EXCEPTION 'You have posted 10 listings in the last 24 hours. Please try again tomorrow.'
+      USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
 END;
 $$;
 
@@ -731,7 +814,7 @@ BEGIN
     RETURN jsonb_build_object(
       'error', jsonb_build_object(
         'http_code', 403,
-        'message', 'Please use a permanent email address — disposable email domains are not allowed.'
+        'message', 'Please use a permanent email address. Disposable email domains are not allowed.'
       )
     );
   END IF;
@@ -755,7 +838,7 @@ BEGIN
      AND NEW.email IS NOT NULL
      AND NEW.email <> ''
      AND NOT public.is_email_allowed(NEW.email) THEN
-    RAISE EXCEPTION 'Please use a permanent email address — disposable email domains are not allowed.';
+    RAISE EXCEPTION 'Please use a permanent email address. Disposable email domains are not allowed.';
   END IF;
   RETURN NEW;
 END;
@@ -973,7 +1056,7 @@ CREATE TRIGGER trigger_update_stats_on_delete
 
 DROP TRIGGER IF EXISTS trigger_update_stats_on_update ON public.reviews;
 CREATE TRIGGER trigger_update_stats_on_update
-  AFTER UPDATE ON public.reviews
+  AFTER UPDATE OF rating, recommend, deleted_at, university_id, user_id ON public.reviews
   FOR EACH ROW
   EXECUTE FUNCTION public.update_university_stats_on_update();
 
@@ -1006,6 +1089,24 @@ CREATE TRIGGER enforce_comment_nesting_trigger
   BEFORE INSERT OR UPDATE OF parent_id, review_id ON public.comments
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_comment_nesting();
+
+DROP TRIGGER IF EXISTS enforce_comment_rate_limit_trigger ON public.comments;
+CREATE TRIGGER enforce_comment_rate_limit_trigger
+  BEFORE INSERT ON public.comments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_comment_rate_limit();
+
+DROP TRIGGER IF EXISTS enforce_flight_listing_rate_limit_trigger ON public.flight_listings;
+CREATE TRIGGER enforce_flight_listing_rate_limit_trigger
+  BEFORE INSERT ON public.flight_listings
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_flight_listing_rate_limit();
+
+DROP TRIGGER IF EXISTS sync_review_upvote_count_trigger ON public.upvotes;
+CREATE TRIGGER sync_review_upvote_count_trigger
+  AFTER INSERT OR DELETE ON public.upvotes
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_review_upvote_count();
 
 DROP TRIGGER IF EXISTS update_flight_listings_updated_at_trigger ON public.flight_listings;
 CREATE TRIGGER update_flight_listings_updated_at_trigger
@@ -1283,7 +1384,10 @@ LEFT JOIN public.profiles p
     (p.is_discoverable = true AND p.onboarding_completed = true AND p.display_name IS NOT NULL)
     OR auth.uid() = fl.user_id
   )
-WHERE fl.is_active = true OR auth.uid() = fl.user_id;
+-- Expired trips (departure date passed) are hidden from everyone but the
+-- owner (migration 050).
+WHERE (fl.is_active = true AND fl.departure_date >= CURRENT_DATE)
+   OR auth.uid() = fl.user_id;
 
 GRANT SELECT ON public.flight_listings_with_profile TO anon;
 GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
@@ -1300,6 +1404,11 @@ GRANT EXECUTE ON FUNCTION public.profile_has_social_handle(UUID) TO authenticate
 
 REVOKE ALL ON FUNCTION public.toggle_upvote(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_role;
+
+-- Trigger functions (migration 050): not client-callable.
+REVOKE ALL ON FUNCTION public.sync_review_upvote_count() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.enforce_comment_rate_limit() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.enforce_flight_listing_rate_limit() FROM PUBLIC, anon, authenticated;
 
 -- refresh_university_stats runs inside trigger functions (security-definer
 -- owner privileges); it is not a client-callable surface.
@@ -1515,6 +1624,9 @@ SELECT cron.schedule(
 
 ALTER TABLE public.upload_rate_limits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.upload_sessions ENABLE ROW LEVEL SECURITY;
+-- Service role only (migration 050 removed the default client grants).
+REVOKE ALL ON public.upload_rate_limits FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.upload_sessions FROM PUBLIC, anon, authenticated;
 
 GRANT ALL ON public.upload_rate_limits TO service_role;
 GRANT ALL ON public.upload_sessions TO service_role;
@@ -1765,7 +1877,12 @@ SELECT
     WHERE q.accepted_answer_id = a.id AND q.deleted_at IS NULL
   ) AS accepted
 FROM public.qa_answers a
-WHERE a.deleted_at IS NULL;
+WHERE a.deleted_at IS NULL
+  -- Hidden with their soft-deleted question (migration 050).
+  AND EXISTS (
+    SELECT 1 FROM public.qa_questions pq
+    WHERE pq.id = a.question_id AND pq.deleted_at IS NULL
+  );
 
 GRANT SELECT ON public.qa_answers_public TO anon;
 GRANT SELECT ON public.qa_answers_public TO authenticated;
@@ -1959,7 +2076,113 @@ REVOKE ALL ON public.qa_email_log FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.qa_email_log TO service_role;
 
 -- ---------------------------------------------------------
--- 14. PostgREST schema reload
+-- 14. Content reports and orphan media cleanup (migration 050)
+-- ---------------------------------------------------------
+
+-- Reports on reviews and comments, written only by the content-report Edge
+-- Function. Q&A reports live in qa_reports.
+CREATE TABLE IF NOT EXISTS public.content_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  review_id UUID REFERENCES public.reviews(id) ON DELETE CASCADE,
+  comment_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT content_reports_one_target
+    CHECK (num_nonnulls(review_id, comment_id) = 1),
+  CONSTRAINT content_reports_reason_length
+    CHECK (reason IS NULL OR char_length(reason) <= 500)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS content_reports_unique_review
+  ON public.content_reports (reporter_id, review_id) WHERE review_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS content_reports_unique_comment
+  ON public.content_reports (reporter_id, comment_id) WHERE comment_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_content_reports_created_at
+  ON public.content_reports (created_at DESC);
+
+ALTER TABLE public.content_reports ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.content_reports FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.content_reports TO service_role;
+
+-- Objects in review-media older than p_min_age that no review (live or
+-- soft-deleted) and no draft references. position() is an exact substring
+-- match: object names contain '_' which LIKE would treat as a wildcard.
+CREATE OR REPLACE FUNCTION public.list_orphan_media(p_min_age INTERVAL, p_limit INT)
+RETURNS TABLE(name TEXT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT o.name
+  FROM storage.objects AS o
+  WHERE o.bucket_id = 'review-media'
+    AND o.created_at < NOW() - p_min_age
+    AND NOT EXISTS (
+      SELECT 1 FROM public.reviews AS r
+      WHERE position(o.name IN r.media::text) > 0
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM public.review_drafts AS d
+      WHERE position(o.name IN d.payload::text) > 0
+    )
+  ORDER BY o.created_at
+  LIMIT LEAST(GREATEST(p_limit, 1), 1000);
+$$;
+
+REVOKE ALL ON FUNCTION public.list_orphan_media(INTERVAL, INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_orphan_media(INTERVAL, INT) TO service_role;
+
+-- Called by pg_cron. Reads the function URL + shared secret from Vault
+-- (media_cleanup_url / media_cleanup_secret) and does nothing until both
+-- exist, same pattern as enqueue_comment_notification.
+CREATE OR REPLACE FUNCTION public.trigger_media_cleanup()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_url TEXT;
+  v_secret TEXT;
+BEGIN
+  SELECT s.decrypted_secret INTO v_url
+    FROM vault.decrypted_secrets AS s
+    WHERE s.name = 'media_cleanup_url'
+    LIMIT 1;
+  SELECT s.decrypted_secret INTO v_secret
+    FROM vault.decrypted_secrets AS s
+    WHERE s.name = 'media_cleanup_secret'
+    LIMIT 1;
+
+  IF v_url IS NULL OR v_secret IS NULL THEN
+    RETURN;
+  END IF;
+
+  PERFORM net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'x-cleanup-secret', v_secret
+    ),
+    body := '{}'::jsonb
+  );
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'media cleanup trigger failed: %', SQLERRM;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.trigger_media_cleanup() FROM PUBLIC, anon, authenticated;
+
+SELECT cron.schedule(
+  'cleanup-orphan-media',
+  '41 3 * * *',
+  $$SELECT public.trigger_media_cleanup();$$
+);
+
+-- ---------------------------------------------------------
+-- 15. PostgREST schema reload
 -- ---------------------------------------------------------
 
 NOTIFY pgrst, 'reload schema';
