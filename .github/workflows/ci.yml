@@ -5,8 +5,11 @@ on:
     branches: [master, staging]
   pull_request:
     branches: [master, staging]
+  workflow_dispatch:
 
 jobs:
+  # Lint, format, types, unit tests, build + prerender, and the SEO validator.
+  # (Was split across ci.yml and seo.yml, which ran the same build twice.)
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -24,11 +27,18 @@ jobs:
       - run: npm run format:check
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
+      - name: Build + prerender
+        run: npm run build
         env:
-          # Build pipeline exports prerender data — the committed fixture
-          # stands in for Supabase in CI.
+          # Committed fixture stands in for Supabase. CI builds are never the
+          # prod deploy, so the validator runs in noindex mode.
           TRC_EXPORT_FIXTURE: '1'
+          TRC_INDEXABLE: '0'
+      - name: SEO validator
+        run: node scripts/validate_build.mjs
+      - name: Lighthouse CI (warnings only, budgets enforced after data lands)
+        if: github.event_name == 'pull_request'
+        run: npx lhci autorun --config=lighthouserc.cjs || echo "::warning::lhci unavailable in this environment"
 
   edge-functions:
     runs-on: ubuntu-latest
@@ -64,3 +74,31 @@ jobs:
               deno test --config supabase/functions/_shared/deno.json supabase/functions/_shared/
             fi
           fi
+
+  # Rebuilds the database from every migration + seed.sql on a fresh local
+  # Postgres, then runs the supabase/verify/*.sql probes. Catches migrations
+  # that don't apply from scratch and RLS/grant regressions the probes cover.
+  database:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_PROJECT_ID: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start Postgres and apply migrations + seed
+        run: |
+          supabase db start
+          supabase db reset --local
+      - name: Run verification probes
+        run: |
+          status=0
+          for f in supabase/verify/*.sql; do
+            echo "== $f"
+            out=$(docker exec -i "supabase_db_${SUPABASE_PROJECT_ID}" \
+              psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$f") || { echo "$out"; status=1; continue; }
+            echo "$out"
+            if echo "$out" | grep -q 'FAIL'; then status=1; fi
+          done
+          exit $status
