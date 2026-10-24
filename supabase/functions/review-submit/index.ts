@@ -21,12 +21,13 @@ import {
 import { verifyTurnstile } from '../_shared/turnstile.ts'
 import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
 import { anonRateKey } from '../_shared/rateKey.ts'
+import { withRandomSuffix } from '../_shared/slug.ts'
 import {
-  GENERIC_UNIVERSITY_WORDS,
-  isWeakSlug,
-  slugify,
-  withRandomSuffix,
-} from '../_shared/slug.ts'
+  UNI_SLUG_MAX,
+  parseNewUniversity,
+  planNewUniversity,
+  type NewUniversity,
+} from './newUniversity.ts'
 import {
   LIMITS,
   VALID_CURRENT_STATUS,
@@ -51,7 +52,6 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 // ---- University resolution ------------------------------------------------------
 
-const UNI_SLUG_MAX = 120
 const NEW_UNI_INSERT_ATTEMPTS = 3
 
 type ResolvedUniversity = { id: string; slug: string; created: boolean }
@@ -96,7 +96,7 @@ async function findUniversityBySlug(slug: string): Promise<{ id: string; slug: s
 async function resolveUniversityId(body: {
   universitySlug?: string
   universityName?: string
-  newUniversity?: { name: string; city: string; province: string | null }
+  newUniversity?: NewUniversity
 }): Promise<ResolvedUniversity> {
   if (body.universitySlug) {
     const s = body.universitySlug.trim().toLowerCase()
@@ -128,8 +128,8 @@ async function resolveUniversityId(body: {
 
   if (body.newUniversity) {
     const { name, city, province } = body.newUniversity
-    const base = slugify(name, UNI_SLUG_MAX)
-    if (isWeakSlug(base, GENERIC_UNIVERSITY_WORDS)) {
+    const { kind, base } = planNewUniversity(name)
+    if (kind === 'by-name') {
       return await findOrCreateUniversityByName(name, city, province, base)
     }
 
@@ -294,33 +294,13 @@ async function handleSubmit(req: Request): Promise<Response> {
   // ---- Resolve / create the university ----
   let university: { id: string; slug: string; created: boolean }
   try {
-    const newUniversity = body.newUniversity
-      ? {
-          name: asTrimmedString(
-            (body.newUniversity as Record<string, unknown>).name,
-            LIMITS.uniName.max
-          ),
-          city: asTrimmedString(
-            (body.newUniversity as Record<string, unknown>).city,
-            LIMITS.uniCity.max
-          ),
-          // Optional; lets the resolver match a province-only university.
-          province: asTrimmedString(
-            (body.newUniversity as Record<string, unknown>).province,
-            LIMITS.uniCity.max
-          ),
-        }
-      : undefined
-
-    if (newUniversity && (!newUniversity.name || !newUniversity.city)) {
-      return jsonResponse(req, { error: 'University name and city are required' }, 400)
-    }
+    // Throws (→ 400 below) on a present but invalid payload.
+    const newUniversity = parseNewUniversity(body.newUniversity)
 
     university = await resolveUniversityId({
       universitySlug: asTrimmedString(body.universitySlug, 200) || undefined,
       universityName: asTrimmedString(body.universityName, LIMITS.uniName.max) || undefined,
-      newUniversity: newUniversity as
-        { name: string; city: string; province: string | null } | undefined,
+      newUniversity,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not resolve university'
