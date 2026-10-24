@@ -55,6 +55,10 @@ const isAppShellPath = (href) =>
 const MEDIA_EXTS = /\.(png|jpe?g|gif|webp|avif|svg|mp4|webm|mov|woff2?|ttf|otf)(\?|#|$)/i
 const HOTLINK_HOSTS =
   /shanghairanking\.cn|images\.pexels\.com|picsum\.photos|cdn\.pixabay\.com|googleapis\.com|gstatic\.com/i
+// Stock-photo hosts used only by the demo seed (seed.sql / seed_demo.sql).
+// Demo data is allowed on local and staging, never prod, so on non-prod
+// builds these are warnings; prod builds and every other host still fail.
+const DEMO_MEDIA_HOSTS = /images\.pexels\.com|picsum\.photos|cdn\.pixabay\.com/i
 
 // Every generated page must have: file, one title, canonical=self, desc,
 // robots, one h1, valid JSON-LD, parseable payload.
@@ -141,7 +145,8 @@ for (const path of routePaths) {
   for (const el of doc.querySelectorAll('img,script,iframe,video,source,link[href]')) {
     const u = el.getAttribute('src') ?? el.getAttribute('href') ?? ''
     if (/^https?:\/\//i.test(u) && !u.startsWith(PROD) && HOTLINK_HOSTS.test(u)) {
-      fail(`${path}: hotlinked resource ${u.slice(0, 90)}`)
+      const report = !isProd && DEMO_MEDIA_HOSTS.test(u) ? warn : fail
+      report(`${path}: hotlinked resource ${u.slice(0, 90)}`)
     }
   }
 
