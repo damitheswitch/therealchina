@@ -122,6 +122,14 @@ BEGIN
   INSERT INTO probe_results VALUES ('same name, other city gets its own row',
     CASE WHEN v_slug = 'verify-uni-049-chengdu' AND v_created THEN 'PASS' ELSE 'FAIL: got ' || v_slug END);
 
+  -- 10. A province-only row (no city) is reused when the visitor gives a city.
+  INSERT INTO public.universities (name, city, province, slug)
+  VALUES ('Verify Province Uni', NULL, 'Zhejiang', 'verify-province-uni-049');
+  SELECT r.slug, r.created INTO v_slug, v_created
+  FROM public.find_or_create_university_by_name('verify province uni', 'Hangzhou', 'verify-province-uni-049-dup') r;
+  INSERT INTO probe_results VALUES ('province-only row reused',
+    CASE WHEN v_slug = 'verify-province-uni-049' AND NOT v_created THEN 'PASS' ELSE 'FAIL: got ' || v_slug END);
+
   -- 8. Clients can't call the resolver directly.
   BEGIN
     SET LOCAL ROLE authenticated;
