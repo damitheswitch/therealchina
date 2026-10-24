@@ -16,6 +16,13 @@
 --    run the nesting check on UPDATE too so service-role/admin edits can't
 --    break the invariant either.
 --
+-- 3. universities: review-submit resolves a "not listed" university whose
+--    name has no identifying slug (non-Latin or generic-only) by name. Doing
+--    the lookup and insert as two client calls let concurrent submissions
+--    both miss and create two rows, and an exact .eq() match missed case and
+--    whitespace variants. find_or_create_university_by_name does both under
+--    a per-name advisory lock with a case-insensitive match. Service role only.
+--
 -- Revokes are per role: Supabase default privileges grant directly to anon
 -- and authenticated, so FROM PUBLIC alone would not remove them.
 
@@ -57,3 +64,46 @@ CREATE TRIGGER enforce_comment_nesting_trigger
   BEFORE INSERT OR UPDATE OF parent_id, review_id ON public.comments
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_comment_nesting();
+
+CREATE OR REPLACE FUNCTION public.find_or_create_university_by_name(
+  p_name TEXT,
+  p_city TEXT,
+  p_slug TEXT
+)
+RETURNS TABLE(id UUID, slug TEXT, created BOOLEAN)
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_key TEXT := lower(regexp_replace(btrim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+BEGIN
+  IF v_key = '' THEN
+    RAISE EXCEPTION 'University name is required.';
+  END IF;
+
+  -- Serialize concurrent submissions of the same name; the lock is released
+  -- at the end of the calling transaction.
+  PERFORM pg_advisory_xact_lock(hashtextextended('universities.name:' || v_key, 0));
+
+  RETURN QUERY
+  SELECT u.id, u.slug, false
+  FROM public.universities u
+  WHERE lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
+     OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key
+  ORDER BY (lower(btrim(u.city)) IS NOT DISTINCT FROM lower(btrim(p_city))) DESC,
+           u.created_at
+  LIMIT 1;
+  IF FOUND THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  INSERT INTO public.universities AS u (name, city, slug)
+  VALUES (btrim(p_name), p_city, p_slug)
+  RETURNING u.id, u.slug, true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.find_or_create_university_by_name(TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.find_or_create_university_by_name(TEXT, TEXT, TEXT) TO service_role;

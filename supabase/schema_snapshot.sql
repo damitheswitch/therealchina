@@ -523,6 +523,50 @@ BEGIN
 END;
 $$;
 
+-- Resolves a "not listed" university by name when its slug can't identify it
+-- (non-Latin or generic-only name). Case/whitespace-insensitive match on name
+-- or name_zh, serialized per name so concurrent submissions share one row
+-- (migration 049). Called only by the review-submit Edge Function.
+CREATE OR REPLACE FUNCTION public.find_or_create_university_by_name(
+  p_name TEXT,
+  p_city TEXT,
+  p_slug TEXT
+)
+RETURNS TABLE(id UUID, slug TEXT, created BOOLEAN)
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_key TEXT := lower(regexp_replace(btrim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+BEGIN
+  IF v_key = '' THEN
+    RAISE EXCEPTION 'University name is required.';
+  END IF;
+
+  -- Serialize concurrent submissions of the same name; the lock is released
+  -- at the end of the calling transaction.
+  PERFORM pg_advisory_xact_lock(hashtextextended('universities.name:' || v_key, 0));
+
+  RETURN QUERY
+  SELECT u.id, u.slug, false
+  FROM public.universities u
+  WHERE lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
+     OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key
+  ORDER BY (lower(btrim(u.city)) IS NOT DISTINCT FROM lower(btrim(p_city))) DESC,
+           u.created_at
+  LIMIT 1;
+  IF FOUND THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  INSERT INTO public.universities AS u (name, city, slug)
+  VALUES (btrim(p_name), p_city, p_slug)
+  RETURNING u.id, u.slug, true;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.refresh_university_stats(p_university_id UUID)
 RETURNS VOID
 LANGUAGE plpgsql
@@ -1318,6 +1362,11 @@ GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;
 -- (migration 044) — callable only through the review-boost Edge Function.
 REVOKE ALL ON FUNCTION public.apply_anonymous_boost(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.apply_anonymous_boost(UUID, TEXT, JSONB) TO service_role;
+
+-- find_or_create_university_by_name is called only by review-submit
+-- (migration 049).
+REVOKE ALL ON FUNCTION public.find_or_create_university_by_name(TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.find_or_create_university_by_name(TEXT, TEXT, TEXT) TO service_role;
 
 -- Auth calls the before-user-created hook as supabase_auth_admin.
 REVOKE ALL ON FUNCTION public.hook_reject_disposable_email(JSONB) FROM PUBLIC, anon, authenticated;

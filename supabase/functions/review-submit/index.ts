@@ -54,22 +54,30 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const UNI_SLUG_MAX = 120
 const NEW_UNI_INSERT_ATTEMPTS = 3
 
+type ResolvedUniversity = { id: string; slug: string; created: boolean }
+
 // A weak slug (no Latin characters, or only generic words) says nothing about
-// which university this is, so match on the exact name instead.
-async function findUniversityByExactName(
-  name: string
-): Promise<{ id: string; slug: string } | null> {
-  for (const column of ['name', 'name_zh']) {
+// which university this is, so match on the name instead. The RPC matches
+// case-insensitively on name/name_zh and holds a per-name lock across lookup
+// and insert, so concurrent submissions of the same name share one row.
+async function findOrCreateUniversityByName(
+  name: string,
+  city: string,
+  base: string
+): Promise<ResolvedUniversity> {
+  for (let attempt = 0; attempt < NEW_UNI_INSERT_ATTEMPTS; attempt++) {
     const { data, error } = await supabaseAdmin
-      .from('universities')
-      .select('id, slug')
-      .eq(column, name)
-      .limit(1)
-      .maybeSingle()
-    if (error) throw error
-    if (data) return data
+      .rpc('find_or_create_university_by_name', {
+        p_name: name,
+        p_city: city,
+        p_slug: withRandomSuffix(base, UNI_SLUG_MAX, 'university'),
+      })
+      .single<ResolvedUniversity>()
+    if (!error && data) return data
+    // Random-suffix collision: try another suffix.
+    if (error?.code !== '23505') throw error
   }
-  return null
+  throw new Error('Could not create the university. Please try again.')
 }
 
 async function findUniversityBySlug(slug: string): Promise<{ id: string; slug: string } | null> {
@@ -87,7 +95,7 @@ async function resolveUniversityId(body: {
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string }
-}): Promise<{ id: string; slug: string; created: boolean }> {
+}): Promise<ResolvedUniversity> {
   if (body.universitySlug) {
     const s = body.universitySlug.trim().toLowerCase()
     // Format check keeps the PostgREST filter string injection-safe.
@@ -119,17 +127,17 @@ async function resolveUniversityId(body: {
   if (body.newUniversity) {
     const { name, city } = body.newUniversity
     const base = slugify(name, UNI_SLUG_MAX)
-    const weak = isWeakSlug(base, GENERIC_UNIVERSITY_WORDS)
+    if (isWeakSlug(base, GENERIC_UNIVERSITY_WORDS)) {
+      return await findOrCreateUniversityByName(name, city, base)
+    }
 
-    // Reuse an existing row instead of creating a duplicate: by canonical slug
-    // or alias when the slug identifies the name, by exact name when it
-    // can't (a non-Latin name would otherwise collapse to one shared slug).
-    const found = weak ? await findUniversityByExactName(name) : await findUniversityBySlug(base)
+    // Reuse an existing row by canonical slug or alias instead of creating a
+    // duplicate.
+    const found = await findUniversityBySlug(base)
     if (found) return { ...found, created: false }
 
     for (let attempt = 0; attempt < NEW_UNI_INSERT_ATTEMPTS; attempt++) {
-      const slug =
-        !weak && attempt === 0 ? base : withRandomSuffix(base, UNI_SLUG_MAX, 'university')
+      const slug = attempt === 0 ? base : withRandomSuffix(base, UNI_SLUG_MAX, 'university')
       const { data, error } = await supabaseAdmin
         .from('universities')
         .insert({ name, city, slug })
@@ -139,9 +147,8 @@ async function resolveUniversityId(body: {
       if (!error && data) return { ...data, created: true }
       if (error?.code !== '23505') throw error
 
-      // Slug race on an identifying slug: someone just created this
-      // university, so reuse their row.
-      if (!weak && attempt === 0) {
+      // Slug race: someone just created this university, so reuse their row.
+      if (attempt === 0) {
         const existing = await findUniversityBySlug(base)
         if (existing) return { ...existing, created: false }
       }

@@ -105,6 +105,29 @@ BEGIN
   END;
 END $$;
 
+DO $$
+DECLARE
+  v_slug TEXT;
+  v_created BOOLEAN;
+BEGIN
+  -- 7. A case/whitespace variant of an existing name reuses that row.
+  SELECT r.slug, r.created INTO v_slug, v_created
+  FROM public.find_or_create_university_by_name('  verify   UNI ', 'Hangzhou', 'verify-uni-049-dup') r;
+  INSERT INTO probe_results VALUES ('uni name match ignores case',
+    CASE WHEN v_slug = 'verify-uni-049' AND NOT v_created THEN 'PASS' ELSE 'FAIL: got ' || v_slug END);
+
+  -- 8. Clients can't call the resolver directly.
+  BEGIN
+    SET LOCAL ROLE authenticated;
+    PERFORM public.find_or_create_university_by_name('Direct Call Uni', 'Hangzhou', 'direct-call-uni-049');
+    RESET ROLE;
+    INSERT INTO probe_results VALUES ('uni resolver not client-callable', 'FAIL: call succeeded');
+  EXCEPTION WHEN insufficient_privilege THEN
+    RESET ROLE;
+    INSERT INTO probe_results VALUES ('uni resolver not client-callable', 'PASS (' || SQLERRM || ')');
+  END;
+END $$;
+
 SELECT * FROM probe_results;
 
 ROLLBACK;
