@@ -5,7 +5,7 @@ export const SITE = {
   shortName: 'TRC',
   tagline: 'Honest reviews of Chinese universities, by international students',
   defaultDescription:
-    'Real reviews from real international students — costs, campus life and the support nobody puts in a brochure, for universities across China.',
+    'Real reviews from real international students on costs, campus life and the support nobody puts in a brochure, for universities across China.',
   contactEmail: 'nihao@therealchina.net',
   contactUrl: 'https://www.therealchina.net/contact',
   twitter: '', // no account yet — update when created

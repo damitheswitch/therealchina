@@ -42,7 +42,7 @@ console.log(
   `deploy context: ${env.CONTEXT ?? 'local'} → ${isProdDeploy ? 'INDEXABLE' : 'noindex'} output`
 )
 
-const { universities, stats, reviews, authors, upvotes } = loadData(DATA_DIR)
+const { universities, stats, reviews, authors } = loadData(DATA_DIR)
 const indexableUnis = indexableUniversities(universities, reviews)
 console.log(
   `${universities.length} universities · ${indexableUnis.length} indexable (≥1 substantive review)`
@@ -69,7 +69,7 @@ const routes: RouteEntry[] = [
   { path: '/universities', data: indexData() },
   {
     path: '/reviews',
-    data: { reviewsPage: reviewsPageData(reviews, universities, authors, upvotes) },
+    data: { reviewsPage: reviewsPageData(reviews, universities, authors) },
   },
   // City hubs — only indexable ones are prerendered; thin cities go through
   // the SPA shell with noindex (rule emitted below).
@@ -86,7 +86,7 @@ const routes: RouteEntry[] = [
     .filter((h) => h.indexable)
     .map((h) => ({
       path: `/${h.kind}/${h.hub.slug}`,
-      data: { hubPage: hubPageData(h, authors, upvotes) },
+      data: { hubPage: hubPageData(h, authors) },
     })),
   // Trust/legal pages — always indexable, static content.
   ...TRUST_PAGES.map((d) => ({ path: `/${d.slug}`, data: {} })),
@@ -95,7 +95,7 @@ const routes: RouteEntry[] = [
   ...GUIDES.map((g) => ({ path: `/guide/${g.slug}`, data: {} })),
   ...indexableUnis.map((u) => ({
     path: `/university/${u.slug}`,
-    data: { universityPage: universityPageData(u, reviews, stats, authors, upvotes) },
+    data: { universityPage: universityPageData(u, reviews, stats, authors) },
   })),
 ]
 

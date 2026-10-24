@@ -23,7 +23,7 @@ export const ReviewsPage = () => {
       <Seo
         path="/reviews"
         title="Student Reviews"
-        description="Every university review on The Real China — unfiltered experiences from international students across China."
+        description="Every university review on The Real China. Unfiltered experiences from international students across China."
         jsonLd={[
           stringify(
             itemListSchema(
@@ -47,7 +47,7 @@ export const ReviewsPage = () => {
       <div style={{ paddingTop: '2.5rem' }}>
         <h1>Latest reviews</h1>
         <p className="muted" style={{ maxWidth: '46rem' }}>
-          Unfiltered reviews from international students — what the brochures don&apos;t tell you
+          Unfiltered reviews from international students: what the brochures don&apos;t tell you
           about studying in China.
         </p>
       </div>

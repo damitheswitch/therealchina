@@ -188,7 +188,7 @@ export const OnboardingForm = ({
               required
             />
             <p className="form-hint">
-              This is how you&apos;ll appear across TRC — reviews, directory, and flights. You can
+              This is how you&apos;ll appear across TRC: reviews, directory, and flights. You can
               change it later in Settings.
             </p>
             {displayNameError && (

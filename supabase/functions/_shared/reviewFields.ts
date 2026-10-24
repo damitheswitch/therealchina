@@ -65,6 +65,15 @@ export function validateMedia(value: unknown, mediaUrlPrefix: string): MediaItem
   })
 }
 
+// Storage object names (review-media bucket paths) behind validated media
+// items. validateMedia has already checked every URL starts with the prefix.
+export function mediaObjectNames(media: MediaItem[], mediaUrlPrefix: string): string[] {
+  return media.map((m) => m.url.slice(mediaUrlPrefix.length).split(/[?#]/)[0])
+}
+
+export const MEDIA_EXPIRED_MESSAGE =
+  'Some photos or videos in this draft have expired. Remove them, add them again, and resubmit.'
+
 // All writable review fields after validation, in DB column shape. Insert and
 // update write this object verbatim — id/user_id/university_id/created_at are
 // never part of it.

@@ -1,10 +1,39 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
+import { todayLocal } from '../lib/flightListings'
+
+const FLIGHT_LISTINGS_LIMIT = 200
 
 type FlightListing = Tables<'flight_listings_with_profile'>
 
-export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}) => {
+const FLIGHT_LISTING_COLUMNS =
+  'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, updated_at, display_name, avatar_url, social_handles, show_social_handle, contact_platforms'
+
+async function fetchOwnListings(userId: string | null): Promise<FlightListing[]> {
+  if (!userId) return []
+  const rows: FlightListing[] = []
+  let after: string | null = null
+  for (;;) {
+    let query = supabase
+      .from('flight_listings_with_profile')
+      .select(FLIGHT_LISTING_COLUMNS)
+      .eq('user_id', userId)
+      .order('id', { ascending: true })
+      .limit(FLIGHT_LISTINGS_LIMIT)
+    if (after) query = query.gt('id', after)
+    const { data, error } = await query
+    if (error) throw error
+    if (!data?.length) return rows
+    rows.push(...data)
+    after = data[data.length - 1].id
+  }
+}
+
+export const useFlightListings = ({
+  enabled = true,
+  userId = null,
+}: { enabled?: boolean; userId?: string | null } = {}) => {
   const [listings, setListings] = useState<FlightListing[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<Error | null>(null)
@@ -34,24 +63,52 @@ export const useFlightListings = ({ enabled = true }: { enabled?: boolean } = {}
     setLoading(true)
     setError(null)
     try {
-      const { data, error: fetchError } = await supabase
-        .from('flight_listings_with_profile')
-        .select(
-          'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle, contact_platforms'
-        )
-        // No client-side is_active filter: the view already returns
-        // active rows plus the viewer's own closed listings
-        .order('created_at', { ascending: false })
+      // Split upcoming, past and the viewer's own trips into separate queries
+      // so each section gets its own row budget: past or closed history can
+      // never crowd out upcoming trips on the main board, the Past Flights tab
+      // still shows departed active trips from everyone, and My Flights always
+      // includes all of the owner's listings.
+      const today = todayLocal()
+      const [upcomingRes, pastRes, ownRows] = await Promise.all([
+        supabase
+          .from('flight_listings_with_profile')
+          .select(FLIGHT_LISTING_COLUMNS)
+          .eq('is_active', true)
+          .gte('departure_date', today)
+          .order('departure_date', { ascending: true })
+          .order('created_at', { ascending: false })
+          .limit(FLIGHT_LISTINGS_LIMIT),
+        supabase
+          .from('flight_listings_with_profile')
+          .select(FLIGHT_LISTING_COLUMNS)
+          .eq('is_active', true)
+          .lt('departure_date', today)
+          .order('departure_date', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(FLIGHT_LISTINGS_LIMIT),
+        fetchOwnListings(userId),
+      ])
 
-      if (fetchError) throw fetchError
-      if (mounted.current) setListings((data as FlightListing[] | null) || [])
+      if (upcomingRes.error) throw upcomingRes.error
+      if (pastRes.error) throw pastRes.error
+      const merged: FlightListing[] = []
+      const seen = new Set<string>()
+      for (const group of [ownRows, upcomingRes.data, pastRes.data]) {
+        for (const row of (group as FlightListing[] | null) || []) {
+          if (row.id && !seen.has(row.id)) {
+            seen.add(row.id)
+            merged.push(row)
+          }
+        }
+      }
+      if (mounted.current) setListings(merged)
     } catch (err) {
       console.error('Error fetching flight listings:', err)
       if (mounted.current) setError(err as Error)
     } finally {
       if (mounted.current) setLoading(false)
     }
-  }, [enabled])
+  }, [enabled, userId])
 
   useEffect(() => {
     if (!enabled) return

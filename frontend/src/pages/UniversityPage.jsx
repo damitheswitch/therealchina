@@ -130,10 +130,10 @@ export const UniversityPage = () => {
       </div>
     ) : (
       <div className="uni-profile-rating-block">
-        <span className="rating-number">—</span>
+        <span className="rating-number">New</span>
         <div className="rating-info">
           <StarRating rating={0} sizeClass="stars-lg" />
-          <span className="count">No reviews yet — be the first!</span>
+          <span className="count">No reviews yet. Be the first!</span>
         </div>
       </div>
     )
@@ -142,7 +142,7 @@ export const UniversityPage = () => {
   const seoDescription =
     reviewCount > 0
       ? `${university.name} in ${location}: rated ${avgRating.toFixed(1)}/5 by ${reviewCount} international student${reviewCount !== 1 ? 's' : ''}. Honest reviews on academics, costs, campus life and support.`
-      : `${university.name} in ${location}. Honest reviews by international students — academics, costs, campus life and support.`
+      : `${university.name} in ${location}. Honest reviews by international students: academics, costs, campus life and support.`
 
   // SEO sources: hydrated pages carry every review (with text) in the
   // prerender payload, so schema markup + the indexable rule stay exact there.

@@ -55,7 +55,7 @@ export const reviewToWizardState = (review: EditableReview): WizardEditState => 
   }
 
   const uni = review.universities
-  const universityLabel = uni ? [uni.name, uni.city].filter(Boolean).join(' — ') : ''
+  const universityLabel = uni ? [uni.name, uni.city].filter(Boolean).join(', ') : ''
 
   return {
     rating: review.rating,
