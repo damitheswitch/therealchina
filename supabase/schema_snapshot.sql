@@ -566,6 +566,9 @@ BEGIN
   -- at the end of the calling transaction.
   PERFORM pg_advisory_xact_lock(hashtextextended('universities.name:' || v_key, 0));
 
+  -- Same name AND same city only: a generic name can belong to different
+  -- universities in different cities, and a review attached to the wrong
+  -- one can't be moved back automatically.
   RETURN QUERY
   SELECT u.id, u.slug, false
   FROM public.universities u
