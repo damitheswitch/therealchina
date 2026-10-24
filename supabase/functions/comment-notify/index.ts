@@ -127,12 +127,17 @@ async function handleNotify(req: Request): Promise<Response> {
   if (review.user_id === comment.user_id) return skip('self_comment')
 
   // Opt-out lives on the owner's profile (migration 050).
-  const { data: ownerProfile } = await supabaseAdmin
+  // Fails closed: if the preference can't be read, don't email.
+  const { data: ownerProfile, error: ownerProfileError } = await supabaseAdmin
     .from('profiles')
     .select('notify_on_comments')
     .eq('id', review.user_id)
     .maybeSingle()
-  if (ownerProfile?.notify_on_comments === false) return skip('opted_out')
+  if (ownerProfileError || !ownerProfile) {
+    console.error('Opt-out lookup failed:', ownerProfileError)
+    return skip('preference_unavailable')
+  }
+  if (ownerProfile.notify_on_comments === false) return skip('opted_out')
 
   // Throttle: at most one email per review+owner per window, plus a daily cap.
   const windowStart = new Date(Date.now() - THROTTLE_MINUTES * 60_000).toISOString()
