@@ -27,3 +27,15 @@ test('fails closed on empty, failed, or changed CLI output', () => {
     assert.throws(() => assertMigrationsApplied(output, files), /No migration history/)
   }
 })
+
+test('ignores letter-suffixed files the Supabase CLI never applies', () => {
+  // Real repo names: the CLI skips both, so remote history has 010 then 012.
+  const withSuffixed = [
+    '010_base.sql',
+    '011a_profile_security_fixes.sql',
+    '011b_storage_policies_reference.sql',
+    '012_next.sql',
+  ]
+  assertMigrationsApplied('010 | 010 |\n012 | 012 |', withSuffixed)
+  assert.throws(() => assertMigrationsApplied('010 | 010 |\n012 | |', withSuffixed), /012/)
+})

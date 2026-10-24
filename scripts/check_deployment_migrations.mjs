@@ -25,6 +25,11 @@ export function assertMigrationsApplied(output, files) {
     }
   }
   if (!rows) throw new Error('No migration history found in CLI output')
+  // Same rule as the Supabase CLI, which only applies `<digits>_name.sql`
+  // files. Letter-suffixed files (011a, 011b) are skipped by `db push`
+  // ("file name must match pattern") and never reach the remote history:
+  // 011a was applied by hand and 011b is a do-not-run reference. Requiring
+  // them here would block every deploy.
   const missing = files
     .filter((file) => /^\d+_.+\.sql$/.test(file))
     .map((file) => file.split('_')[0])
