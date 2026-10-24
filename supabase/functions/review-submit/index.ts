@@ -63,6 +63,7 @@ type ResolvedUniversity = { id: string; slug: string; created: boolean }
 async function findOrCreateUniversityByName(
   name: string,
   city: string,
+  province: string | null,
   base: string
 ): Promise<ResolvedUniversity> {
   for (let attempt = 0; attempt < NEW_UNI_INSERT_ATTEMPTS; attempt++) {
@@ -71,6 +72,7 @@ async function findOrCreateUniversityByName(
         p_name: name,
         p_city: city,
         p_slug: withRandomSuffix(base, UNI_SLUG_MAX, 'university'),
+        p_province: province,
       })
       .single<ResolvedUniversity>()
     if (!error && data) return data
@@ -94,7 +96,7 @@ async function findUniversityBySlug(slug: string): Promise<{ id: string; slug: s
 async function resolveUniversityId(body: {
   universitySlug?: string
   universityName?: string
-  newUniversity?: { name: string; city: string }
+  newUniversity?: { name: string; city: string; province: string | null }
 }): Promise<ResolvedUniversity> {
   if (body.universitySlug) {
     const s = body.universitySlug.trim().toLowerCase()
@@ -125,10 +127,10 @@ async function resolveUniversityId(body: {
   }
 
   if (body.newUniversity) {
-    const { name, city } = body.newUniversity
+    const { name, city, province } = body.newUniversity
     const base = slugify(name, UNI_SLUG_MAX)
     if (isWeakSlug(base, GENERIC_UNIVERSITY_WORDS)) {
-      return await findOrCreateUniversityByName(name, city, base)
+      return await findOrCreateUniversityByName(name, city, province, base)
     }
 
     // Reuse an existing row by canonical slug or alias instead of creating a
@@ -140,7 +142,7 @@ async function resolveUniversityId(body: {
       const slug = attempt === 0 ? base : withRandomSuffix(base, UNI_SLUG_MAX, 'university')
       const { data, error } = await supabaseAdmin
         .from('universities')
-        .insert({ name, city, slug })
+        .insert({ name, city, province, slug })
         .select('id, slug')
         .single()
 
@@ -302,6 +304,11 @@ async function handleSubmit(req: Request): Promise<Response> {
             (body.newUniversity as Record<string, unknown>).city,
             LIMITS.uniCity.max
           ),
+          // Optional; lets the resolver match a province-only university.
+          province: asTrimmedString(
+            (body.newUniversity as Record<string, unknown>).province,
+            LIMITS.uniCity.max
+          ),
         }
       : undefined
 
@@ -312,7 +319,8 @@ async function handleSubmit(req: Request): Promise<Response> {
     university = await resolveUniversityId({
       universitySlug: asTrimmedString(body.universitySlug, 200) || undefined,
       universityName: asTrimmedString(body.universityName, LIMITS.uniName.max) || undefined,
-      newUniversity: newUniversity as { name: string; city: string } | undefined,
+      newUniversity: newUniversity as
+        { name: string; city: string; province: string | null } | undefined,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not resolve university'
