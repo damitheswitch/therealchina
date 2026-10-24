@@ -43,18 +43,27 @@ export const useFlightListings = ({
     setLoading(true)
     setError(null)
     try {
-      // Public board: active, upcoming trips ordered by departure, so if the
-      // cap bites it drops the trips furthest in the future. The explicit
-      // filters keep the viewer's own past or closed trips (which the view
-      // also returns) from using up the cap. Those load separately, so My
-      // Flights and the owner controls see every one of them.
-      const [boardRes, ownRes] = await Promise.all([
+      // Split upcoming, past and the viewer's own trips into separate queries
+      // so each section gets its own row budget: past or closed history can
+      // never crowd out upcoming trips on the main board, the Past Flights tab
+      // still shows departed active trips from everyone, and My Flights always
+      // includes all of the owner's listings.
+      const today = todayLocal()
+      const [upcomingRes, pastRes, ownRes] = await Promise.all([
         supabase
           .from('flight_listings_with_profile')
           .select(FLIGHT_LISTING_COLUMNS)
           .eq('is_active', true)
-          .gte('departure_date', todayLocal())
+          .gte('departure_date', today)
           .order('departure_date', { ascending: true })
+          .order('created_at', { ascending: false })
+          .limit(FLIGHT_LISTINGS_LIMIT),
+        supabase
+          .from('flight_listings_with_profile')
+          .select(FLIGHT_LISTING_COLUMNS)
+          .eq('is_active', true)
+          .lt('departure_date', today)
+          .order('departure_date', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(FLIGHT_LISTINGS_LIMIT),
         userId
@@ -66,14 +75,20 @@ export const useFlightListings = ({
           : Promise.resolve({ data: [] as FlightListing[], error: null }),
       ])
 
-      if (boardRes.error) throw boardRes.error
+      if (upcomingRes.error) throw upcomingRes.error
+      if (pastRes.error) throw pastRes.error
       if (ownRes.error) throw ownRes.error
-      const own = (ownRes.data as FlightListing[] | null) || []
-      const ownIds = new Set(own.map((l) => l.id))
-      const board = ((boardRes.data as FlightListing[] | null) || []).filter(
-        (l) => !ownIds.has(l.id)
-      )
-      if (mounted.current) setListings([...own, ...board])
+      const merged: FlightListing[] = []
+      const seen = new Set<string>()
+      for (const group of [ownRes.data, upcomingRes.data, pastRes.data]) {
+        for (const row of (group as FlightListing[] | null) || []) {
+          if (row.id && !seen.has(row.id)) {
+            seen.add(row.id)
+            merged.push(row)
+          }
+        }
+      }
+      if (mounted.current) setListings(merged)
     } catch (err) {
       console.error('Error fetching flight listings:', err)
       if (mounted.current) setError(err as Error)

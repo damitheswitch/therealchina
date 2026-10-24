@@ -14,14 +14,12 @@
 -- 5. content_reports: reports on reviews and comments, written by the
 --    content-report Edge Function only.
 -- 6. profiles.notify_on_comments: opt-out for comment notification emails.
--- 7. flight_listings_with_profile hides trips whose departure date has
---    passed (owners still see their own).
--- 8. qa_answers_public hides answers under soft-deleted questions.
--- 9. Orphan media cleanup: list_orphan_media() + a daily cron that calls the
+-- 7. qa_answers_public hides answers under soft-deleted questions.
+-- 8. Orphan media cleanup: list_orphan_media() + a daily cron that calls the
 --    media-cleanup Edge Function (URL + secret from Vault; no-op until the
 --    owner provisions them).
--- 10. Defense in depth: client grants revoked on upload_rate_limits and
---     upload_sessions; disposable-email messages without dashes.
+-- 9. Defense in depth: client grants revoked on upload_rate_limits and
+--    upload_sessions; disposable-email messages without dashes.
 
 -- ---- 1. upvote_count -------------------------------------------------------
 
@@ -241,67 +239,7 @@ GRANT ALL ON public.content_reports TO service_role;
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS notify_on_comments BOOLEAN NOT NULL DEFAULT TRUE;
 
--- ---- 7. Expired flight listings --------------------------------------------
--- Same column list as before (CREATE OR REPLACE keeps the grants); only the
--- WHERE clause changes.
-
-CREATE OR REPLACE VIEW public.flight_listings_with_profile AS
-SELECT
-  fl.id,
-  fl.user_id,
-  fl.departure_country,
-  fl.arrival_country,
-  fl.departure_city,
-  fl.arrival_city,
-  fl.departure_date,
-  fl.arrival_date,
-  fl.available_kgs,
-  fl.price_per_kg,
-  fl.currency,
-  fl.notes,
-  fl.is_active,
-  fl.created_at,
-  fl.updated_at,
-  p.display_name,
-  p.avatar_url,
-  CASE
-    WHEN p.id IS NOT NULL
-      AND auth.role() = 'authenticated'
-      AND COALESCE(p.show_social_handle, true) = true THEN
-      (
-        SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
-        FROM jsonb_array_elements(
-          CASE
-            WHEN jsonb_typeof(p.social_handles) = 'array' THEN p.social_handles
-            WHEN jsonb_typeof(p.social_handles) = 'object' THEN jsonb_build_array(p.social_handles)
-            ELSE '[]'::jsonb
-          END
-        ) AS elem
-        WHERE fl.contact_platforms IS NULL
-          OR elem ->> 'platform' IN (
-            SELECT jsonb_array_elements_text(fl.contact_platforms)
-          )
-      )
-    ELSE '[]'::jsonb
-  END AS social_handles,
-  CASE
-    WHEN p.id IS NOT NULL
-      AND auth.role() = 'authenticated'
-      AND COALESCE(p.show_social_handle, true) = true THEN true
-    ELSE false
-  END AS show_social_handle,
-  CASE WHEN auth.uid() = fl.user_id THEN fl.contact_platforms END AS contact_platforms
-FROM public.flight_listings fl
-LEFT JOIN public.profiles p
-  ON fl.user_id = p.id
-  AND (
-    (p.is_discoverable = true AND p.onboarding_completed = true AND p.display_name IS NOT NULL)
-    OR auth.uid() = fl.user_id
-  )
-WHERE (fl.is_active = true AND fl.departure_date >= CURRENT_DATE)
-   OR auth.uid() = fl.user_id;
-
--- ---- 8. Answers under deleted questions ------------------------------------
+-- ---- 7. Answers under deleted questions ------------------------------------
 
 CREATE OR REPLACE VIEW public.qa_answers_public AS
 SELECT

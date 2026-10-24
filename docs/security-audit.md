@@ -84,7 +84,7 @@ Edge Function changes take effect only after `supabase functions deploy` per env
 | No way to report reviews or comments; Q&A reports were never surfaced. | `content_reports` table (service role only) + `content-report` Edge Function (signed-in, 30/h) + Report buttons. New reports from both paths email `REPORT_ALERT_EMAIL`. |
 | Comment emails had no opt-out. | `profiles.notify_on_comments` + profile toggle; `comment-notify` skips opted-out owners and links to the setting. |
 | Uploads never attached to a review stayed public forever. | `list_orphan_media()` + `media-cleanup` Edge Function, run daily by pg_cron through Vault-stored URL + secret. Objects referenced by any review or draft are kept; only objects older than 2 days are removed. |
-| Expired flight listings stayed visible; Q&A answers under deleted questions stayed readable; `toggle_upvote` accepted soft-deleted reviews; the stats trigger recomputed on every review update; upload tables kept default client grants; notify secrets were compared with `!==`. | All fixed in 050 / the functions (`safeEqual` for shared secrets). |
+| Q&A answers under deleted questions stayed readable; `toggle_upvote` accepted soft-deleted reviews; the stats trigger recomputed on every review update; upload tables kept default client grants; notify secrets were compared with `!==`. | All fixed in 050 / the functions (`safeEqual` for shared secrets). |
 
 Verified locally with `supabase/verify/050_audit_followups.sql` (14 probes); CI now rebuilds the DB from migrations and runs every `supabase/verify/*.sql` file.
 

@@ -8,10 +8,6 @@
 --    inserts now get created_at = NOW(), owners can't rewrite created_at on
 --    their listings, and each user's check runs under a per-user lock so
 --    parallel inserts can't all pass the count together.
---
--- 3. flight_listings_with_profile hides departed trips (050), but the table's
---    public SELECT policy still returned every active row. The policy now
---    applies the same date rule as the view.
 
 -- ---- 2. Rate limits count server timestamps ---------------------------------
 
@@ -85,11 +81,3 @@ CREATE TRIGGER enforce_flight_listing_rate_limit_trigger
   BEFORE INSERT OR UPDATE OF created_at ON public.flight_listings
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_flight_listing_rate_limit();
-
--- ---- 3. Departed flights hidden on the table too ----------------------------
-
-DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.flight_listings;
-CREATE POLICY "Public read access to active flight listings"
-  ON public.flight_listings FOR SELECT
-  TO public
-  USING ((is_active = true AND departure_date >= CURRENT_DATE) OR auth.uid() = user_id);

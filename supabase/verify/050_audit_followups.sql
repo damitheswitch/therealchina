@@ -101,7 +101,7 @@ BEGIN
   END;
 END $$;
 
--- Expired listings are hidden from other viewers (anon here).
+-- Active departed and upcoming listings stay visible for the Past/Upcoming tabs.
 INSERT INTO public.flight_listings (id, user_id, departure_country, arrival_country, departure_date, arrival_date, available_kgs, price_per_kg)
 VALUES
   ('00000000-0000-4000-8000-0000000050d1', '00000000-0000-4000-8000-0000000050a2', 'Morocco', 'China', CURRENT_DATE - 3, CURRENT_DATE - 2, 5, 50),
@@ -109,8 +109,8 @@ VALUES
 SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
 SET LOCAL ROLE anon;
 INSERT INTO probe_results
-SELECT 'expired listing hidden, upcoming shown',
-  CASE WHEN NOT EXISTS (SELECT 1 FROM public.flight_listings_with_profile WHERE id = '00000000-0000-4000-8000-0000000050d1')
+SELECT 'past and upcoming active listings shown',
+  CASE WHEN EXISTS (SELECT 1 FROM public.flight_listings_with_profile WHERE id = '00000000-0000-4000-8000-0000000050d1')
         AND EXISTS (SELECT 1 FROM public.flight_listings_with_profile WHERE id = '00000000-0000-4000-8000-0000000050d2')
        THEN 'PASS' ELSE 'FAIL' END;
 RESET ROLE;

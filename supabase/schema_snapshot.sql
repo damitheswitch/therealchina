@@ -1339,8 +1339,7 @@ DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.f
 CREATE POLICY "Public read access to active flight listings"
   ON public.flight_listings FOR SELECT
   TO public
-  -- Same date rule as flight_listings_with_profile (migration 051).
-  USING ((is_active = true AND departure_date >= CURRENT_DATE) OR auth.uid() = user_id);
+  USING (is_active = true OR auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Authenticated insert access to flight listings" ON public.flight_listings;
 CREATE POLICY "Authenticated insert access to flight listings"
@@ -1464,10 +1463,7 @@ LEFT JOIN public.profiles p
     (p.is_discoverable = true AND p.onboarding_completed = true AND p.display_name IS NOT NULL)
     OR auth.uid() = fl.user_id
   )
--- Expired trips (departure date passed) are hidden from everyone but the
--- owner (migration 050).
-WHERE (fl.is_active = true AND fl.departure_date >= CURRENT_DATE)
-   OR auth.uid() = fl.user_id;
+WHERE fl.is_active = true OR auth.uid() = fl.user_id;
 
 GRANT SELECT ON public.flight_listings_with_profile TO anon;
 GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
