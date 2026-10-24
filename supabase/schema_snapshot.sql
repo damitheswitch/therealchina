@@ -541,8 +541,9 @@ $$;
 
 -- Resolves a "not listed" university by name when its slug can't identify it
 -- (non-Latin or generic-only name). Case/whitespace-insensitive match on name
--- or name_zh, serialized per name so concurrent submissions share one row
--- (migration 049). Called only by the review-submit Edge Function.
+-- or name_zh within the same city, serialized per name so concurrent
+-- submissions share one row (migrations 049, 051). A same-name school in
+-- another city gets its own row. Called only by the review-submit Edge Function.
 CREATE OR REPLACE FUNCTION public.find_or_create_university_by_name(
   p_name TEXT,
   p_city TEXT,
@@ -555,6 +556,7 @@ AS $$
 #variable_conflict use_column
 DECLARE
   v_key TEXT := lower(regexp_replace(btrim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+  v_city TEXT := lower(regexp_replace(btrim(coalesce(p_city, '')), '\s+', ' ', 'g'));
 BEGIN
   IF v_key = '' THEN
     RAISE EXCEPTION 'University name is required.';
@@ -567,10 +569,10 @@ BEGIN
   RETURN QUERY
   SELECT u.id, u.slug, false
   FROM public.universities u
-  WHERE lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
-     OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key
-  ORDER BY (lower(btrim(u.city)) IS NOT DISTINCT FROM lower(btrim(p_city))) DESC,
-           u.created_at
+  WHERE (lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
+         OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key)
+    AND lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city
+  ORDER BY u.created_at
   LIMIT 1;
   IF FOUND THEN
     RETURN;
@@ -727,7 +729,9 @@ END;
 $$;
 
 -- Migration 050: per-user limits on direct API inserts (auth.uid() set);
--- seeds and admin SQL run without a JWT and pass.
+-- seeds and admin SQL run without a JWT and pass. Migration 051: API inserts
+-- get created_at = NOW() (backdating would dodge the count), listing updates
+-- keep created_at, and the count runs under a per-user lock.
 CREATE OR REPLACE FUNCTION public.enforce_comment_rate_limit()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -739,6 +743,11 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RETURN NEW;
   END IF;
+
+  -- The quota counts created_at, so API callers can't choose it.
+  NEW.created_at := NOW();
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('comments.rate:' || NEW.user_id::TEXT, 0));
 
   IF (
     SELECT COUNT(*) FROM public.comments
@@ -762,6 +771,15 @@ BEGIN
   IF auth.uid() IS NULL THEN
     RETURN NEW;
   END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    NEW.created_at := OLD.created_at;
+    RETURN NEW;
+  END IF;
+
+  NEW.created_at := NOW();
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('flight_listings.rate:' || NEW.user_id::TEXT, 0));
 
   IF (
     SELECT COUNT(*) FROM public.flight_listings
@@ -1142,7 +1160,7 @@ CREATE TRIGGER enforce_comment_rate_limit_trigger
 
 DROP TRIGGER IF EXISTS enforce_flight_listing_rate_limit_trigger ON public.flight_listings;
 CREATE TRIGGER enforce_flight_listing_rate_limit_trigger
-  BEFORE INSERT ON public.flight_listings
+  BEFORE INSERT OR UPDATE OF created_at ON public.flight_listings
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_flight_listing_rate_limit();
 
@@ -1304,7 +1322,8 @@ DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.f
 CREATE POLICY "Public read access to active flight listings"
   ON public.flight_listings FOR SELECT
   TO public
-  USING (is_active = true OR auth.uid() = user_id);
+  -- Same date rule as flight_listings_with_profile (migration 051).
+  USING ((is_active = true AND departure_date >= CURRENT_DATE) OR auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Authenticated insert access to flight listings" ON public.flight_listings;
 CREATE POLICY "Authenticated insert access to flight listings"

@@ -4,6 +4,7 @@ import { usePrerenderData } from '../lib/prerenderData'
 import {
   upvoteCountsFromRows,
   sortReviews,
+  helpfulTopIsSettled,
   DEFAULT_REVIEW_SORT,
   REVIEW_SERVER_ORDER,
   type ReviewSort,
@@ -25,14 +26,15 @@ export interface ReviewsPageData {
 }
 
 const PAGE_SIZE = 50
-const HELPFUL_CANDIDATE_POOL = 1000
+// Page size for the 'helpful' candidate scan (PostgREST's default max-rows).
+const HELPFUL_CANDIDATE_PAGE = 1000
 
 // The /reviews feed. `sort` follows the shared ReviewSort model: the prerender
 // payload only matches the default 'newest' order, so any other sort bypasses
 // hydration and fetches. Column sorts ORDER BY server-side before the page
-// cap; 'helpful' ranks client-side (votes plus detail score) over the most
-// upvoted reviews, so the result is a global top-N, not "best of the latest
-// 50".
+// cap; 'helpful' ranks client-side (votes plus detail score), scanning the
+// most upvoted reviews until no unscanned review could still make the top
+// N, so the result is a global top-N, not "best of the latest 50".
 export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'newest') => {
   const pd = usePrerenderData<ReviewsPageData>('reviewsPage')
   const seeded = sort === DEFAULT_REVIEW_SORT ? pd : null
@@ -87,22 +89,30 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
         let helpfulCounts: Record<string, number> | null = null
 
         if (sort === 'helpful') {
-          // Candidate pool: the most-upvoted heads, capped explicitly rather
-          // than by PostgREST's silent max-rows limit. Detail scores are small
-          // next to vote counts, so the global top-N comes from this pool.
-          const headsRes = await supabase
-            .from('reviews')
-            .select(REVIEW_DETAIL_COLUMNS)
-            .order('upvote_count', { ascending: false })
-            .order('created_at', { ascending: false })
-            .limit(HELPFUL_CANDIDATE_POOL)
-            .abortSignal(controller.signal)
-          if (headsRes.error) throw headsRes.error
-          const heads = (headsRes.data as ReviewSortable[] | null) || []
-          helpfulCounts = upvoteCountsFromRows(heads)
-          const topIds = sortReviews(heads, 'helpful', helpfulCounts)
-            .slice(0, PAGE_SIZE)
-            .map((h) => h.id)
+          // Page through heads by upvote_count. Detail areas add up to
+          // DETAIL_AREA_COUNT points, so stop only once the current top-N
+          // can't be beaten by a review with fewer votes than the last page.
+          const headsById = new Map<string, ReviewSortable & { upvote_count: number }>()
+          let ranked: ReviewSortable[] = []
+          for (let from = 0; ; from += HELPFUL_CANDIDATE_PAGE) {
+            const headsRes = await supabase
+              .from('reviews')
+              .select(REVIEW_DETAIL_COLUMNS)
+              .order('upvote_count', { ascending: false })
+              .order('created_at', { ascending: false })
+              .order('id', { ascending: false })
+              .range(from, from + HELPFUL_CANDIDATE_PAGE - 1)
+              .abortSignal(controller.signal)
+            if (headsRes.error) throw headsRes.error
+            const page = (headsRes.data as (ReviewSortable & { upvote_count: number })[]) || []
+            for (const h of page) headsById.set(h.id, h)
+            helpfulCounts = upvoteCountsFromRows([...headsById.values()])
+            ranked = sortReviews([...headsById.values()], 'helpful', helpfulCounts)
+            if (page.length < HELPFUL_CANDIDATE_PAGE) break
+            const minFetched = page[page.length - 1].upvote_count ?? 0
+            if (helpfulTopIsSettled(ranked, PAGE_SIZE, helpfulCounts, minFetched)) break
+          }
+          const topIds = ranked.slice(0, PAGE_SIZE).map((h) => h.id)
           const { data, error: rowsError } = topIds.length
             ? await supabase
                 .from('reviews')

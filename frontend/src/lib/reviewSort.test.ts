@@ -8,6 +8,7 @@ import {
   isServerSortable,
   resolveAutoSort,
   sortReviews,
+  helpfulTopIsSettled,
 } from './reviewSort'
 
 const r = (id: string, rating: number, created_at: string | null) => ({ id, rating, created_at })
@@ -133,5 +134,25 @@ describe('upvoteCountsFromRows', () => {
   it('handles empty input', () => {
     expect(upvoteCountsFromRows(null)).toEqual({})
     expect(upvoteCountsFromRows([])).toEqual({})
+  })
+})
+
+describe('helpfulTopIsSettled', () => {
+  const thin = (id: string) => r(id, 4, '2025-01-01T00:00:00Z')
+
+  it('is not settled while fewer than limit candidates are ranked', () => {
+    expect(helpfulTopIsSettled([thin('a')], 2, { a: 100 }, 0)).toBe(false)
+  })
+
+  it('settles once the cutoff beats any unfetched score', () => {
+    // Unfetched reviews have at most 3 votes, so at most 3 + 7 = 10 points.
+    const ranked = [thin('a'), thin('b')]
+    expect(helpfulTopIsSettled(ranked, 2, { a: 20, b: 11 }, 3)).toBe(true)
+  })
+
+  it('keeps scanning when a detailed review with fewer votes could still win or tie', () => {
+    const ranked = [thin('a'), thin('b')]
+    expect(helpfulTopIsSettled(ranked, 2, { a: 20, b: 10 }, 3)).toBe(false)
+    expect(helpfulTopIsSettled(ranked, 2, { a: 1, b: 1 }, 1)).toBe(false)
   })
 })

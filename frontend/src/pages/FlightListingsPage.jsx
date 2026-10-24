@@ -71,7 +71,7 @@ export const FlightListingsPage = () => {
     loading,
     error: listingsError,
     refetch: refetchListings,
-  } = useFlightListings({ enabled: !!user })
+  } = useFlightListings({ enabled: !!user, userId: user?.id ?? null })
 
   // Surface fetch errors as a toast (preserves previous inline behavior).
   useEffect(() => {
