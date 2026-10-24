@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import type { Tables } from '../types/database.types'
+import { todayLocal } from '../lib/flightListings'
 
 const FLIGHT_LISTINGS_LIMIT = 200
 
@@ -42,15 +43,17 @@ export const useFlightListings = ({
     setLoading(true)
     setError(null)
     try {
-      // The view hides departed trips (except the viewer's own), so the
-      // board is ordered by departure: if the cap bites, it drops the trips
-      // furthest in the future, never ones that leave soon. The viewer's own
-      // listings load separately so My Flights and the owner controls see
-      // every one of them regardless of the cap.
+      // Public board: active, upcoming trips ordered by departure, so if the
+      // cap bites it drops the trips furthest in the future. The explicit
+      // filters keep the viewer's own past or closed trips (which the view
+      // also returns) from using up the cap. Those load separately, so My
+      // Flights and the owner controls see every one of them.
       const [boardRes, ownRes] = await Promise.all([
         supabase
           .from('flight_listings_with_profile')
           .select(FLIGHT_LISTING_COLUMNS)
+          .eq('is_active', true)
+          .gte('departure_date', todayLocal())
           .order('departure_date', { ascending: true })
           .order('created_at', { ascending: false })
           .limit(FLIGHT_LISTINGS_LIMIT),
