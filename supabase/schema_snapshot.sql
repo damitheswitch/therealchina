@@ -743,6 +743,9 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- The window below counts created_at, so the client never sets it.
+  NEW.created_at := NOW();
+
   IF (
     SELECT COUNT(*) FROM public.comments
     WHERE user_id = NEW.user_id
@@ -766,6 +769,9 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- The window below counts created_at, so the client never sets it.
+  NEW.created_at := NOW();
+
   IF (
     SELECT COUNT(*) FROM public.flight_listings
     WHERE user_id = NEW.user_id
@@ -773,6 +779,21 @@ BEGIN
   ) >= 10 THEN
     RAISE EXCEPTION 'You have posted 10 listings in the last 24 hours. Please try again tomorrow.'
       USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Migration 051: owners edit listings but never move created_at (the
+-- rate-limit window counts it).
+CREATE OR REPLACE FUNCTION public.preserve_flight_listing_created_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    NEW.created_at := OLD.created_at;
   END IF;
   RETURN NEW;
 END;
@@ -1149,6 +1170,12 @@ CREATE TRIGGER enforce_flight_listing_rate_limit_trigger
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_flight_listing_rate_limit();
 
+DROP TRIGGER IF EXISTS preserve_flight_listing_created_at_trigger ON public.flight_listings;
+CREATE TRIGGER preserve_flight_listing_created_at_trigger
+  BEFORE UPDATE ON public.flight_listings
+  FOR EACH ROW
+  EXECUTE FUNCTION public.preserve_flight_listing_created_at();
+
 DROP TRIGGER IF EXISTS sync_review_upvote_count_trigger ON public.upvotes;
 CREATE TRIGGER sync_review_upvote_count_trigger
   AFTER INSERT OR DELETE ON public.upvotes
@@ -1431,10 +1458,9 @@ LEFT JOIN public.profiles p
     (p.is_discoverable = true AND p.onboarding_completed = true AND p.display_name IS NOT NULL)
     OR auth.uid() = fl.user_id
   )
--- Expired trips (departure date passed) are hidden from everyone but the
--- owner (migration 050).
-WHERE (fl.is_active = true AND fl.departure_date >= CURRENT_DATE)
-   OR auth.uid() = fl.user_id;
+-- Departed trips stay listed: the board's Past tab shows them (migration 051
+-- reverted 050's date filter).
+WHERE fl.is_active = true OR auth.uid() = fl.user_id;
 
 GRANT SELECT ON public.flight_listings_with_profile TO anon;
 GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
@@ -1456,6 +1482,7 @@ GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_r
 REVOKE ALL ON FUNCTION public.sync_review_upvote_count() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.enforce_comment_rate_limit() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.enforce_flight_listing_rate_limit() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.preserve_flight_listing_created_at() FROM PUBLIC, anon, authenticated;
 
 -- refresh_university_stats runs inside trigger functions (security-definer
 -- owner privileges); it is not a client-callable surface.
