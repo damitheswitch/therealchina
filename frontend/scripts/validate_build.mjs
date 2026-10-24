@@ -46,6 +46,12 @@ const APP_SHELL_PATHS = new Set([
   '/reset-password',
   '/community',
 ])
+// App routes with dynamic segments (/profile/:id, /community/q/:slug). The
+// `/* /app.html 200` catch-all serves them, so links into them are valid.
+// Kept to these two prefixes so a typo'd static link still fails.
+const APP_SHELL_PREFIXES = ['/profile/', '/community/']
+const isAppShellPath = (href) =>
+  APP_SHELL_PATHS.has(href) || APP_SHELL_PREFIXES.some((p) => href.startsWith(p))
 const MEDIA_EXTS = /\.(png|jpe?g|gif|webp|avif|svg|mp4|webm|mov|woff2?|ttf|otf)(\?|#|$)/i
 const HOTLINK_HOSTS =
   /shanghairanking\.cn|images\.pexels\.com|picsum\.photos|cdn\.pixabay\.com|googleapis\.com|gstatic\.com/i
@@ -162,7 +168,7 @@ for (const { path, href } of linksToCheck) {
     routeSet.has(href) ||
     redirectTargets.has(href) ||
     spaRewrites.has(href) ||
-    APP_SHELL_PATHS.has(href) ||
+    isAppShellPath(href) ||
     distHas(href)
   )
     continue
