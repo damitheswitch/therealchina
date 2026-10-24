@@ -22,6 +22,9 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+      - name: Test deployment migration guard
+        run: node --test scripts/check_deployment_migrations.test.mjs
+        working-directory: .
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check

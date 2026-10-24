@@ -8,7 +8,27 @@ const FLIGHT_LISTINGS_LIMIT = 200
 type FlightListing = Tables<'flight_listings_with_profile'>
 
 const FLIGHT_LISTING_COLUMNS =
-  'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, display_name, avatar_url, social_handles, show_social_handle, contact_platforms'
+  'id, user_id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active, created_at, updated_at, display_name, avatar_url, social_handles, show_social_handle, contact_platforms'
+
+async function fetchOwnListings(userId: string | null): Promise<FlightListing[]> {
+  if (!userId) return []
+  const rows: FlightListing[] = []
+  let after: string | null = null
+  for (;;) {
+    let query = supabase
+      .from('flight_listings_with_profile')
+      .select(FLIGHT_LISTING_COLUMNS)
+      .eq('user_id', userId)
+      .order('id', { ascending: true })
+      .limit(FLIGHT_LISTINGS_LIMIT)
+    if (after) query = query.gt('id', after)
+    const { data, error } = await query
+    if (error) throw error
+    if (!data?.length) return rows
+    rows.push(...data)
+    after = data[data.length - 1].id
+  }
+}
 
 export const useFlightListings = ({
   enabled = true,
@@ -49,7 +69,7 @@ export const useFlightListings = ({
       // still shows departed active trips from everyone, and My Flights always
       // includes all of the owner's listings.
       const today = todayLocal()
-      const [upcomingRes, pastRes, ownRes] = await Promise.all([
+      const [upcomingRes, pastRes, ownRows] = await Promise.all([
         supabase
           .from('flight_listings_with_profile')
           .select(FLIGHT_LISTING_COLUMNS)
@@ -66,21 +86,14 @@ export const useFlightListings = ({
           .order('departure_date', { ascending: false })
           .order('created_at', { ascending: false })
           .limit(FLIGHT_LISTINGS_LIMIT),
-        userId
-          ? supabase
-              .from('flight_listings_with_profile')
-              .select(FLIGHT_LISTING_COLUMNS)
-              .eq('user_id', userId)
-              .order('departure_date', { ascending: true })
-          : Promise.resolve({ data: [] as FlightListing[], error: null }),
+        fetchOwnListings(userId),
       ])
 
       if (upcomingRes.error) throw upcomingRes.error
       if (pastRes.error) throw pastRes.error
-      if (ownRes.error) throw ownRes.error
       const merged: FlightListing[] = []
       const seen = new Set<string>()
-      for (const group of [ownRes.data, upcomingRes.data, pastRes.data]) {
+      for (const group of [ownRows, upcomingRes.data, pastRes.data]) {
         for (const row of (group as FlightListing[] | null) || []) {
           if (row.id && !seen.has(row.id)) {
             seen.add(row.id)

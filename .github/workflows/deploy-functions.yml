@@ -1,6 +1,6 @@
 # Deploys every Edge Function when code lands on staging (trc-staging) or
 # master (prod), so a merged function fix can't sit undeployed. Migrations are
-# not pushed here; they still go through `supabase db push` by hand.
+# not pushed here; deployment is blocked until they have been applied.
 # Requires the SUPABASE_ACCESS_TOKEN repo secret (owner step). Without it this
 # workflow is a no-op.
 name: Deploy Edge Functions
@@ -11,6 +11,9 @@ on:
     paths:
       - 'supabase/functions/**'
       - 'supabase/config.toml'
+      - 'supabase/migrations/**'
+      - 'scripts/check_deployment_migrations.mjs'
+      - '.github/workflows/deploy-functions.yml'
   workflow_dispatch:
 
 concurrency:
@@ -25,6 +28,12 @@ jobs:
       # staging → trc-staging, master → TRC prod.
       PROJECT_REF: ${{ github.ref_name == 'master' && 'hfinkagueeojyyrpauav' || 'pthlbalvkunugifbzgzk' }}
     steps:
+      - name: Reject unsupported deployment branches
+        run: |
+          case "$GITHUB_REF" in
+            refs/heads/staging|refs/heads/master) ;;
+            *) echo "Deploy only from staging or master"; exit 1 ;;
+          esac
       - name: Check for access token
         id: token
         run: |
@@ -40,6 +49,18 @@ jobs:
         if: steps.token.outputs.present == 'true'
         with:
           version: latest
+      - uses: actions/setup-node@v4
+        if: steps.token.outputs.present == 'true'
+        with:
+          node-version: 22
+      - name: Require all migrations on the deployment target
+        if: steps.token.outputs.present == 'true'
+        env:
+          SUPABASE_PROJECT_ID: ${{ env.PROJECT_REF }}
+        run: |
+          set -o pipefail
+          supabase migration list --project-ref "$PROJECT_REF" |
+            node scripts/check_deployment_migrations.mjs
       - name: Deploy all functions
         if: steps.token.outputs.present == 'true'
         # config.toml reads project_id from this variable; it must never be

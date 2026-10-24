@@ -745,10 +745,55 @@ BEGIN
 END;
 $$;
 
--- Migration 050: per-user limits on direct API inserts (auth.uid() set);
--- seeds and admin SQL run without a JWT and pass. Migration 051: API inserts
--- get created_at = NOW() (backdating would dodge the count), listing updates
--- keep created_at, and the count runs under a per-user lock.
+-- Migration 054: quota history is private and survives content deletion.
+CREATE TABLE public.posting_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('comment', 'flight')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX posting_events_user_kind_created
+  ON public.posting_events (user_id, kind, created_at);
+ALTER TABLE public.posting_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.posting_events FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.posting_events TO service_role;
+
+CREATE OR REPLACE FUNCTION public.consume_posting_quota(p_user_id UUID, p_kind TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_limit INT;
+  v_window INTERVAL;
+BEGIN
+  IF p_kind = 'comment' THEN
+    v_limit := 20;
+    v_window := INTERVAL '1 hour';
+  ELSIF p_kind = 'flight' THEN
+    v_limit := 10;
+    v_window := INTERVAL '24 hours';
+  ELSE
+    RAISE EXCEPTION 'Unknown posting quota';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('posting:' || p_kind || ':' || p_user_id::TEXT, 0));
+  DELETE FROM public.posting_events
+  WHERE user_id = p_user_id AND kind = p_kind
+    AND created_at <= NOW() - v_window;
+  IF (SELECT COUNT(*) FROM public.posting_events
+      WHERE user_id = p_user_id AND kind = p_kind
+        AND created_at > NOW() - v_window) >= v_limit THEN
+    RAISE EXCEPTION 'Posting limit reached. Please try again later.' USING ERRCODE = 'P0001';
+  END IF;
+  INSERT INTO public.posting_events (user_id, kind) VALUES (p_user_id, p_kind);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.consume_posting_quota(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.consume_posting_quota(UUID, TEXT) TO service_role;
+
+-- API timestamps are server-set; seeds/admin SQL without a JWT bypass quotas.
 CREATE OR REPLACE FUNCTION public.enforce_comment_rate_limit()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -756,23 +801,9 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  -- Only API callers are limited; seeds and admin SQL run without a JWT.
-  IF auth.uid() IS NULL THEN
-    RETURN NEW;
-  END IF;
-
-  -- The quota counts created_at, so API callers can't choose it.
-  NEW.created_at := NOW();
-
-  PERFORM pg_advisory_xact_lock(hashtextextended('comments.rate:' || NEW.user_id::TEXT, 0));
-
-  IF (
-    SELECT COUNT(*) FROM public.comments
-    WHERE user_id = NEW.user_id
-      AND created_at > NOW() - INTERVAL '1 hour'
-  ) >= 20 THEN
-    RAISE EXCEPTION 'You have posted a lot of comments in the last hour. Please wait a little and try again.'
-      USING ERRCODE = 'P0001';
+  IF auth.uid() IS NOT NULL THEN
+    NEW.created_at := NOW();
+    PERFORM public.consume_posting_quota(NEW.user_id, 'comment');
   END IF;
   RETURN NEW;
 END;
@@ -785,26 +816,13 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  IF auth.uid() IS NULL THEN
-    RETURN NEW;
-  END IF;
-
-  IF TG_OP = 'UPDATE' THEN
-    NEW.created_at := OLD.created_at;
-    RETURN NEW;
-  END IF;
-
-  NEW.created_at := NOW();
-
-  PERFORM pg_advisory_xact_lock(hashtextextended('flight_listings.rate:' || NEW.user_id::TEXT, 0));
-
-  IF (
-    SELECT COUNT(*) FROM public.flight_listings
-    WHERE user_id = NEW.user_id
-      AND created_at > NOW() - INTERVAL '24 hours'
-  ) >= 10 THEN
-    RAISE EXCEPTION 'You have posted 10 listings in the last 24 hours. Please try again tomorrow.'
-      USING ERRCODE = 'P0001';
+  IF auth.uid() IS NOT NULL THEN
+    IF TG_OP = 'UPDATE' THEN
+      NEW.created_at := OLD.created_at;
+    ELSE
+      NEW.created_at := NOW();
+      PERFORM public.consume_posting_quota(NEW.user_id, 'flight');
+    END IF;
   END IF;
   RETURN NEW;
 END;

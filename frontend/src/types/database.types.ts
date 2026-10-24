@@ -23,6 +23,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      posting_events: {
+        Row: {
+          id: string
+          user_id: string
+          kind: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          kind: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          kind?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       blocked_email_domains: {
         Row: {
           domain: string
@@ -1200,6 +1221,10 @@ export type Database = {
         Returns: string
       }
       cleanup_upload_rate_limits: { Args: Record<PropertyKey, never>; Returns: undefined }
+      consume_posting_quota: {
+        Args: { p_user_id: string; p_kind: string }
+        Returns: undefined
+      }
       hook_reject_disposable_email: { Args: { event: Json }; Returns: Json }
       immutable_array_to_string: { Args: { arr: string[]; sep: string }; Returns: string }
       is_email_allowed: { Args: { p_email: string }; Returns: boolean }

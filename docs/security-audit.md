@@ -92,3 +92,18 @@ Verified locally with `supabase/verify/050_audit_followups.sql` (14 probes); CI 
 - `REPORT_ALERT_EMAIL` (function secret) to receive report alerts.
 - `MEDIA_CLEANUP_SECRET` (function secret), plus Vault secrets `media_cleanup_url` (`https://<ref>.supabase.co/functions/v1/media-cleanup`) and `media_cleanup_secret` (same value). Until both Vault secrets exist the cron job does nothing.
 - `SUPABASE_ACCESS_TOKEN` GitHub secret to turn on `deploy-functions.yml`.
+
+## Review follow-ups (migration 054)
+
+- Posting quotas now use private `posting_events` history, so deleting a
+  comment or flight does not restore the quota. Recent existing posts are
+  backfilled during the upgrade. Expired events are pruned on the user's next
+  post; deleting an account removes its history.
+- Function deployments check the target migration history and stop if any
+  migration in the checkout is missing. Apply migrations first, then rerun
+  the failed deployment workflow. Only `staging` and `master` may deploy.
+- My Flights uses ID-cursor pagination rather than relying on a single
+  uncapped request. Upcoming and Past Flights retain separate row budgets.
+- Regression coverage: `supabase/verify/054_persistent_posting_quotas.sql`,
+  `frontend/src/hooks/useFlightListings.test.tsx`, and
+  `scripts/check_deployment_migrations.test.mjs`.
