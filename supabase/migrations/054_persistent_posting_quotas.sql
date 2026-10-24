@@ -1,6 +1,10 @@
 -- Posting history survives content deletion. Existing recent posts retain
 -- their quota usage when upgrading from the row-counting triggers.
-BEGIN;
+--
+-- No BEGIN/COMMIT here: the Supabase CLI already runs each migration file in
+-- one transaction together with its schema_migrations row, and an explicit
+-- COMMIT would end that transaction early. The LOCK below is held until the
+-- CLI's transaction commits.
 
 -- Hold writes until both the backfill and trigger replacements are installed.
 LOCK TABLE public.comments, public.flight_listings IN SHARE ROW EXCLUSIVE MODE;
@@ -92,5 +96,3 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
-COMMIT;
