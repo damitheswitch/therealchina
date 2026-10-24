@@ -45,8 +45,12 @@ BEGIN
   FROM public.universities u
   WHERE (lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
          OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key)
-    AND lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city
-  ORDER BY u.created_at
+    -- Same city, or no recorded city (province-only rows). Two known,
+    -- different cities never match; an exact city match wins.
+    AND (u.city IS NULL OR btrim(u.city) = ''
+         OR lower(regexp_replace(btrim(u.city), '\s+', ' ', 'g')) = v_city)
+  ORDER BY (lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city) DESC,
+           u.created_at
   LIMIT 1;
   IF FOUND THEN
     RETURN;

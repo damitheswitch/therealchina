@@ -566,16 +566,21 @@ BEGIN
   -- at the end of the calling transaction.
   PERFORM pg_advisory_xact_lock(hashtextextended('universities.name:' || v_key, 0));
 
-  -- Same name AND same city only: a generic name can belong to different
-  -- universities in different cities, and a review attached to the wrong
-  -- one can't be moved back automatically.
+  -- Same name, and either the same city or no recorded city (province-only
+  -- rows). Two known, different cities never match: a generic name can
+  -- belong to different universities, and a review attached to the wrong
+  -- one can't be moved back automatically. An exact city match wins.
   RETURN QUERY
   SELECT u.id, u.slug, false
   FROM public.universities u
   WHERE (lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
          OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key)
-    AND lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city
-  ORDER BY u.created_at
+    -- Same city, or no recorded city (province-only rows). Two known,
+    -- different cities never match; an exact city match wins.
+    AND (u.city IS NULL OR btrim(u.city) = ''
+         OR lower(regexp_replace(btrim(u.city), '\s+', ' ', 'g')) = v_city)
+  ORDER BY (lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city) DESC,
+           u.created_at
   LIMIT 1;
   IF FOUND THEN
     RETURN;
