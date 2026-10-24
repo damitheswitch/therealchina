@@ -116,6 +116,12 @@ BEGIN
   INSERT INTO probe_results VALUES ('uni name match ignores case',
     CASE WHEN v_slug = 'verify-uni-049' AND NOT v_created THEN 'PASS' ELSE 'FAIL: got ' || v_slug END);
 
+  -- 9. The same name in another city is a different university.
+  SELECT r.slug, r.created INTO v_slug, v_created
+  FROM public.find_or_create_university_by_name('Verify Uni', 'Chengdu', 'verify-uni-049-chengdu') r;
+  INSERT INTO probe_results VALUES ('same name, other city gets its own row',
+    CASE WHEN v_slug = 'verify-uni-049-chengdu' AND v_created THEN 'PASS' ELSE 'FAIL: got ' || v_slug END);
+
   -- 8. Clients can't call the resolver directly.
   BEGIN
     SET LOCAL ROLE authenticated;
