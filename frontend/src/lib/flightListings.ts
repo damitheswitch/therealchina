@@ -32,6 +32,19 @@ export const isOwn = (
   userId: string | null | undefined
 ): boolean => Boolean(userId && listing.user_id === userId)
 
+// The board loads a capped set of everyone's listings plus the viewer's own
+// listings uncapped, so an owner can always find, edit or close theirs.
+// Dedupes by id (own rows win) and keeps newest-posted first.
+export const mergeListingSets = (
+  general: FlightListing[],
+  own: FlightListing[]
+): FlightListing[] => {
+  const byId = new Map<string, FlightListing>()
+  for (const listing of general) if (listing.id) byId.set(listing.id, listing)
+  for (const listing of own) if (listing.id) byId.set(listing.id, listing)
+  return [...byId.values()].sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+}
+
 // Rows a tab is allowed to show. Inactive (is_active <> true) listings are
 // owner-only: they never enter Upcoming/Past, and enter All only for the
 // owner — matching what the flight_listings_with_profile view returns.

@@ -6,6 +6,7 @@ import {
   flightCounts,
   hasDeparted,
   isOwn,
+  mergeListingSets,
   sortListings,
   type FlightListing,
 } from './flightListings'
@@ -201,5 +202,25 @@ describe('contactPlatformsToStore', () => {
 
   it('passes NULL through untouched (failed picker load never rewrites)', () => {
     expect(contactPlatformsToStore(null, all)).toBeNull()
+  })
+})
+
+describe('mergeListingSets', () => {
+  it('keeps own listings the capped set missed, without duplicates', () => {
+    const general = [
+      l('b', OTHER, '2026-10-02', true, { created_at: '2026-09-20T00:00:00Z' }),
+      l('a', ME, '2026-10-01', true, { created_at: '2026-09-10T00:00:00Z' }),
+    ]
+    const own = [
+      l('a', ME, '2026-10-01', true, { created_at: '2026-09-10T00:00:00Z', notes: 'fresh' }),
+      l('old', ME, '2026-01-01', false, { created_at: '2025-12-01T00:00:00Z' }),
+    ]
+    const merged = mergeListingSets(general, own)
+    expect(merged.map((x) => x.id)).toEqual(['b', 'a', 'old'])
+    expect(merged.find((x) => x.id === 'a')?.notes).toBe('fresh')
+  })
+
+  it('handles empty inputs', () => {
+    expect(mergeListingSets([], [])).toEqual([])
   })
 })
