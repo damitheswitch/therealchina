@@ -35,6 +35,8 @@ import {
   clearLocalDraft,
   isDraftWorthSaving,
   mapDraftStepToScreen,
+  withLiveMedia,
+  EXPIRED_DRAFT_MEDIA_MESSAGE,
   type ReviewDraftPayload,
 } from '../lib/reviewDrafts'
 import {
@@ -216,6 +218,15 @@ export const ReviewWizard = ({
     if (editMode || authLoading) return
 
     const controller = new AbortController()
+    // localStorage drafts can outlive their uploads (server cleanup can't see
+    // them), so drop media that no longer exists before showing the draft.
+    const applyLocalDraft = async (local: ReviewDraftPayload): Promise<boolean> => {
+      const live = await withLiveMedia(local, controller.signal)
+      if (controller.signal.aborted) return false
+      applyDraftPayload(live.payload)
+      if (live.dropped) showToast(EXPIRED_DRAFT_MEDIA_MESSAGE, 'error')
+      return true
+    }
     const run = async () => {
       let loaded = false
       let lookupFailed = false
@@ -264,7 +275,7 @@ export const ReviewWizard = ({
           if (local && isDraftWorthSaving(local)) {
             const sameUni = !uniParam || local.selectedUni === uniParam
             if (sameUni) {
-              applyDraftPayload(local)
+              if (!(await applyLocalDraft(local))) return
               loaded = true
             }
           }
@@ -278,7 +289,7 @@ export const ReviewWizard = ({
           if (local && isDraftWorthSaving(local)) {
             const sameUni = !uniParam || local.selectedUni === uniParam
             if (sameUni) {
-              applyDraftPayload(local)
+              if (!(await applyLocalDraft(local))) return
               clearLocalDraft()
               loaded = true
             }

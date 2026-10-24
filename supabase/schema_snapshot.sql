@@ -2205,8 +2205,10 @@ REVOKE ALL ON public.content_reports FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.content_reports TO service_role;
 
 -- Objects in review-media older than p_min_age that no review (live or
--- soft-deleted) and no draft references. position() is an exact substring
--- match: object names contain '_' which LIKE would treat as a wildcard.
+-- soft-deleted) and no draft references (migration 055). The referenced set
+-- is built once from every string in reviews.media / review_drafts.payload
+-- and anti-joined; names outside [A-Za-z0-9/._-] are never listed, since
+-- exact equality can't see a percent-encoded URL.
 CREATE OR REPLACE FUNCTION public.list_orphan_media(p_min_age INTERVAL, p_limit INT)
 RETURNS TABLE(name TEXT)
 LANGUAGE sql
@@ -2214,24 +2216,51 @@ STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
+  WITH strings AS (
+    SELECT s #>> '{}' AS s
+    FROM public.reviews AS r,
+         jsonb_path_query(coalesce(r.media, '[]'::jsonb), 'strict $.** ? (@.type() == "string")') AS s
+    UNION ALL
+    SELECT s #>> '{}'
+    FROM public.review_drafts AS d,
+         jsonb_path_query(d.payload, 'strict $.** ? (@.type() == "string")') AS s
+  ),
+  referenced AS (
+    SELECT DISTINCT coalesce(substring(s FROM '/review-media/([^?#]+)'), s) AS name
+    FROM strings
+  )
   SELECT o.name
   FROM storage.objects AS o
   WHERE o.bucket_id = 'review-media'
     AND o.created_at < NOW() - p_min_age
-    AND NOT EXISTS (
-      SELECT 1 FROM public.reviews AS r
-      WHERE position(o.name IN r.media::text) > 0
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM public.review_drafts AS d
-      WHERE position(o.name IN d.payload::text) > 0
-    )
+    AND o.name ~ '^[A-Za-z0-9/._-]+$'
+    AND NOT EXISTS (SELECT 1 FROM referenced AS x WHERE x.name = o.name)
   ORDER BY o.created_at
   LIMIT LEAST(GREATEST(p_limit, 1), 1000);
 $$;
 
 REVOKE ALL ON FUNCTION public.list_orphan_media(INTERVAL, INT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.list_orphan_media(INTERVAL, INT) TO service_role;
+
+-- Submitted object names that are not in the review-media bucket (migration
+-- 055). review-submit rejects those instead of publishing broken images.
+CREATE OR REPLACE FUNCTION public.missing_review_media(p_names TEXT[])
+RETURNS TABLE(name TEXT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT DISTINCT n
+  FROM unnest(coalesce(p_names, ARRAY[]::TEXT[])) AS n
+  WHERE NOT EXISTS (
+    SELECT 1 FROM storage.objects AS o
+    WHERE o.bucket_id = 'review-media' AND o.name = n
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.missing_review_media(TEXT[]) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.missing_review_media(TEXT[]) TO service_role;
 
 -- Called by pg_cron. Reads the function URL + shared secret from Vault
 -- (media_cleanup_url / media_cleanup_secret) and does nothing until both

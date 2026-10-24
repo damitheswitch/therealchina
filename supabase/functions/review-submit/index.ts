@@ -30,8 +30,10 @@ import {
 } from './newUniversity.ts'
 import {
   LIMITS,
+  MEDIA_EXPIRED_MESSAGE,
   VALID_CURRENT_STATUS,
   asTrimmedString,
+  mediaObjectNames,
   validateReviewFields,
 } from '../_shared/reviewFields.ts'
 
@@ -224,6 +226,22 @@ async function handleSubmit(req: Request): Promise<Response> {
       { error: err instanceof Error ? err.message : 'Invalid submission' },
       400
     )
+  }
+
+  // Media must still exist. An anonymous draft kept in localStorage can hold
+  // uploads that media-cleanup has since removed; publishing those would show
+  // broken images. Fails closed if the lookup errors.
+  if (fields.media.length) {
+    const { data: missing, error: missingError } = await supabaseAdmin.rpc('missing_review_media', {
+      p_names: mediaObjectNames(fields.media, MEDIA_URL_PREFIX),
+    })
+    if (missingError) {
+      console.error('Media existence check failed:', missingError)
+      return jsonResponse(req, { error: 'Could not check your photos. Please try again.' }, 500)
+    }
+    if ((missing as { name: string }[] | null)?.length) {
+      return jsonResponse(req, { error: MEDIA_EXPIRED_MESSAGE }, 400)
+    }
   }
 
   // Anonymous reviews carry browser-generated capabilities so the same person

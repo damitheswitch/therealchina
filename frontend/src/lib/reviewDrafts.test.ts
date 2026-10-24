@@ -12,6 +12,7 @@ import {
   clearLocalDraft,
   hasLocalDraftForUniversity,
   mapDraftStepToScreen,
+  withLiveMedia,
   DRAFT_PAYLOAD_VERSION,
   type ReviewDraft,
   type ReviewDraftPayload,
@@ -159,5 +160,52 @@ describe('local draft fallback', () => {
     saveLocalDraft({ ...emptyPayload, selectedUni: 'tsinghua', rating: 5 })
     expect(hasLocalDraftForUniversity('tsinghua')).toBe(true)
     expect(hasLocalDraftForUniversity('fudan')).toBe(false)
+  })
+})
+
+describe('withLiveMedia', () => {
+  const url = (name: string) =>
+    `https://x.supabase.co/storage/v1/object/public/review-media/reviews/${name}`
+  const withMedia = (...names: string[]): ReviewDraftPayload => ({
+    ...emptyPayload,
+    media: names.map((n) => ({ url: url(n), type: 'image' as const })),
+  })
+
+  it('drops uploads storage reports as gone and keeps the rest', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const href = String(input)
+      if (href.endsWith('gone.jpg')) return new Response(null, { status: 404 })
+      if (href.endsWith('old.jpg')) return new Response(null, { status: 400 })
+      return new Response(null, { status: 200 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const { payload, dropped } = await withLiveMedia(withMedia('ok.jpg', 'gone.jpg', 'old.jpg'))
+    expect(dropped).toBe(2)
+    expect(payload.media.map((m) => m.url)).toEqual([url('ok.jpg')])
+    expect(fetchMock).toHaveBeenCalledWith(
+      url('ok.jpg'),
+      expect.objectContaining({ method: 'HEAD' })
+    )
+    vi.unstubAllGlobals()
+  })
+
+  it('keeps media when the check itself fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('network down')
+      })
+    )
+    const draft = withMedia('a.jpg')
+    expect(await withLiveMedia(draft)).toEqual({ payload: draft, dropped: 0 })
+    vi.unstubAllGlobals()
+  })
+
+  it('skips the network when the draft has no media', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await withLiveMedia(emptyPayload)).toEqual({ payload: emptyPayload, dropped: 0 })
+    expect(fetchMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })

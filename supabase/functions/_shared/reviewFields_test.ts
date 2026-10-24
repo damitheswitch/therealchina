@@ -1,5 +1,10 @@
 import { assertEquals, assertThrows } from 'jsr:@std/assert'
-import { validateReviewFields, validateBoostPatch, validateMedia } from './reviewFields.ts'
+import {
+  mediaObjectNames,
+  validateReviewFields,
+  validateBoostPatch,
+  validateMedia,
+} from './reviewFields.ts'
 
 const PREFIX = 'https://example.supabase.co/storage/v1/object/public/review-media/'
 
@@ -137,4 +142,18 @@ Deno.test('boost patch rejects invalid values with the same rules as full valida
   assertThrows(() => validateBoostPatch({ startYear: 1800 }))
   assertThrows(() => validateBoostPatch({ subscores: { rating_cost: 9 } }))
   assertThrows(() => validateBoostPatch({ program: 'x'.repeat(121) }))
+})
+
+Deno.test('mediaObjectNames maps public URLs to bucket paths', () => {
+  const media = validateMedia(
+    [
+      { url: `${PREFIX}reviews/abc/1-photo.jpg`, type: 'image' },
+      { url: `${PREFIX}reviews/def/2-clip.mp4?t=1#x`, type: 'video' },
+    ],
+    PREFIX
+  )
+  assertEquals(mediaObjectNames(media, PREFIX), [
+    'reviews/abc/1-photo.jpg',
+    'reviews/def/2-clip.mp4',
+  ])
 })
