@@ -1,5 +1,5 @@
 import type { Tables } from '../types/database.types'
-import { detailScore, type ReviewDetailInput } from './reviewDetail'
+import { DETAIL_AREA_COUNT, detailScore, type ReviewDetailInput } from './reviewDetail'
 
 // Shared review sort model. 'helpful' ranks by upvotes + filled detail
 // areas — PostgREST can't ORDER BY a related-row count, so hooks rank that
@@ -105,4 +105,27 @@ export const countByReviewId = (
     counts[row.review_id] = (counts[row.review_id] ?? 0) + 1
   }
   return counts
+}
+
+// The global 'helpful' feed ranks a pool of the most-upvoted reviews. A
+// review outside that pool has at most minPoolVotes upvotes, and detail
+// areas add at most DETAIL_AREA_COUNT, so it can only reach the top `take`
+// if its votes are at least (score of the take-th pool entry) minus
+// DETAIL_AREA_COUNT. Returns the vote range worth fetching as extra
+// candidates, or null when the pool already decides the top `take` exactly
+// (it holds the whole corpus, or nothing outside it can catch up).
+export const helpfulExtraCandidateRange = (
+  pool: readonly (ReviewSortable & { upvote_count?: number | null })[],
+  poolCap: number,
+  take: number
+): { minVotes: number; maxVotes: number } | null => {
+  if (pool.length < poolCap || pool.length === 0) return null
+  const counts = upvoteCountsFromRows(pool)
+  const ranked = sortReviews(pool, 'helpful', counts)
+  const cutoff = ranked[Math.min(take, ranked.length) - 1]
+  const cutoffScore = (counts[cutoff.id] ?? 0) + detailScore(cutoff)
+  const minPoolVotes = Math.min(...pool.map((r) => r.upvote_count ?? 0))
+  const floor = Math.max(0, cutoffScore - DETAIL_AREA_COUNT)
+  if (floor > minPoolVotes) return null
+  return { minVotes: floor, maxVotes: minPoolVotes }
 }

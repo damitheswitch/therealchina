@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import {
+  helpfulExtraCandidateRange,
   upvoteCountsFromRows,
   sortReviews,
   DEFAULT_REVIEW_SORT,
@@ -88,8 +89,9 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
 
         if (sort === 'helpful') {
           // Candidate pool: the most-upvoted heads, capped explicitly rather
-          // than by PostgREST's silent max-rows limit. Detail scores are small
-          // next to vote counts, so the global top-N comes from this pool.
+          // than by PostgREST's silent max-rows limit. When the pool is full,
+          // detailed reviews just below its vote floor can still outrank pool
+          // entries, so that vote band is fetched as extra candidates.
           const headsRes = await supabase
             .from('reviews')
             .select(REVIEW_DETAIL_COLUMNS)
@@ -98,7 +100,25 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
             .limit(HELPFUL_CANDIDATE_POOL)
             .abortSignal(controller.signal)
           if (headsRes.error) throw headsRes.error
-          const heads = (headsRes.data as ReviewSortable[] | null) || []
+          let heads = (headsRes.data as ReviewSortable[] | null) || []
+          const extra = helpfulExtraCandidateRange(heads, HELPFUL_CANDIDATE_POOL, PAGE_SIZE)
+          if (extra) {
+            const extraRes = await supabase
+              .from('reviews')
+              .select(REVIEW_DETAIL_COLUMNS)
+              .gte('upvote_count', extra.minVotes)
+              .lte('upvote_count', extra.maxVotes)
+              .order('upvote_count', { ascending: false })
+              .order('created_at', { ascending: false })
+              .limit(HELPFUL_CANDIDATE_POOL)
+              .abortSignal(controller.signal)
+            if (extraRes.error) throw extraRes.error
+            const seen = new Set(heads.map((h) => h.id))
+            heads = [
+              ...heads,
+              ...((extraRes.data as ReviewSortable[] | null) || []).filter((h) => !seen.has(h.id)),
+            ]
+          }
           helpfulCounts = upvoteCountsFromRows(heads)
           const topIds = sortReviews(heads, 'helpful', helpfulCounts)
             .slice(0, PAGE_SIZE)

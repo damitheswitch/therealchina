@@ -3,6 +3,7 @@ import {
   compareReviews,
   countByReviewId,
   upvoteCountsFromRows,
+  helpfulExtraCandidateRange,
   HELPFUL_DEFAULT_MIN_REVIEWS,
   isReviewSort,
   isServerSortable,
@@ -133,5 +134,36 @@ describe('upvoteCountsFromRows', () => {
   it('handles empty input', () => {
     expect(upvoteCountsFromRows(null)).toEqual({})
     expect(upvoteCountsFromRows([])).toEqual({})
+  })
+})
+
+describe('helpfulExtraCandidateRange', () => {
+  const head = (id: string, votes: number, extra: Record<string, unknown> = {}) => ({
+    id,
+    rating: 4,
+    created_at: `2026-01-${String((Number(id.replace(/\D/g, '')) % 28) + 1).padStart(2, '0')}T00:00:00Z`,
+    upvote_count: votes,
+    ...extra,
+  })
+
+  it('needs no extra fetch when the pool holds the whole corpus', () => {
+    expect(helpfulExtraCandidateRange([head('r1', 3), head('r2', 0)], 1000, 50)).toBeNull()
+  })
+
+  it('asks for the band below the pool floor when a full pool is close', () => {
+    // A full pool of one-vote, no-detail reviews: a zero-vote review with
+    // every detail area outranks them, so votes 0..1 must be fetched.
+    const pool = Array.from({ length: 10 }, (_, i) => head(`r${i + 1}`, 1))
+    expect(helpfulExtraCandidateRange(pool, 10, 3)).toEqual({ minVotes: 0, maxVotes: 1 })
+  })
+
+  it('needs no extra fetch when nothing outside the pool can catch up', () => {
+    // Top 3 sit at 50 votes and the pool floor is 1: a review with at most
+    // 1 vote plus every detail area can't reach 50.
+    const pool = [
+      ...Array.from({ length: 3 }, (_, i) => head(`r${i + 1}`, 50)),
+      ...Array.from({ length: 7 }, (_, i) => head(`r${i + 4}`, 1)),
+    ]
+    expect(helpfulExtraCandidateRange(pool, 10, 3)).toBeNull()
   })
 })
