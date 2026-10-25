@@ -44,34 +44,42 @@ const supabase = createClient(url, key)
 const UNI_COLS = `${UNI_COLUMNS}, created_at`
 const REVIEW_COLS = REVIEW_COLUMNS
 
-const fetchAll = async (table: string, columns: string, activeOnly = false): Promise<unknown[]> => {
+const fetchAll = async (
+  table: string,
+  columns: string,
+  orderBy: string,
+  activeOnly = false
+): Promise<unknown[]> => {
   const rows: unknown[] = []
   for (let from = 0; ; from += PAGE) {
     let query = supabase.from(table).select(columns)
     // RLS already hides soft-deleted reviews — this makes the exclusion
     // explicit in the public export payload, independent of policy details.
     if (activeOnly) query = query.is('deleted_at', null)
-    const { data, error } = await query.range(from, from + PAGE - 1)
+    // Stable order: without ORDER BY, Postgres may return overlapping or
+    // missing rows across pages.
+    const { data, error } = await query.order(orderBy).range(from, from + PAGE - 1)
     if (error) throw new Error(`${table}: ${error.message}`)
     rows.push(...(data ?? []))
     if (!data || data.length < PAGE) return rows
   }
 }
 
-const universities = await fetchAll('universities', UNI_COLS)
+const universities = await fetchAll('universities', UNI_COLS, 'id')
 const stats = await fetchAll(
   'university_stats',
-  'university_id, avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count, updated_at'
+  'university_id, avg_rating, review_count, has_verified_review, recommend_yes_count, recommend_maybe_count, recommend_no_count, updated_at',
+  'university_id'
 )
-const reviews = await fetchAll('reviews', REVIEW_COLS, true)
-const authors = await fetchAll('profile_public', 'id, display_name, avatar_url')
-// review_id only — voter identity never enters the public payload.
-const upvotes = await fetchAll('upvotes', 'review_id')
+const reviews = await fetchAll('reviews', REVIEW_COLS, 'id', true)
+const authors = await fetchAll('profile_public', 'id, display_name, avatar_url', 'id')
+// Upvote counts ship on the review rows (reviews.upvote_count) — no voter
+// rows are exported.
 
 mkdirSync(OUT_DIR, { recursive: true })
-for (const [name, rows] of Object.entries({ universities, stats, reviews, authors, upvotes })) {
+for (const [name, rows] of Object.entries({ universities, stats, reviews, authors })) {
   writeFileSync(resolve(OUT_DIR, `${name}.json`), JSON.stringify(rows))
 }
 console.log(
-  `exported ${universities.length} universities, ${stats.length} stats, ${reviews.length} reviews, ${authors.length} author profiles, ${upvotes.length} upvotes → ${OUT_DIR}`
+  `exported ${universities.length} universities, ${stats.length} stats, ${reviews.length} reviews, ${authors.length} author profiles → ${OUT_DIR}`
 )

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { useToast } from '../contexts/ToastContext'
 import { useFlightListings } from '../hooks/useFlightListings'
+import { FlightSafetyNotice } from '../components/FlightSafetyNotice'
 import { FlightListingCard } from '../components/FlightListingCard'
 import { FlightListingForm } from '../components/FlightListingForm'
 import { SocialHandlesSetupModal } from '../components/SocialHandlesSetupModal'
@@ -70,7 +71,7 @@ export const FlightListingsPage = () => {
     loading,
     error: listingsError,
     refetch: refetchListings,
-  } = useFlightListings({ enabled: !!user })
+  } = useFlightListings({ enabled: !!user, userId: user?.id ?? null })
 
   // Surface fetch errors as a toast (preserves previous inline behavior).
   useEffect(() => {
@@ -255,6 +256,7 @@ export const FlightListingsPage = () => {
       <div className="section-header">
         <h1 className="section-title">Flight Listings</h1>
         <p className="page-subtitle">Find people flying your way and send packages through them</p>
+        <FlightSafetyNotice />
       </div>
 
       {/* Inline filter toolbar + Post CTA */}

@@ -7,10 +7,10 @@
 // Full review card/page row — everything ReviewCard, summary and display
 // helpers read (all migration-022 fields).
 export const REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career'
+  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, upvote_count'
 
 // Minimal row for "has more pages" / total-count probes.
-export const REVIEW_HEAD_COLUMNS = 'id, rating, created_at'
+export const REVIEW_HEAD_COLUMNS = 'id, rating, created_at, upvote_count'
 
 // Head row for the client-ranked 'helpful' sort: the sort keys plus every
 // column lib/reviewDetail reads. 'text' stays out — it's the heavy field and
@@ -23,7 +23,7 @@ export const UNI_COLUMNS =
 
 // Own-profile row (the columns ProfileContext exposes to the app).
 export const PROFILE_COLUMNS =
-  'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent'
+  'display_name, bio, location, university, program, social_handles, social_platform, social_handle, show_social_handle, is_discoverable, onboarding_completed, home_country, current_status, languages_spoken, email_consent, notify_on_comments'
 
 // university embed shapes used alongside REVIEW_COLUMNS.
 export const REVIEW_UNI_EMBED = 'universities(name, city, slug)'

@@ -48,7 +48,7 @@ export const TRUST_PAGES: TrustDoc[] = [
         id: 'contact',
         body: [
           'Email nihao@therealchina.net. We read everything, though replies can take a few days.',
-          "If your university's details are wrong (name, city, ranking, website), send us the source and we'll fix it. We don't remove reviews at a university's request — the editorial policy explains why.",
+          "If your university's details are wrong (name, city, ranking, website), send us the source and we'll fix it. We don't remove reviews at a university's request. The editorial policy explains why.",
         ],
       },
       {
@@ -87,7 +87,7 @@ export const TRUST_PAGES: TrustDoc[] = [
         h: 'Review guidelines',
         id: 'review-guidelines',
         body: [
-          "Write about your own experience: teaching quality, dorms, canteens, city life, admin support, costs. Specific beats general — 'the international office took three weeks to issue my JW202' helps people more than 'admin is slow'.",
+          "Write about your own experience: teaching quality, dorms, canteens, city life, admin support, costs. Specific beats general: 'the international office took three weeks to issue my JW202' helps people more than 'admin is slow'.",
           "Be honest and fair. Include what worked and what didn't. No review needs to be balanced, but honest nuance is more useful than a rant or an ad.",
           "Don't post content about people who aren't you, personal data, or hate speech. Don't review a university you never attended. One review per person per university.",
         ],

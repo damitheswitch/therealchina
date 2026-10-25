@@ -252,6 +252,34 @@ export const clearLocalDraft = (): void => {
   }
 }
 
+// The server's orphan-media cleanup can't see browser storage, so uploads in
+// an old localStorage draft may already be gone. Drop those items before the
+// wizard shows them; review-submit would reject them anyway. Only a definite
+// 400/404 from storage counts as gone: a network error keeps the item.
+export const withLiveMedia = async (
+  payload: ReviewDraftPayload,
+  signal?: AbortSignal
+): Promise<{ payload: ReviewDraftPayload; dropped: number }> => {
+  const media = payload.media ?? []
+  if (!media.length) return { payload, dropped: 0 }
+  const alive = await Promise.all(
+    media.map(async (item) => {
+      try {
+        const res = await fetch(item.url, { method: 'HEAD', signal })
+        return res.status !== 400 && res.status !== 404
+      } catch (err) {
+        if (signal?.aborted) throw err
+        return true
+      }
+    })
+  )
+  const kept = media.filter((_, i) => alive[i])
+  return { payload: { ...payload, media: kept }, dropped: media.length - kept.length }
+}
+
+export const EXPIRED_DRAFT_MEDIA_MESSAGE =
+  'Some photos or videos in your saved draft expired. Add them again before you publish.'
+
 export const hasLocalDraftForUniversity = (slug: string): boolean => {
   const draft = loadLocalDraft()
   if (!isDraftWorthSaving(draft)) return false

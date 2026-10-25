@@ -1,6 +1,8 @@
 [build]
   base = "frontend"
-  command = "npm run build"
+  # The SEO validator gates every deploy. It detects the production context
+  # itself (CONTEXT + URL) and validates indexable output there.
+  command = "npm run build && node scripts/validate_build.mjs"
   publish = "dist"
 
 [build.environment]

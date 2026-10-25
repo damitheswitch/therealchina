@@ -10,7 +10,7 @@ export const LandingPage = () => {
     <>
       <Seo
         path="/"
-        description="Honest reviews of Chinese universities by international students — real costs, campus life and the support nobody puts in a brochure."
+        description="Honest reviews of Chinese universities by international students: real costs, campus life and the support nobody puts in a brochure."
         jsonLd={[stringify(websiteSchema()), stringify(orgSchema())]}
       />
       <section className="hero">

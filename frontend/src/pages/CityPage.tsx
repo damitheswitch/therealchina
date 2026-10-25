@@ -43,7 +43,7 @@ export const CityPage = () => {
       <Seo
         path={`/city/${slug}`}
         title={`Universities in ${city}`}
-        description={`${universities.length} universit${universities.length === 1 ? 'y' : 'ies'} in ${city}, China — honest reviews by international students on costs, programs and campus life.`}
+        description={`${universities.length} universit${universities.length === 1 ? 'y' : 'ies'} in ${city}, China. Honest reviews by international students on costs, programs and campus life.`}
         index={indexable}
         jsonLd={[
           stringify(

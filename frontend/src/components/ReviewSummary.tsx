@@ -178,7 +178,7 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
 
       {reviewCount <= 4 && (
         <p className="early-note">
-          <Icons.Info /> Early data — based on {reviewCount} review{reviewCount === 1 ? '' : 's'} so
+          <Icons.Info /> Early data: based on {reviewCount} review{reviewCount === 1 ? '' : 's'} so
           far
         </p>
       )}

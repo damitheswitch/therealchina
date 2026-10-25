@@ -3,6 +3,7 @@ import {
   jsonResponse,
   supabaseAdmin,
 } from '../_shared/guard.ts'
+import { safeEqual } from '../_shared/safeEqual.ts'
 
 // qa-notify: emails a question's author when someone answers it.
 //
@@ -69,7 +70,7 @@ async function sendEmail(to: string, subject: string, text: string, html: string
 
 async function handleNotify(req: Request): Promise<Response> {
   const secret = Deno.env.get('QA_NOTIFY_SECRET')
-  if (!secret || req.headers.get('x-notify-secret') !== secret) {
+  if (!secret || !safeEqual(req.headers.get('x-notify-secret') ?? '', secret)) {
     return jsonResponse(req, { error: 'Unauthorized' }, 401)
   }
 

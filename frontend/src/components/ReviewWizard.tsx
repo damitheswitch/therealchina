@@ -35,6 +35,8 @@ import {
   clearLocalDraft,
   isDraftWorthSaving,
   mapDraftStepToScreen,
+  withLiveMedia,
+  EXPIRED_DRAFT_MEDIA_MESSAGE,
   type ReviewDraftPayload,
 } from '../lib/reviewDrafts'
 import {
@@ -52,7 +54,6 @@ import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
-import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
@@ -217,6 +218,15 @@ export const ReviewWizard = ({
     if (editMode || authLoading) return
 
     const controller = new AbortController()
+    // localStorage drafts can outlive their uploads (server cleanup can't see
+    // them), so drop media that no longer exists before showing the draft.
+    const applyLocalDraft = async (local: ReviewDraftPayload): Promise<boolean> => {
+      const live = await withLiveMedia(local, controller.signal)
+      if (controller.signal.aborted) return false
+      applyDraftPayload(live.payload)
+      if (live.dropped) showToast(EXPIRED_DRAFT_MEDIA_MESSAGE, 'error')
+      return true
+    }
     const run = async () => {
       let loaded = false
       let lookupFailed = false
@@ -265,7 +275,7 @@ export const ReviewWizard = ({
           if (local && isDraftWorthSaving(local)) {
             const sameUni = !uniParam || local.selectedUni === uniParam
             if (sameUni) {
-              applyDraftPayload(local)
+              if (!(await applyLocalDraft(local))) return
               loaded = true
             }
           }
@@ -279,7 +289,7 @@ export const ReviewWizard = ({
           if (local && isDraftWorthSaving(local)) {
             const sameUni = !uniParam || local.selectedUni === uniParam
             if (sameUni) {
-              applyDraftPayload(local)
+              if (!(await applyLocalDraft(local))) return
               clearLocalDraft()
               loaded = true
             }
@@ -488,7 +498,7 @@ export const ReviewWizard = ({
     }
     if (s === 2) {
       if (values.reviewText.trim().length < 10) {
-        return 'One honest sentence is enough — but other students do need that much.'
+        return 'One honest sentence is enough, but other students do need that much.'
       }
       return null
     }
@@ -900,8 +910,6 @@ export const ReviewWizard = ({
           )}
         </div>
       </div>
-
-      <RegistrationNudge />
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>

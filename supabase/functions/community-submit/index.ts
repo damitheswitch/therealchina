@@ -7,6 +7,8 @@ import {
   SUPABASE_URL,
 } from '../_shared/guard.ts'
 import { asTrimmedString } from '../_shared/reviewFields.ts'
+import { isWeakSlug, slugify, withRandomSuffix } from '../_shared/slug.ts'
+import { SITE_URL, sendOwnerAlert } from '../_shared/alert.ts'
 
 // Gated write path for Community Q&A (Phase 6). All three actions require a
 // signed-in caller whose profile has completed onboarding — anonymous
@@ -39,18 +41,9 @@ const QA_CATEGORIES = new Set([
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function slugify(title: string): string {
-  // Same scheme as review-submit's slugify, capped at 120 to leave room for
-  // a numeric suffix inside the 140-char CHECK.
-  const slug = title
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 120)
-    .replace(/-+$/g, '')
-  return slug || 'question'
-}
+// qa_questions.slug CHECK caps slugs at 140 characters.
+const QUESTION_SLUG_MAX = 140
+const QUESTION_INSERT_ATTEMPTS = 4
 
 async function notifyAnswer(answerId: string) {
   // Queue hop: community-submit is the only write path, so it calls
@@ -149,11 +142,14 @@ Deno.serve(async (req) => {
       // unlinked rather than failing on a typo.
     }
 
-    const base = slugify(title)
-    // Retry on the slug UNIQUE index — suffixes keep links clean when titles
-    // collide.
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const slug = attempt === 0 ? base : `${base}-${attempt + 1}`
+    // Clean slug first; on a collision (or a title with no Latin characters,
+    // which has no usable base at all) retry with a random suffix. Numbered
+    // suffixes ran out after four identical titles and then failed every post.
+    const base = slugify(title, 120)
+    const weak = isWeakSlug(base)
+    for (let attempt = 0; attempt < QUESTION_INSERT_ATTEMPTS; attempt++) {
+      const slug =
+        !weak && attempt === 0 ? base : withRandomSuffix(base, QUESTION_SLUG_MAX, 'question')
       const { data, error } = await supabaseAdmin
         .from('qa_questions')
         .insert({
@@ -250,6 +246,19 @@ Deno.serve(async (req) => {
     if (error && error.code !== '23505') {
       console.error('Report insert error:', error)
       return jsonResponse(req, { error: 'Could not send that. Please try again.' }, 500)
+    }
+    // First report from this user on this target: tell the owner. Repeats
+    // (23505) were already alerted.
+    if (!error) {
+      await sendOwnerAlert(`Reported Q&A ${targetType} on The Real China`, [
+        `A signed-in user reported a Q&A ${targetType}.`,
+        ``,
+        `Reason: ${reason ?? '(none given)'}`,
+        `${targetType === 'question' ? 'Question' : 'Answer'} id: ${targetId}`,
+        `Reporter id: ${caller.sub}`,
+        ``,
+        `Community: ${SITE_URL}/community`,
+      ])
     }
     return jsonResponse(req, { ok: true }, 200)
   }

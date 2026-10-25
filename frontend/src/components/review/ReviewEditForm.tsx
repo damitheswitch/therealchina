@@ -114,7 +114,7 @@ export const ReviewEditForm = ({
               editReview.universities
                 ? [editReview.universities.name, editReview.universities.city]
                     .filter(Boolean)
-                    .join(' — ')
+                    .join(', ')
                 : ''
             }
           />

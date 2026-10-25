@@ -15,6 +15,7 @@ import {
   jsonResponse,
 } from '../_shared/guard.ts'
 import { verifyTurnstile } from '../_shared/turnstile.ts'
+import { anonRateKey } from '../_shared/rateKey.ts'
 import { detectMediaType } from './media_detect.ts'
 
 // ---- Config --------------------------------------------------------------------
@@ -190,13 +191,12 @@ async function handleUpload(req: Request): Promise<Response> {
   // trusted request IP for anonymous ones.
   const ip = getClientIP(req)
   const isAnon = jwt.role === 'anon'
-  const rateKey = isAnon ? `ip:${ip}` : `user:${jwt.sub}`
+  // An unknown IP shares one bucket instead of skipping the limiter.
+  const rateKey = isAnon ? anonRateKey('ip:', ip) : `user:${jwt.sub}`
   const rateLimit = isAnon ? ANON_UPLOAD_LIMIT_PER_HOUR : AUTH_UPLOAD_LIMIT_PER_HOUR
-  if (!isAnon || ip !== 'unknown') {
-    const allowed = await checkRateLimit(rateKey, rateLimit)
-    if (!allowed) {
-      return jsonResponse(req, { error: RATE_LIMIT_MESSAGE }, 429)
-    }
+  const allowed = await checkRateLimit(rateKey, rateLimit)
+  if (!allowed) {
+    return jsonResponse(req, { error: RATE_LIMIT_MESSAGE }, 429)
   }
 
   // Consume a session slot atomically, only after the request has passed

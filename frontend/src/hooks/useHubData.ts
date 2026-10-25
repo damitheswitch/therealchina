@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
 import { REVIEW_COLUMNS, UNI_COLUMNS } from '../lib/queryColumns'
+import { upvoteCountsFromRows } from '../lib/reviewSort'
 import type { HubDef } from '../lib/seo/programs'
 import type { Tables } from '../types/database.types'
 
@@ -101,7 +102,7 @@ export const useHubData = (
         const uniIds = [...new Set(rows.map((r) => r.university_id))]
         const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[]
         const reviewIds = rows.map((r) => r.id)
-        const [uniRes, authorRes, upRes, mineRes] = await Promise.all([
+        const [uniRes, authorRes, mineRes] = await Promise.all([
           uniIds.length
             ? supabase
                 .from('universities')
@@ -117,13 +118,6 @@ export const useHubData = (
                 .in('id', authorIds)
                 .abortSignal(controller.signal)
             : Promise.resolve({ data: [], error: null }),
-          reviewIds.length
-            ? supabase
-                .from('upvotes')
-                .select('review_id')
-                .in('review_id', reviewIds)
-                .abortSignal(controller.signal)
-            : Promise.resolve({ data: [], error: null }),
           userId && reviewIds.length
             ? supabase
                 .from('upvotes')
@@ -135,11 +129,8 @@ export const useHubData = (
         ])
         if (uniRes.error) throw uniRes.error
         if (authorRes.error) throw authorRes.error
-        const counts: Record<string, number> = {}
-        for (const u of (upRes.data as { review_id: string }[] | null) || []) {
-          counts[u.review_id] = (counts[u.review_id] ?? 0) + 1
-        }
-        setUpvoteCounts(counts)
+        // Rows carry the trigger-maintained upvote_count (migration 050).
+        setUpvoteCounts(upvoteCountsFromRows(rows))
         setUpvotedMine(
           new Set(((mineRes.data as { review_id: string }[] | null) || []).map((r) => r.review_id))
         )

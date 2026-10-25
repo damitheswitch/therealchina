@@ -1,5 +1,5 @@
 import type { Tables } from '../types/database.types'
-import { detailScore, type ReviewDetailInput } from './reviewDetail'
+import { DETAIL_AREA_COUNT, detailScore, type ReviewDetailInput } from './reviewDetail'
 
 // Shared review sort model. 'helpful' ranks by upvotes + filled detail
 // areas — PostgREST can't ORDER BY a related-row count, so hooks rank that
@@ -84,6 +84,17 @@ export const REVIEW_SERVER_ORDER: Record<
 export const isServerSortable = (sort: ReviewSort): sort is Exclude<ReviewSort, 'helpful'> =>
   sort !== 'helpful'
 
+// Review rows → review_id → count, from the trigger-maintained
+// reviews.upvote_count column (migration 050). Rows without the column
+// (older prerender payloads) count as zero.
+export const upvoteCountsFromRows = (
+  rows: readonly { id: string; upvote_count?: number | null }[] | null | undefined
+): Record<string, number> => {
+  const counts: Record<string, number> = {}
+  for (const row of rows ?? []) counts[row.id] = row.upvote_count ?? 0
+  return counts
+}
+
 // upvotes rows → review_id → count. Batched `.in()` rows, never per-row
 // queries (same convention as the engagement-counts effects).
 export const countByReviewId = (
@@ -94,4 +105,21 @@ export const countByReviewId = (
     counts[row.review_id] = (counts[row.review_id] ?? 0) + 1
   }
   return counts
+}
+
+// 'helpful' candidates are fetched in upvote_count-descending pages. A review
+// not fetched yet has at most `minFetchedUpvotes` votes, so its score is at
+// most minFetchedUpvotes + DETAIL_AREA_COUNT. Once the `limit`-th best fetched
+// score is strictly above that, no unfetched review can enter (or tie into)
+// the top `limit`, and paging can stop.
+export const helpfulTopIsSettled = (
+  ranked: readonly ReviewSortable[],
+  limit: number,
+  upvoteCounts: Record<string, number>,
+  minFetchedUpvotes: number
+): boolean => {
+  if (ranked.length < limit) return false
+  const cutoff = ranked[limit - 1]
+  const cutoffScore = (upvoteCounts[cutoff.id] ?? 0) + detailScore(cutoff)
+  return cutoffScore > minFetchedUpvotes + DETAIL_AREA_COUNT
 }

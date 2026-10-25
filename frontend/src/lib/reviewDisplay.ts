@@ -111,8 +111,8 @@ export const getSubScores = (review: ReviewDisplayData): SubScore[] =>
   )
 
 const formatYearRange = (start: number | null, end: number | null): string => {
-  if (start && end) return `${start}–${end}`
-  if (start) return `${start}–present`
+  if (start && end) return `${start} to ${end}`
+  if (start) return `${start} to present`
   if (end) return `until ${end}`
   return ''
 }

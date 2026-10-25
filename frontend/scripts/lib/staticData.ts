@@ -48,6 +48,7 @@ export interface ReviewRow {
   program: string | null
   degree_level: string | null
   created_at: string
+  upvote_count?: number | null
   [k: string]: unknown
 }
 export interface AuthorRow {
@@ -64,25 +65,22 @@ const load = <T>(dir: string, name: string): T => {
   return JSON.parse(readFileSync(p, 'utf8')) as T
 }
 
-export interface UpvoteRow {
-  review_id: string
-}
-
 export const loadData = (dataDir: string) => {
   const universities = load<UniRow[]>(dataDir, 'universities')
   const stats = load<StatsRow[]>(dataDir, 'stats')
   const reviews = load<ReviewRow[]>(dataDir, 'reviews')
   const authors = load<AuthorRow[]>(dataDir, 'authors')
-  const upvotes = existsSync(resolve(dataDir, 'upvotes.json'))
-    ? load<UpvoteRow[]>(dataDir, 'upvotes')
-    : []
-  return { universities, stats, reviews, authors, upvotes }
+  return { universities, stats, reviews, authors }
 }
 
-/** review_id → public count. Voter identity is never exported. */
-export const upvoteCounts = (upvotes: UpvoteRow[]): Record<string, number> => {
+/**
+ * review_id → public count, from reviews.upvote_count (migration 050). Zero
+ * counts are left out: readers treat a missing id as 0, and the payload is
+ * public HTML.
+ */
+export const upvoteCounts = (rows: ReviewRow[]): Record<string, number> => {
   const counts: Record<string, number> = {}
-  for (const u of upvotes) counts[u.review_id] = (counts[u.review_id] ?? 0) + 1
+  for (const r of rows) if (r.upvote_count) counts[r.id] = r.upvote_count
   return counts
 }
 
@@ -163,8 +161,7 @@ export const universityPageData = (
   uni: UniRow,
   reviews: ReviewRow[],
   stats: StatsRow[],
-  authors: AuthorRow[],
-  upvotes: UpvoteRow[] = []
+  authors: AuthorRow[]
 ) => {
   const rows = reviews
     .filter((r) => r.university_id === uni.id)
@@ -174,10 +171,8 @@ export const universityPageData = (
     authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])
   )
   const stat = stats.find((s) => s.university_id === uni.id) ?? null
-  const rowIds = new Set(rows.map((r) => r.id))
-  // review_id → count for this uni's reviews only. Voter identity never
-  // enters the payload — same export rule as reviewsPageData/hubPageData.
-  const counts = upvoteCounts(upvotes.filter((u) => rowIds.has(u.review_id)))
+  // review_id → count for this uni's reviews only.
+  const counts = upvoteCounts(rows)
   // Ship rows in the order the page's default view renders them (D4.3):
   // 'helpful' past HELPFUL_DEFAULT_MIN_REVIEWS — same comparator the hook
   // applies — else 'newest'. Static HTML and the first hydrated paint then
@@ -201,19 +196,13 @@ import { normalizeDegree, DEGREE_HUBS } from '../../src/lib/seo/degrees'
 
 const REVIEW_PAGE_SIZE = 50
 
-export const reviewsPageData = (
-  reviews: ReviewRow[],
-  unis: UniRow[],
-  authors: AuthorRow[],
-  upvotes: UpvoteRow[]
-) => {
+export const reviewsPageData = (reviews: ReviewRow[], unis: UniRow[], authors: AuthorRow[]) => {
   const rows = [...reviews]
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, REVIEW_PAGE_SIZE)
   const uniIds = new Set(rows.map((r) => r.university_id))
   const authorIds = new Set(rows.map((r) => r.user_id).filter(Boolean))
-  const rowIds = new Set(rows.map((r) => r.id))
-  const counts = upvoteCounts(upvotes.filter((u) => rowIds.has(u.review_id)))
+  const counts = upvoteCounts(rows)
   return {
     reviews: rows,
     universities: Object.fromEntries(
@@ -297,16 +286,15 @@ export const allHubs = (unis: UniRow[], reviews: ReviewRow[], stats: StatsRow[])
   ]
 }
 
-export const hubPageData = (entry: HubEntry, authors: AuthorRow[], upvotes: UpvoteRow[]) => {
+export const hubPageData = (entry: HubEntry, authors: AuthorRow[]) => {
   const authorIds = new Set(entry.reviews.map((r) => r.user_id).filter(Boolean))
-  const rowIds = new Set(entry.reviews.map((r) => r.id))
   return {
     kind: entry.kind,
     hub: entry.hub,
     universities: entry.universities,
     reviews: entry.reviews,
     authors: Object.fromEntries(authors.filter((a) => authorIds.has(a.id)).map((a) => [a.id, a])),
-    upvoteCounts: upvoteCounts(upvotes.filter((u) => rowIds.has(u.review_id))),
+    upvoteCounts: upvoteCounts(entry.reviews),
   }
 }
 

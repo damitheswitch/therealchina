@@ -6,6 +6,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useComments } from '../hooks/useComments'
 import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
+import { ReportButton } from './ReportButton'
 
 // CommentSection component — a segmented pill: "Comments (n)" toggles the
 // thread, "Write" opens the composer. `initialCount` comes from the parent's
@@ -150,6 +151,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                     {!authorProfiles[comment.user_id]?.display_name && <strong>Anonymous</strong>}
                   </div>
                   <p style={{ marginTop: 'var(--sp-1)' }}>{comment.text}</p>
+                  <ReportButton targetType="comment" targetId={comment.id} />
                   {user && !replyTo && (
                     <button
                       onClick={() => setReplyTo(comment.id)}
@@ -210,6 +212,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                           )}
                         </div>
                         <p style={{ marginTop: 'var(--sp-1)' }}>{reply.text}</p>
+                        <ReportButton targetType="comment" targetId={reply.id} />
                       </div>
                     ))}
                   </div>

@@ -63,3 +63,47 @@ New anonymous write surface: `review-boost` Edge Function + `apply_anonymous_boo
 - **Not opened.** Media upload still requires an `upload_sessions` token minted by a user JWT — anonymous Boost cannot attach media. `review-manage` remains JWT-only. `claim_token`/`email` claim flow unchanged for legacy rows.
 - **Residual trade-off.** A bad-token flood on a known review ID can never block the real reviewer — the digest is checked before the throttle, so a valid capability saves during backoff, and only invalid tokens are made to wait (≤10 min each, never cumulative). The flood's only cost is cheap early-reject RPC calls. If targeted abuse shows up, revisit with a per-caller signal that doesn't depend on client-supplied headers.
 - **Verified on staging:** anonymous publish (digest stored) → 5-card Boost saves (no media card), wrong-token 403 then 429 backoff, boost-token device match in `review-claim`, anonymous claim clears the hash (post-claim token → 404). Still unverified on staging: signed-in Boost and `?draft=` resume (Phase 2 doc tracks those).
+
+## Follow-up audit fixes (2026-10-24)
+
+| Finding | Fix | Verified |
+|---|---|---|
+| `reviews` still had an authenticated INSERT policy. Any onboarded user could POST to PostgREST and skip `review-submit`: no rate limit, no media URL allowlist, client-chosen `created_at`. The frontend never used it. | Migration `049_close_direct_write_paths.sql`: policy dropped, `REVOKE INSERT, UPDATE, DELETE ON reviews FROM PUBLIC, anon, authenticated`. | Local `db reset` + `supabase/verify/049_write_paths.sql`: direct insert as `authenticated` → permission denied. |
+| `comments` UPDATE policy let authors rewrite `review_id`/`parent_id`/`created_at`; nesting was only checked on INSERT, so updates could build reply-to-reply chains or move comments across reviews. No comment edit feature exists. | Same migration: policy dropped, UPDATE revoked per role, `enforce_comment_nesting` now also runs on `UPDATE OF parent_id, review_id` and requires a reply to share its parent's review. | Same script: update denied, nested and cross-review replies rejected, normal replies and own-comment deletes still work. |
+| `review-submit` and `media-upload` skipped the anonymous rate limit when the client IP resolved to `unknown` (fail-open). | `_shared/rateKey.ts`: unknown-IP callers share one bucket per surface and the event is logged. | `rateKey_test.ts`. Still to check on staging: what `getClientIP` returns behind the Supabase edge (if it's a shared edge IP, every anonymous caller shares one bucket). |
+| Slug fallbacks: a non-Latin "not listed" university name slugified to `university` and every later one reused that row; non-Latin or repeated Q&A titles ran out of `-2…-4` suffixes and returned 500. | `_shared/slug.ts`: weak slugs (empty, tiny, or only generic words) never match existing rows by slug; universities match on `name`/`name_zh` instead, through `find_or_create_university_by_name` (migration 049): case/whitespace-insensitive, and lookup + insert run under a per-name advisory lock so concurrent submissions share one row. New rows get a random suffix on weak slugs and on collisions. | `slug_test.ts`; `supabase/verify/049_write_paths.sql` (case-variant reuse, not client-callable); concurrent-call check against Postgres 15. |
+
+Edge Function changes take effect only after `supabase functions deploy` per environment.
+
+## Audit follow-ups, part 2 (migration 050, 2026-10-24)
+
+| Finding | Fix |
+|---|---|
+| Upvote counts came from downloading the `upvotes` table, which truncated silently past PostgREST's 1000-row cap. | `reviews.upvote_count`, kept in sync by a trigger on `upvotes` and backfilled. The frontend and prerender pipeline read counts from review rows. **Open finding #5 (voter identity readable by anon) is now the contract step:** once this frontend is live everywhere, a later migration replaces the public `upvotes` SELECT policy with own-rows only. |
+| Comments and flight listings had no write rate limit. | `BEFORE INSERT` triggers: 20 comments per user per hour, 10 listings per user per 24h. They only apply to API callers (`auth.uid()` set). |
+| No way to report reviews or comments; Q&A reports were never surfaced. | `content_reports` table (service role only) + `content-report` Edge Function (signed-in, 30/h) + Report buttons. New reports from both paths email `REPORT_ALERT_EMAIL`. |
+| Comment emails had no opt-out. | `profiles.notify_on_comments` + profile toggle; `comment-notify` skips opted-out owners and links to the setting. |
+| Uploads never attached to a review stayed public forever. | `list_orphan_media()` + `media-cleanup` Edge Function, run daily by pg_cron through Vault-stored URL + secret. Objects referenced by any review or draft are kept; only objects older than 2 days are removed. Migration 055 builds the referenced set once and anti-joins it (the 050 scan grew as objects x reviews), and never lists names a URL could percent-encode. Anonymous localStorage drafts are invisible to the scan, so the wizard drops expired media on restore and review-submit rejects media that no longer exists (`missing_review_media`). |
+| Q&A answers under deleted questions stayed readable; `toggle_upvote` accepted soft-deleted reviews; the stats trigger recomputed on every review update; upload tables kept default client grants; notify secrets were compared with `!==`. | All fixed in 050 / the functions (`safeEqual` for shared secrets). |
+
+Verified locally with `supabase/verify/050_audit_followups.sql` (14 probes); CI now rebuilds the DB from migrations and runs every `supabase/verify/*.sql` file.
+
+**Owner setup needed per environment:**
+- `REPORT_ALERT_EMAIL` (function secret) to receive report alerts.
+- `MEDIA_CLEANUP_SECRET` (function secret), plus Vault secrets `media_cleanup_url` (`https://<ref>.supabase.co/functions/v1/media-cleanup`) and `media_cleanup_secret` (same value). Until both Vault secrets exist the cron job does nothing.
+- `SUPABASE_ACCESS_TOKEN` GitHub secret to turn on `deploy-functions.yml`.
+
+## Review follow-ups (migration 054)
+
+- Posting quotas now use private `posting_events` history, so deleting a
+  comment or flight does not restore the quota. Recent existing posts are
+  backfilled during the upgrade. Expired events are pruned on the user's next
+  post; deleting an account removes its history.
+- Function deployments check the target migration history and stop if any
+  migration in the checkout is missing. Apply migrations first, then rerun
+  the failed deployment workflow. Only `staging` and `master` may deploy.
+- My Flights uses ID-cursor pagination rather than relying on a single
+  uncapped request. Upcoming and Past Flights retain separate row budgets.
+- Regression coverage: `supabase/verify/054_persistent_posting_quotas.sql`,
+  `frontend/src/hooks/useFlightListings.test.tsx`, and
+  `scripts/check_deployment_migrations.test.mjs`.

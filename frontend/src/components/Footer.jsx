@@ -25,7 +25,7 @@ export const Footer = () => (
         <Link to="/about#contact">Contact</Link>
       </div>
       <p className="footer-copy">
-        The Real China — Authentic student reviews. Built by the community, for the community.
+        The Real China: authentic student reviews. Built by the community, for the community.
       </p>
     </div>
   </footer>
