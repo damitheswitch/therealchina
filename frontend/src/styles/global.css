@@ -613,6 +613,15 @@ h3 {
   background: var(--seal-red-tint);
   color: var(--seal-red);
 }
+.quick-rating-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: var(--r-full);
+  white-space: nowrap;
+  background: var(--rice-warm);
+  color: var(--ink-soft);
+}
 .review-proscons {
   display: grid;
   grid-template-columns: 1fr 1fr;

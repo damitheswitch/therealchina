@@ -65,7 +65,11 @@ const MyReviewCard = ({
         </div>
       </div>
       <ReviewContext review={review} />
-      <p className="review-text">{review.text}</p>
+      {review.text ? (
+        <p className="review-text">{review.text}</p>
+      ) : (
+        <span className="quick-rating-badge">Quick rating</span>
+      )}
       <ReviewExtras review={review} />
       {Array.isArray(review.media) && review.media.length > 0 && (
         <MediaGallery media={review.media} />

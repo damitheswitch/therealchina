@@ -79,7 +79,9 @@ export const MEDIA_EXPIRED_MESSAGE =
 // never part of it.
 export interface ValidatedReviewFields {
   rating: number
-  text: string
+  // Null = quick rating (rating/tags only). The reviews.review_kind generated
+  // column derives the public label from this.
+  text: string | null
   program: string | null
   degree_level: string | null
   media: MediaItem[]
@@ -179,8 +181,10 @@ export function validateReviewFields(
   }
   const rating = body.rating
 
+  // Text is optional (quick ratings are rating/tags only) — but when present
+  // it keeps the same length bounds as before.
   const text = asTrimmedString(body.text, LIMITS.text.max)
-  if (!text || text.length < LIMITS.text.min) {
+  if (text && text.length < LIMITS.text.min) {
     throw new Error(`Review text must be at least ${LIMITS.text.min} characters`)
   }
 

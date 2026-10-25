@@ -40,7 +40,12 @@ export type ReviewSummaryInput = Pick<
   | 'tuition_range'
   | 'living_cost_range'
   | SubScoreKey
->
+> & {
+  // Not part of the summary numbers — carried so the indexable rule can
+  // tell written reviews from quick ratings without fetching text. Optional:
+  // older fixtures and partial rows may not carry it.
+  review_kind?: string | null
+}
 
 // Shared by the listing card pill: yes / (yes + maybe + no), rounded.
 // Returns null when nobody answered so callers can hide the badge entirely.

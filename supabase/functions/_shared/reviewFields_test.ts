@@ -26,6 +26,28 @@ Deno.test('rejects non-integer rating and short text', () => {
   assertThrows(() => validateReviewFields({ ...baseBody, text: 'too short' }, PREFIX))
 })
 
+Deno.test('accepts a rating-only review with no text (quick rating)', () => {
+  const fields = validateReviewFields({ rating: 5 }, PREFIX)
+  assertEquals(fields.rating, 5)
+  assertEquals(fields.text, null)
+})
+
+Deno.test('accepts a tag-only review and normalizes empty text to null', () => {
+  const fields = validateReviewFields(
+    { rating: 4, text: '   ', tags: ['Safe', 'Good dorms'] },
+    PREFIX
+  )
+  assertEquals(fields.text, null)
+  assertEquals(fields.tags, ['Safe', 'Good dorms'])
+})
+
+Deno.test('still enforces the text bounds when text is present', () => {
+  assertThrows(() => validateReviewFields({ ...baseBody, text: 'short' }, PREFIX))
+  assertThrows(() =>
+    validateReviewFields({ ...baseBody, text: 'x'.repeat(5001) }, PREFIX)
+  )
+})
+
 Deno.test('rejects media URLs outside our bucket', () => {
   assertThrows(() =>
     validateReviewFields(
