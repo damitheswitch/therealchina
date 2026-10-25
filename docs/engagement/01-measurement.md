@@ -28,7 +28,7 @@ Umami reports an observed visitor funnel, not an exact wizard-attempt ledger. Su
 Decision: **Umami Cloud** for browser-side events, with separate production and staging Umami websites.
 
 - Production tracks only the production hostname and production website ID.
-- Staging uses a separate website ID on the exact staging hostname.
+- Staging, if a second website is ever added, uses a separate website ID on the exact staging hostname. Not provisioned today (single-site account — see "Current setup").
 - Localhost and deploy previews do not track by default.
 - If mainland/WeChat reachability fails consistently, choose between a first-party proxy and self-hosted Umami before treating the funnel as representative.
 

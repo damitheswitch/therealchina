@@ -201,8 +201,9 @@ build, prerender, 324 unit tests. Browser e2e against the local stack:
   it. `submittedRef` now blocks post-submit autosaves (`9e4acd0`).
 - University not-listed path: proposed "Testville Technical College" →
   server created the university row and the review published against it.
-  (The server accepts only `name` + `city` for new universities — `province`
-  is collected in the draft but not persisted; pre-existing behavior.)
+  (At that date the server accepted only `name` + `city` for new
+  universities; `province` is persisted too since the 2026-10-24
+  province-aware resolver rework in PR #74.)
 - One-page edit from MyReviews: modify → confirm dialog → save → row
   updated; enriched review renders correctly on the university page.
 - Anonymous path: submit without Turnstile token rejected 400 by
