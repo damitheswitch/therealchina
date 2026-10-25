@@ -4,6 +4,19 @@
 
 **2026-10-11 owner decision — baseline requirement waived.** The owner explicitly waived the dated pre-change baseline ("The pre-change Phase 1 baseline requirement is explicitly waived by the owner"). No pre-Phase-2 observation week was captured, and none will be backfilled — Umami keeps measuring, but no baseline numbers are claimed anywhere, and Phase 2+ effectiveness notes use post-change data only. The "Done when" gates below that depended on a pre-change baseline are superseded by this waiver; the instrumentation-verification gate stands and is met.
 
+**2026-10-25 — Google Analytics 4 added for public pages.** GA4
+(`G-SETVDZ07H4`, `SITE.gaMeasurementId`) is prerendered into content pages
+and `404.html` on production deploys only. Boundary decision: `app.html`
+(the SPA shell behind /review, /profile, /reset-password and other app
+routes) carries no GA tag — GA4 reports the full page URL including query
+string as `page_location`, and app routes can hold `?draft=`, `?code=` and
+similar params that the payload boundary below forbids sending to
+analytics. The tag's bootstrap additionally strips those params from the
+landing hit's `page_location`. SPA page views rely on GA4 Enhanced
+Measurement (on by default); note it also fires on `history.replaceState`,
+so filter interactions on prerendered directory pages may inflate page_view
+counts. Umami remains the only tracker inside the review flow.
+
 **Depends on:** nothing. **Blocks:** Phase 2 (the dated baseline must exist before the flow changes).
 
 **Overview:** [00-overview.md](00-overview.md) §5.

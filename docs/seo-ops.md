@@ -28,6 +28,30 @@ Guardrail details live in `AGENTS.md` → SEO section.
 Detection: `CONTEXT=production` AND `URL` contains `therealchina.net`, or
 `TRC_INDEXABLE=1`. Everything else is noindex — safe by default.
 
+## Analytics tags
+
+Both beacons are injected at prerender time on **production deploys only**
+(the same `isProdDeploy` gate as robots/CSP) — previews, staging and local
+builds ship no analytics code:
+
+- **Google tag** (`SITE.gaMeasurementId`, GA4 `G-SETVDZ07H4`): immediately
+  after `<head>` on every prerendered route and `404.html`. `app.html` is
+  deliberately GA-free — app URLs can hold `?draft=` and `?code=` params
+  that must not reach a third-party tracker's `page_location`.
+- **Cloudflare beacon**: before `</head>` on all output including `app.html`,
+  only when `CF_BEACON_TOKEN` is set.
+
+Operational notes:
+
+- SPA page views rely on **GA4 Enhanced Measurement** staying enabled in the
+  web data stream (it is by default). There is no client-side hook.
+- A build made with `TRC_INDEXABLE=1` emits the prod tag — never serve such
+  output on a public URL or it will hit the production GA property.
+- `validate_build.mjs` asserts the contract on every build (tag count per
+  page type); `smoke_live.mjs` asserts it on the live site (present on `/`,
+  absent on `/review`, absent entirely with `--preview`). After a prod
+  deploy, also confirm hits in GA4 → Reports → Realtime.
+
 ## Per-release checklist
 
 1. Merge to `staging` → Netlify preview builds.

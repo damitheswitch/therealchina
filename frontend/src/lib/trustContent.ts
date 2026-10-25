@@ -122,7 +122,7 @@ export const TRUST_PAGES: TrustDoc[] = [
     slug: 'privacy',
     title: 'Privacy Policy',
     description: 'What data The Real China collects and why.',
-    updated: '2026-10-08',
+    updated: '2026-10-25',
     sections: [
       {
         h: 'What we collect',
@@ -130,6 +130,7 @@ export const TRUST_PAGES: TrustDoc[] = [
         body: [
           'Account data (email, display name), the content you submit (reviews, photos, profile fields), and the technical logs needed to keep the site running. Reviews marked anonymous are not linked to your account publicly.',
           'We use Umami Cloud to measure how people use the review form so we can improve it. We do not send review text, email addresses, or account identifiers to Umami.',
+          'Public pages also run Google Analytics so we can see which content people read and where they arrive from. It records page views and basic device data, and it sets its own cookie. Signed-in app pages, like your profile and the review form itself, are not sent to Google.',
         ],
       },
       {
@@ -150,7 +151,7 @@ export const TRUST_PAGES: TrustDoc[] = [
         h: 'Processors',
         id: 'processors',
         body: [
-          'A handful of services keep TRC running: Supabase (database and auth), Netlify (hosting), Cloudflare Turnstile (abuse protection), Resend (transactional email), and Umami Cloud (review-form analytics). Each only gets what it needs to do its job.',
+          'A handful of services keep TRC running: Supabase (database and auth), Netlify (hosting), Cloudflare Turnstile (abuse protection), Resend (transactional email), Google Analytics (traffic on public pages), and Umami Cloud (review-form analytics). Each only gets what it needs to do its job.',
         ],
       },
     ],
