@@ -52,7 +52,6 @@ import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
-import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
@@ -930,8 +929,6 @@ export const ReviewWizard = ({
           )}
         </div>
       </div>
-
-      <RegistrationNudge />
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>
