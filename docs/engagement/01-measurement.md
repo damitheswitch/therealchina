@@ -8,6 +8,19 @@
 recording and review dated outcomes when needed; the baseline wait remains
 waived. This coordinating agent has not independently checked production.
 
+**2026-10-25 — Google Analytics 4 added for public pages.** GA4
+(`G-SETVDZ07H4`, `SITE.gaMeasurementId`) is prerendered into content pages
+and `404.html` on production deploys only. Boundary decision: `app.html`
+(the SPA shell behind /review, /profile, /reset-password and other app
+routes) carries no GA tag — GA4 reports the full page URL including query
+string as `page_location`, and app routes can hold `?draft=`, `?code=` and
+similar params that the payload boundary below forbids sending to
+analytics. The tag's bootstrap additionally strips those params from the
+landing hit's `page_location`. SPA page views rely on GA4 Enhanced
+Measurement (on by default); note it also fires on `history.replaceState`,
+so filter interactions on prerendered directory pages may inflate page_view
+counts. Umami remains the only tracker inside the review flow.
+
 **Depends on:** nothing. **Blocks:** no baseline waiting gate.
 
 **Overview:** [00-overview.md](00-overview.md) §5.

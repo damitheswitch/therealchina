@@ -36,14 +36,8 @@ if (!TEMPLATE.includes('<div id="app"></div>')) {
   throw new Error('template has no <div id="app"></div> mount point')
 }
 
-// Strip the template's default SEO tags — each page injects its own managed set.
-const baseTemplate = TEMPLATE.replace(/\s*<meta\s+name="description"[^>]*>/, '').replace(
-  /<title>[^<]*<\/title>/,
-  '<title></title>'
-)
-
-// Cloudflare Web Analytics — production deploys only, only when the owner has
-// set CF_BEACON_TOKEN in Netlify env. Never ships on previews/local.
+// Analytics — production deploys only, never on previews/local. The CF beacon
+// also needs CF_BEACON_TOKEN in Netlify env; the Google tag ID lives in site.ts.
 const env = buildEnv(FRONTEND)
 const isProdDeploy =
   env.TRC_INDEXABLE === '1' ||
@@ -52,6 +46,23 @@ const BEACON =
   isProdDeploy && env.CF_BEACON_TOKEN
     ? `\n    <!-- Cloudflare Web Analytics -->\n    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${escapeAttr(env.CF_BEACON_TOKEN)}"}'></script>`
     : ''
+// The Google tag goes on content pages only — app.html (the SPA shell behind
+// /review, /profile, /reset-password…) is excluded so auth codes and draft
+// params in app URLs stay under the Umami payload boundary instead of landing
+// in GA's page_location, which reports the full query string. The bootstrap
+// strips the same classes of params from the landing hit (Supabase email
+// links can redirect to the origin carrying ?code=); utm-style params stay.
+// GA4's Enhanced Measurement (on by default) tracks history-change page
+// views, so React Router navigations need no client-side page_view hook.
+const GA = isProdDeploy
+  ? `\n    <!-- Google tag (gtag.js) -->\n    <script async src="https://www.googletagmanager.com/gtag/js?id=${escapeAttr(SITE.gaMeasurementId)}"></script>\n    <script>\n      window.dataLayer = window.dataLayer || [];\n      function gtag(){dataLayer.push(arguments);}\n      gtag('js', new Date());\n      var gaLoc = new URL(location.href);\n      ['code','state','draft','token','access_token','refresh_token','type','error','error_code','error_description','uni','post'].forEach(function(p){gaLoc.searchParams.delete(p)});\n      gtag('config', ${JSON.stringify(SITE.gaMeasurementId)}, { page_location: gaLoc.href });\n    </script>`
+  : ''
+
+// Strip the template's default SEO tags — each page injects its own managed set.
+const baseTemplate = TEMPLATE.replace(/\s*<meta\s+name="description"[^>]*>/, '').replace(
+  /<title>[^<]*<\/title>/,
+  '<title></title>'
+)
 
 const inject = (
   path: string,
@@ -60,7 +71,9 @@ const inject = (
   data: Record<string, unknown>
 ): string => {
   const payload = `<script>window.__PRERENDERED_DATA__ = ${stringify(data)};</script>`
+  // Google's install instructions: the tag goes immediately after <head>.
   return baseTemplate
+    .replace('<head>', `<head>${GA}`)
     .replace('<title></title>', `<title>${escapeAttr(head.title)}</title>`)
     .replace('</head>', `    ${head.html}${BEACON}\n  </head>`)
     .replace('<div id="app"></div>', `<div id="app">${html}</div>\n    ${payload}`)
