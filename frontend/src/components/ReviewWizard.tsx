@@ -105,6 +105,15 @@ export const ReviewWizard = ({
   // row already in hand, so lazy initializers are safe.
   const [initial] = useState(() => (editReview ? reviewToWizardState(editReview) : null))
 
+  // Resume a saved draft: ?draft=<id> for signed-in users, or the anonymous
+  // localStorage fallback for everyone else.
+  const draftParam = searchParams.get('draft')
+  // Normalized like the server does (review-submit trims + lowercases, then
+  // format-checks): anything that can't be a slug is treated as no param at
+  // all — an empty field beats a broken lookup and a dead-end publish.
+  const uniParamRaw = (searchParams.get('uni') || '').trim().toLowerCase()
+  const uniParam = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(uniParamRaw) ? uniParamRaw : ''
+
   const form = useReviewForm(
     editMode && initial
       ? {
@@ -126,17 +135,13 @@ export const ReviewWizard = ({
           cons: initial.cons,
           reviewText: initial.reviewText,
         }
-      : { selectedUni: searchParams.get('uni') || '' }
+      : { selectedUni: draftParam ? '' : uniParam }
   )
   // `form` is a new object whenever values change; `applyValues`/`set` are
   // stable. Effects and callbacks that apply drafts must depend on the stable
   // setter only, or the draft-load effect would re-run on every keystroke.
   const { values, applyValues } = form
 
-  // Resume a saved draft: ?draft=<id> for signed-in users, or the anonymous
-  // localStorage fallback for everyone else.
-  const draftParam = searchParams.get('draft')
-  const uniParam = searchParams.get('uni')
   const [draftId, setDraftId] = useState<string | null>(draftParam)
   const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
@@ -246,10 +251,12 @@ export const ReviewWizard = ({
         } else if (user && uniParam) {
           // A draft for this slug may already exist — resume it so autosave
           // updates the saved row instead of clobbering it with a fresh one.
+          // Alias slugs resolve too (old links keep working): the param is
+          // format-validated above, so the .or() string can't be injected.
           const { data: uni, error: uniError } = await supabase
             .from('universities')
             .select('id')
-            .eq('slug', uniParam)
+            .or(`slug.eq.${uniParam},slug_aliases.cs.{${uniParam}}`)
             .abortSignal(controller.signal)
             .maybeSingle()
           if (uniError) throw uniError
@@ -374,7 +381,7 @@ export const ReviewWizard = ({
       const { data } = await supabase
         .from('universities')
         .select('id')
-        .eq('slug', values.selectedUni)
+        .or(`slug.eq.${values.selectedUni},slug_aliases.cs.{${values.selectedUni}}`)
         .abortSignal(controller.signal)
         .maybeSingle()
       if (!controller.signal.aborted) setDraftUniversityId(data?.id ?? null)
@@ -433,7 +440,16 @@ export const ReviewWizard = ({
 
   // Pre-fill university from ?uni=<slug>
   const uniSlug = uniParam
-  const { university: prefilledUni } = useUniversity(uniSlug || undefined)
+  const { university: prefilledUni, loading: prefilledUniLoading } = useUniversity(
+    uniSlug || undefined
+  )
+
+  // The last slug/name pair selectedUni+selectedUniName got from the URL —
+  // the raw param seed or the values this effect applied. URL-sourced values
+  // stay overwriteable so an alias (raw param != canonical slug) or a ?uni
+  // change while the wizard is mounted doesn't freeze the field on the wrong
+  // university; typed and draft-loaded values always win.
+  const urlSeededRef = useRef({ slug: uniSlug, name: '' })
 
   // Sync resolved university into form state once. Drafts already carry their
   // own university — don't let the ?uni prefill overwrite a loaded draft or a
@@ -441,23 +457,37 @@ export const ReviewWizard = ({
   useEffect(() => {
     if (prefilledUni && !editMode && !draftParam) {
       applyValues((v) =>
-        v.selectedUniName || (v.selectedUni && v.selectedUni !== prefilledUni.slug)
+        (v.selectedUniName && v.selectedUniName !== urlSeededRef.current.name) ||
+        (v.selectedUni && v.selectedUni !== uniSlug && v.selectedUni !== urlSeededRef.current.slug)
           ? {}
           : { selectedUni: prefilledUni.slug || '', selectedUniName: prefilledUni.name || '' }
       )
+      urlSeededRef.current = { slug: prefilledUni.slug || uniSlug, name: prefilledUni.name || '' }
     }
-  }, [prefilledUni, editMode, draftParam, applyValues])
+  }, [prefilledUni, editMode, draftParam, uniSlug, applyValues])
+
+  // A ?uni slug that resolves to nothing must not ride along silently: it
+  // passes step-1 validation and then fails at publish. Clearing it once the
+  // lookup settles leaves an empty field that demands a real pick.
+  useEffect(() => {
+    if (editMode || draftParam || !uniSlug || prefilledUni || prefilledUniLoading) return
+    applyValues((v) => (v.selectedUni === uniSlug ? { selectedUni: '' } : {}))
+  }, [editMode, draftParam, uniSlug, prefilledUni, prefilledUniLoading, applyValues])
 
   // Pre-fill program and university name from the user's profile once it
   // loads, filling empty fields only so typed input is never clobbered.
-  // Skipped in edit mode: the review row is the source of truth there.
+  // Skipped in edit mode (the review row is the source of truth) and for the
+  // university when ?uni is present (the link wins — the profile name would
+  // show one university while the link's slug submitted to another).
   useEffect(() => {
     if (!profile || editMode) return
     applyValues((v) => ({
       ...(!v.program && profile.program ? { program: profile.program } : {}),
-      ...(!v.selectedUniName && profile.university ? { selectedUniName: profile.university } : {}),
+      ...(!v.selectedUniName && !uniParam && profile.university
+        ? { selectedUniName: profile.university }
+        : {}),
     }))
-  }, [profile, editMode, applyValues])
+  }, [profile, editMode, uniParam, applyValues])
 
   // ---- Validation --------------------------------------------------------------
 
