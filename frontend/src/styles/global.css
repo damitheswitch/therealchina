@@ -2147,7 +2147,7 @@ h3 {
   object-fit: cover;
   border-radius: 16px;
   border: 1px solid var(--ink-line);
-  background: #fff;
+  background: var(--rice-deep);
   box-shadow: var(--shadow-card);
   flex-shrink: 0;
 }

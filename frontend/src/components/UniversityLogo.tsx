@@ -12,7 +12,7 @@ interface Props {
 
 /**
  * First-party university logo. DB rows store the ShanghaiRanking CDN URL;
- * firstPartyLogo() maps it to the mirrored /logos/<id>.<ext> file. Anything
+ * firstPartyLogo() maps it to the mirrored /logos/<id>.png file. Anything
  * else renders a letter tile — third-party images are never hotlinked.
  */
 export const UniversityLogo = ({ name, logoUrl, size, className, eager = false }: Props) => {
