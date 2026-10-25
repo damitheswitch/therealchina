@@ -33,10 +33,14 @@ import {
   loadLocalDraft,
   saveLocalDraft,
   clearLocalDraft,
+  listLocalDrafts,
+  hasDraftSubstance,
   isDraftWorthSaving,
   mapDraftStepToScreen,
   withLiveMedia,
   EXPIRED_DRAFT_MEDIA_MESSAGE,
+  LOCAL_DRAFT_NO_UNI_SLUG,
+  type LocalDraftEntry,
   type ReviewDraftPayload,
 } from '../lib/reviewDrafts'
 import {
@@ -149,6 +153,13 @@ export const ReviewWizard = ({
   // Set when a requested draft lookup failed — lets a valid ?uni still
   // prefill after a bad ?draft= link instead of leaving an empty field.
   const [draftLookupFailed, setDraftLookupFailed] = useState(false)
+  // A saved anonymous draft for a different university than the one open now.
+  // Surfaced as a non-blocking banner so the draft is not silently buried.
+  const [otherDraft, setOtherDraft] = useState<{
+    slug: string
+    to: string
+    name: string
+  } | null>(null)
 
   // Flow state
   const [phase, setPhase] = useState<Phase>('form')
@@ -199,6 +210,9 @@ export const ReviewWizard = ({
   // The slug/name pair a loaded draft applied — so a later clear can tell
   // "still the draft's values" apart from "the user typed over them".
   const draftSeedRef = useRef({ slug: '', name: '' })
+  // The anonymous draft slot this visit consumed ('none' when no university
+  // was picked). Publish clears it even if the pick changed mid-session.
+  const loadedLocalSlotRef = useRef<string | null>(null)
   // Set the moment submitReview succeeds — a debounced autosave can still fire
   // during the stamp animation (phase is still 'form' until it finishes), and
   // without this it would re-create the draft row publish just deleted.
@@ -217,7 +231,10 @@ export const ReviewWizard = ({
       setStep(mapDraftStepToScreen(p))
       applyValues(fieldValuesFromDraft(p))
       setMediaState({ media: p.media ?? [], uploading: false, errorCount: 0 })
-      lastSavedPayloadRef.current = p
+      // Strip savedAt — draftPayload never carries it, so keeping it here
+      // would dirty-compare for the ~1.5s until the next autosave.
+      const { savedAt: _savedAt, ...comparable } = p
+      lastSavedPayloadRef.current = comparable
       draftSeedRef.current = { slug: p.selectedUni || '', name: p.selectedUniName || '' }
     },
     [applyValues]
@@ -231,29 +248,47 @@ export const ReviewWizard = ({
     error: prefilledUniError,
   } = useUniversity(uniParam || undefined)
 
+  // The local draft slot for the current pick: canonical once the ?uni
+  // lookup resolves. A still-raw param is an alias, so null — keying a slot
+  // by it would leave the draft unreachable via the canonical slug.
+  const draftSlotSlug =
+    uniParam && values.selectedUni === uniParam ? (prefilledUni?.slug ?? null) : values.selectedUni
+
   // Load the draft once auth is ready. Signed-in users pull by ?draft=<id>, or
   // by ?uni=<slug> when a draft already exists for that university (so the
   // wizard resumes instead of overwriting it on the first autosave). Anonymous
   // visitors fall back to the localStorage draft when the slug matches.
   useEffect(() => {
     if (editMode || authLoading) return
-    // The signed-in ?uni draft check keys off the resolved university id —
-    // wait for the shared lookup rather than racing it.
-    if (user && uniParam && !draftParam && prefilledUniLoading) return
+    // Both the signed-in draft check and the anonymous slot key come from
+    // the resolved university — wait for the shared lookup rather than
+    // racing it or duplicating its query.
+    if (uniParam && !draftParam && prefilledUniLoading) return
 
     const controller = new AbortController()
     // localStorage drafts can outlive their uploads (server cleanup can't see
     // them), so drop media that no longer exists before showing the draft.
-    const applyLocalDraft = async (local: ReviewDraftPayload): Promise<boolean> => {
-      const live = await withLiveMedia(local, controller.signal)
+    const applyLocalDraft = async (entry: LocalDraftEntry): Promise<boolean> => {
+      const live = await withLiveMedia(entry.payload, controller.signal)
       if (controller.signal.aborted) return false
       applyDraftPayload(live.payload)
+      // The slot this visit consumed — publish clears it regardless of how
+      // the form's university pick changes afterward.
+      loadedLocalSlotRef.current = entry.slug
       if (live.dropped) showToast(EXPIRED_DRAFT_MEDIA_MESSAGE, 'error')
       return true
     }
     const run = async () => {
       let loaded = false
       let lookupFailed = false
+      // The local draft this visit applied, by storage key — kept out of the
+      // other-drafts notice below.
+      let appliedLocalSlug: string | null = null
+      // Local slots are keyed by canonical slug and server drafts by
+      // university id, while the link may carry an alias — both come from
+      // the shared lookup, falling back to the raw param when it fails.
+      const resolvedSlug = prefilledUni?.slug || uniParam
+      const resolvedUniId = prefilledUni?.id ?? null
       try {
         if (user && draftParam) {
           const d = await getReviewDraft(draftParam, user.id)
@@ -272,12 +307,12 @@ export const ReviewWizard = ({
           // autosave updates the saved row instead of clobbering it. The row
           // comes from the shared useUniversity lookup, so alias links match
           // the canonical university id.
-          if (prefilledUni?.id) {
+          if (resolvedUniId) {
             const { data: d, error: draftError } = await supabase
               .from('review_drafts')
               .select('id, payload, university_id')
               .eq('user_id', user.id)
-              .eq('university_id', prefilledUni.id)
+              .eq('university_id', resolvedUniId)
               .abortSignal(controller.signal)
               .maybeSingle()
             if (draftError) throw draftError
@@ -290,13 +325,14 @@ export const ReviewWizard = ({
             }
           }
         } else if (!user) {
-          const local = loadLocalDraft()
-          if (local && isDraftWorthSaving(local)) {
-            const sameUni = !uniParam || local.selectedUni === uniParam
-            if (sameUni) {
-              if (!(await applyLocalDraft(local))) return
-              loaded = true
-            }
+          // Drafts are keyed by university: a ?uni link reads only its own
+          // slot (canonical above, so aliases work), a plain visit picks up
+          // the most recently saved draft.
+          const entry = loadLocalDraft(resolvedSlug || undefined)
+          if (entry && isDraftWorthSaving(entry.payload)) {
+            if (!(await applyLocalDraft(entry))) return
+            appliedLocalSlug = entry.slug
+            loaded = true
           }
         }
 
@@ -304,14 +340,11 @@ export const ReviewWizard = ({
         // no server draft was loaded, pick up the localStorage draft and let
         // autosave promote it to their account.
         if (user && !draftParam && !loaded && !controller.signal.aborted) {
-          const local = loadLocalDraft()
-          if (local && isDraftWorthSaving(local)) {
-            const sameUni = !uniParam || local.selectedUni === uniParam
-            if (sameUni) {
-              if (!(await applyLocalDraft(local))) return
-              clearLocalDraft()
-              loaded = true
-            }
+          const entry = loadLocalDraft(resolvedSlug || undefined)
+          if (entry && isDraftWorthSaving(entry.payload)) {
+            if (!(await applyLocalDraft(entry))) return
+            clearLocalDraft(entry.slug)
+            loaded = true
           }
         }
       } catch (err) {
@@ -321,6 +354,32 @@ export const ReviewWizard = ({
       } finally {
         if (!controller.signal.aborted) {
           if (lookupFailed) setDraftLookupFailed(true)
+          // Tell the visitor about drafts for other universities. A group-chat
+          // link for Y must not silently bury a draft they started for X.
+          // Skeletons saved by a bare ?uni prefill do not count as progress.
+          const others = listLocalDrafts().filter(
+            (d) =>
+              d.slug !== (uniParam || LOCAL_DRAFT_NO_UNI_SLUG) &&
+              d.slug !== (resolvedSlug || LOCAL_DRAFT_NO_UNI_SLUG) &&
+              d.slug !== appliedLocalSlug &&
+              hasDraftSubstance(d.payload)
+          )
+          const first = others[0]
+          setOtherDraft(
+            first
+              ? {
+                  slug: first.slug,
+                  to:
+                    first.slug !== LOCAL_DRAFT_NO_UNI_SLUG && first.slug !== '__not_listed'
+                      ? `/review?uni=${first.slug}`
+                      : '/review',
+                  name:
+                    first.payload.selectedUniName.trim() ||
+                    first.payload.newUniName.trim() ||
+                    'another university',
+                }
+              : null
+          )
           setReviewEntry(
             resolveReviewEntry({ loaded, requested: Boolean(draftParam), lookupFailed })
           )
@@ -453,8 +512,12 @@ export const ReviewWizard = ({
           setDraftId(savedId)
           lastSavedPayloadRef.current = draftPayload
         } else {
-          saveLocalDraft(draftPayload)
-          lastSavedPayloadRef.current = draftPayload
+          // A null slot means the pick is still an unresolved alias — skip
+          // rather than write a slot reads can't find back.
+          if (draftSlotSlug !== null) {
+            saveLocalDraft(draftSlotSlug, draftPayload)
+            lastSavedPayloadRef.current = draftPayload
+          }
         }
       } catch (err) {
         console.error('Draft save failed:', err)
@@ -462,7 +525,7 @@ export const ReviewWizard = ({
     }, 1500)
 
     return () => clearTimeout(timer)
-  }, [user, editMode, draftLoading, phase, draftPayload, draftUniversityId])
+  }, [user, editMode, draftLoading, phase, draftPayload, draftUniversityId, draftSlotSlug])
 
   // Warn before closing the tab when there is unsaved progress. The autosave
   // runs every 1.5s, so this only guards the narrow window after a change.
@@ -536,6 +599,9 @@ export const ReviewWizard = ({
     prefilledUniError,
     applyValues,
   ])
+
+  // Alias links resolve inside the draft-load effect above: the anonymous
+  // draft slot uses the canonical slug, so the lookup happens once there.
 
   // Pre-fill program and university name from the user's profile once it
   // loads, filling empty fields only so typed input is never clobbered.
@@ -739,7 +805,13 @@ export const ReviewWizard = ({
           console.error('Could not delete draft after submit:', err)
         }
       } else {
-        clearLocalDraft()
+        // The slot this review consumed goes — its content is now published —
+        // and so does the current pick's slot when the pick changed
+        // mid-session (autosave copied the same payload there).
+        if (loadedLocalSlotRef.current !== null) clearLocalDraft(loadedLocalSlotRef.current)
+        if (draftSlotSlug !== null && draftSlotSlug !== loadedLocalSlotRef.current) {
+          clearLocalDraft(draftSlotSlug)
+        }
       }
 
       const slug = result.universityCreated ? null : result.universitySlug
@@ -925,6 +997,31 @@ export const ReviewWizard = ({
             </span>
           ))}
         </div>
+
+        {/* A saved draft for a different university — surfaced so a ?uni
+            link never silently buries work in progress. */}
+        {otherDraft && (
+          <div className="draft-reminder fade-in">
+            <div className="draft-reminder-copy">
+              <Icons.Pen />
+              <span>
+                You also have an unfinished review for <strong>{otherDraft.name}</strong>.
+              </span>
+            </div>
+            <div className="draft-reminder-actions">
+              <Link to={otherDraft.to} className="btn btn-outline btn-sm">
+                Continue it
+              </Link>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setOtherDraft(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error banner */}
         {error && (
