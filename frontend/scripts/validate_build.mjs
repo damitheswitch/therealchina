@@ -24,6 +24,14 @@ const fail = (m) => errors.push(m)
 const warn = (m) => warns.push(m)
 
 const read = (p) => readFileSync(p, 'utf8')
+
+// Google tag contract — asserted below: exactly one tag per prod content page,
+// never on non-prod builds, never in app.html (the app shell stays GA-free so
+// auth/draft params in app URLs can't reach a third-party tracker).
+const siteSrc = read(resolve(SRC, 'lib/seo/site.ts'))
+const gaMeasurementId = siteSrc.match(/gaMeasurementId:\s*'([^']+)'/)?.[1] ?? ''
+if (isProd && !gaMeasurementId) warn('site.ts has no gaMeasurementId — GA checks skipped')
+const gaTagCount = (html) => (html.match(/googletagmanager\.com\/gtag\/js/g) ?? []).length
 const distFile = (route) =>
   route === '/' ? resolve(DIST, 'index.html') : resolve(DIST, route.slice(1), 'index.html')
 
@@ -89,6 +97,12 @@ for (const path of routePaths) {
   const robots = doc.querySelector('meta[name="robots"]')?.getAttribute('content') ?? ''
   if (!robots) fail(`${path}: missing robots meta`)
   if (isProd && /noindex/i.test(robots)) fail(`${path}: noindex on a production page`)
+
+  const gaTags = gaTagCount(html)
+  if (isProd && gaMeasurementId && gaTags !== 1) {
+    fail(`${path}: expected exactly 1 Google tag, found ${gaTags}`)
+  }
+  if (!isProd && gaTags !== 0) fail(`${path}: Google tag leaked into non-prod build`)
 
   const h1s = doc.querySelectorAll('h1')
   if (h1s.length !== 1) warn(`${path}: ${h1s.length} <h1> (expected exactly 1)`)
@@ -224,6 +238,15 @@ for (const f of ['app.html', '404.html']) {
   }
   const h = read(p)
   if (!/noindex/i.test(h)) fail(`${f}: must carry noindex`)
+  const tags = gaTagCount(h)
+  // app.html is deliberately GA-free (see prerender.tsx); 404.html is content
+  // surface and follows the same one-tag-on-prod contract as routes.
+  if (f === 'app.html' && tags !== 0) fail('app.html must not carry the Google tag')
+  if (f === '404.html') {
+    if (isProd && gaMeasurementId && tags !== 1)
+      fail('404.html must carry exactly 1 Google tag on prod')
+    if (!isProd && tags !== 0) fail('404.html: Google tag in non-prod build')
+  }
 }
 if (
   existsSync(resolve(DIST, 'app.html')) &&
@@ -271,7 +294,6 @@ const globalCss = read(resolve(SRC, 'styles/global.css'))
 if (/@import\s+url\(/.test(globalCss)) fail('global.css still contains a remote @import')
 
 // IndexNow key file must exist when a key is configured
-const siteSrc = read(resolve(SRC, 'lib/seo/site.ts'))
 const inKey = siteSrc.match(/indexnowKey:\s*'([^']+)'/)?.[1] ?? ''
 if (inKey && !existsSync(resolve(FRONTEND, 'public', `${inKey}.txt`))) {
   fail(`IndexNow key file public/${inKey}.txt missing (or key out of sync with site.ts)`)

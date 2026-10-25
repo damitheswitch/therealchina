@@ -34,6 +34,9 @@ console.log(`smoke: ${base} (${isPreview ? 'preview/staging' : 'production'} mod
   // Preview noindex is enforced by X-Robots-Tag + robots.txt (checked below);
   // page meta stays policy-level so content never fights deploy context.
   if (!isPreview && /noindex/i.test(robots)) fail('/: production page is noindex!')
+  const hasGa = /googletagmanager\.com\/gtag\/js/.test(r.body)
+  if (!isPreview && !hasGa) fail('/: Google tag missing on production')
+  if (isPreview && hasGa) fail('/: Google tag must not ship on previews')
   if (!/<div id="app">\s*<[^>]|<div id="app">[^<]{10}/s.test(r.body)) {
     fail('/: #app looks empty — prerendered HTML not being served')
   }
@@ -96,10 +99,13 @@ if (uniSlug) {
   const bogusCity = await get('/city/notacity-zzz')
   if (bogusCity.status !== 404) fail(`/city/bogus → ${bogusCity.status} (soft 404!)`)
 
-  // App routes → 200 via SPA shell, must carry noindex
+  // App routes → 200 via SPA shell, must carry noindex. The shell is
+  // deliberately GA-free — app URLs can hold auth codes and draft params
+  // that must not reach a third-party tracker (see prerender.tsx).
   const app = await get('/review')
   if (app.status !== 200) fail(`/review → ${app.status}`)
   if (!/noindex/i.test(app.body)) fail('/review: app shell missing noindex')
+  if (/googletagmanager/i.test(app.body)) fail('/review: app shell must not carry the Google tag')
 }
 
 // ── 4. robots + headers contract ────────────────────────────────────────────
