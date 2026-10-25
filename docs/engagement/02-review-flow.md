@@ -1,12 +1,13 @@
 # Phase 2: The fast review flow
 
-**Depends on:** Phase 1 baseline recorded (production tracker working + dated
-pre-change baseline captured — not done yet; see `01-measurement.md`).
-**Blocks:** Phases 3 to 7.
-**Status:** merged into `staging` via PR #56 (`2246e9f`); not released to
-production. The staging site serves the two-screen flow, but signed-in Boost
-and server-draft resume have not yet been verified there. The Phase 1 baseline
-still gates the production release.
+**Depends on:** Phase 1 instrumentation; the pre-change baseline wait is
+waived (see `01-measurement.md`).
+**Feeds:** Phases 3 to 7; do not treat this released phase as still blocking
+all planning or implementation.
+**Status as of 2026-10-13:** released to production per owner confirmation.
+This coordinating agent has not independently checked production deployment
+identity or behavior. PR #56 (`2246e9f`) and the local/staging-preview checks
+below are earlier implementation evidence, not fresh production verification.
 **Overview:** [00-overview.md](00-overview.md) §3 (diagnosis) and §6 (target flow).
 
 ## Goal
@@ -19,6 +20,7 @@ Boost through the existing edit path. Anonymous Boost is Phase 3.
 
 **D2.1 What's required before publishing?**
 Today 6 fields are required: university, program, stars, recommend, start year, review text (10+ characters).
+
 - (a) Keep all 6.
 - (b) Drop program and start year to optional.
 - (c) Allow rating-only reviews, no text (the Local Guides approach).
@@ -34,11 +36,13 @@ Today 6 fields are required: university, program, stars, recommend, start year, 
   owner report, since this was the argument for (a).
 
 **D2.2 Tags: before or after publishing?**
+
 - **Recommendation:** before. They're a few taps, and they partly replace pros and cons.
 - **Implemented:** before. Optional chips on screen 2, per the recommendation.
 
 **D2.3 The register popup after an anonymous review**
 Today it can't be closed (`closable: false`).
+
 - (a) Make it closable, with a concrete reason to sign up ("get notified when someone replies").
 - (b) Keep it forced.
 - **Recommendation:** (a).
@@ -48,6 +52,7 @@ Today it can't be closed (`closable: false`).
   The claim-token and post-sign-in redirect keys are unchanged.
 
 **D2.4 "About you" fields** (languages, current status, email consent)
+
 - (a) Move them to sign-up onboarding (`OnboardingForm.jsx` already asks for them).
 - (b) Keep them as a final Boost card.
 - **Recommendation:** (a) for signed-in users. Anonymous users get only the home-country card in Boost.
@@ -61,6 +66,7 @@ Today it can't be closed (`closable: false`).
   not exist yet — revisit in Phase 3.
 
 **D2.5 Old drafts saved under the 5-step layout**
+
 - (a) Map old steps: 1 → screen 1; 2 and 3 → screen 1 with Boost data kept; 4 and 5 → screen 2.
 - (b) Discard drafts older than the release.
 - **Recommendation:** (a). Losing someone's half-written review is the opposite of this whole plan.
@@ -73,6 +79,7 @@ Today it can't be closed (`closable: false`).
   of 2").
 
 **D2.6 What editing a published review looks like**
+
 - (a) One long page with all sections.
 - (b) Keep the step-by-step layout.
 - **Recommendation:** (a). Editing isn't a first-time flow, so speed matters less than seeing everything.
@@ -81,6 +88,7 @@ Today it can't be closed (`closable: false`).
 
 **D2.7 Copy for the starter chips and Boost cards**
 The agent drafts the wording. You approve it, because it's user-facing and the `AGENTS.md` copy rules apply.
+
 - **Drafted, awaiting owner approval.** Starters: "The best part is ",
   "The worst part is ", "I wish I knew ". Boost cards and subtitles are in
   `BOOST_CARD_META` (`lib/reviewFlow.ts`). Screen titles: "The essentials.
@@ -160,12 +168,18 @@ ReviewStory,ReviewSuccess,BoostCards,ReviewEditForm}.tsx`,
 - The `AGENTS.md` verification gate passes (lint, format, build).
 - Phase 1 events fire for the new screens.
 
-## Release gate (owner)
+## Release status and ongoing integration
 
-Phase 2 is merged into `staging`, not `master`. Do not release it to
-production until the Phase 1 gate opens: the production Umami tracker is
-verified delivering events **and** a dated pre-change baseline is captured.
-The legacy 5-step flow keeps serving production until then.
+Owner confirmed production release on 2026-10-13. The old pre-change baseline
+release gate is waived; do not wait for a historical observation week or
+restore the legacy flow on that basis. Measurement continues.
+
+New sessions must start from current staging and preserve the publish
+minimum, draft compatibility, claim flow, and edit authorization. Phase 5
+owns contact disclosure/link changes; Phase 7 owns recognition. Coordinate
+shared `ReviewSuccess`, `ReviewStory`, form fields, and profile changes rather
+than rewriting them on independent branches. Exact deployed identity and
+live behavior must be established before making new verification claims.
 
 ## Local verification (2026-10-09, dev + local Supabase)
 
@@ -193,7 +207,7 @@ build, prerender, 324 unit tests. Browser e2e against the local stack:
   updated; enriched review renders correctly on the university page.
 - Anonymous path: submit without Turnstile token rejected 400 by
   `review-submit` (fail-closed). The local test sitekey errored (400020)
-  in the browser, so an anonymous *happy path* was not completed locally —
+  in the browser, so an anonymous _happy path_ was not completed locally —
   verify on the deploy preview.
 
 Not verifiable locally: Umami payload delivery (no site ID locally or on
