@@ -1,12 +1,14 @@
-# Daily production rebuild — new reviews earn new prerendered pages, sitemap
-# entries and JSON-LD ratings without a code change. Requires a Netlify build
-# hook stored in the NETLIFY_BUILD_HOOK repo secret (owner step — see
-# docs/seo-ops.md). Without the secret this workflow is a no-op.
-name: Daily rebuild
+# Weekly production rebuild — new reviews earn new prerendered pages, sitemap
+# entries and JSON-LD ratings without a code change. Weekly cadence keeps
+# Netlify production-deploy credit use low; reviews become indexable within
+# ~7 days. Requires a Netlify build hook stored in the NETLIFY_BUILD_HOOK
+# repo secret (owner step — see docs/seo-ops.md). Without the secret this
+# workflow is a no-op.
+name: Weekly rebuild
 
 on:
   schedule:
-    - cron: '0 2 * * *' # 02:00 UTC — low-traffic window
+    - cron: '0 2 * * 1' # 02:00 UTC Mondays — low-traffic window
   workflow_dispatch:
 
 jobs:
