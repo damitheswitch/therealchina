@@ -12,6 +12,8 @@ export const SITE = {
   sameAs: [] as string[],
   // IndexNow key — the matching key file lives at frontend/public/<key>.txt.
   indexnowKey: '0f4d0874e85f43c1933b9fd11f9b60ad',
+  // GA4 measurement ID — scripts/prerender.tsx injects the tag on prod pages.
+  gaMeasurementId: 'G-SETVDZ07H4',
 } as const
 
 // www is the canonical host — the apex 301s to it, so every canonical,
