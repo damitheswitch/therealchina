@@ -10,6 +10,8 @@ import {
   loadLocalDraft,
   saveLocalDraft,
   clearLocalDraft,
+  listLocalDrafts,
+  hasDraftSubstance,
   hasLocalDraftForUniversity,
   mapDraftStepToScreen,
   withLiveMedia,
@@ -138,6 +140,7 @@ describe('mapDraftStepToScreen', () => {
 describe('local draft fallback', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.useRealTimers()
   })
 
   it('round-trips a payload through localStorage', () => {
@@ -149,17 +152,92 @@ describe('local draft fallback', () => {
 
   it('returns null after clear and on invalid JSON', () => {
     saveLocalDraft({ ...emptyPayload, rating: 4 })
-    clearLocalDraft()
+    clearLocalDraft('')
     expect(loadLocalDraft()).toBeNull()
 
     localStorage.setItem('trc_review_draft', 'not-json')
     expect(loadLocalDraft()).toBeNull()
+    expect(localStorage.getItem('trc_review_draft')).toBeNull()
   })
 
   it('matches a draft to its university slug', () => {
     saveLocalDraft({ ...emptyPayload, selectedUni: 'tsinghua', rating: 5 })
     expect(hasLocalDraftForUniversity('tsinghua')).toBe(true)
     expect(hasLocalDraftForUniversity('fudan')).toBe(false)
+  })
+
+  it('keeps drafts for different universities in separate slots', () => {
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'fudan', rating: 5, reviewText: 'A' })
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'peking', rating: 2 })
+    expect(loadLocalDraft('fudan')?.rating).toBe(5)
+    expect(loadLocalDraft('peking')?.rating).toBe(2)
+    // Saving the peking draft did not overwrite fudan's text.
+    expect(loadLocalDraft('fudan')?.reviewText).toBe('A')
+  })
+
+  it('clears only the matching university slot', () => {
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'fudan', rating: 5 })
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'peking', rating: 2 })
+    clearLocalDraft('fudan')
+    expect(loadLocalDraft('fudan')).toBeNull()
+    expect(loadLocalDraft('peking')?.rating).toBe(2)
+  })
+
+  it('returns the most recently saved draft when no slug is given', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(1000)
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'fudan', rating: 5 })
+    vi.setSystemTime(2000)
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'peking', rating: 2 })
+    expect(loadLocalDraft()?.selectedUni).toBe('peking')
+    expect(listLocalDrafts().map((d) => d.slug)).toEqual(['peking', 'fudan'])
+  })
+
+  it('migrates the legacy single-slot draft into a per-university key', () => {
+    localStorage.setItem(
+      'trc_review_draft',
+      JSON.stringify({ ...emptyPayload, selectedUni: 'fudan', rating: 5 })
+    )
+    expect(loadLocalDraft('fudan')?.rating).toBe(5)
+    expect(localStorage.getItem('trc_review_draft')).toBeNull()
+    expect(localStorage.getItem('trc_review_draft:fudan')).not.toBeNull()
+  })
+
+  it('migrates a legacy draft with no university into the none slot', () => {
+    localStorage.setItem('trc_review_draft', JSON.stringify({ ...emptyPayload, rating: 4 }))
+    expect(loadLocalDraft()?.rating).toBe(4)
+    expect(localStorage.getItem('trc_review_draft:none')).not.toBeNull()
+  })
+
+  it('lists drafts for other universities but skips empty storage and junk', () => {
+    saveLocalDraft({ ...emptyPayload, selectedUni: 'fudan', rating: 5 })
+    localStorage.setItem('trc_review_draft:junk', 'not-json')
+    localStorage.setItem('unrelated', '{}')
+    const slugs = listLocalDrafts().map((d) => d.slug)
+    expect(slugs).toEqual(['fudan'])
+  })
+})
+
+describe('hasDraftSubstance', () => {
+  it('treats a bare ?uni skeleton as no real progress', () => {
+    expect(hasDraftSubstance(null)).toBe(false)
+    expect(hasDraftSubstance(emptyPayload)).toBe(false)
+    expect(
+      hasDraftSubstance({
+        ...emptyPayload,
+        selectedUni: 'peking',
+        selectedUniName: 'Peking University',
+      })
+    ).toBe(false)
+  })
+
+  it('counts typed content, ratings, and step-2 drafts as progress', () => {
+    expect(hasDraftSubstance({ ...emptyPayload, rating: 3 })).toBe(true)
+    expect(hasDraftSubstance({ ...emptyPayload, reviewText: 'Great' })).toBe(true)
+    expect(hasDraftSubstance({ ...emptyPayload, program: 'MBBS' })).toBe(true)
+    expect(hasDraftSubstance({ ...emptyPayload, selectedTags: ['Safe'] })).toBe(true)
+    expect(hasDraftSubstance({ ...emptyPayload, subscores: { rating_campus: 4 } })).toBe(true)
+    expect(hasDraftSubstance({ ...emptyPayload, step: 2 })).toBe(true)
   })
 })
 

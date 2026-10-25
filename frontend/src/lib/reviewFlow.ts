@@ -78,10 +78,10 @@ export const emptyReviewFieldValues: ReviewFieldValues = {
   anonEmail: '',
 }
 
-// Strips the draft-only keys (v, step, media) so the rest can be applied to
-// form state directly. Media is handled separately by the uploader.
+// Strips the draft-only keys (v, step, media, savedAt) so the rest can be
+// applied to form state directly. Media is handled separately by the uploader.
 export const fieldValuesFromDraft = (p: ReviewDraftPayload): Partial<ReviewFieldValues> => {
-  const { v: _v, step: _step, media: _media, ...fields } = p
+  const { v: _v, step: _step, media: _media, savedAt: _savedAt, ...fields } = p
   return fields
 }
 

@@ -39,7 +39,8 @@ export const useReviewDraftForUniversity = (
             setDraft((data as ReviewDraft | null) ?? null)
           }
         } else {
-          const local = loadLocalDraft()
+          // Anonymous drafts are keyed per university — read this page's slot.
+          const local = loadLocalDraft(universitySlug)
           if (isDraftWorthSaving(local) && local?.selectedUni === universitySlug) {
             setDraft({
               id: 'local',

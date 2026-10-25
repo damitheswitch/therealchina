@@ -43,9 +43,17 @@ export interface ReviewDraftPayload {
   languagesSpoken: string[]
   emailConsent: boolean
   anonEmail: string
+  // Local drafts only: when the payload was last written to localStorage.
+  // Server drafts use the row's own updated_at.
+  savedAt?: number
 }
 
 const LOCAL_DRAFT_KEY = 'trc_review_draft'
+// Anonymous drafts are namespaced per university so a group-chat link for
+// university Y never overwrites a half-written draft for X. Drafts with no
+// university chosen yet share the "none" slot.
+const LOCAL_DRAFT_PREFIX = 'trc_review_draft:'
+const localDraftKey = (slug: string): string => `${LOCAL_DRAFT_PREFIX}${slug || 'none'}`
 
 // Draft payload version written by the current flow. Payloads saved by the
 // old 5-step wizard have no `v` — they are v1 and their `step` refers to the
@@ -223,30 +231,96 @@ export const deleteReviewDraftForUniversity = async (
 
 // -- Anonymous local fallback ------------------------------------------------
 
-export const loadLocalDraft = (): ReviewDraftPayload | null => {
+export interface LocalDraftEntry {
+  // The storage suffix: a canonical university slug, or 'none' when no
+  // university was picked. Not guaranteed to equal payload.selectedUni if the
+  // payload is malformed, so code that needs the stored slug should use this.
+  slug: string
+  payload: ReviewDraftPayload
+}
+
+const readDraftKey = (key: string): ReviewDraftPayload | null => {
   try {
-    const raw = localStorage.getItem(LOCAL_DRAFT_KEY)
+    const raw = localStorage.getItem(key)
     if (!raw) return null
     const parsed = JSON.parse(raw) as ReviewDraftPayload
-    if (typeof parsed !== 'object' || parsed === null) return null
-    return parsed
+    return typeof parsed === 'object' && parsed !== null ? parsed : null
   } catch {
     return null
   }
 }
 
-export const saveLocalDraft = (payload: ReviewDraftPayload): void => {
+// One-shot move of the pre-F7 single-slot draft into its per-university key.
+// Safe to run on every call: once migrated there is nothing left to move.
+const migrateLegacyLocalDraft = (): void => {
+  const legacy = readDraftKey(LOCAL_DRAFT_KEY)
   try {
-    localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(payload))
+    localStorage.removeItem(LOCAL_DRAFT_KEY)
+  } catch {
+    return
+  }
+  if (!legacy) return
+  try {
+    localStorage.setItem(localDraftKey(legacy.selectedUni), JSON.stringify(legacy))
+  } catch {
+    // Storage may be full or disabled; the draft stays lost rather than
+    // crashing the wizard, matching the rest of the local-fallback behavior.
+  }
+}
+
+// Every saved anonymous draft, newest first. Skeleton drafts (a ?uni link
+// visit that saved only the prefilled university) are included — callers
+// decide whether they matter via isDraftWorthSaving / hasDraftSubstance.
+export const listLocalDrafts = (): LocalDraftEntry[] => {
+  migrateLegacyLocalDraft()
+  const entries: LocalDraftEntry[] = []
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i)
+      if (!key || !key.startsWith(LOCAL_DRAFT_PREFIX)) continue
+      const payload = readDraftKey(key)
+      if (payload && isDraftWorthSaving(payload)) {
+        entries.push({ slug: key.slice(LOCAL_DRAFT_PREFIX.length), payload })
+      }
+    }
+  } catch {
+    // Ignore
+  }
+  entries.sort((a, b) => (b.payload.savedAt ?? 0) - (a.payload.savedAt ?? 0))
+  return entries
+}
+
+// With a slug, reads only that university's slot. With no slug, returns the
+// most recently saved draft across slots, matching the old single-slot
+// behavior for a plain /review visit.
+export const loadLocalDraft = (slug?: string): ReviewDraftPayload | null => {
+  if (slug === undefined) return listLocalDrafts()[0]?.payload ?? null
+  migrateLegacyLocalDraft()
+  return readDraftKey(localDraftKey(slug))
+}
+
+export const saveLocalDraft = (payload: ReviewDraftPayload): void => {
+  migrateLegacyLocalDraft()
+  try {
+    localStorage.setItem(
+      localDraftKey(payload.selectedUni),
+      JSON.stringify({ ...payload, savedAt: Date.now() })
+    )
   } catch (err) {
     // Storage may be full or disabled; this is a best-effort fallback.
     console.error('Could not save local draft:', err)
   }
 }
 
-export const clearLocalDraft = (): void => {
+export const clearLocalDraft = (slug: string): void => {
   try {
-    localStorage.removeItem(LOCAL_DRAFT_KEY)
+    localStorage.removeItem(localDraftKey(slug))
+    // A legacy single-slot draft for the same university goes too, in case it
+    // has not been migrated yet.
+    const legacy = readDraftKey(LOCAL_DRAFT_KEY)
+    if (legacy && (legacy.selectedUni || '') === (slug || '')) {
+      localStorage.removeItem(LOCAL_DRAFT_KEY)
+    }
   } catch {
     // Ignore
   }
@@ -281,7 +355,24 @@ export const EXPIRED_DRAFT_MEDIA_MESSAGE =
   'Some photos or videos in your saved draft expired. Add them again before you publish.'
 
 export const hasLocalDraftForUniversity = (slug: string): boolean => {
-  const draft = loadLocalDraft()
-  if (!isDraftWorthSaving(draft)) return false
-  return draft?.selectedUni === slug
+  const draft = loadLocalDraft(slug)
+  return isDraftWorthSaving(draft) && (draft?.selectedUni || '') === slug
+}
+
+// A ?uni prefill alone saves a skeleton draft (university picked, nothing
+// else). That is not real progress, so surfaces like the "other drafts"
+// notice only count drafts where the user wrote or rated something.
+export const hasDraftSubstance = (payload: ReviewDraftPayload | null): boolean => {
+  if (!payload) return false
+  return (
+    payload.rating > 0 ||
+    payload.reviewText.trim().length > 0 ||
+    payload.pros.trim().length > 0 ||
+    payload.cons.trim().length > 0 ||
+    payload.program.trim().length > 0 ||
+    payload.newUniName.trim().length > 0 ||
+    Object.keys(payload.subscores).length > 0 ||
+    payload.selectedTags.length > 0 ||
+    payload.step > 1
+  )
 }

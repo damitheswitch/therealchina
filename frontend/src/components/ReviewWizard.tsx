@@ -33,6 +33,8 @@ import {
   loadLocalDraft,
   saveLocalDraft,
   clearLocalDraft,
+  listLocalDrafts,
+  hasDraftSubstance,
   isDraftWorthSaving,
   mapDraftStepToScreen,
   withLiveMedia,
@@ -145,6 +147,13 @@ export const ReviewWizard = ({
   const [draftId, setDraftId] = useState<string | null>(draftParam)
   const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
+  // A saved anonymous draft for a different university than the one open now.
+  // Surfaced as a non-blocking banner so the draft is not silently buried.
+  const [otherDraft, setOtherDraft] = useState<{
+    slug: string
+    to: string
+    name: string
+  } | null>(null)
 
   // Flow state
   const [phase, setPhase] = useState<Phase>('form')
@@ -235,7 +244,29 @@ export const ReviewWizard = ({
     const run = async () => {
       let loaded = false
       let lookupFailed = false
+      // The local draft this visit applied, by storage key — kept out of the
+      // other-drafts notice below.
+      let appliedLocalSlug: string | null = null
       try {
+        // Local drafts are keyed by the canonical slug and server drafts by
+        // university id, while the link may carry an alias — resolve the param
+        // once and use the canonical slug/id for both. The param is
+        // format-validated above, so the .or() string can't be injected.
+        let resolvedSlug = uniParam
+        let resolvedUniId: string | null = null
+        if (uniParam && !draftParam) {
+          const { data: uniRow, error: uniError } = await supabase
+            .from('universities')
+            .select('id, slug')
+            .or(`slug.eq.${uniParam},slug_aliases.cs.{${uniParam}}`)
+            .abortSignal(controller.signal)
+            .maybeSingle()
+          if (uniError) throw uniError
+          if (controller.signal.aborted) return
+          if (uniRow?.slug) resolvedSlug = uniRow.slug
+          resolvedUniId = uniRow?.id ?? null
+        }
+
         if (user && draftParam) {
           const d = await getReviewDraft(draftParam, user.id)
           if (controller.signal.aborted) return
@@ -249,23 +280,14 @@ export const ReviewWizard = ({
             showToast('That draft could not be found.', 'error')
           }
         } else if (user && uniParam) {
-          // A draft for this slug may already exist — resume it so autosave
-          // updates the saved row instead of clobbering it with a fresh one.
-          // Alias slugs resolve too (old links keep working): the param is
-          // format-validated above, so the .or() string can't be injected.
-          const { data: uni, error: uniError } = await supabase
-            .from('universities')
-            .select('id')
-            .or(`slug.eq.${uniParam},slug_aliases.cs.{${uniParam}}`)
-            .abortSignal(controller.signal)
-            .maybeSingle()
-          if (uniError) throw uniError
-          if (uni?.id) {
+          // A draft for this university may already exist — resume it so
+          // autosave updates the saved row instead of clobbering it.
+          if (resolvedUniId) {
             const { data: d, error: draftError } = await supabase
               .from('review_drafts')
               .select('id, payload, university_id')
               .eq('user_id', user.id)
-              .eq('university_id', uni.id)
+              .eq('university_id', resolvedUniId)
               .abortSignal(controller.signal)
               .maybeSingle()
             if (draftError) throw draftError
@@ -278,11 +300,15 @@ export const ReviewWizard = ({
             }
           }
         } else if (!user) {
-          const local = loadLocalDraft()
+          // Drafts are keyed by university: a ?uni link reads only its own
+          // slot (resolved to canonical above, so aliases work), a plain visit
+          // picks up the most recently saved draft.
+          const local = loadLocalDraft(resolvedSlug || undefined)
           if (local && isDraftWorthSaving(local)) {
-            const sameUni = !uniParam || local.selectedUni === uniParam
+            const sameUni = !uniParam || local.selectedUni === resolvedSlug
             if (sameUni) {
               if (!(await applyLocalDraft(local))) return
+              appliedLocalSlug = local.selectedUni || 'none'
               loaded = true
             }
           }
@@ -292,12 +318,12 @@ export const ReviewWizard = ({
         // no server draft was loaded, pick up the localStorage draft and let
         // autosave promote it to their account.
         if (user && !draftParam && !loaded && !controller.signal.aborted) {
-          const local = loadLocalDraft()
+          const local = loadLocalDraft(resolvedSlug || undefined)
           if (local && isDraftWorthSaving(local)) {
-            const sameUni = !uniParam || local.selectedUni === uniParam
+            const sameUni = !uniParam || local.selectedUni === resolvedSlug
             if (sameUni) {
               if (!(await applyLocalDraft(local))) return
-              clearLocalDraft()
+              clearLocalDraft(local.selectedUni)
               loaded = true
             }
           }
@@ -308,6 +334,31 @@ export const ReviewWizard = ({
         console.error('Error loading draft:', err)
       } finally {
         if (!controller.signal.aborted) {
+          // Tell the visitor about drafts for other universities. A group-chat
+          // link for Y must not silently bury a draft they started for X.
+          // Skeletons saved by a bare ?uni prefill do not count as progress.
+          const others = listLocalDrafts().filter(
+            (d) =>
+              d.slug !== (uniParam || 'none') &&
+              d.slug !== appliedLocalSlug &&
+              hasDraftSubstance(d.payload)
+          )
+          const first = others[0]
+          setOtherDraft(
+            first
+              ? {
+                  slug: first.slug,
+                  to:
+                    first.slug !== 'none' && first.slug !== '__not_listed'
+                      ? `/review?uni=${first.slug}`
+                      : '/review',
+                  name:
+                    first.payload.selectedUniName.trim() ||
+                    first.payload.newUniName.trim() ||
+                    'another university',
+                }
+              : null
+          )
           setReviewEntry(
             resolveReviewEntry({ loaded, requested: Boolean(draftParam), lookupFailed })
           )
@@ -473,6 +524,9 @@ export const ReviewWizard = ({
     if (editMode || draftParam || !uniSlug || prefilledUni || prefilledUniLoading) return
     applyValues((v) => (v.selectedUni === uniSlug ? { selectedUni: '' } : {}))
   }, [editMode, draftParam, uniSlug, prefilledUni, prefilledUniLoading, applyValues])
+
+  // Alias links resolve inside the draft-load effect above: the anonymous
+  // draft slot uses the canonical slug, so the lookup happens once there.
 
   // Pre-fill program and university name from the user's profile once it
   // loads, filling empty fields only so typed input is never clobbered.
@@ -676,7 +730,7 @@ export const ReviewWizard = ({
           console.error('Could not delete draft after submit:', err)
         }
       } else {
-        clearLocalDraft()
+        clearLocalDraft(values.selectedUni)
       }
 
       const slug = result.universityCreated ? null : result.universitySlug
@@ -862,6 +916,31 @@ export const ReviewWizard = ({
             </span>
           ))}
         </div>
+
+        {/* A saved draft for a different university — surfaced so a ?uni
+            link never silently buries work in progress. */}
+        {otherDraft && (
+          <div className="draft-reminder fade-in">
+            <div className="draft-reminder-copy">
+              <Icons.Pen />
+              <span>
+                You also have an unfinished review for <strong>{otherDraft.name}</strong>.
+              </span>
+            </div>
+            <div className="draft-reminder-actions">
+              <Link to={otherDraft.to} className="btn btn-outline btn-sm">
+                Continue it
+              </Link>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setOtherDraft(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error banner */}
         {error && (
