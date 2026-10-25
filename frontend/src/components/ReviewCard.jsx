@@ -36,6 +36,10 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  */
 export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
   const { id, rating, text, media, created_at, user_id, recommend } = review
+  // Quick rating = no written text (same definition the reviews.review_kind
+  // generated column uses). Rating/tags still render; the empty text block
+  // collapses into a small label instead.
+  const isQuick = !text?.trim()
   const [expanded, setExpanded] = useState(false)
   // Optimistically clamped: prerendered HTML ships every card clamped (a
   // no-op visually on short text), so hydration never un-collapses a card —
@@ -115,6 +119,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
         <StarRating rating={rating} />
         <div className="review-meta">
           <RecommendPill value={recommend} />
+          {isQuick && <span className="quick-rating-badge">Quick rating</span>}
           {user_id && <SealBadge />}
           <span>{date}</span>
         </div>
@@ -139,12 +144,14 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
 
       <ReviewContext review={review} />
 
-      <div className="review-text-wrap">
-        <p ref={textRef} className={`review-text${showClamped ? ' clamped' : ''}`}>
-          {text}
-        </p>
-        {showClamped && textOverflows && <div className="review-text-fade" aria-hidden="true" />}
-      </div>
+      {text && (
+        <div className="review-text-wrap">
+          <p ref={textRef} className={`review-text${showClamped ? ' clamped' : ''}`}>
+            {text}
+          </p>
+          {showClamped && textOverflows && <div className="review-text-fade" aria-hidden="true" />}
+        </div>
+      )}
 
       {isCollapsible && (
         <div className="review-disclosure-row">

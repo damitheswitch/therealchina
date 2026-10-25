@@ -7,8 +7,8 @@ import type { BoostCard } from './analytics'
 // ---- Fast review flow (Phase 2) --------------------------------------------------
 // Two publish screens: essentials (university + rating) then story (text + tags).
 // Everything else is optional and moves to the post-publish Boost card stack.
-// The server minimum is already university + rating + text (see
-// _shared/reviewFields.ts), so publishing never needs more than that.
+// The server minimum is university + rating (see _shared/reviewFields.ts) —
+// text is optional, and a textless review lands as a "quick rating".
 
 export const FAST_FLOW_SCREENS = 2
 

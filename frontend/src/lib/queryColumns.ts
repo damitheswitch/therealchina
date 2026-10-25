@@ -7,7 +7,7 @@
 // Full review card/page row — everything ReviewCard, summary and display
 // helpers read (all migration-022 fields).
 export const REVIEW_COLUMNS =
-  'id, university_id, user_id, rating, text, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, upvote_count'
+  'id, university_id, user_id, rating, text, review_kind, program, degree_level, media, created_at, enrollment_status, start_year, end_year, language_of_instruction, tuition_range, living_cost_range, funding_type, funding_coverage, recommend, pros, cons, tags, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, upvote_count'
 
 // Minimal row for "has more pages" / total-count probes.
 export const REVIEW_HEAD_COLUMNS = 'id, rating, created_at, upvote_count'

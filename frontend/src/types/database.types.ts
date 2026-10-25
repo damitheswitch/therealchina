@@ -760,9 +760,10 @@ export type Database = {
           rating_intl_office: number | null
           rating_social: number | null
           recommend: string | null
+          review_kind: string
           start_year: number | null
           tags: string[] | null
-          text: string
+          text: string | null
           tuition_range: string | null
           university_id: string
           updated_at: string | null
@@ -794,9 +795,10 @@ export type Database = {
           rating_intl_office?: number | null
           rating_social?: number | null
           recommend?: string | null
+          review_kind?: never
           start_year?: number | null
           tags?: string[] | null
-          text: string
+          text?: string | null
           tuition_range?: string | null
           university_id: string
           updated_at?: string | null
@@ -828,9 +830,10 @@ export type Database = {
           rating_intl_office?: number | null
           rating_social?: number | null
           recommend?: string | null
+          review_kind?: never
           start_year?: number | null
           tags?: string[] | null
-          text?: string
+          text?: string | null
           tuition_range?: string | null
           university_id?: string
           updated_at?: string | null

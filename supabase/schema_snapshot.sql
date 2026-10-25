@@ -82,7 +82,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   university_id UUID NOT NULL REFERENCES public.universities(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  text TEXT NOT NULL,
+  text TEXT,
+  -- 'quick' = rating/tags only (no written text), 'full' = has text.
+  -- Derived, so a review that gains text later flips kind automatically.
+  review_kind TEXT GENERATED ALWAYS AS (
+    CASE WHEN text IS NULL OR btrim(text) = '' THEN 'quick' ELSE 'full' END
+  ) STORED,
   program TEXT,
   degree_level TEXT,
   media JSONB DEFAULT '[]'::jsonb,
@@ -125,7 +130,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 ALTER TABLE public.reviews
 DROP CONSTRAINT IF EXISTS chk_reviews_text_length,
 ADD CONSTRAINT chk_reviews_text_length
-  CHECK (char_length(text) BETWEEN 10 AND 5000)
+  CHECK (text IS NULL OR char_length(text) BETWEEN 10 AND 5000)
   NOT VALID,
 DROP CONSTRAINT IF EXISTS chk_reviews_pros_length,
 ADD CONSTRAINT chk_reviews_pros_length

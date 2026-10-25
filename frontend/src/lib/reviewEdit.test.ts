@@ -7,6 +7,7 @@ const baseReview: EditableReview = {
   user_id: 'me',
   rating: 4,
   text: 'Solid program, brutal winters.',
+  review_kind: 'full',
   program: 'Computer Science',
   degree_level: 'Bachelor',
   media: [
