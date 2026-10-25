@@ -3813,7 +3813,7 @@ UPDATE universities SET name = 'Pingxiang University',
   province = 'Jiangxi',
   country = COALESCE(country, 'China'),
   uni_category = 'comprehensive',
-  logo_url = 'https://www.shanghairanking.cn/_uni/logo/24745412.png' WHERE slug = 'pingxiang' OR 'pingxiang' = ANY(slug_aliases);
+  logo_url = 'https://www.shanghairanking.cn/_uni/logo-jpg/2474541200.jpg' WHERE slug = 'pingxiang' OR 'pingxiang' = ANY(slug_aliases);
 UPDATE universities SET name = 'Pu''er University',
   name_zh = '普洱学院',
   rankings = rankings || '{"shanghai_national":500,"shanghai_url":"https://www.shanghairanking.cn/institution/puer-university"}'::jsonb,

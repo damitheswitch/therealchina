@@ -4,13 +4,13 @@ import { firstPartyLogo } from './logo'
 describe('firstPartyLogo', () => {
   it('maps png logos to local paths', () => {
     expect(firstPartyLogo('https://www.shanghairanking.cn/_uni/logo/27532357.png')).toBe(
-      '/logos/27532357.png'
+      '/logos/27532357.png?v=2'
     )
   })
 
-  it('maps logo-jpg variants to local paths', () => {
+  it('maps logo-jpg variants to converted png paths', () => {
     expect(firstPartyLogo('https://www.shanghairanking.cn/_uni/logo-jpg/8551212700.jpg')).toBe(
-      '/logos/8551212700.jpg'
+      '/logos/8551212700.png?v=2'
     )
   })
 

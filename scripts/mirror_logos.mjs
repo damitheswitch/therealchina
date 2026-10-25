@@ -8,8 +8,12 @@
 // Idempotent: existing files are skipped. Source of truth for which ids to
 // fetch: the SR logo URLs in supabase/seed.sql, supabase/seed_universities.sql
 // and supabase/seed_merge.sql.
+//
+// logo-jpg sources come down as .jpg with a baked white background — run
+// `python scripts/remove_logo_bg.py` afterwards to convert them into
+// transparent .png files (the frontend maps every logo to /logos/<id>.png).
 
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { HEADERS } from './lib/shanghairanking.mjs'
@@ -78,3 +82,5 @@ for (const [url, { id, ext }] of urls) {
 
 console.log(`done: ${done} downloaded, ${skipped} already present, ${failed} failed`)
 if (big.length) console.log('over 150KB:\n  ' + big.join('\n  '))
+if (readdirSync(OUT_DIR).some((f) => f.endsWith('.jpg')))
+  console.log('note: .jpg logos present — run `python scripts/remove_logo_bg.py` to convert them')
