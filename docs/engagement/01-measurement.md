@@ -4,13 +4,20 @@
 
 **2026-10-11 owner decision — baseline requirement waived.** The owner explicitly waived the dated pre-change baseline ("The pre-change Phase 1 baseline requirement is explicitly waived by the owner"). No pre-Phase-2 observation week was captured, and none will be backfilled — Umami keeps measuring, but no baseline numbers are claimed anywhere, and Phase 2+ effectiveness notes use post-change data only. The "Done when" gates below that depended on a pre-change baseline are superseded by this waiver; the instrumentation-verification gate stands and is met.
 
-**Depends on:** nothing. **Blocks:** Phase 2 (the dated baseline must exist before the flow changes).
+**2026-10-13 owner confirmation:** Phase 1 is on production. Continue
+recording and review dated outcomes when needed; the baseline wait remains
+waived. This coordinating agent has not independently checked production.
+
+**Depends on:** nothing. **Blocks:** no baseline waiting gate.
 
 **Overview:** [00-overview.md](00-overview.md) §5.
 
 ## Goal
 
-Know where observed visitors drop out of the existing review flow, for signed-in and anonymous users, and record a dated "before" baseline that Phase 2 can be judged against.
+Observe where signed-in and anonymous visitors drop out of the released
+review flow. Continue collecting Umami events and review dated read-only
+Supabase outcomes when useful. No missing pre-change baseline is claimed,
+backfilled, or required before further work.
 
 Umami reports an observed visitor funnel, not an exact wizard-attempt ledger. Supabase reports authoritative published rows and a separate snapshot of idle signed-in drafts. They are complementary signals and are not joined by IDs.
 
@@ -21,7 +28,7 @@ Umami reports an observed visitor funnel, not an exact wizard-attempt ledger. Su
 Decision: **Umami Cloud** for browser-side events, with separate production and staging Umami websites.
 
 - Production tracks only the production hostname and production website ID.
-- Staging uses a separate website ID on the exact staging hostname.
+- Staging, if a second website is ever added, uses a separate website ID on the exact staging hostname. Not provisioned today (single-site account — see "Current setup").
 - Localhost and deploy previews do not track by default.
 - If mainland/WeChat reachability fails consistently, choose between a first-party proxy and self-hosted Umami before treating the funnel as representative.
 
@@ -47,7 +54,7 @@ Processor list includes Supabase, Netlify, Cloudflare Turnstile, Resend, and Uma
 
 Enums:
 
-- `flow`: `legacy_5`; a later value such as `fast_2` is reserved for Phase 2.
+- `flow`: `legacy_5` for the historical wizard; `fast_2` for the released Phase 2 flow.
 - `entry`: `new`, `resumed`, `unknown`.
 - `auth`: `anonymous`, `signed_in`.
 - `reason`: `turnstile_client`, `turnstile_server`, `server_input`, `rate_limited`, `auth_or_onboarding`, `network_or_unknown`, `server_error`.
@@ -58,17 +65,18 @@ Enums:
 
 ### Boost events (defined in Phase 2, `feat/phase2-fast-review-flow`)
 
-| Event                   | When it fires                                                                     | Exact properties              |
-| ----------------------- | --------------------------------------------------------------------------------- | ----------------------------- |
-| `boost_card_completed`  | A Boost card's save through `review-manage` succeeds                              | `flow`, `auth`, `card`        |
-| `boost_exited`          | The reviewer leaves the Boost card stack before finishing it                      | `flow`, `auth`, `after_card`  |
+| Event                  | When it fires                                                                     | Exact properties             |
+| ---------------------- | --------------------------------------------------------------------------------- | ---------------------------- |
+| `boost_card_completed` | A Boost card's authorized save through `review-manage` or `review-boost` succeeds | `flow`, `auth`, `card`       |
+| `boost_exited`         | The reviewer leaves the Boost card stack before finishing it                      | `flow`, `auth`, `after_card` |
 
 - `card`: `program`, `ratings`, `money`, `details`, `pros_cons`, `media`.
 - `after_card`: the last card completed before exit, or `none` when the
   reviewer exits before any card saved.
-- Both events fire only under `flow: fast_2`. `auth` stays `signed_in` while
-  Boost is signed-in only; anonymous Boost (Phase 3) may emit `anonymous` if
-  it ships.
+- Both events fire only under `flow: fast_2`. `auth` distinguishes
+  `signed_in` and `anonymous`; Phase 3 is reported released by the owner.
+  Completion means a successful save through the applicable authorized path,
+  not merely clicking a card. Keep the exact allowlisted payload boundary.
 
 ## Privacy and payload boundary
 
@@ -109,8 +117,8 @@ Current setup: the free Umami account has one website, so only production is con
 
 1. **Implementation:** complete. Helper, wizard wiring, exact schemas, tests, environment gating, and privacy copy are merged to `staging` in PR #51. The staging deploy is `staging--therealchina.netlify.app`.
 2. **Staging verification:** not performed. The free Umami account has only the production website, so staging analytics remains disabled. Production request/dashboard verification must therefore carry more weight, and the checklist below remains required if a staging site is added later.
-3. **Production instrumentation:** Phase 1 code is merged to `master` in PR #53 and the CSP fix is merged in PR #54. Activation is pending the Netlify production deploy that applies PR #54; no production test reviews or test writes.
-4. **Baseline collection:** pending the successful production tracker request and dashboard evidence. Needs at least one complete pre-Phase-2 observation week, raw sample sizes, dated read-only Supabase results, and separate idle-draft snapshots.
+3. **Production instrumentation:** earlier evidence records the 2026-10-10 daily-rebuild deploy carrying the PR #54 CSP fix; owner reconfirmed production release on 2026-10-13. No fresh independent production check is claimed here; no production test reviews or test writes.
+4. **Pre-change baseline:** waived, never captured. Continuing measurement remains active; record dated windows, raw sample sizes, read-only outcomes, and separate idle-draft snapshots when reviewing results. No release wait or invented baseline.
 
 ## Staging verification checklist
 
@@ -187,14 +195,14 @@ order by progress;
 
 ## Baseline record
 
-| Capture date/time (UTC) | Observation window (UTC) | Umami starts | Umami publishes | Published rows | Anonymous rows | Signed-in rows | Optional-field results | Idle-draft snapshot | Notes        |
-| ----------------------- | ------------------------ | -----------: | --------------: | -------------: | -------------: | -------------: | ---------------------- | ------------------- | ------------ |
+| Capture date/time (UTC) | Observation window (UTC) | Umami starts | Umami publishes | Published rows | Anonymous rows | Signed-in rows | Optional-field results | Idle-draft snapshot | Notes                                                    |
+| ----------------------- | ------------------------ | -----------: | --------------: | -------------: | -------------: | -------------: | ---------------------- | ------------------- | -------------------------------------------------------- |
 | n/a                     | n/a                      |          n/a |             n/a |            n/a |            n/a |            n/a | n/a                    | n/a                 | Waived by owner 2026-10-11 — never captured, not claimed |
 
 ## Done when
 
-- Staging verification is complete if a separate staging website exists; otherwise it is explicitly recorded as not performed. *(Not performed — single Umami website exists, production only.)*
-- Production instrumentation is deployed and verified with actual request and dashboard evidence. *(Live via the 2026-10-10 daily-rebuild deploy carrying the PR #54 CSP fix.)*
+- Staging verification is complete if a separate staging website exists; otherwise it is explicitly recorded as not performed. _(Not performed — single Umami website exists, production only.)_
+- Production instrumentation is deployed and verified with actual request and dashboard evidence. _(Live via the 2026-10-10 daily-rebuild deploy carrying the PR #54 CSP fix.)_
 - ~~At least one complete pre-Phase-2 observation week is recorded with raw sample sizes.~~ **Waived by owner 2026-10-11.**
 - ~~Dated read-only Supabase outcomes and idle-draft snapshots are recorded above.~~ **Waived by owner 2026-10-11.**
-- ~~Phase 2 remains unreleased until the baseline exists.~~ **Waived by owner 2026-10-11** — Phase 2+ ships with the coordinated release; nothing is claimed about the missing baseline.
+- ~~Phase 2 remains unreleased until the baseline exists.~~ **Waived by owner 2026-10-11**, reaffirmed 2026-10-13. Phases 1-4 are reported released by the owner; nothing is claimed about the missing baseline.
