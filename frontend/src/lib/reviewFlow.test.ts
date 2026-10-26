@@ -13,6 +13,7 @@ import {
   draftPayloadFromState,
   emptyReviewFieldValues,
   fieldValuesFromDraft,
+  normalizeUniSlugParam,
   recentYearChips,
   STORY_STARTERS,
   type ReviewFieldValues,
@@ -216,5 +217,27 @@ describe('recentYearChips', () => {
   it('returns the current year and six before it', () => {
     const chips = recentYearChips(2026)
     expect(chips).toEqual([2026, 2025, 2024, 2023, 2022, 2021, 2020])
+  })
+})
+
+describe('normalizeUniSlugParam', () => {
+  it('accepts lowercase slugs and aliases as-is', () => {
+    expect(normalizeUniSlugParam('zhejiang-university')).toBe('zhejiang-university')
+    expect(normalizeUniSlugParam('zju')).toBe('zju')
+  })
+
+  it('trims and lowercases before validating', () => {
+    expect(normalizeUniSlugParam('  ZJU ')).toBe('zju')
+  })
+
+  it('treats anything that cannot be a slug as no param', () => {
+    for (const bad of [null, undefined, '', '  ', 'a,b', 'a}b', 'a.b', '-x', 'x-', 'x--y', '_x']) {
+      expect(normalizeUniSlugParam(bad)).toBe('')
+    }
+  })
+
+  it('rejects overlong values the same way review-submit does', () => {
+    expect(normalizeUniSlugParam('a'.repeat(121))).toBe('')
+    expect(normalizeUniSlugParam('a'.repeat(120))).toBe('a'.repeat(120))
   })
 })

@@ -12,6 +12,18 @@ import type { BoostCard } from './analytics'
 
 export const FAST_FLOW_SCREENS = 2
 
+// University slugs as they may appear in URL params. review-submit keeps its
+// own copy of this check (Deno can't import this file) — keep them in sync.
+export const UNI_SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
+export const UNI_SLUG_MAX_LEN = 120
+
+// Anything that can't be a slug is treated as no param at all — an empty
+// field beats a broken lookup and a dead-end publish.
+export const normalizeUniSlugParam = (raw: string | null | undefined): string => {
+  const s = (raw || '').trim().toLowerCase()
+  return UNI_SLUG_RE.test(s) && s.length <= UNI_SLUG_MAX_LEN ? s : ''
+}
+
 // Every field a review can carry, as the wizard holds it. One shape feeds the
 // submit payload, the edit/update payload, and each Boost save — the server
 // writes the whole validated field set on every call, so callers always send
@@ -78,10 +90,10 @@ export const emptyReviewFieldValues: ReviewFieldValues = {
   anonEmail: '',
 }
 
-// Strips the draft-only keys (v, step, media) so the rest can be applied to
-// form state directly. Media is handled separately by the uploader.
+// Strips the draft-only keys (v, step, media, savedAt) so the rest can be
+// applied to form state directly. Media is handled separately by the uploader.
 export const fieldValuesFromDraft = (p: ReviewDraftPayload): Partial<ReviewFieldValues> => {
-  const { v: _v, step: _step, media: _media, ...fields } = p
+  const { v: _v, step: _step, media: _media, savedAt: _savedAt, ...fields } = p
   return fields
 }
 
