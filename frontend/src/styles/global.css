@@ -1924,17 +1924,22 @@ h3 {
   display: none;
 }
 
-/* Empty-state rating block sits inside the top row on desktop: pushed right
-   of the identity block and vertically centered next to the CTA. */
-.uni-profile-header.has-logo .uni-profile-top .uni-profile-rating-empty {
-  align-self: center;
+/* Empty-state rating: desktop keeps it stacked under the header CTA on the
+   right; mobile slots it into the ranking facts row instead (or under the
+   identity block when a uni has no ranking data). */
+.uni-profile-cta-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
   margin-left: auto;
+  flex-shrink: 0;
+}
+.uni-profile-header.has-logo .uni-profile-rating-empty {
   padding: 0;
 }
-@media (max-width: 700px) {
-  .uni-profile-header.has-logo .uni-profile-top .uni-profile-rating-empty {
-    margin-left: 0;
-  }
+.uni-profile-facts .uni-profile-rating-empty {
+  display: none;
 }
 
 /* ===== University Review Summary ===== */
@@ -2569,6 +2574,24 @@ h3 {
   }
   .uni-profile-mobile-cta > .btn {
     width: 100%;
+  }
+  .uni-profile-cta-col {
+    display: none;
+  }
+  .uni-profile-cta-col.no-facts {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .uni-profile-cta-col.no-facts > .btn {
+    display: none;
+  }
+  .uni-profile-facts .uni-profile-rating-empty {
+    display: flex;
+    margin-left: auto;
+  }
+  .uni-profile-facts.has-empty-rating .uni-profile-fact {
+    flex-basis: auto;
   }
   .uni-profile-header.has-logo .uni-profile-rating-block {
     padding-left: 0;

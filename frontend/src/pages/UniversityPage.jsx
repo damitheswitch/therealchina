@@ -111,6 +111,18 @@ export const UniversityPage = () => {
       ? rankings.shanghai_url
       : 'https://www.shanghairanking.cn/rankings/bcur'
 
+  const hasFacts =
+    rankNational !== null || rankWorld !== null || shanghaiScore !== null || prestigeTags.length > 0
+
+  const ratingEmpty = (
+    <div className="uni-profile-rating-block uni-profile-rating-empty">
+      <div className="rating-info">
+        <StarRating rating={0} sizeClass="stars-lg" />
+        <span className="count">No reviews yet. Ask a current student below.</span>
+      </div>
+    </div>
+  )
+
   const ratingBlock =
     reviewCount > 0 ? (
       <div className="uni-profile-rating-block">
@@ -128,14 +140,7 @@ export const UniversityPage = () => {
         )}
         {hasVerified && <SealBadge large={true} />}
       </div>
-    ) : (
-      <div className="uni-profile-rating-block uni-profile-rating-empty">
-        <div className="rating-info">
-          <StarRating rating={0} sizeClass="stars-lg" />
-          <span className="count">No reviews yet. Ask a current student below.</span>
-        </div>
-      </div>
-    )
+    ) : null
 
   const scrollToAsk = (e) => {
     e.preventDefault()
@@ -240,11 +245,8 @@ export const UniversityPage = () => {
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
 
-              {(rankNational !== null ||
-                rankWorld !== null ||
-                shanghaiScore !== null ||
-                prestigeTags.length > 0) && (
-                <div className="uni-profile-facts">
+              {hasFacts && (
+                <div className={`uni-profile-facts${reviewCount === 0 ? ' has-empty-rating' : ''}`}>
                   {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
                     <div className="uni-profile-fact">
                       <span className="uni-profile-fact-label">National ranking</span>
@@ -324,6 +326,7 @@ export const UniversityPage = () => {
                       <RankingIndicatorList indicators={indicators} />
                     </div>
                   )}
+                  {reviewCount === 0 && ratingEmpty}
                 </div>
               )}
 
@@ -356,10 +359,16 @@ export const UniversityPage = () => {
               )}
             </div>
           </div>
-          {reviewCount === 0 && ratingBlock}
-          {heroCta}
+          {reviewCount === 0 ? (
+            <div className={`uni-profile-cta-col${hasFacts ? '' : ' no-facts'}`}>
+              {heroCta}
+              {ratingEmpty}
+            </div>
+          ) : (
+            heroCta
+          )}
         </div>
-        {reviewCount > 0 && ratingBlock}
+        {ratingBlock}
         <div className="uni-profile-mobile-cta">{heroCta}</div>
       </div>
 
