@@ -117,7 +117,12 @@ export const UniversityPage = () => {
   const ratingEmpty = (
     <div className="uni-profile-rating-block uni-profile-rating-empty">
       <div className="rating-info">
-        <StarRating rating={0} sizeClass="stars-lg" />
+        <span className="empty-stars">
+          <span className="empty-dash" aria-hidden="true">
+            —
+          </span>
+          <StarRating rating={0} sizeClass="stars-lg" />
+        </span>
         <span className="count">No reviews yet. Ask a current student below.</span>
       </div>
     </div>
@@ -246,7 +251,7 @@ export const UniversityPage = () => {
               <div className="uni-profile-name-zh">{university.name_zh}</div>
 
               {hasFacts && (
-                <div className={`uni-profile-facts${reviewCount === 0 ? ' has-empty-rating' : ''}`}>
+                <div className="uni-profile-facts">
                   {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
                     <div className="uni-profile-fact">
                       <span className="uni-profile-fact-label">National ranking</span>
@@ -326,7 +331,6 @@ export const UniversityPage = () => {
                       <RankingIndicatorList indicators={indicators} />
                     </div>
                   )}
-                  {reviewCount === 0 && ratingEmpty}
                 </div>
               )}
 
@@ -360,7 +364,7 @@ export const UniversityPage = () => {
             </div>
           </div>
           {reviewCount === 0 ? (
-            <div className={`uni-profile-cta-col${hasFacts ? '' : ' no-facts'}`}>
+            <div className="uni-profile-cta-col">
               {heroCta}
               {ratingEmpty}
             </div>
@@ -369,6 +373,7 @@ export const UniversityPage = () => {
           )}
         </div>
         {ratingBlock}
+        {reviewCount === 0 && ratingEmpty}
         <div className="uni-profile-mobile-cta">{heroCta}</div>
       </div>
 

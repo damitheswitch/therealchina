@@ -1924,21 +1924,46 @@ h3 {
   display: none;
 }
 
-/* Empty-state rating: desktop keeps it stacked under the header CTA on the
-   right; mobile slots it into the ranking facts row instead (or under the
-   identity block when a uni has no ranking data). */
+/* Empty-state rating: a small dash + empty stars stand in for the score.
+   Desktop anchors it to the bottom of the header CTA column so it sits on
+   the ranking/distinctions line, directly under the Ask a Student button,
+   with the note wrapping beside stars pinned to the right edge. On mobile
+   it falls back to the prod-style row under the header identity. */
 .uni-profile-cta-col {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
   margin-left: auto;
   flex-shrink: 0;
+  align-self: stretch;
 }
-.uni-profile-header.has-logo .uni-profile-rating-empty {
+.uni-profile-header.has-logo .uni-profile-cta-col .uni-profile-rating-empty {
   padding: 0;
 }
-.uni-profile-facts .uni-profile-rating-empty {
+.uni-profile-cta-col .uni-profile-rating-empty .rating-info {
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 0.85rem;
+}
+.uni-profile-cta-col .uni-profile-rating-empty .count {
+  max-width: 11.5rem;
+  text-align: right;
+  line-height: 1.35;
+}
+.uni-profile-rating-empty .empty-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.uni-profile-rating-empty .empty-dash {
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+.uni-profile-header > .uni-profile-rating-empty {
   display: none;
 }
 
@@ -2578,20 +2603,8 @@ h3 {
   .uni-profile-cta-col {
     display: none;
   }
-  .uni-profile-cta-col.no-facts {
+  .uni-profile-header > .uni-profile-rating-empty {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-  .uni-profile-cta-col.no-facts > .btn {
-    display: none;
-  }
-  .uni-profile-facts .uni-profile-rating-empty {
-    display: flex;
-    margin-left: auto;
-  }
-  .uni-profile-facts.has-empty-rating .uni-profile-fact {
-    flex-basis: auto;
   }
   .uni-profile-header.has-logo .uni-profile-rating-block {
     padding-left: 0;
