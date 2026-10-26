@@ -30,7 +30,7 @@ import {
   getReviewDraft,
   deleteReviewDraft,
   deleteReviewDraftForUniversity,
-  loadLocalDraft,
+  loadLocalDraftWithAlias,
   saveLocalDraft,
   clearLocalDraft,
   listLocalDrafts,
@@ -213,6 +213,9 @@ export const ReviewWizard = ({
   // The anonymous draft slot this visit consumed ('none' when no university
   // was picked). Publish clears it even if the pick changed mid-session.
   const loadedLocalSlotRef = useRef<string | null>(null)
+  // The slot the last local autosave wrote — lets a pick change retire the
+  // slot the draft moved from instead of stacking residue copies.
+  const lastWrittenLocalSlotRef = useRef<string | null>(null)
   // Set the moment submitReview succeeds — a debounced autosave can still fire
   // during the stamp animation (phase is still 'form' until it finishes), and
   // without this it would re-create the draft row publish just deleted.
@@ -249,10 +252,22 @@ export const ReviewWizard = ({
   } = useUniversity(uniParam || undefined)
 
   // The local draft slot for the current pick: canonical once the ?uni
-  // lookup resolves. A still-raw param is an alias, so null — keying a slot
-  // by it would leave the draft unreachable via the canonical slug.
+  // lookup resolves. A still-raw param is an alias while the lookup is
+  // pending, so null then — keying a slot by it would leave the draft
+  // unreachable via the canonical slug. On lookup *error* the raw param is
+  // still the best key: the read path below falls back to it the same way,
+  // and skipping saves would silently disable autosave for the session.
   const draftSlotSlug =
-    uniParam && values.selectedUni === uniParam ? (prefilledUni?.slug ?? null) : values.selectedUni
+    uniParam && values.selectedUni === uniParam
+      ? (prefilledUni?.slug ?? (prefilledUniError ? uniParam : null))
+      : values.selectedUni
+
+  // A mounted ?uni=A→B navigation starts a new visit: the slot refs below
+  // belong to the university that loaded them, not the new one.
+  useEffect(() => {
+    loadedLocalSlotRef.current = null
+    lastWrittenLocalSlotRef.current = null
+  }, [uniParam])
 
   // Load the draft once auth is ready. Signed-in users pull by ?draft=<id>, or
   // by ?uni=<slug> when a draft already exists for that university (so the
@@ -262,8 +277,9 @@ export const ReviewWizard = ({
     if (editMode || authLoading) return
     // Both the signed-in draft check and the anonymous slot key come from
     // the resolved university — wait for the shared lookup rather than
-    // racing it or duplicating its query.
-    if (uniParam && !draftParam && prefilledUniLoading) return
+    // racing it or duplicating its query. A signed-in ?draft=<id> load is
+    // the one path that needs nothing from the lookup, so it skips the wait.
+    if (uniParam && prefilledUniLoading && !(user && draftParam)) return
 
     const controller = new AbortController()
     // localStorage drafts can outlive their uploads (server cleanup can't see
@@ -327,8 +343,10 @@ export const ReviewWizard = ({
         } else if (!user) {
           // Drafts are keyed by university: a ?uni link reads only its own
           // slot (canonical above, so aliases work), a plain visit picks up
-          // the most recently saved draft.
-          const entry = loadLocalDraft(resolvedSlug || undefined)
+          // the most recently saved draft. The raw-param slot is checked
+          // too — legacy migrations and saves during a failed lookup can
+          // leave drafts keyed by the alias.
+          const entry = loadLocalDraftWithAlias(resolvedSlug || undefined, uniParam)
           if (entry && isDraftWorthSaving(entry.payload)) {
             if (!(await applyLocalDraft(entry))) return
             appliedLocalSlug = entry.slug
@@ -340,7 +358,7 @@ export const ReviewWizard = ({
         // no server draft was loaded, pick up the localStorage draft and let
         // autosave promote it to their account.
         if (user && !draftParam && !loaded && !controller.signal.aborted) {
-          const entry = loadLocalDraft(resolvedSlug || undefined)
+          const entry = loadLocalDraftWithAlias(resolvedSlug || undefined, uniParam)
           if (entry && isDraftWorthSaving(entry.payload)) {
             if (!(await applyLocalDraft(entry))) return
             clearLocalDraft(entry.slug)
@@ -513,10 +531,21 @@ export const ReviewWizard = ({
           lastSavedPayloadRef.current = draftPayload
         } else {
           // A null slot means the pick is still an unresolved alias — skip
-          // rather than write a slot reads can't find back.
-          if (draftSlotSlug !== null) {
+          // rather than write a slot reads can't find back. While a ?uni
+          // navigation is still resolving the pick has not settled either —
+          // that slot belongs to the previous visit's checkpoint.
+          if (draftSlotSlug !== null && !prefilledUniLoading) {
             saveLocalDraft(draftSlotSlug, draftPayload)
             lastSavedPayloadRef.current = draftPayload
+            // The draft follows the pick within a visit: when it lands
+            // under a different university, the copy it moved from is
+            // residue — clear it so it can't resurface after publish or on
+            // a later visit.
+            const prevLocalSlot = lastWrittenLocalSlotRef.current ?? loadedLocalSlotRef.current
+            if (prevLocalSlot !== null && prevLocalSlot !== draftSlotSlug) {
+              clearLocalDraft(prevLocalSlot)
+            }
+            lastWrittenLocalSlotRef.current = draftSlotSlug
           }
         }
       } catch (err) {
@@ -525,7 +554,16 @@ export const ReviewWizard = ({
     }, 1500)
 
     return () => clearTimeout(timer)
-  }, [user, editMode, draftLoading, phase, draftPayload, draftUniversityId, draftSlotSlug])
+  }, [
+    user,
+    editMode,
+    draftLoading,
+    phase,
+    draftPayload,
+    draftUniversityId,
+    draftSlotSlug,
+    prefilledUniLoading,
+  ])
 
   // Warn before closing the tab when there is unsaved progress. The autosave
   // runs every 1.5s, so this only guards the narrow window after a change.
@@ -805,12 +843,15 @@ export const ReviewWizard = ({
           console.error('Could not delete draft after submit:', err)
         }
       } else {
-        // The slot this review consumed goes — its content is now published —
-        // and so does the current pick's slot when the pick changed
-        // mid-session (autosave copied the same payload there).
-        if (loadedLocalSlotRef.current !== null) clearLocalDraft(loadedLocalSlotRef.current)
-        if (draftSlotSlug !== null && draftSlotSlug !== loadedLocalSlotRef.current) {
-          clearLocalDraft(draftSlotSlug)
+        // Every slot this visit touched goes — its content is now published:
+        // the loaded slot, the last slot autosave wrote (the pick may have
+        // moved inside the debounce window), and the current pick's slot.
+        for (const slot of new Set([
+          loadedLocalSlotRef.current,
+          lastWrittenLocalSlotRef.current,
+          draftSlotSlug,
+        ])) {
+          if (slot !== null) clearLocalDraft(slot)
         }
       }
 

@@ -306,6 +306,35 @@ export const loadLocalDraft = (slug?: string): LocalDraftEntry | null => {
   return payload ? { slug: slug || LOCAL_DRAFT_NO_UNI_SLUG, payload } : null
 }
 
+// Reads the canonical slot plus the raw-param slot when they differ. A raw
+// param is an alias of the same university (the shared lookup only returns
+// rows whose slug or slug_aliases match), so both slots hold drafts for one
+// university — written by a legacy migration or a save during a failed
+// lookup. The worth-saving, newer payload wins; the losing slot is removed
+// so it cannot resurface as a phantom "other draft" later.
+export const loadLocalDraftWithAlias = (
+  slug: string | undefined,
+  rawParam: string
+): LocalDraftEntry | null => {
+  const primary = loadLocalDraft(slug)
+  // The merge is only safe with a canonical anchor: slug '' reads the
+  // no-university slot and undefined reads the most-recent draft — neither
+  // is known to be the same university as rawParam.
+  if (!rawParam || !slug || rawParam === slug) return primary
+  const secondary = loadLocalDraft(rawParam)
+  if (!secondary || secondary.slug === primary?.slug) return primary
+  if (!primary) return secondary
+  const candidates = [primary, secondary]
+  // A skeleton (a bare ?uni prefill, nothing written) never beats a draft
+  // with real content, no matter which was saved more recently.
+  const substantive = candidates.filter((e) => hasDraftSubstance(e.payload))
+  const pick = (substantive.length ? substantive : candidates).sort(
+    (a, b) => (b.payload.savedAt ?? 0) - (a.payload.savedAt ?? 0)
+  )[0]
+  for (const e of candidates) if (e !== pick) clearLocalDraft(e.slug)
+  return pick
+}
+
 // The caller passes the resolved slug — never derive the slot from the
 // payload, which can still hold a raw ?uni alias or a stale pick. The
 // payload's selectedUni is kept in lockstep with the slot so resume checks

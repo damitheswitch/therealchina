@@ -8,6 +8,7 @@ import {
   draftUniversityLabel,
   draftProgressLabel,
   loadLocalDraft,
+  loadLocalDraftWithAlias,
   saveLocalDraft,
   clearLocalDraft,
   listLocalDrafts,
@@ -253,6 +254,74 @@ describe('local draft fallback', () => {
     localStorage.setItem('unrelated', '{}')
     const slugs = listLocalDrafts().map((d) => d.slug)
     expect(slugs).toEqual(['fudan'])
+  })
+
+  describe('loadLocalDraftWithAlias', () => {
+    it('reads the raw-param slot when the canonical one is empty', () => {
+      // A draft saved while the ?uni lookup was failing lives under the
+      // alias — the resolved read must still find it.
+      saveLocalDraft('zju', { ...emptyPayload, selectedUni: 'zju', rating: 5 })
+      const entry = loadLocalDraftWithAlias('zhejiang-university', 'zju')
+      expect(entry?.slug).toBe('zju')
+      expect(entry?.payload.rating).toBe(5)
+    })
+
+    it('recovers a legacy draft migrated under an alias', () => {
+      localStorage.setItem(
+        'trc_review_draft',
+        JSON.stringify({ ...emptyPayload, selectedUni: 'zju', rating: 4 })
+      )
+      const entry = loadLocalDraftWithAlias('zhejiang-university', 'zju')
+      expect(entry?.slug).toBe('zju')
+      expect(entry?.payload.rating).toBe(4)
+    })
+
+    it('prefers the newer of the two slots and retires the loser', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(1000)
+      saveLocalDraft('zju', { ...emptyPayload, selectedUni: 'zju', rating: 1 })
+      vi.setSystemTime(2000)
+      saveLocalDraft('zhejiang-university', {
+        ...emptyPayload,
+        selectedUni: 'zhejiang-university',
+        rating: 5,
+      })
+      const entry = loadLocalDraftWithAlias('zhejiang-university', 'zju')
+      expect(entry?.slug).toBe('zhejiang-university')
+      expect(loadLocalDraft('zju')).toBeNull()
+      expect(loadLocalDraft('zhejiang-university')?.payload.rating).toBe(5)
+    })
+
+    it('prefers a substantive older draft over a newer skeleton', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(1000)
+      saveLocalDraft('zju', { ...emptyPayload, selectedUni: 'zju', rating: 3 })
+      vi.setSystemTime(2000)
+      // Newer write, but only a bare prefill skeleton.
+      saveLocalDraft('zhejiang-university', {
+        ...emptyPayload,
+        selectedUni: 'zhejiang-university',
+      })
+      const entry = loadLocalDraftWithAlias('zhejiang-university', 'zju')
+      expect(entry?.slug).toBe('zju')
+      expect(loadLocalDraft('zhejiang-university')).toBeNull()
+    })
+
+    it('behaves like loadLocalDraft when there is no alias to check', () => {
+      saveLocalDraft('fudan', { ...emptyPayload, selectedUni: 'fudan', rating: 4 })
+      expect(loadLocalDraftWithAlias('fudan', 'fudan')?.payload.rating).toBe(4)
+      expect(loadLocalDraftWithAlias('fudan', '')?.payload.rating).toBe(4)
+      expect(loadLocalDraftWithAlias('fudan', 'tsinghua')?.payload.rating).toBe(4)
+    })
+
+    it('does not clear the picked slot when both reads hit it', () => {
+      // loadLocalDraft() with no slug returns the most recent entry — which
+      // can be the raw-param slot itself.
+      saveLocalDraft('zju', { ...emptyPayload, selectedUni: 'zju', rating: 5 })
+      const entry = loadLocalDraftWithAlias(undefined, 'zju')
+      expect(entry?.slug).toBe('zju')
+      expect(loadLocalDraft('zju')).not.toBeNull()
+    })
   })
 })
 
