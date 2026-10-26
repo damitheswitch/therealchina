@@ -139,6 +139,26 @@ export const fetchCommunityQuestions = async (): Promise<CommunityQuestion[]> =>
   return rows.map((r) => mapQuestion(r, authors))
 }
 
+export const fetchUniversityQuestions = async (
+  universityId: string,
+  signal?: AbortSignal
+): Promise<CommunityQuestion[]> => {
+  let query = supabase
+    .from('qa_questions_public')
+    .select(QUESTION_COLS)
+    .eq('university_id', universityId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+  if (signal) query = query.abortSignal(signal)
+  const { data, error } = await query
+  if (error) throw error
+  const rows = (data ?? []) as QuestionRow[]
+  const authors = await fetchAuthors([
+    ...new Set(rows.map((r) => r.author_id).filter((id): id is string => !!id)),
+  ])
+  return rows.map((r) => mapQuestion(r, authors))
+}
+
 export const fetchCommunityQuestion = async (
   slug: string
 ): Promise<{ question: CommunityQuestion; answers: CommunityAnswer[] } | null> => {

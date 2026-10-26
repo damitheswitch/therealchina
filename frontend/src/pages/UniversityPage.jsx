@@ -111,6 +111,23 @@ export const UniversityPage = () => {
       ? rankings.shanghai_url
       : 'https://www.shanghairanking.cn/rankings/bcur'
 
+  const hasFacts =
+    rankNational !== null || rankWorld !== null || shanghaiScore !== null || prestigeTags.length > 0
+
+  const ratingEmpty = (
+    <div className="uni-profile-rating-block uni-profile-rating-empty">
+      <div className="rating-info">
+        <span className="empty-stars">
+          <span className="empty-dash" aria-hidden="true">
+            —
+          </span>
+          <StarRating rating={0} sizeClass="stars-lg" />
+        </span>
+        <span className="count">No reviews yet. Ask a current student below.</span>
+      </div>
+    </div>
+  )
+
   const ratingBlock =
     reviewCount > 0 ? (
       <div className="uni-profile-rating-block">
@@ -128,14 +145,25 @@ export const UniversityPage = () => {
         )}
         {hasVerified && <SealBadge large={true} />}
       </div>
+    ) : null
+
+  const scrollToAsk = (e) => {
+    e.preventDefault()
+    document.getElementById('ask-student')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => {
+      document.getElementById('ask-uni-question')?.focus({ preventScroll: true })
+    }, 450)
+  }
+
+  const heroCta =
+    reviewCount > 0 ? (
+      <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
+        <Icons.Pen /> Leave a Review
+      </Link>
     ) : (
-      <div className="uni-profile-rating-block">
-        <span className="rating-number">New</span>
-        <div className="rating-info">
-          <StarRating rating={0} sizeClass="stars-lg" />
-          <span className="count">No reviews yet. Be the first!</span>
-        </div>
-      </div>
+      <a href="#ask-student" onClick={scrollToAsk} className="btn btn-primary btn-lg">
+        <Icons.Chat /> Ask a Student
+      </a>
     )
 
   const seoTitle = `${university.name} Reviews`
@@ -222,10 +250,7 @@ export const UniversityPage = () => {
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
 
-              {(rankNational !== null ||
-                rankWorld !== null ||
-                shanghaiScore !== null ||
-                prestigeTags.length > 0) && (
+              {hasFacts && (
                 <div className="uni-profile-facts">
                   {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
                     <div className="uni-profile-fact">
@@ -338,17 +363,18 @@ export const UniversityPage = () => {
               )}
             </div>
           </div>
-          <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
-            <Icons.Pen /> Leave a Review
-          </Link>
+          {reviewCount === 0 ? (
+            <div className="uni-profile-cta-col">
+              {heroCta}
+              {ratingEmpty}
+            </div>
+          ) : (
+            heroCta
+          )}
         </div>
         {ratingBlock}
-        <Link
-          to={`/review?uni=${university.slug}`}
-          className="btn btn-primary btn-lg uni-profile-mobile-cta"
-        >
-          <Icons.Pen /> Leave a Review
-        </Link>
+        {reviewCount === 0 && ratingEmpty}
+        <div className="uni-profile-mobile-cta">{heroCta}</div>
       </div>
 
       <DraftReminder university={university} />
