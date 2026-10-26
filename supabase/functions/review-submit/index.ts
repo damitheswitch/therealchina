@@ -102,7 +102,9 @@ async function resolveUniversityId(body: {
 }): Promise<ResolvedUniversity> {
   if (body.universitySlug) {
     const s = body.universitySlug.trim().toLowerCase()
-    // Format check keeps the PostgREST filter string injection-safe.
+    // Format check keeps the PostgREST filter string injection-safe. The
+    // client mirrors this in frontend/src/lib/reviewFlow.ts (UNI_SLUG_RE /
+    // normalizeUniSlugParam) — keep the two in sync.
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) || s.length > 120) {
       throw new Error('invalid university slug')
     }

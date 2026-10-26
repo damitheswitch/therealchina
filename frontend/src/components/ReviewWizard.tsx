@@ -46,6 +46,8 @@ import {
   buildReviewFields,
   draftPayloadFromState,
   fieldValuesFromDraft,
+  normalizeUniSlugParam,
+  UNI_SLUG_RE,
 } from '../lib/reviewFlow'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
@@ -111,8 +113,7 @@ export const ReviewWizard = ({
   // Normalized like the server does (review-submit trims + lowercases, then
   // format-checks): anything that can't be a slug is treated as no param at
   // all — an empty field beats a broken lookup and a dead-end publish.
-  const uniParamRaw = (searchParams.get('uni') || '').trim().toLowerCase()
-  const uniParam = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(uniParamRaw) ? uniParamRaw : ''
+  const uniParam = normalizeUniSlugParam(searchParams.get('uni'))
 
   const form = useReviewForm(
     editMode && initial
@@ -145,6 +146,9 @@ export const ReviewWizard = ({
   const [draftId, setDraftId] = useState<string | null>(draftParam)
   const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
+  // Set when a requested draft lookup failed — lets a valid ?uni still
+  // prefill after a bad ?draft= link instead of leaving an empty field.
+  const [draftLookupFailed, setDraftLookupFailed] = useState(false)
 
   // Flow state
   const [phase, setPhase] = useState<Phase>('form')
@@ -192,6 +196,9 @@ export const ReviewWizard = ({
   const storyViewedRef = useRef(false)
   const reportedValidationScreensRef = useRef(new Set<number>())
   const submitInFlightRef = useRef(false)
+  // The slug/name pair a loaded draft applied — so a later clear can tell
+  // "still the draft's values" apart from "the user typed over them".
+  const draftSeedRef = useRef({ slug: '', name: '' })
   // Set the moment submitReview succeeds — a debounced autosave can still fire
   // during the stamp animation (phase is still 'form' until it finishes), and
   // without this it would re-create the draft row publish just deleted.
@@ -211,16 +218,18 @@ export const ReviewWizard = ({
       applyValues(fieldValuesFromDraft(p))
       setMediaState({ media: p.media ?? [], uploading: false, errorCount: 0 })
       lastSavedPayloadRef.current = p
+      draftSeedRef.current = { slug: p.selectedUni || '', name: p.selectedUniName || '' }
     },
     [applyValues]
   )
 
   // Resolve ?uni=<slug> once — the field prefill below and the draft-load
   // effect's university check share this single lookup (aliases included).
-  const uniSlug = uniParam
-  const { university: prefilledUni, loading: prefilledUniLoading } = useUniversity(
-    uniSlug || undefined
-  )
+  const {
+    university: prefilledUni,
+    loading: prefilledUniLoading,
+    error: prefilledUniError,
+  } = useUniversity(uniParam || undefined)
 
   // Load the draft once auth is ready. Signed-in users pull by ?draft=<id>, or
   // by ?uni=<slug> when a draft already exists for that university (so the
@@ -311,6 +320,7 @@ export const ReviewWizard = ({
         console.error('Error loading draft:', err)
       } finally {
         if (!controller.signal.aborted) {
+          if (lookupFailed) setDraftLookupFailed(true)
           setReviewEntry(
             resolveReviewEntry({ loaded, requested: Boolean(draftParam), lookupFailed })
           )
@@ -389,19 +399,37 @@ export const ReviewWizard = ({
       setDraftUniversityId(null)
       return
     }
+    // The ?uni lookup already resolved this row — reuse it rather than
+    // re-running the same slug/alias query.
+    if (
+      prefilledUni &&
+      (values.selectedUni === uniParam || values.selectedUni === prefilledUni.slug)
+    ) {
+      setDraftUniversityId(prefilledUni.id)
+      return
+    }
+    // Anything that can't be a slug can't resolve to a row — and a legacy or
+    // tampered draft payload carrying `,`/`}`/`.` would break the .or()
+    // filter below into a 400 that silently nulled the draft link.
+    if (!UNI_SLUG_RE.test(values.selectedUni)) {
+      setDraftUniversityId(null)
+      return
+    }
     const controller = new AbortController()
     const run = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('universities')
         .select('id')
         .or(`slug.eq.${values.selectedUni},slug_aliases.cs.{${values.selectedUni}}`)
         .abortSignal(controller.signal)
         .maybeSingle()
-      if (!controller.signal.aborted) setDraftUniversityId(data?.id ?? null)
+      if (controller.signal.aborted) return
+      if (error) console.error('Error resolving draft university:', error)
+      setDraftUniversityId(data?.id ?? null)
     }
     run()
     return () => controller.abort()
-  }, [editMode, values.selectedUni])
+  }, [editMode, values.selectedUni, prefilledUni, uniParam])
 
   // Autosave once something worth keeping exists. Debounced so typing doesn't
   // create a write per keystroke. Nothing is saved after publish — the review
@@ -456,30 +484,58 @@ export const ReviewWizard = ({
   // stay overwriteable so an alias (raw param != canonical slug) or a ?uni
   // change while the wizard is mounted doesn't freeze the field on the wrong
   // university; typed and draft-loaded values always win.
-  const urlSeededRef = useRef({ slug: uniSlug, name: '' })
+  const urlSeededRef = useRef({ slug: uniParam, name: '' })
 
   // Sync resolved university into form state once. Drafts already carry their
   // own university — don't let the ?uni prefill overwrite a loaded draft or a
-  // university the user picked while the lookup was in flight.
+  // university the user picked while the lookup was in flight. A failed
+  // ?draft= lookup lifts the draftParam gate so a valid ?uni still prefills.
   useEffect(() => {
-    if (prefilledUni && !editMode && !draftParam) {
+    if (prefilledUni && !editMode && (!draftParam || draftLookupFailed)) {
       applyValues((v) =>
         (v.selectedUniName && v.selectedUniName !== urlSeededRef.current.name) ||
-        (v.selectedUni && v.selectedUni !== uniSlug && v.selectedUni !== urlSeededRef.current.slug)
+        (v.selectedUni && v.selectedUni !== uniParam && v.selectedUni !== urlSeededRef.current.slug)
           ? {}
           : { selectedUni: prefilledUni.slug || '', selectedUniName: prefilledUni.name || '' }
       )
-      urlSeededRef.current = { slug: prefilledUni.slug || uniSlug, name: prefilledUni.name || '' }
+      urlSeededRef.current = { slug: prefilledUni.slug || uniParam, name: prefilledUni.name || '' }
     }
-  }, [prefilledUni, editMode, draftParam, uniSlug, applyValues])
+  }, [prefilledUni, editMode, draftParam, draftLookupFailed, uniParam, applyValues])
 
   // A ?uni slug that resolves to nothing must not ride along silently: it
   // passes step-1 validation and then fails at publish. Clearing it once the
-  // lookup settles leaves an empty field that demands a real pick.
+  // lookup settles leaves an empty field that demands a real pick. A lookup
+  // that errored (offline, retried abort) is not "no row" — keep the value.
   useEffect(() => {
-    if (editMode || draftParam || !uniSlug || prefilledUni || prefilledUniLoading) return
-    applyValues((v) => (v.selectedUni === uniSlug ? { selectedUni: '' } : {}))
-  }, [editMode, draftParam, uniSlug, prefilledUni, prefilledUniLoading, applyValues])
+    if (
+      editMode ||
+      draftParam ||
+      !uniParam ||
+      prefilledUni ||
+      prefilledUniLoading ||
+      prefilledUniError
+    )
+      return
+    applyValues((v) =>
+      v.selectedUni === uniParam
+        ? {
+            selectedUni: '',
+            // A dead slug can carry a name in from a draft — clear the pair
+            // so publish can't send the name as a free-text university. A
+            // name the user typed over it stays.
+            ...(v.selectedUniName === draftSeedRef.current.name ? { selectedUniName: '' } : {}),
+          }
+        : {}
+    )
+  }, [
+    editMode,
+    draftParam,
+    uniParam,
+    prefilledUni,
+    prefilledUniLoading,
+    prefilledUniError,
+    applyValues,
+  ])
 
   // Pre-fill program and university name from the user's profile once it
   // loads, filling empty fields only so typed input is never clobbered.

@@ -48,10 +48,11 @@ export const useUniversity = (slug: string | undefined) => {
           .select(UNI_COLUMNS)
           .or(`slug.eq.${slug},slug_aliases.cs.{${slug}}`)
           .abortSignal(controller.signal)
-          .single()
+          // maybeSingle: an unresolved slug is a null row, not an error.
+          .maybeSingle()
 
         if (fetchError) throw fetchError
-        setUniversity(data as Tables<'universities'>)
+        setUniversity((data as Tables<'universities'>) ?? null)
       } catch (err) {
         // supabase-js surfaces aborts as { message: 'AbortError: ...' } with no
         // .name — check both so StrictMode double-mounts stay quiet.
