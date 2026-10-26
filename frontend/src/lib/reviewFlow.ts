@@ -1,12 +1,16 @@
 import type { MediaItem, SubScores } from './reviewSubmit'
+import type { ReviewCardData } from './reviewDisplay'
 import type { ReviewEditPayload } from './reviewManage'
 import type { BoostFields } from './reviewBoost'
 import { DRAFT_PAYLOAD_VERSION, type ReviewDraftPayload } from './reviewDrafts'
+import { RATINGS_AREA_MIN } from './reviewDetail'
 import type { BoostCard } from './analytics'
 
-// ---- Fast review flow (Phase 2) --------------------------------------------------
-// Two publish screens: essentials (university + rating) then story (text + tags).
-// Everything else is optional and moves to the post-publish Boost card stack.
+// ---- Tap-first review flow (v2) --------------------------------------------------
+// Two publish screens: essentials (university + rating + one-tap context) then
+// the verdict screen (polarity picks + optional text). Structured picks write
+// real columns as they happen: tags, pros, cons, and a ready-made sentence.
+// Everything else is optional and moves to the post-publish Boost card deck.
 // The server minimum is university + rating (see _shared/reviewFields.ts) —
 // text is optional, and a textless review lands as a "quick rating".
 
@@ -52,6 +56,7 @@ export interface ReviewFieldValues {
   pros: string
   cons: string
   reviewText: string
+  polarity: PolarityPicks
   homeCountry: string
   currentStatus: string
   languagesSpoken: string[]
@@ -83,6 +88,7 @@ export const emptyReviewFieldValues: ReviewFieldValues = {
   pros: '',
   cons: '',
   reviewText: '',
+  polarity: {},
   homeCountry: '',
   currentStatus: '',
   languagesSpoken: [],
@@ -92,9 +98,14 @@ export const emptyReviewFieldValues: ReviewFieldValues = {
 
 // Strips the draft-only keys (v, step, media, savedAt) so the rest can be
 // applied to form state directly. Media is handled separately by the uploader.
+// The loosely-typed `polarity` record is narrowed to the topic-key map here —
+// only valid keys/directions were ever written.
 export const fieldValuesFromDraft = (p: ReviewDraftPayload): Partial<ReviewFieldValues> => {
-  const { v: _v, step: _step, media: _media, savedAt: _savedAt, ...fields } = p
-  return fields
+  const { v: _v, step: _step, media: _media, savedAt: _savedAt, polarity, ...fields } = p
+  return {
+    ...fields,
+    ...(polarity ? { polarity: polarity as ReviewFieldValues['polarity'] } : {}),
+  }
 }
 
 export const draftPayloadFromState = (
@@ -129,19 +140,67 @@ export const buildReviewFields = (v: ReviewFieldValues, media: MediaItem[]): Rev
 
 // ---- Boost ---------------------------------------------------------------------
 
-export const BOOST_CARD_ORDER: BoostCard[] = [
-  'program',
-  'ratings',
-  'money',
-  'details',
-  'pros_cons',
-  'media',
-]
+// The post-publish deck, ordered the way the tap flow cascades: rapid-fire
+// ratings first (easiest), then cost, then program, then photo. Pros/cons and
+// tags are already covered by the verdict matrix on screen 2; enrollment,
+// degree, years and language fold into the program card or are inferred.
+export const BOOST_CARD_ORDER: BoostCard[] = ['ratings', 'money', 'program', 'media']
 
 // Anonymous Boost (Phase 3) can only write the columns the review-boost
-// function allowlists — no media card (uploads are a separate surface) and no
-// tags card exists in Boost at all.
+// function allowlists — no media card (uploads are a separate surface).
 export const ANON_BOOST_CARDS: BoostCard[] = BOOST_CARD_ORDER.filter((c) => c !== 'media')
+
+// Short tab labels for the deck switcher. Keys cover the whole BoostCard union
+// so the map stays total even where a card is not in the current order.
+export const BOOST_CARD_SHORT: Record<BoostCard, { emoji: string; label: string }> = {
+  ratings: { emoji: '⭐', label: 'Ratings' },
+  money: { emoji: '💰', label: 'Cost' },
+  program: { emoji: '🎓', label: 'Major' },
+  media: { emoji: '📸', label: 'Photo' },
+  details: { emoji: '🗓', label: 'Timing' },
+  pros_cons: { emoji: '⚖️', label: 'Pros' },
+}
+
+// A card counts as done when its required picks exist on the live values.
+// Ratings uses the same bar as the detail-area rule (RATINGS_AREA_MIN of 8);
+// media means at least one attached item. Degree/language already answered on
+// screen 1 leave 'program' done before the deck even opens (e.g. a Language
+// Course pick infers both), which is exactly what lets the cascade skip it.
+export const isBoostCardDone = (
+  card: BoostCard,
+  v: ReviewFieldValues,
+  mediaCount: number
+): boolean => {
+  switch (card) {
+    case 'ratings':
+      return (
+        SUBSCORE_INPUT_FIELDS.filter((f) => typeof v.subscores[f.key] === 'number').length >=
+        RATINGS_AREA_MIN
+      )
+    case 'money':
+      return Boolean(v.fundingType && v.livingCostRange)
+    case 'program':
+      return Boolean(v.program.trim() && v.languageOfInstruction)
+    case 'media':
+      return mediaCount > 0
+    default:
+      return false
+  }
+}
+
+// The card the cascade should open next: the first not-done card after
+// `fromIndex`, else -1 meaning the deck is finished.
+export const nextBoostCard = (
+  cards: BoostCard[],
+  fromIndex: number,
+  v: ReviewFieldValues,
+  mediaCount: number
+): number => {
+  for (let i = fromIndex + 1; i < cards.length; i++) {
+    if (!isBoostCardDone(cards[i], v, mediaCount)) return i
+  }
+  return -1
+}
 
 // Per-card request fields for the anonymous path — the client sends exactly
 // the card's current values, so a stale draft can never rewrite columns a
@@ -152,6 +211,9 @@ export const buildBoostPatch = (values: ReviewFieldValues, card: BoostCard): Boo
       return {
         program: values.program.trim() || null,
         degreeLevel: values.degreeLevel || null,
+        languageOfInstruction: values.languageOfInstruction || null,
+        enrollmentStatus: values.enrollmentStatus || null,
+        endYear: values.endYear === '' ? null : values.endYear,
       }
     case 'ratings':
       return { subscores: values.subscores }
@@ -180,17 +242,21 @@ export const buildBoostPatch = (values: ReviewFieldValues, card: BoostCard): Boo
 }
 
 export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> = {
-  program: {
-    title: 'What did you study?',
-    sub: 'Students searching for your program will find this review.',
-  },
   ratings: {
     title: 'Rate the details',
-    sub: 'Tap a score for each one. Takes about 15 seconds.',
+    sub: 'One tap each. Takes about 15 seconds.',
   },
   money: {
     title: 'The money question',
     sub: 'What does it actually cost to study here?',
+  },
+  program: {
+    title: 'What did you study?',
+    sub: 'Students searching your program will find this review.',
+  },
+  media: {
+    title: 'Got a photo?',
+    sub: 'Dorm, campus, canteen. Real photos beat every rating.',
   },
   details: {
     title: 'When were you there?',
@@ -200,15 +266,268 @@ export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> 
     title: 'Best and worst',
     sub: 'One line each is plenty.',
   },
-  media: {
-    title: 'Got a photo?',
-    sub: 'Dorm, campus, canteen. Real photos beat every rating.',
-  },
 }
 
-// Starter chips for the writing screen: one tap inserts a sentence opening so
-// the textarea never starts blank.
-export const STORY_STARTERS = ['The best part is ', 'The worst part is ', 'I wish I knew ']
+// ---- Verdict matrix (screen 2) --------------------------------------------------
+// Six topics with a 👍 / 👎 side each. A pick writes three kinds of columns at
+// once: a canonical tag, a phrase into pros or cons, and a clause in the
+// auto-built review sentence. Phrases stay comma-free so pros/cons can be
+// split back on ", " without losing user-typed parts.
+
+export type PolarityDir = 'pos' | 'neg'
+export type PolarityTopicKey = 'classes' | 'dorms' | 'food' | 'admin' | 'city' | 'social'
+export type PolarityPicks = Partial<Record<PolarityTopicKey, PolarityDir>>
+
+export interface PolaritySide {
+  label: string
+  tag: string
+  phrase: string
+}
+
+export interface PolarityTopic {
+  key: PolarityTopicKey
+  label: string
+  emoji: string
+  pos: PolaritySide
+  neg: PolaritySide
+}
+
+export const POLARITY_TOPICS: PolarityTopic[] = [
+  {
+    key: 'classes',
+    label: 'Classes',
+    emoji: '📚',
+    pos: { label: 'Strong', tag: 'Strong academics', phrase: 'strong professors and classes' },
+    neg: { label: 'Weak', tag: 'Weak teaching', phrase: 'inconsistent teaching quality' },
+  },
+  {
+    key: 'dorms',
+    label: 'Dorms',
+    emoji: '🏠',
+    pos: { label: 'Modern', tag: 'Good dorms', phrase: 'comfortable international dorms' },
+    neg: { label: 'Old or strict', tag: 'Bad dorms', phrase: 'crowded or aging dorms' },
+  },
+  {
+    key: 'food',
+    label: 'Canteen',
+    emoji: '🍜',
+    pos: { label: 'Great food', tag: 'Great food', phrase: 'great affordable campus food' },
+    neg: { label: 'Limited', tag: 'Bad food', phrase: 'limited campus food options' },
+  },
+  {
+    key: 'admin',
+    label: 'Admin and visa',
+    emoji: '🛂',
+    pos: {
+      label: 'Helpful',
+      tag: 'Easy visa',
+      phrase: 'helpful international office and visa support',
+    },
+    neg: {
+      label: 'Bureaucratic',
+      tag: 'Hard bureaucracy',
+      phrase: 'slow bureaucracy and admin rules',
+    },
+  },
+  {
+    key: 'city',
+    label: 'City life',
+    emoji: '🚇',
+    pos: { label: 'Affordable', tag: 'Cheap city', phrase: 'affordable and convenient city life' },
+    neg: { label: 'Expensive', tag: 'Expensive city', phrase: 'high living costs in the city' },
+  },
+  {
+    key: 'social',
+    label: 'Social',
+    emoji: '🌏',
+    pos: {
+      label: 'Welcoming',
+      tag: 'International-friendly',
+      phrase: 'a welcoming international community',
+    },
+    neg: { label: 'Isolating', tag: 'Isolating', phrase: 'an isolating social scene' },
+  },
+]
+
+const POLARITY_TAG_SET = new Set(POLARITY_TOPICS.flatMap((t) => [t.pos.tag, t.neg.tag]))
+const POLARITY_PHRASE_SET = new Set(POLARITY_TOPICS.flatMap((t) => [t.pos.phrase, t.neg.phrase]))
+
+const joinNatural = (parts: string[]): string => {
+  if (parts.length <= 1) return parts[0] ?? ''
+  if (parts.length === 2) return `${parts[0]} and ${parts[1]}`
+  return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`
+}
+
+// The auto-written review sentence for a set of picks. Reads in declaration
+// order regardless of tap order, so the same picks always build the same text.
+export const derivePolarityText = (picks: PolarityPicks): string => {
+  const pos: string[] = []
+  const neg: string[] = []
+  for (const t of POLARITY_TOPICS) {
+    const dir = picks[t.key]
+    if (dir === 'pos') pos.push(t.pos.phrase)
+    else if (dir === 'neg') neg.push(t.neg.phrase)
+  }
+  if (pos.length && neg.length) {
+    return `Highlights include ${joinNatural(pos)}, though students should expect ${joinNatural(neg)}.`
+  }
+  if (pos.length) return `The standouts are ${joinNatural(pos)}.`
+  if (neg.length) return `The main challenges are ${joinNatural(neg)}.`
+  return ''
+}
+
+const splitCsv = (value: string): string[] =>
+  value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+// The form patch for one matrix tap. Tapping the active side un-picks the
+// topic. Derived columns rebuild from scratch each time: tags, pros and cons
+// keep any non-polarity parts the user (or an older draft) already had, and
+// the review text is only rewritten while it still equals what the matrix
+// last produced — once the reviewer types their own words it is left alone.
+export const applyPolarityPick = (
+  v: ReviewFieldValues,
+  topic: PolarityTopicKey,
+  dir: PolarityDir
+): Partial<ReviewFieldValues> => {
+  const picks: PolarityPicks = { ...v.polarity }
+  if (picks[topic] === dir) delete picks[topic]
+  else picks[topic] = dir
+
+  const tags: string[] = []
+  const posPhrases: string[] = []
+  const negPhrases: string[] = []
+  for (const t of POLARITY_TOPICS) {
+    const pick = picks[t.key]
+    if (!pick) continue
+    const side = t[pick]
+    tags.push(side.tag)
+    ;(pick === 'pos' ? posPhrases : negPhrases).push(side.phrase)
+  }
+
+  const manualTags = v.selectedTags.filter((t) => !POLARITY_TAG_SET.has(t))
+  const manualPros = splitCsv(v.pros).filter((p) => !POLARITY_PHRASE_SET.has(p))
+  const manualCons = splitCsv(v.cons).filter((p) => !POLARITY_PHRASE_SET.has(p))
+
+  const previousAutoText = derivePolarityText(v.polarity)
+  const textIsAuto = v.reviewText === '' || v.reviewText === previousAutoText
+
+  return {
+    polarity: picks,
+    selectedTags: [...manualTags, ...tags],
+    pros: [...manualPros, ...posPhrases].join(', '),
+    cons: [...manualCons, ...negPhrases].join(', '),
+    ...(textIsAuto ? { reviewText: derivePolarityText(picks) } : {}),
+  }
+}
+
+// ---- Smart defaults -------------------------------------------------------------
+// One tap on screen 1 answers questions the old flow asked again later. The
+// degree-level options carry strong defaults: a Language Course year is
+// Chinese-taught Chinese language by definition, and Exchange pins enrollment
+// status. Inferred values only fill empty fields (or roll back values they
+// set), so a deliberate pick is never clobbered.
+
+export const LANGUAGE_COURSE_DEGREE = 'Language Course'
+export const LANGUAGE_COURSE_PROGRAM = 'Chinese Language (Mandarin)'
+export const LANGUAGE_COURSE_INSTRUCTION = 'Chinese (Mandarin)'
+export const EXCHANGE_DEGREE = 'Exchange'
+
+export const applyDegreeLevel = (
+  v: ReviewFieldValues,
+  next: string
+): Partial<ReviewFieldValues> => {
+  const patch: Partial<ReviewFieldValues> = { degreeLevel: next }
+
+  const wasLangCourse = v.degreeLevel === LANGUAGE_COURSE_DEGREE
+  const isLangCourse = next === LANGUAGE_COURSE_DEGREE
+  if (isLangCourse && !wasLangCourse) {
+    if (!v.program || v.program === LANGUAGE_COURSE_PROGRAM) {
+      patch.program = LANGUAGE_COURSE_PROGRAM
+    }
+    if (!v.languageOfInstruction || v.languageOfInstruction === LANGUAGE_COURSE_INSTRUCTION) {
+      patch.languageOfInstruction = LANGUAGE_COURSE_INSTRUCTION
+    }
+  } else if (wasLangCourse && !isLangCourse) {
+    if (v.program === LANGUAGE_COURSE_PROGRAM) patch.program = ''
+    if (v.languageOfInstruction === LANGUAGE_COURSE_INSTRUCTION) {
+      patch.languageOfInstruction = ''
+    }
+  }
+
+  if (next === EXCHANGE_DEGREE && v.degreeLevel !== EXCHANGE_DEGREE && !v.enrollmentStatus) {
+    patch.enrollmentStatus = 'exchange'
+  } else if (
+    v.degreeLevel === EXCHANGE_DEGREE &&
+    next !== EXCHANGE_DEGREE &&
+    v.enrollmentStatus === 'exchange'
+  ) {
+    patch.enrollmentStatus = ''
+  }
+
+  return patch
+}
+
+// A recent start year on a blank enrollment status almost always means the
+// reviewer is still there; an end year means they finished. Exchange status
+// set by applyDegreeLevel is never overridden.
+export const applyStartYear = (
+  v: ReviewFieldValues,
+  year: number | '',
+  now = new Date().getFullYear()
+): Partial<ReviewFieldValues> => ({
+  startYear: year,
+  ...(!v.enrollmentStatus && typeof year === 'number' && year >= now - 3
+    ? { enrollmentStatus: 'current' }
+    : {}),
+})
+
+export const applyEndYear = (
+  v: ReviewFieldValues,
+  year: number | ''
+): Partial<ReviewFieldValues> => ({
+  endYear: year,
+  ...(typeof year === 'number' && (!v.enrollmentStatus || v.enrollmentStatus === 'current')
+    ? { enrollmentStatus: 'alumni' }
+    : {}),
+})
+
+// A program pick carries its own inference: Chinese Language (Mandarin) is
+// taught in Mandarin. Only fills the language field while it is empty.
+export const applyProgram = (
+  v: ReviewFieldValues,
+  program: string
+): Partial<ReviewFieldValues> => ({
+  program,
+  ...(program === LANGUAGE_COURSE_PROGRAM && !v.languageOfInstruction
+    ? { languageOfInstruction: LANGUAGE_COURSE_INSTRUCTION }
+    : {}),
+})
+
+// ---- Reactive rating ------------------------------------------------------------
+
+export const RATING_VIBE: Record<number, { emoji: string; text: string }> = {
+  1: { emoji: '😬', text: 'Rough experience. Your honesty warns the next student.' },
+  2: { emoji: '😕', text: 'Below expectations. The details will help.' },
+  3: { emoji: '😐', text: 'Decent overall, with trade-offs.' },
+  4: { emoji: '😊', text: 'A solid choice for international students.' },
+  5: { emoji: '🤩', text: 'You loved it. Tell the next student why.' },
+}
+
+// ---- Popular program quick picks ------------------------------------------------
+// The majors most international students in China actually take, as one-tap
+// chips on the program card. The autocomplete below them covers the rest.
+
+export const POPULAR_PROGRAMS: { label: string; value: string }[] = [
+  { label: '🩺 MBBS', value: 'Clinical Medicine (MBBS)' },
+  { label: '💻 CS / AI', value: 'Computer Science' },
+  { label: '🇨🇳 Chinese Language', value: 'Chinese Language (Mandarin)' },
+  { label: '📈 Business / Trade', value: 'International Economics and Trade' },
+  { label: '⚙️ Engineering', value: 'Mechanical Engineering' },
+  { label: '🌐 Intl Relations', value: 'International Relations' },
+]
 
 // ---- Field option lists --------------------------------------------------------
 
@@ -292,3 +611,43 @@ export const allYearOptions = (now = new Date().getFullYear()): number[] => {
   for (let y = now + 1; y >= 1990; y--) years.push(y)
   return years
 }
+
+// ---- Live preview ---------------------------------------------------------------
+
+// The card needs `rating` on top of the display-fields shape ReviewCardData
+// describes (the real card reads it off the full reviews row).
+export type PreviewReview = ReviewCardData & { rating: number }
+
+// Maps live form values to the card shape — shared by the preview card, the
+// success screen's strength meter, and the wizard's detail track, so all
+// three score the same review the same way.
+export const previewReviewFromFields = (
+  values: ReviewFieldValues,
+  media: MediaItem[]
+): PreviewReview => ({
+  rating: values.rating,
+  recommend: values.recommend || null,
+  program: values.program || null,
+  degree_level: values.degreeLevel || null,
+  enrollment_status: values.enrollmentStatus || null,
+  start_year: values.startYear || null,
+  end_year: values.endYear || null,
+  language_of_instruction: values.languageOfInstruction || null,
+  tuition_range: values.tuitionRange || null,
+  living_cost_range: values.livingCostRange || null,
+  funding_type: values.fundingType || null,
+  funding_coverage:
+    values.fundingType && values.fundingType !== 'self' ? values.fundingCoverage || null : null,
+  pros: values.pros || null,
+  cons: values.cons || null,
+  tags: values.selectedTags,
+  media: media as unknown as PreviewReview['media'],
+  rating_academics: values.subscores.rating_academics ?? null,
+  rating_campus: values.subscores.rating_campus ?? null,
+  rating_accommodation: values.subscores.rating_accommodation ?? null,
+  rating_cost: values.subscores.rating_cost ?? null,
+  rating_intl_office: values.subscores.rating_intl_office ?? null,
+  rating_social: values.subscores.rating_social ?? null,
+  rating_extracurricular: values.subscores.rating_extracurricular ?? null,
+  rating_career: values.subscores.rating_career ?? null,
+})

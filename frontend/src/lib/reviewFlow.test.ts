@@ -8,14 +8,24 @@ import {
   ANON_BOOST_CARDS,
   BOOST_CARD_META,
   BOOST_CARD_ORDER,
+  BOOST_CARD_SHORT,
   buildBoostPatch,
   buildReviewFields,
   draftPayloadFromState,
   emptyReviewFieldValues,
   fieldValuesFromDraft,
+  isBoostCardDone,
+  nextBoostCard,
   normalizeUniSlugParam,
   recentYearChips,
-  STORY_STARTERS,
+  applyDegreeLevel,
+  applyEndYear,
+  applyPolarityPick,
+  applyProgram,
+  applyStartYear,
+  derivePolarityText,
+  LANGUAGE_COURSE_PROGRAM,
+  LANGUAGE_COURSE_INSTRUCTION,
   type ReviewFieldValues,
 } from './reviewFlow'
 
@@ -152,17 +162,18 @@ describe('draft payload versioning', () => {
 })
 
 describe('boost card ordering', () => {
-  it('covers every card exactly once and leads with program', () => {
+  it('covers every card exactly once, leads with ratings, and has tab labels', () => {
     expect(new Set(BOOST_CARD_ORDER).size).toBe(BOOST_CARD_ORDER.length)
-    expect(BOOST_CARD_ORDER[0]).toBe('program')
+    expect(BOOST_CARD_ORDER).toEqual(['ratings', 'money', 'program', 'media'])
     for (const card of BOOST_CARD_ORDER) {
       expect(BOOST_CARD_META[card]).toBeDefined()
       expect(BOOST_CARD_META[card].title.length).toBeGreaterThan(0)
+      expect(BOOST_CARD_SHORT[card].label.length).toBeGreaterThan(0)
     }
   })
 
   it('anonymous Boost drops only the media card', () => {
-    expect(ANON_BOOST_CARDS).toEqual(['program', 'ratings', 'money', 'details', 'pros_cons'])
+    expect(ANON_BOOST_CARDS).toEqual(['ratings', 'money', 'program'])
   })
 })
 
@@ -181,6 +192,9 @@ describe('buildBoostPatch', () => {
     expect(buildBoostPatch(v, 'program')).toEqual({
       program: 'MBBS',
       degreeLevel: 'Bachelor',
+      languageOfInstruction: null,
+      enrollmentStatus: null,
+      endYear: null,
     })
     expect(buildBoostPatch(v, 'details')).toEqual({
       enrollmentStatus: null,
@@ -207,9 +221,174 @@ describe('buildBoostPatch', () => {
   })
 })
 
-describe('story starters', () => {
-  it('ends with a space so text can continue the sentence', () => {
-    for (const s of STORY_STARTERS) expect(s.endsWith(' ')).toBe(true)
+describe('polarity matrix derivation', () => {
+  it('one pick fans out into tag, pros, and the auto sentence', () => {
+    const patch = applyPolarityPick(values(), 'classes', 'pos')
+    expect(patch.polarity).toEqual({ classes: 'pos' })
+    expect(patch.selectedTags).toEqual(['Strong academics'])
+    expect(patch.pros).toBe('strong professors and classes')
+    expect(patch.cons).toBe('')
+    expect(patch.reviewText).toBe('The standouts are strong professors and classes.')
+  })
+
+  it('mixed picks join pros and cons into one honest sentence', () => {
+    let v = values()
+    v = { ...v, ...applyPolarityPick(v, 'classes', 'pos') }
+    v = { ...v, ...applyPolarityPick(v, 'dorms', 'pos') }
+    v = { ...v, ...applyPolarityPick(v, 'admin', 'neg') }
+    expect(v.selectedTags).toEqual(['Strong academics', 'Good dorms', 'Hard bureaucracy'])
+    expect(v.pros).toBe('strong professors and classes, comfortable international dorms')
+    expect(v.cons).toBe('slow bureaucracy and admin rules')
+    expect(v.reviewText).toBe(
+      'Highlights include strong professors and classes and comfortable international dorms, though students should expect slow bureaucracy and admin rules.'
+    )
+  })
+
+  it('joins three or more items with commas instead of chained "and"', () => {
+    const text = derivePolarityText({ classes: 'pos', dorms: 'pos', food: 'pos' })
+    expect(text).toBe(
+      'The standouts are strong professors and classes, comfortable international dorms, and great affordable campus food.'
+    )
+  })
+
+  it('tapping the active side un-picks the topic and strips its columns', () => {
+    let v = values()
+    v = { ...v, ...applyPolarityPick(v, 'classes', 'pos') }
+    v = { ...v, ...applyPolarityPick(v, 'classes', 'pos') }
+    expect(v.polarity).toEqual({})
+    expect(v.selectedTags).toEqual([])
+    expect(v.pros).toBe('')
+    expect(v.reviewText).toBe('')
+  })
+
+  it('never overwrites text the reviewer typed themselves', () => {
+    const v = values({ reviewText: 'my own words, typed by hand' })
+    const patch = applyPolarityPick(v, 'classes', 'pos')
+    expect(patch.reviewText).toBeUndefined()
+  })
+
+  it('overwrites its own generated text on the next pick but not manual edits', () => {
+    let v = values()
+    v = { ...v, ...applyPolarityPick(v, 'classes', 'pos') }
+    // Still auto: text equals what the matrix produced, so it updates.
+    v = { ...v, ...applyPolarityPick(v, 'dorms', 'pos') }
+    expect(v.reviewText).toContain('comfortable international dorms')
+    // A manual edit freezes the text for later picks.
+    v = { ...v, reviewText: 'edited by the reviewer' }
+    v = { ...v, ...applyPolarityPick(v, 'food', 'neg') }
+    expect(v.reviewText).toBe('edited by the reviewer')
+  })
+
+  it('keeps non-polarity tags and manual pros the user already had', () => {
+    const v = values({
+      selectedTags: ['Safe', 'Good dorms'],
+      pros: 'handwritten pro',
+    })
+    const patch = applyPolarityPick(v, 'classes', 'pos')
+    // 'Good dorms' is a polarity tag and gets re-derived, not duplicated;
+    // 'Safe' and the manual pro survive untouched.
+    expect(patch.selectedTags).toEqual(['Safe', 'Strong academics'])
+    expect(patch.pros).toBe('handwritten pro, strong professors and classes')
+  })
+})
+
+describe('smart defaults', () => {
+  it('Language Course fills program and instruction language', () => {
+    const patch = applyDegreeLevel(values(), 'Language Course')
+    expect(patch.program).toBe(LANGUAGE_COURSE_PROGRAM)
+    expect(patch.languageOfInstruction).toBe(LANGUAGE_COURSE_INSTRUCTION)
+  })
+
+  it('rolling back from Language Course clears only its inferred values', () => {
+    let v = values()
+    v = { ...v, ...applyDegreeLevel(v, 'Language Course') }
+    const back = applyDegreeLevel(v, 'Bachelor')
+    expect(back.program).toBe('')
+    expect(back.languageOfInstruction).toBe('')
+    // Picking Language Course when program is already something else keeps it.
+    const kept = applyDegreeLevel(values({ program: 'Law' }), 'Language Course')
+    expect(kept.program).toBeUndefined()
+  })
+
+  it('Exchange pins enrollment status and releases it on switch', () => {
+    const on = applyDegreeLevel(values(), 'Exchange')
+    expect(on.enrollmentStatus).toBe('exchange')
+    const off = applyDegreeLevel(
+      { ...values(), degreeLevel: 'Exchange', enrollmentStatus: 'exchange' },
+      'Bachelor'
+    )
+    expect(off.enrollmentStatus).toBe('')
+    // An explicit status is never overwritten.
+    const kept = applyDegreeLevel(values({ enrollmentStatus: 'alumni' }), 'Exchange')
+    expect(kept.enrollmentStatus).toBeUndefined()
+  })
+
+  it('recent start year infers current; end year infers alumni', () => {
+    const now = new Date().getFullYear()
+    expect(applyStartYear(values(), now, now).enrollmentStatus).toBe('current')
+    expect(applyStartYear(values(), now - 10, now).enrollmentStatus).toBeUndefined()
+    expect(
+      applyStartYear(values({ enrollmentStatus: 'exchange' }), now, now).enrollmentStatus
+    ).toBeUndefined()
+    expect(applyEndYear(values(), 2024).enrollmentStatus).toBe('alumni')
+    expect(
+      applyEndYear(values({ enrollmentStatus: 'exchange' }), 2024).enrollmentStatus
+    ).toBeUndefined()
+  })
+
+  it('Chinese Language program fills empty instruction language', () => {
+    expect(applyProgram(values(), LANGUAGE_COURSE_PROGRAM).languageOfInstruction).toBe(
+      LANGUAGE_COURSE_INSTRUCTION
+    )
+    expect(
+      applyProgram(values({ languageOfInstruction: 'English' }), LANGUAGE_COURSE_PROGRAM)
+        .languageOfInstruction
+    ).toBeUndefined()
+  })
+})
+
+describe('boost card completion', () => {
+  it('money needs funding and living cost; program needs major and language', () => {
+    const v = values({ fundingType: 'csc' })
+    expect(isBoostCardDone('money', v, 0)).toBe(false)
+    const v2 = values({ fundingType: 'csc', livingCostRange: '¥2k–¥4k' })
+    expect(isBoostCardDone('money', v2, 0)).toBe(true)
+    expect(isBoostCardDone('program', values({ program: 'Law' }), 0)).toBe(false)
+    expect(
+      isBoostCardDone('program', values({ program: 'Law', languageOfInstruction: 'English' }), 0)
+    ).toBe(true)
+    expect(isBoostCardDone('media', v2, 1)).toBe(true)
+  })
+
+  it('ratings completes at the detail-area bar of four scored aspects', () => {
+    const three = { rating_academics: 4, rating_campus: 5, rating_social: 3 }
+    expect(isBoostCardDone('ratings', values({ subscores: three }), 0)).toBe(false)
+    const four = { ...three, rating_career: 4 }
+    expect(isBoostCardDone('ratings', values({ subscores: four }), 0)).toBe(true)
+  })
+
+  it('nextBoostCard skips done cards and returns -1 when the deck is finished', () => {
+    const cards = BOOST_CARD_ORDER
+    const v = values({
+      program: 'Law',
+      languageOfInstruction: 'English',
+    })
+    // From money (index 1): program is already done, so media is next.
+    expect(nextBoostCard(cards, 1, v, 0)).toBe(3)
+    // Everything done: -1 finishes the deck.
+    const allDone = values({
+      fundingType: 'csc',
+      livingCostRange: '¥2k–¥4k',
+      program: 'Law',
+      languageOfInstruction: 'English',
+      subscores: {
+        rating_academics: 4,
+        rating_campus: 4,
+        rating_social: 4,
+        rating_career: 4,
+      },
+    })
+    expect(nextBoostCard(cards, 2, allDone, 1)).toBe(-1)
   })
 })
 

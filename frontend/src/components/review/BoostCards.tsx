@@ -1,41 +1,51 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SubScores } from '../../lib/reviewSubmit'
 import {
   BOOST_CARD_META,
   BOOST_CARD_ORDER,
+  BOOST_CARD_SHORT,
   SUBSCORE_INPUT_FIELDS,
+  isBoostCardDone,
+  nextBoostCard,
   type ReviewFieldValues,
 } from '../../lib/reviewFlow'
 import type { BoostAfterCard, BoostCard } from '../../lib/analytics'
 import type { ReviewForm } from '../../hooks/useReviewForm'
-import { StarInput } from '../StarInput'
 import {
-  DegreeField,
+  EndYearField,
   EnrollmentField,
   LanguageField,
   MediaField,
   MoneyFields,
   ProgramField,
-  ProsConsField,
-  YearsField,
   type MediaState,
 } from './fields'
 import type { MediaItem } from '../../lib/reviewSubmit'
 
-// The post-publish Boost: optional detail added one card at a time, each card
-// saved immediately through review-manage. The server rewrites the whole
-// field set on every update, so `onSave` persists the caller's full current
-// state — a card's edits reach `form` the moment they are made (the preview
-// fills in live), and Skip restores the values the card had on entry rather
-// than letting unsaved input leak into a later card's save.
+// The post-publish deck: optional detail one card at a time, auto-cascading.
+// Finishing a card's required picks saves it and slides the next card in, so
+// nobody is left staring at a completed card wondering what to do next. Tabs
+// across the top jump anywhere; cards already answered on screen 1 (a
+// Language Course pick fills program and language, for example) show done
+// and get skipped by the cascade, but stay tappable for corrections.
 const CARD_FIELDS: Record<BoostCard, (keyof ReviewFieldValues)[]> = {
-  program: ['program', 'degreeLevel'],
   ratings: ['subscores'],
   money: ['tuitionRange', 'livingCostRange', 'fundingType', 'fundingCoverage'],
+  program: ['program', 'degreeLevel', 'languageOfInstruction', 'enrollmentStatus', 'endYear'],
   details: ['enrollmentStatus', 'startYear', 'endYear', 'languageOfInstruction'],
   pros_cons: ['pros', 'cons'],
   media: [],
 }
+
+interface CardSnapshot {
+  fields: Partial<ReviewFieldValues>
+  media: MediaItem[]
+}
+
+const snapshotsEqual = (a: CardSnapshot | undefined, b: CardSnapshot): boolean =>
+  !!a &&
+  JSON.stringify(a.fields) === JSON.stringify(b.fields) &&
+  JSON.stringify(a.media) === JSON.stringify(b.media)
 
 export const BoostCards = ({
   form,
@@ -62,10 +72,18 @@ export const BoostCards = ({
 }) => {
   const [index, setIndex] = useState(initialIndex)
   const [saving, setSaving] = useState(false)
+  const [cascadeMsg, setCascadeMsg] = useState<string | null>(null)
   const lastCompletedRef = useRef<BoostAfterCard>('none')
-  const snapshotRef = useRef<{ fields: Partial<ReviewFieldValues>; media: MediaItem[] } | null>(
-    null
-  )
+  // Per-card restore points: the saved state on entry, refreshed after every
+  // successful save. Skip restores the current card; leaving restores every
+  // card visited, so nothing unsaved can ride along on the preview.
+  const baselinesRef = useRef<Partial<Record<BoostCard, CardSnapshot>>>({})
+  // Whether the current card already met its done condition when opened. A
+  // card that was complete on entry (Language Course prefill, or revisiting a
+  // saved card) never auto-cascades: the reviewer is there deliberately.
+  const entryCompleteRef = useRef(false)
+  const advancingRef = useRef(false)
+  const cascadeTimerRef = useRef<number | null>(null)
   const formValuesRef = useRef(form.values)
   const mediaStateRef = useRef(mediaState)
 
@@ -77,19 +95,57 @@ export const BoostCards = ({
     mediaStateRef.current = mediaState
   }, [mediaState])
 
+  useEffect(
+    () => () => {
+      if (cascadeTimerRef.current !== null) window.clearTimeout(cascadeTimerRef.current)
+    },
+    []
+  )
+
   const card = cards[index]
   const total = cards.length
   const isLast = index === total - 1
+  const mediaCount = mediaState.media.length
 
-  // Snapshot this card's fields on entry: the restore point Skip returns to.
-  useEffect(() => {
-    snapshotRef.current = {
+  const takeSnapshot = useCallback(
+    (c: BoostCard): CardSnapshot => ({
       fields: Object.fromEntries(
-        CARD_FIELDS[card].map((k) => [k, formValuesRef.current[k]])
+        CARD_FIELDS[c].map((k) => [k, formValuesRef.current[k]])
       ) as Partial<ReviewFieldValues>,
       media: mediaStateRef.current.media,
+    }),
+    []
+  )
+
+  // Record the restore point and the done-on-entry flag once per card visit.
+  useEffect(() => {
+    if (!baselinesRef.current[card]) baselinesRef.current[card] = takeSnapshot(card)
+    entryCompleteRef.current = isBoostCardDone(
+      card,
+      formValuesRef.current,
+      mediaStateRef.current.media.length
+    )
+  }, [card, takeSnapshot])
+
+  const restoreCard = (c: BoostCard) => {
+    const base = baselinesRef.current[c]
+    if (!base) return
+    form.applyValues(base.fields)
+    if (c === 'media') onMediaStateChange({ ...mediaStateRef.current, media: base.media })
+  }
+
+  const restoreAllVisited = () => {
+    const merged: Partial<ReviewFieldValues> = {}
+    let media: MediaItem[] | null = null
+    for (const c of Object.keys(baselinesRef.current) as BoostCard[]) {
+      const base = baselinesRef.current[c]
+      if (!base) continue
+      Object.assign(merged, base.fields)
+      if (c === 'media') media = base.media
     }
-  }, [card])
+    form.applyValues(merged)
+    if (media) onMediaStateChange({ ...mediaStateRef.current, media })
+  }
 
   const advance = () => {
     if (isLast) {
@@ -99,6 +155,82 @@ export const BoostCards = ({
     }
   }
 
+  // Manual navigation while a cascade timer is pending wins: cancel the
+  // timer so a tap on a tab or Back does not get overridden 500ms later.
+  const cancelCascade = () => {
+    if (cascadeTimerRef.current !== null) {
+      window.clearTimeout(cascadeTimerRef.current)
+      cascadeTimerRef.current = null
+      setCascadeMsg(null)
+      advancingRef.current = false
+    }
+  }
+
+  // The cascade: flash a saved notice, then save and land on the next card
+  // that still needs answers (skipping anything already done, like a
+  // prefilled program card). If every remaining card is done, the deck
+  // finishes. The whole save runs inside the timer so the state update from
+  // the completing tap has flushed before the patch is built — a save fired
+  // synchronously in the same click handler would read stale values and
+  // drop the last tap.
+  const runCascade = useCallback(
+    (fromCard: BoostCard) => {
+      if (advancingRef.current) return
+      advancingRef.current = true
+      setCascadeMsg(`✓ ${BOOST_CARD_SHORT[fromCard].label} saved`)
+      cascadeTimerRef.current = window.setTimeout(() => {
+        cascadeTimerRef.current = null
+        setCascadeMsg(null)
+        const after = () => {
+          baselinesRef.current[fromCard] = takeSnapshot(fromCard)
+          lastCompletedRef.current = fromCard
+          const next = nextBoostCard(
+            cards,
+            index,
+            formValuesRef.current,
+            mediaStateRef.current.media.length
+          )
+          advancingRef.current = false
+          if (next === -1) {
+            onFinish()
+          } else {
+            setIndex(next)
+          }
+        }
+
+        // Only save when this visit actually changed the card's fields — an
+        // all-skipped ratings walk or a pre-filled card has nothing to write.
+        const dirty = !snapshotsEqual(baselinesRef.current[fromCard], takeSnapshot(fromCard))
+        if (!dirty) {
+          after()
+          return
+        }
+        setSaving(true)
+        void onSave(fromCard).then((ok) => {
+          setSaving(false)
+          if (!ok) {
+            advancingRef.current = false
+            return // error already toasted by the caller; stay on the card
+          }
+          onCardCompleted(fromCard)
+          after()
+        })
+      }, 520)
+    },
+    [cards, index, onSave, onCardCompleted, onFinish, takeSnapshot]
+  )
+
+  // Auto-cascade for the two chip-driven cards: the tap that completes the
+  // required picks saves and moves on, no extra button press in between.
+  // Ratings cascades on its own walk-finished event; media stays manual
+  // because uploads are multi-file and should not cut off after the first.
+  const completeNow =
+    (card === 'money' || card === 'program') && isBoostCardDone(card, form.values, mediaCount)
+  useEffect(() => {
+    if (!completeNow || entryCompleteRef.current || saving || advancingRef.current) return
+    runCascade(card)
+  }, [completeNow, card, saving, runCascade])
+
   const saveCard = async () => {
     if (saving) return
     setSaving(true)
@@ -107,41 +239,44 @@ export const BoostCards = ({
       if (!ok) return // error already toasted by the caller; stay on the card
       lastCompletedRef.current = card
       onCardCompleted(card)
+      baselinesRef.current[card] = takeSnapshot(card)
       advance()
     } finally {
       setSaving(false)
     }
   }
 
-  const restoreSnapshot = () => {
-    const snap = snapshotRef.current
-    if (snap) {
-      form.applyValues(snap.fields)
-      onMediaStateChange({ ...mediaStateRef.current, media: snap.media })
-    }
-  }
-
   const skip = () => {
-    restoreSnapshot()
+    cancelCascade()
+    restoreCard(card)
     advance()
   }
 
-  // Leaving mid-card discards that card's unsaved input as well — otherwise
-  // the preview would show detail the review never actually saved.
+  // Back stays inside the deck: previous card, never the pre-publish screens
+  // (the review is already live). Tab jumps are free navigation — unsaved
+  // input simply stays pending until the card is saved or left for good.
+  const back = () => {
+    cancelCascade()
+    setIndex((i) => Math.max(i - 1, 0))
+  }
+
   const exit = () => {
-    restoreSnapshot()
+    cancelCascade()
+    restoreAllVisited()
     onExit(lastCompletedRef.current, index)
   }
+
+  const prevCard = index > 0 ? cards[index - 1] : null
 
   return (
     <div className="boost">
       <div className="boost-head">
         <div>
           <h2 className="step-title" style={{ marginBottom: 0 }}>
-            Make it more useful
+            Keep the streak going
           </h2>
           <p className="step-sub" style={{ marginBottom: 0 }}>
-            Card {index + 1} of {total}. Skip anything you don&apos;t know.
+            Cards save as you finish them. Tap any to jump ahead.
           </p>
         </div>
         <button type="button" className="btn btn-ghost" onClick={exit} disabled={saving}>
@@ -149,26 +284,49 @@ export const BoostCards = ({
         </button>
       </div>
 
+      <div className="boost-tabs" role="tablist" aria-label="Review detail cards">
+        {cards.map((c, i) => {
+          const done = isBoostCardDone(c, form.values, mediaCount)
+          return (
+            <button
+              key={c}
+              type="button"
+              role="tab"
+              aria-selected={i === index}
+              className={`boost-tab${i === index ? ' active' : ''}${done ? ' done' : ''}`}
+              onClick={() => {
+                cancelCascade()
+                setIndex(i)
+              }}
+              disabled={saving}
+            >
+              {done ? '✓' : BOOST_CARD_SHORT[c].emoji} {BOOST_CARD_SHORT[c].label}
+            </button>
+          )
+        })}
+      </div>
+
+      {cascadeMsg && (
+        <div className="boost-cascade" role="status">
+          <span>{cascadeMsg}</span>
+          <span aria-hidden="true">→</span>
+        </div>
+      )}
+
       <div className="boost-card" key={card}>
         <h3 className="boost-card-title">{BOOST_CARD_META[card].title}</h3>
         <p className="boost-card-sub">{BOOST_CARD_META[card].sub}</p>
 
+        {card === 'ratings' && <RatingsCard form={form} onDone={() => runCascade('ratings')} />}
+        {card === 'money' && <MoneyFields form={form} />}
         {card === 'program' && (
           <>
             <ProgramField form={form} />
-            <DegreeField form={form} />
-          </>
-        )}
-        {card === 'ratings' && <RatingsCard form={form} />}
-        {card === 'money' && <MoneyFields form={form} />}
-        {card === 'details' && (
-          <>
-            <EnrollmentField form={form} />
-            <YearsField form={form} />
             <LanguageField form={form} />
+            <EnrollmentField form={form} />
+            <EndYearField form={form} />
           </>
         )}
-        {card === 'pros_cons' && <ProsConsField form={form} />}
         {card === 'media' && (
           <MediaField
             mediaState={mediaState}
@@ -180,9 +338,18 @@ export const BoostCards = ({
         )}
 
         <div className="wizard-nav">
-          <button type="button" className="btn btn-ghost" onClick={exit} disabled={saving}>
-            Stop here
-          </button>
+          {prevCard ? (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={back}
+              disabled={saving || mediaState.uploading}
+            >
+              ← {BOOST_CARD_SHORT[prevCard].label}
+            </button>
+          ) : (
+            <span />
+          )}
           <div style={{ display: 'flex', gap: '.5rem' }}>
             <button
               type="button"
@@ -207,30 +374,55 @@ export const BoostCards = ({
   )
 }
 
-// The ratings card walks the eight aspects one at a time (tap a score to move
-// on, "Not sure" skips it). Picks write straight into form state so the
-// preview fills in live; the card's single Save persists the whole stack.
-const RatingsCard = ({ form }: { form: ReviewForm }) => {
-  const [aspectIndex, setAspectIndex] = useState(0)
+const TAP_LABELS = ['Poor', 'Fair', 'Okay', 'Good', 'Great']
 
+// The ratings card walks the eight aspects one at a time on a thumb-sized
+// 1–5 tap bar: tap a score to move on, "Not sure" passes, dots jump back.
+// Reaching the last aspect fires onDone, which cascades into the next card —
+// the fix for the old dead end where nothing happened after the final rating.
+const RatingsCard = ({ form, onDone }: { form: ReviewForm; onDone: () => void }) => {
   const scores = form.values.subscores
-  const aspect = SUBSCORE_INPUT_FIELDS[aspectIndex]
-  const done = aspectIndex >= SUBSCORE_INPUT_FIELDS.length
+  const total = SUBSCORE_INPUT_FIELDS.length
 
-  const answer = (key: keyof SubScores, value: number) => {
-    form.set('subscores', { ...scores, [key]: value })
-    setAspectIndex((i) => i + 1)
+  // Resume at the first unrated aspect; a fully-rated revisit lands on the
+  // summary instead of forcing another walk.
+  const firstUnrated = SUBSCORE_INPUT_FIELDS.findIndex((f) => scores[f.key] === undefined)
+  const [aspectIndex, setAspectIndex] = useState(firstUnrated === -1 ? total : firstUnrated)
+
+  const done = aspectIndex >= total
+  const aspect = done ? null : SUBSCORE_INPUT_FIELDS[aspectIndex]
+  const ratedCount = Object.keys(scores).length
+
+  const moveOn = (key?: keyof SubScores, value?: number) => {
+    if (key && typeof value === 'number') {
+      form.set('subscores', { ...scores, [key]: value })
+    }
+    if (aspectIndex >= total - 1) {
+      setAspectIndex(total)
+      onDone()
+    } else {
+      setAspectIndex((i) => i + 1)
+    }
   }
 
-  if (done) {
+  if (done || !aspect) {
     return (
       <div className="boost-ratings-done">
         <p className="form-hint">
-          {Object.keys(scores).length > 0
-            ? `${Object.keys(scores).length} of ${SUBSCORE_INPUT_FIELDS.length} rated.`
-            : 'Nothing rated.'}{' '}
-          Save to add them to your review.
+          {ratedCount > 0 ? `${ratedCount} of ${total} rated.` : 'Nothing rated yet.'} Tap the dots
+          to change any score.
         </p>
+        <div className="aspect-dots">
+          {SUBSCORE_INPUT_FIELDS.map((f, i) => (
+            <button
+              key={f.key}
+              type="button"
+              aria-label={`${f.label}: ${scores[f.key] ? `${scores[f.key]}/5` : 'not rated'}`}
+              className={`aspect-dot${scores[f.key] ? ' done' : ''}`}
+              onClick={() => setAspectIndex(i)}
+            />
+          ))}
+        </div>
         <button type="button" className="btn btn-outline btn-sm" onClick={() => setAspectIndex(0)}>
           Go through again
         </button>
@@ -240,8 +432,19 @@ const RatingsCard = ({ form }: { form: ReviewForm }) => {
 
   return (
     <div className="boost-aspect">
+      <div className="aspect-dots">
+        {SUBSCORE_INPUT_FIELDS.map((f, i) => (
+          <button
+            key={f.key}
+            type="button"
+            aria-label={`${f.label}: ${scores[f.key] ? `${scores[f.key]}/5` : 'not rated'}`}
+            className={`aspect-dot${scores[f.key] ? ' done' : ''}${i === aspectIndex ? ' active' : ''}`}
+            onClick={() => setAspectIndex(i)}
+          />
+        ))}
+      </div>
       <div className="boost-aspect-count">
-        {aspectIndex + 1} of {SUBSCORE_INPUT_FIELDS.length}
+        Aspect {aspectIndex + 1} of {total} · {ratedCount} rated
       </div>
       <div className="subscore-head" style={{ marginBottom: '0.4rem' }}>
         <span className="subscore-name" style={{ fontSize: '1rem' }}>
@@ -251,15 +454,40 @@ const RatingsCard = ({ form }: { form: ReviewForm }) => {
           {scores[aspect.key] ? `${scores[aspect.key]}/5` : 'not rated'}
         </span>
       </div>
-      <StarInput value={scores[aspect.key] || 0} onChange={(v: number) => answer(aspect.key, v)} />
-      <button
-        type="button"
-        className="btn btn-ghost"
-        style={{ marginTop: '0.6rem', padding: '.3rem 0', fontSize: '.8rem' }}
-        onClick={() => setAspectIndex((i) => i + 1)}
-      >
-        Not sure →
-      </button>
+      <div className="tap-score-row" role="radiogroup" aria-label={aspect.label}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            role="radio"
+            aria-checked={scores[aspect.key] === n}
+            className={`tap-score${scores[aspect.key] === n ? ' selected' : ''}`}
+            onClick={() => moveOn(aspect.key, n)}
+          >
+            {n}
+            <span>{TAP_LABELS[n - 1]}</span>
+          </button>
+        ))}
+      </div>
+      <div className="aspect-nav">
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ padding: '.3rem 0', fontSize: '.8rem' }}
+          disabled={aspectIndex === 0}
+          onClick={() => setAspectIndex((i) => Math.max(i - 1, 0))}
+        >
+          ← Prev
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          style={{ padding: '.3rem 0', fontSize: '.8rem' }}
+          onClick={() => moveOn()}
+        >
+          Not sure →
+        </button>
+      </div>
     </div>
   )
 }

@@ -51,8 +51,11 @@ import {
   draftPayloadFromState,
   fieldValuesFromDraft,
   normalizeUniSlugParam,
+  previewReviewFromFields,
   UNI_SLUG_RE,
+  type ReviewFieldValues,
 } from '../lib/reviewFlow'
+import { DETAILED_THRESHOLD, DETAIL_AREA_COUNT, filledDetailAreas } from '../lib/reviewDetail'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
 import { useProfileContext } from '../contexts/ProfileContext'
@@ -70,9 +73,10 @@ import type { MediaState } from './review/fields'
 
 // ---- Constants ----------------------------------------------------------------
 
-// The fast flow's analytics tag. Phase 1 event names and meanings are
-// unchanged — only `flow` distinguishes which layout produced them.
-const FLOW = 'fast_2' as const
+// The tap-first flow's analytics tag. Event names and meanings are unchanged —
+// only `flow` distinguishes which layout produced them, so the v2 funnel can
+// be compared against fast_2 directly.
+const FLOW = 'tap_2' as const
 
 // Screen index -> the step-viewed event + stage enum it emits. Step numbers
 // stay positional ("Nth screen shown") and stages stay semantic, so the
@@ -88,6 +92,46 @@ const SCREEN_STAGES: Record<number, ReviewStage> = {
 const SCREEN_LABELS = ['The essentials', 'Your story']
 
 type Phase = 'form' | 'success' | 'boost'
+
+// Slim "details collected" track under the progress dots: the dragon glides
+// toward the gold pearl as detail areas fill on either side of publish. It
+// reads the same ReviewCardData shape the public card uses, so the count it
+// shows always matches the highlight the review will actually earn.
+const DetailTrack = ({
+  values,
+  media,
+}: {
+  values: ReviewFieldValues
+  media: MediaState['media']
+}) => {
+  const filled = filledDetailAreas(previewReviewFromFields(values, media)).length
+  const pct = Math.min(100, (filled / DETAIL_AREA_COUNT) * 100)
+  const earned = filled >= DETAILED_THRESHOLD
+  return (
+    <div
+      className="detail-track"
+      role="status"
+      aria-label={`${filled} of ${DETAIL_AREA_COUNT} detail areas filled`}
+    >
+      <div className="detail-track-bar">
+        <div className="detail-track-fill" style={{ width: `${pct}%` }} />
+        <span
+          className="detail-track-dragon"
+          style={{ left: `calc(${pct}% - 0.6em)` }}
+          aria-hidden="true"
+        >
+          🐉
+        </span>
+        <span className={`detail-track-pearl${earned ? ' earned' : ''}`} aria-hidden="true" />
+      </div>
+      <div className={`detail-track-label${earned ? ' earned' : ''}`}>
+        {earned
+          ? 'Gold highlight earned'
+          : `${filled}/${DETAIL_AREA_COUNT} details: ${DETAILED_THRESHOLD} earns the gold highlight`}
+      </div>
+    </div>
+  )
+}
 
 export const ReviewWizard = ({
   searchParams,
@@ -181,6 +225,18 @@ export const ReviewWizard = ({
     uploading: false,
     errorCount: 0,
   })
+
+  // Deferred work (the Boost auto-cascade fires its save inside a timer, and
+  // stamped publish runs after the stamp animation) must read flushed state,
+  // not the render closure it was defined in.
+  const valuesRef = useRef(values)
+  const mediaStateRef = useRef(mediaState)
+  useEffect(() => {
+    valuesRef.current = values
+  }, [values])
+  useEffect(() => {
+    mediaStateRef.current = mediaState
+  }, [mediaState])
 
   // Submit state
   const [loading, setLoading] = useState(false)
@@ -678,8 +734,9 @@ export const ReviewWizard = ({
   )
 
   // The publish minimum is exactly what the server requires: a university and
-  // a rating on screen 1, one real sentence on screen 2. Everything else is
-  // optional input, never a gate.
+  // a rating on screen 1. Screen 2 asks nothing mandatory — empty text lands
+  // as a quick rating; only a half-finished sentence (1-9 chars, which the
+  // server would reject) gets nudged.
   const validateScreen = (s: number): string | null => {
     if (s === 1) {
       if (!values.selectedUni && !values.selectedUniName.trim()) {
@@ -694,8 +751,9 @@ export const ReviewWizard = ({
       return null
     }
     if (s === 2) {
-      if (values.reviewText.trim().length < 10) {
-        return 'One honest sentence is enough, but other students do need that much.'
+      const t = values.reviewText.trim()
+      if (t.length > 0 && t.length < 10) {
+        return 'A few more words, or clear it and post a quick rating.'
       }
       return null
     }
@@ -873,7 +931,14 @@ export const ReviewWizard = ({
         sessionStorage.removeItem('trc_claim_checked')
       }
 
-      setPendingSuccess(() => () => setPhase('success'))
+      // Land straight on the Power-Up deck when this reviewer can still write
+      // (signed-in JWT or a stored anonymous boost capability) — one less
+      // click between "published" and "keep going". Without the capability,
+      // the plain success screen is all that exists.
+      setPendingSuccess(() => () => {
+        const canBoost = Boolean(user) || getBoostToken(result.reviewId) !== null
+        setPhase(canBoost ? 'boost' : 'success')
+      })
       setShowStamp(true)
     } catch (error) {
       const status = error instanceof ReviewSubmitError ? error.status : undefined
@@ -908,9 +973,12 @@ export const ReviewWizard = ({
     if (!published) return false
     try {
       if (user) {
-        await updateReview(published.reviewId, buildReviewFields(values, mediaState.media))
+        await updateReview(
+          published.reviewId,
+          buildReviewFields(valuesRef.current, mediaStateRef.current.media)
+        )
       } else {
-        await boostReview(published.reviewId, buildBoostPatch(values, card))
+        await boostReview(published.reviewId, buildBoostPatch(valuesRef.current, card))
       }
       return true
     } catch (err) {
@@ -998,6 +1066,7 @@ export const ReviewWizard = ({
               timeZone: 'UTC',
             })}
           />
+          <DetailTrack values={values} media={mediaState.media} />
           <BoostCards
             form={form}
             mediaState={mediaState}
@@ -1038,6 +1107,8 @@ export const ReviewWizard = ({
             </span>
           ))}
         </div>
+
+        <DetailTrack values={values} media={mediaState.media} />
 
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}
@@ -1110,7 +1181,7 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        <div className="wizard-nav">
+        <div className="wizard-nav wizard-nav-sticky">
           {step === 1 ? (
             <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
               ← Back
@@ -1136,7 +1207,9 @@ export const ReviewWizard = ({
                 ? 'Publishing...'
                 : !user && !reviewTurnstileReady
                   ? 'Verifying you are human...'
-                  : 'Publish review 📜'}
+                  : values.reviewText.trim()
+                    ? 'Publish review 📜'
+                    : 'Publish quick rating ⚡'}
             </button>
           )}
         </div>

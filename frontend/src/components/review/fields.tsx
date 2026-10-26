@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import type { MediaItem, SubScores } from '../../lib/reviewSubmit'
 import { TUITION_RANGES, LIVING_COSTS } from '../../lib/constants'
 import { ENROLLMENT_OPTIONS, FUNDING_OPTIONS } from '../../lib/reviewDisplay'
@@ -7,12 +7,22 @@ import {
   DEGREE_LEVELS,
   INSTRUCTION_LANGS,
   MORE_TAGS,
+  POLARITY_TOPICS,
+  POPULAR_PROGRAMS,
   POPULAR_TAGS,
+  RATING_VIBE,
   RECOMMEND_OPTIONS,
-  STORY_STARTERS,
   SUBSCORE_INPUT_FIELDS,
   allYearOptions,
   recentYearChips,
+  derivePolarityText,
+  applyDegreeLevel,
+  applyEndYear,
+  applyPolarityPick,
+  applyProgram,
+  applyStartYear,
+  type PolarityDir,
+  type PolarityTopicKey,
 } from '../../lib/reviewFlow'
 import type { ReviewForm } from '../../hooks/useReviewForm'
 import { UniversityAutocomplete } from '../UniversityAutocomplete'
@@ -139,14 +149,31 @@ export const UniversityField = ({
   )
 }
 
-export const RatingField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label">
-      Your overall rating <span className="req-dot">*</span>
-    </label>
-    <StarInput value={form.values.rating} onChange={(v: number) => form.set('rating', v)} />
-  </div>
-)
+export const RatingField = ({ form }: { form: ReviewForm }) => {
+  const vibe = RATING_VIBE[form.values.rating]
+  return (
+    <div className="form-group">
+      <label className="form-label">
+        Your overall rating <span className="req-dot">*</span>
+      </label>
+      <div className={`vibe-card${vibe ? ' rated' : ''}`}>
+        <StarInput value={form.values.rating} onChange={(v: number) => form.set('rating', v)} />
+        <div className="vibe-line" aria-live="polite">
+          {vibe ? (
+            <>
+              <span className="vibe-emoji" key={form.values.rating}>
+                {vibe.emoji}
+              </span>
+              <span>{vibe.text}</span>
+            </>
+          ) : (
+            <span className="vibe-idle">Tap a star to rate your experience</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export const RecommendField = ({
   form,
@@ -184,28 +211,43 @@ export const RecommendField = ({
 
 // ---- Studies & timing ------------------------------------------------------------
 
+// Hybrid program picker: the tracks most international students take are
+// one-tap chips; the full list stays reachable through the autocomplete.
+// applyProgram keeps the Chinese Language inference in one place.
 export const ProgramField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <label className="form-label" htmlFor="program">
-      Program
+      Major / program
     </label>
+    <div className="chip-row" style={{ marginBottom: '0.5rem' }}>
+      {POPULAR_PROGRAMS.map((p) => (
+        <button
+          key={p.value}
+          type="button"
+          className={`chip ${form.values.program === p.value ? 'selected' : ''}`}
+          onClick={() => form.applyValues((cur) => applyProgram(cur, p.value))}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
     <ProgramAutocomplete
       id="program"
-      placeholder="e.g. Computer Science"
+      placeholder="Or search any program, e.g. Architecture, Law, Finance"
       value={form.values.program}
-      onChange={(v: string) => form.set('program', v)}
+      onChange={(v: string) => form.applyValues((cur) => applyProgram(cur, v))}
     />
-    <span className="form-hint">Your major / program name.</span>
+    <span className="form-hint">Tap a popular track or search the full list.</span>
   </div>
 )
 
 export const DegreeField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
-    <label className="form-label">Degree level</label>
+    <label className="form-label">Degree / track</label>
     <ChipSelect
       options={DEGREE_LEVELS}
       value={form.values.degreeLevel}
-      onSelect={(v) => form.set('degreeLevel', v)}
+      onSelect={(v) => form.applyValues((cur) => applyDegreeLevel(cur, v))}
     />
   </div>
 )
@@ -297,12 +339,15 @@ const YearChips = ({
 }
 
 export const YearsField = ({ form }: { form: ReviewForm }) => {
-  const { values, set } = form
+  const { values } = form
   return (
     <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
       <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
         <label className="form-label">Start year</label>
-        <YearChips value={values.startYear} onChange={(v) => set('startYear', v)} />
+        <YearChips
+          value={values.startYear}
+          onChange={(v) => form.applyValues((cur) => applyStartYear(cur, v))}
+        />
       </div>
       <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
         <label className="form-label">
@@ -310,13 +355,39 @@ export const YearsField = ({ form }: { form: ReviewForm }) => {
         </label>
         <YearChips
           value={values.endYear}
-          onChange={(v) => set('endYear', v)}
+          onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
           emptyLabel="Still studying"
         />
       </div>
     </div>
   )
 }
+
+// Standalone year pickers for screens that ask one question at a time.
+export const StartYearField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">
+      Start year <span className="form-hint-inline">optional</span>
+    </label>
+    <YearChips
+      value={form.values.startYear}
+      onChange={(v) => form.applyValues((cur) => applyStartYear(cur, v))}
+    />
+  </div>
+)
+
+export const EndYearField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">
+      Finished year <span className="form-hint-inline">if done</span>
+    </label>
+    <YearChips
+      value={form.values.endYear}
+      onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
+      emptyLabel="Still studying"
+    />
+  </div>
+)
 
 export const LanguageField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
@@ -333,25 +404,15 @@ export const LanguageField = ({ form }: { form: ReviewForm }) => (
 
 export const MoneyFields = ({ form }: { form: ReviewForm }) => {
   const { values, set } = form
+  // A full scholarship covers tuition, so the tuition row steps aside instead
+  // of asking a question whose answer is already known.
+  const tuitionCovered =
+    Boolean(values.fundingType) &&
+    values.fundingType !== 'self' &&
+    values.fundingCoverage === 'full'
   return (
     <>
       <div className="form-group">
-        <label className="form-label">Tuition per year</label>
-        <ChipSelect
-          options={TUITION_RANGES}
-          value={values.tuitionRange}
-          onSelect={(v) => set('tuitionRange', v)}
-        />
-      </div>
-      <div className="form-group">
-        <label className="form-label">Monthly living cost</label>
-        <ChipSelect
-          options={LIVING_COSTS}
-          value={values.livingCostRange}
-          onSelect={(v) => set('livingCostRange', v)}
-        />
-      </div>
-      <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Funding</label>
         <div className="segmented">
           {FUNDING_OPTIONS.map((opt) => (
@@ -392,61 +453,99 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
           </div>
         )}
       </div>
+      <div className="form-group">
+        <label className="form-label">Monthly living cost</label>
+        <ChipSelect
+          options={LIVING_COSTS}
+          value={values.livingCostRange}
+          onSelect={(v) => set('livingCostRange', v)}
+        />
+      </div>
+      <div className="form-group" style={{ marginBottom: 0 }}>
+        <label className="form-label">Tuition per year</label>
+        {tuitionCovered ? (
+          <p className="form-hint" style={{ marginTop: 0 }}>
+            Covered by your scholarship.
+          </p>
+        ) : (
+          <ChipSelect
+            options={TUITION_RANGES}
+            value={values.tuitionRange}
+            onSelect={(v) => set('tuitionRange', v)}
+          />
+        )}
+      </div>
     </>
   )
 }
 
 // ---- Story ---------------------------------------------------------------------
 
-export const ReviewTextField = ({
-  form,
-  starters = false,
-}: {
-  form: ReviewForm
-  starters?: boolean
-}) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+// Six 👍 / 👎 rows covering the things students actually compare. Each tap
+// fans out into tags, pros/cons, and the auto-written review below it, so the
+// reader gets structured signal even when the reviewer never types a word.
+export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">
+      What stood out <span className="form-hint-inline">tap a side per row</span>
+    </label>
+    <div className="polarity-grid">
+      {POLARITY_TOPICS.map((topic) => {
+        const pick = form.values.polarity[topic.key as PolarityTopicKey]
+        return (
+          <div className="polarity-row" key={topic.key}>
+            <span className="pol-topic">
+              {topic.emoji} {topic.label}
+            </span>
+            <div className="pol-options" role="group" aria-label={topic.label}>
+              {(['pos', 'neg'] as PolarityDir[]).map((dir) => {
+                const side = topic[dir]
+                return (
+                  <button
+                    key={dir}
+                    type="button"
+                    className={`pol-btn ${dir}${pick === dir ? ' selected' : ''}`}
+                    aria-pressed={pick === dir}
+                    onClick={() =>
+                      form.applyValues((cur) =>
+                        applyPolarityPick(cur, topic.key as PolarityTopicKey, dir)
+                      )
+                    }
+                  >
+                    {dir === 'pos' ? '👍' : '👎'} {side.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  </div>
+)
+
+export const ReviewTextField = ({ form }: { form: ReviewForm }) => {
   const { values, set } = form
-
-  const insertStarter = (starter: string) => {
-    const current = values.reviewText
-    const joiner = current && !current.endsWith(' ') && !current.endsWith('\n') ? ' ' : ''
-    const next = current + joiner + starter
-    set('reviewText', next)
-    // Caret lands after the inserted starter once React commits the new value.
-    requestAnimationFrame(() => {
-      const el = textareaRef.current
-      if (el) {
-        el.focus()
-        el.setSelectionRange(next.length, next.length)
-      }
-    })
-  }
-
+  // "Written from your picks" only while the text still is what the matrix
+  // produced — an edited or replaced box is the reviewer's own words.
+  const autoBuilt =
+    values.reviewText.length > 0 && values.reviewText === derivePolarityText(values.polarity)
   return (
     <div className="form-group">
       <label className="form-label" htmlFor="review-text">
-        Your experience <span className="req-dot">*</span>
+        Your review in your own words <span className="form-hint-inline">optional</span>
       </label>
-      {starters && (
-        <div className="chip-row" style={{ marginBottom: '0.5rem' }}>
-          {STORY_STARTERS.map((s) => (
-            <button key={s} type="button" className="chip" onClick={() => insertStarter(s)}>
-              {s.trim()}…
-            </button>
-          ))}
-        </div>
-      )}
       <textarea
         id="review-text"
-        ref={textareaRef}
         className="form-textarea"
-        placeholder="Tell other students about your experience. Academics, campus life, dormitories, the city, anything that matters..."
+        placeholder="Picks above write this for you. Edit it, replace it, or leave it empty for a quick rating."
         value={values.reviewText}
         onChange={(e) => set('reviewText', e.target.value)}
       />
       <span className="form-hint">
-        Min 10 characters. Tip: your phone keyboard&apos;s microphone works here.
+        {autoBuilt
+          ? 'Written from your picks. Edit it freely, or clear it for a quick rating.'
+          : 'Leave empty for a quick rating, or write at least 10 characters.'}
       </span>
     </div>
   )

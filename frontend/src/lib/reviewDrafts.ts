@@ -37,6 +37,9 @@ export interface ReviewDraftPayload {
   pros: string
   cons: string
   reviewText: string
+  // Verdict-matrix picks from the tap-first flow. Optional: drafts saved
+  // before it existed simply have no key, and resume with an empty matrix.
+  polarity?: Record<string, 'pos' | 'neg'>
   media: MediaItem[]
   homeCountry: string
   currentStatus: string

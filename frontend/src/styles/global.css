@@ -5601,6 +5601,322 @@ a.claim-review-uni:hover {
   padding: var(--sp-2) 0;
 }
 
+/* ---- Tap-first flow additions (v2) ---- */
+
+/* Reactive rating vibe line under the stars */
+.vibe-card {
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  padding: 0.7rem 0.9rem;
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+.vibe-card.rated {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-tint);
+}
+.vibe-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.4rem;
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+.vibe-idle {
+  color: var(--ink-faint);
+}
+.vibe-emoji {
+  display: inline-block;
+  font-size: 1.25rem;
+  animation: vibePop 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes vibePop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Screen-1 optional context: side by side on wider screens */
+.context-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+/* Verdict matrix (screen 2): six topic rows, two thumb buttons each */
+.polarity-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+.polarity-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  padding: 0.55rem 0.7rem;
+}
+.pol-topic {
+  flex: 0 0 6.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.pol-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  flex: 1;
+}
+.pol-btn {
+  padding: 0.5rem 0.4rem;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--ink-line);
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all var(--t-fast);
+}
+.pol-btn:hover {
+  border-color: var(--seal-red);
+}
+.pol-btn.pos.selected {
+  border-color: var(--success);
+  background: rgba(46, 125, 91, 0.1);
+  color: var(--success);
+}
+.pol-btn.neg.selected {
+  border-color: var(--seal-red);
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+}
+
+/* Deck switcher: the four boost cards as tappable tabs, no scrolling */
+.boost-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 0.45rem;
+  margin-bottom: var(--sp-2);
+}
+.boost-tab {
+  padding: 0.5rem 0.4rem;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--ink-line);
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all var(--t-fast);
+}
+.boost-tab:hover {
+  border-color: var(--seal-red);
+}
+.boost-tab.active {
+  border-color: var(--seal-red);
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+}
+.boost-tab.done {
+  border-color: var(--success);
+  color: var(--success);
+}
+.boost-tab.done.active {
+  background: rgba(46, 125, 91, 0.1);
+}
+
+/* Auto-cascade notice between deck tabs and card */
+.boost-cascade {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--sp-2);
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--success);
+  background: rgba(46, 125, 91, 0.08);
+  color: var(--success);
+  font-size: 0.85rem;
+  font-weight: 600;
+  animation: wizardFade 0.25s ease;
+}
+
+/* 1-5 tap bar inside the ratings walk */
+.tap-score-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.45rem;
+}
+.tap-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.65rem 0.2rem;
+  border-radius: var(--r-md);
+  border: 1.5px solid var(--ink-line);
+  background: #fff;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  font-weight: 700;
+  transition: all var(--t-fast);
+}
+.tap-score span {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+.tap-score:hover {
+  border-color: var(--seal-red);
+}
+.tap-score.selected {
+  border-color: var(--seal-red);
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+}
+.tap-score.selected span {
+  color: var(--seal-red);
+}
+
+/* Clickable progress dots for the aspect walk */
+.aspect-dots {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+.aspect-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  padding: 0;
+  border-radius: var(--r-full);
+  border: 1.5px solid var(--ink-line);
+  background: #fff;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.aspect-dot.done {
+  background: var(--seal-red);
+  border-color: var(--seal-red);
+}
+.aspect-dot.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-tint);
+}
+.aspect-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+}
+
+/* Dragon-and-pearl detail track under the wizard progress dots */
+.detail-track {
+  margin-bottom: var(--sp-3);
+}
+.detail-track-bar {
+  position: relative;
+  height: 0.4rem;
+  border-radius: var(--r-full);
+  background: var(--rice-deep);
+  overflow: visible;
+}
+.detail-track-fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--seal-red-light), var(--gold));
+  transition: width var(--t-mid);
+}
+.detail-track-dragon {
+  position: absolute;
+  top: -0.85em;
+  font-size: 1rem;
+  transition: left var(--t-mid);
+  pointer-events: none;
+}
+.detail-track-pearl {
+  position: absolute;
+  right: -0.35em;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: var(--r-full);
+  background: var(--rice-deep);
+  border: 2px solid var(--ink-line);
+  transition: all var(--t-mid);
+}
+.detail-track-pearl.earned {
+  background: var(--gold);
+  border-color: var(--gold-dark);
+  box-shadow: 0 0 8px rgba(201, 162, 39, 0.7);
+}
+.detail-track-label {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+.detail-track-label.earned {
+  color: var(--gold-dark);
+  font-weight: 700;
+}
+
+/* Sticky action bar: keep Continue/Publish under the thumb on mobile */
+@media (max-width: 720px) {
+  .wizard-nav-sticky {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin-left: calc(-1 * var(--sp-2));
+    margin-right: calc(-1 * var(--sp-2));
+    padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--ink-line);
+  }
+}
+
+@media (min-width: 720px) {
+  .context-row {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--sp-2);
+  }
+  .polarity-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .polarity-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+  }
+  .pol-topic {
+    flex-basis: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vibe-emoji,
+  .boost-cascade {
+    animation: none;
+  }
+  .detail-track-fill,
+  .detail-track-dragon,
+  .detail-track-pearl {
+    transition: none;
+  }
+}
+
 /* Danger button (destructive confirms) */
 .btn-danger {
   background: var(--error);
