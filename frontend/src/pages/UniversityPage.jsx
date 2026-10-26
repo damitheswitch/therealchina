@@ -129,13 +129,31 @@ export const UniversityPage = () => {
         {hasVerified && <SealBadge large={true} />}
       </div>
     ) : (
-      <div className="uni-profile-rating-block">
-        <span className="rating-number">New</span>
+      <div className="uni-profile-rating-block uni-profile-rating-empty">
         <div className="rating-info">
           <StarRating rating={0} sizeClass="stars-lg" />
-          <span className="count">No reviews yet. Be the first!</span>
+          <span className="count">No reviews yet. Ask a current student below.</span>
         </div>
       </div>
+    )
+
+  const scrollToAsk = (e) => {
+    e.preventDefault()
+    document.getElementById('ask-student')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => {
+      document.getElementById('ask-uni-question')?.focus({ preventScroll: true })
+    }, 450)
+  }
+
+  const heroCta =
+    reviewCount > 0 ? (
+      <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
+        <Icons.Pen /> Leave a Review
+      </Link>
+    ) : (
+      <a href="#ask-student" onClick={scrollToAsk} className="btn btn-primary btn-lg">
+        <Icons.Chat /> Ask a Student
+      </a>
     )
 
   const seoTitle = `${university.name} Reviews`
@@ -338,17 +356,11 @@ export const UniversityPage = () => {
               )}
             </div>
           </div>
-          <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
-            <Icons.Pen /> Leave a Review
-          </Link>
+          {reviewCount === 0 && ratingBlock}
+          {heroCta}
         </div>
-        {ratingBlock}
-        <Link
-          to={`/review?uni=${university.slug}`}
-          className="btn btn-primary btn-lg uni-profile-mobile-cta"
-        >
-          <Icons.Pen /> Leave a Review
-        </Link>
+        {reviewCount > 0 && ratingBlock}
+        <div className="uni-profile-mobile-cta">{heroCta}</div>
       </div>
 
       <DraftReminder university={university} />

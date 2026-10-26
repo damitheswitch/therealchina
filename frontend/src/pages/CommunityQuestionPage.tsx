@@ -83,6 +83,37 @@ const QuestionView = ({
   const [postAnon, setPostAnon] = useState(false)
   const [posting, setPosting] = useState(false)
   const [reported, setReported] = useState<Set<string>>(new Set())
+  const [justPostedAnswer, setJustPostedAnswer] = useState<string | null>(null)
+  const [copiedShare, setCopiedShare] = useState(false)
+
+  const buildConvertReviewUrl = (answerText?: string) => {
+    if (!question.university) return '/review'
+    const params = new URLSearchParams()
+    params.set('uni', question.university.slug)
+    params.set('prompt', question.title)
+    params.set('qSlug', question.slug)
+    if (answerText) params.set('answer', answerText)
+    return `/review?${params.toString()}`
+  }
+
+  const copyGroupShare = async () => {
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://therealchina.org'
+    const targetUrl = question.university
+      ? `${origin}${buildConvertReviewUrl()}`
+      : `${origin}/community/q/${question.slug}`
+    const prefix = question.university
+      ? `Anyone studying at ${question.university.name}? Quick question: "${question.title}"`
+      : `Quick question for students in China: "${question.title}"`
+    try {
+      await navigator.clipboard.writeText(`${prefix}\n\nAnswer here: ${targetUrl}`)
+      setCopiedShare(true)
+      showToast('Copied question for WeChat / WhatsApp groups.', 'success')
+      setTimeout(() => setCopiedShare(false), 2500)
+    } catch {
+      showToast('Could not copy link.', 'error')
+    }
+  }
 
   const sorted = useMemo(
     () =>
@@ -143,6 +174,7 @@ const QuestionView = ({
     setPosting(true)
     try {
       await submitAnswer({ questionSlug: question.slug, body: text, anonymous: postAnon })
+      setJustPostedAnswer(text)
       setDraft('')
       setPostAnon(false)
       showToast('Answer posted.', 'success')
@@ -204,6 +236,14 @@ const QuestionView = ({
           initialUpvoted={question.viewerUpvoted}
           label="Me too"
         />
+        <button type="button" className="btn btn-outline btn-sm" onClick={copyGroupShare}>
+          <Icons.WeChat size={14} /> {copiedShare ? 'Copied for group!' : 'Share in student group'}
+        </button>
+        {question.university && (
+          <Link to={buildConvertReviewUrl()} className="btn btn-ghost btn-sm">
+            <Icons.Pen /> Answer as a review
+          </Link>
+        )}
         {question.mine && question.notifyOnAnswer !== undefined && (
           <label className="form-checkbox-label qa-notify-toggle">
             <input
@@ -261,6 +301,15 @@ const QuestionView = ({
                   <Icons.Check size={14} /> Mark as accepted
                 </button>
               )}
+              {a.mine && question.university && (
+                <Link
+                  to={buildConvertReviewUrl(a.body.join('\n\n'))}
+                  className="accept-btn"
+                  style={{ color: 'var(--seal-red)', borderColor: 'var(--seal-red)' }}
+                >
+                  <Icons.Pen /> Turn answer into a {question.university.name} review
+                </Link>
+              )}
               <button
                 type="button"
                 className="flag-btn icon-only"
@@ -274,6 +323,18 @@ const QuestionView = ({
           </article>
         ))}
       </section>
+
+      {justPostedAnswer && question.university && (
+        <div className="convert-review-banner">
+          <div>
+            <strong>Thanks for answering!</strong> Turn your reply into a review for{' '}
+            {question.university.name} in one click (your answer is already filled in).
+          </div>
+          <Link to={buildConvertReviewUrl(justPostedAnswer)} className="btn btn-primary btn-sm">
+            <Icons.Pen /> Convert to review
+          </Link>
+        </div>
+      )}
 
       <section className="answer-form" aria-label="Write an answer">
         <h2 className="answer-form-title">Your answer</h2>

@@ -23,6 +23,7 @@ import {
 } from '../lib/reviewClaim'
 import { updateReview } from '../lib/reviewManage'
 import { boostReview } from '../lib/reviewBoost'
+import { submitAnswer } from '../lib/communityApi'
 import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
 import { supabase } from '../lib/supabaseClient'
 import {
@@ -126,7 +127,10 @@ export const ReviewWizard = ({
           cons: initial.cons,
           reviewText: initial.reviewText,
         }
-      : { selectedUni: searchParams.get('uni') || '' }
+      : {
+          selectedUni: searchParams.get('uni') || '',
+          reviewText: searchParams.get('answer') || '',
+        }
   )
   // `form` is a new object whenever values change; `applyValues`/`set` are
   // stable. Effects and callbacks that apply drafts must depend on the stable
@@ -137,9 +141,13 @@ export const ReviewWizard = ({
   // localStorage fallback for everyone else.
   const draftParam = searchParams.get('draft')
   const uniParam = searchParams.get('uni')
+  const promptParam = searchParams.get('prompt')
+  const answerParam = searchParams.get('answer')
+  const qSlugParam = searchParams.get('qSlug')
   const [draftId, setDraftId] = useState<string | null>(draftParam)
   const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
+  const [alsoPostAnswer, setAlsoPostAnswer] = useState(true)
 
   // Flow state
   const [phase, setPhase] = useState<Phase>('form')
@@ -645,6 +653,17 @@ export const ReviewWizard = ({
         } catch (err) {
           console.error('Could not delete draft after submit:', err)
         }
+        if (qSlugParam && alsoPostAnswer && !answerParam) {
+          try {
+            await submitAnswer({
+              questionSlug: qSlugParam,
+              body: values.reviewText.trim(),
+              anonymous: false,
+            })
+          } catch (err) {
+            console.error('Could not cross-post answer to Q&A thread:', err)
+          }
+        }
       } else {
         clearLocalDraft()
       }
@@ -814,7 +833,9 @@ export const ReviewWizard = ({
         <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
           <Icons.ArrowLeft /> Back
         </Link>
-        <h1 className="section-title">Leave a Review</h1>
+        <h1 className="section-title">
+          {promptParam ? 'Answer a Student Question' : 'Leave a Review'}
+        </h1>
 
         {/* Progress bar */}
         <div className="wizard-progress">
@@ -841,9 +862,26 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {step === 1 && <ReviewEssentials form={form} />}
+        {step === 1 && <ReviewEssentials form={form} promptQuestion={promptParam} />}
 
-        {step === 2 && <ReviewStory form={form} isAnonymous={!user} />}
+        {step === 2 && <ReviewStory form={form} isAnonymous={!user} promptQuestion={promptParam} />}
+
+        {user && step === 2 && qSlugParam && !answerParam && (
+          <label
+            className="form-checkbox-label"
+            htmlFor="cross-post-qa"
+            style={{ marginBottom: 'var(--sp-2)' }}
+          >
+            <input
+              id="cross-post-qa"
+              type="checkbox"
+              className="form-checkbox"
+              checked={alsoPostAnswer}
+              onChange={(e) => setAlsoPostAnswer(e.target.checked)}
+            />
+            Also post my response directly on the community question thread
+          </label>
+        )}
 
         {/* Guest identity notice — anonymous stays one click; signing in is a
             modal, so the draft in state + localStorage survives either way. */}
