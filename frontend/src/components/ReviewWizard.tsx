@@ -215,12 +215,22 @@ export const ReviewWizard = ({
     [applyValues]
   )
 
+  // Resolve ?uni=<slug> once — the field prefill below and the draft-load
+  // effect's university check share this single lookup (aliases included).
+  const uniSlug = uniParam
+  const { university: prefilledUni, loading: prefilledUniLoading } = useUniversity(
+    uniSlug || undefined
+  )
+
   // Load the draft once auth is ready. Signed-in users pull by ?draft=<id>, or
   // by ?uni=<slug> when a draft already exists for that university (so the
   // wizard resumes instead of overwriting it on the first autosave). Anonymous
   // visitors fall back to the localStorage draft when the slug matches.
   useEffect(() => {
     if (editMode || authLoading) return
+    // The signed-in ?uni draft check keys off the resolved university id —
+    // wait for the shared lookup rather than racing it.
+    if (user && uniParam && !draftParam && prefilledUniLoading) return
 
     const controller = new AbortController()
     // localStorage drafts can outlive their uploads (server cleanup can't see
@@ -249,23 +259,16 @@ export const ReviewWizard = ({
             showToast('That draft could not be found.', 'error')
           }
         } else if (user && uniParam) {
-          // A draft for this slug may already exist — resume it so autosave
-          // updates the saved row instead of clobbering it with a fresh one.
-          // Alias slugs resolve too (old links keep working): the param is
-          // format-validated above, so the .or() string can't be injected.
-          const { data: uni, error: uniError } = await supabase
-            .from('universities')
-            .select('id')
-            .or(`slug.eq.${uniParam},slug_aliases.cs.{${uniParam}}`)
-            .abortSignal(controller.signal)
-            .maybeSingle()
-          if (uniError) throw uniError
-          if (uni?.id) {
+          // A draft for this university may already exist — resume it so
+          // autosave updates the saved row instead of clobbering it. The row
+          // comes from the shared useUniversity lookup, so alias links match
+          // the canonical university id.
+          if (prefilledUni?.id) {
             const { data: d, error: draftError } = await supabase
               .from('review_drafts')
               .select('id, payload, university_id')
               .eq('user_id', user.id)
-              .eq('university_id', uni.id)
+              .eq('university_id', prefilledUni.id)
               .abortSignal(controller.signal)
               .maybeSingle()
             if (draftError) throw draftError
@@ -318,7 +321,17 @@ export const ReviewWizard = ({
 
     run()
     return () => controller.abort()
-  }, [editMode, authLoading, user, draftParam, uniParam, applyDraftPayload, showToast])
+  }, [
+    editMode,
+    authLoading,
+    user,
+    draftParam,
+    uniParam,
+    prefilledUni,
+    prefilledUniLoading,
+    applyDraftPayload,
+    showToast,
+  ])
 
   const reviewAuth: ReviewAuth = user ? 'signed_in' : 'anonymous'
 
@@ -437,12 +450,6 @@ export const ReviewWizard = ({
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [editMode, draftLoading, phase])
-
-  // Pre-fill university from ?uni=<slug>
-  const uniSlug = uniParam
-  const { university: prefilledUni, loading: prefilledUniLoading } = useUniversity(
-    uniSlug || undefined
-  )
 
   // The last slug/name pair selectedUni+selectedUniName got from the URL —
   // the raw param seed or the values this effect applied. URL-sourced values
