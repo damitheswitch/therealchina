@@ -166,24 +166,20 @@ export const BoostCards = ({
     }
   }
 
-  // The cascade: flash a saved notice, then save and land on the next card
-  // that still needs answers (skipping anything already done, like a
-  // prefilled program card). If every remaining card is done, the deck
-  // finishes. The whole save runs inside the timer so the state update from
-  // the completing tap has flushed before the patch is built — a save fired
-  // synchronously in the same click handler would read stale values and
-  // drop the last tap.
+  // The cascade: wait a beat so the completing tap's state update flushes
+  // before the patch is built — a save fired synchronously in the same
+  // click handler would read stale values and drop the last tap — then
+  // save, flash the notice, and land on the next card that still needs
+  // answers (skipping anything already done, like a prefilled program
+  // card). If every remaining card is done, the deck finishes.
   const runCascade = useCallback(
     (fromCard: BoostCard) => {
       if (advancingRef.current) return
       advancingRef.current = true
-      setCascadeMsg(`✓ ${BOOST_CARD_SHORT[fromCard].label} saved`)
       cascadeTimerRef.current = window.setTimeout(() => {
         cascadeTimerRef.current = null
-        setCascadeMsg(null)
-        const after = () => {
-          baselinesRef.current[fromCard] = takeSnapshot(fromCard)
-          lastCompletedRef.current = fromCard
+        const after = (refreshBaseline = true) => {
+          if (refreshBaseline) baselinesRef.current[fromCard] = takeSnapshot(fromCard)
           const next = nextBoostCard(
             cards,
             index,
@@ -212,8 +208,19 @@ export const BoostCards = ({
             advancingRef.current = false
             return // error already toasted by the caller; stay on the card
           }
+          // Completion means a real save, so the card only counts as
+          // completed (and the notice only shows) once the write landed.
+          // Pin the baseline to the saved state now — anything tapped during
+          // the notice is new unsaved input, not part of this save.
+          lastCompletedRef.current = fromCard
           onCardCompleted(fromCard)
-          after()
+          baselinesRef.current[fromCard] = takeSnapshot(fromCard)
+          setCascadeMsg(`✓ ${BOOST_CARD_SHORT[fromCard].label} saved`)
+          cascadeTimerRef.current = window.setTimeout(() => {
+            cascadeTimerRef.current = null
+            setCascadeMsg(null)
+            after(false)
+          }, 480)
         })
       }, 520)
     },
@@ -253,10 +260,12 @@ export const BoostCards = ({
   }
 
   // Back stays inside the deck: previous card, never the pre-publish screens
-  // (the review is already live). Tab jumps are free navigation — unsaved
-  // input simply stays pending until the card is saved or left for good.
+  // (the review is already live). Both Back and tab jumps restore the
+  // current card first — unsaved input must not linger in form state, or the
+  // next signed-in full-field save would silently persist it.
   const back = () => {
     cancelCascade()
+    restoreCard(card)
     setIndex((i) => Math.max(i - 1, 0))
   }
 
@@ -284,18 +293,18 @@ export const BoostCards = ({
         </button>
       </div>
 
-      <div className="boost-tabs" role="tablist" aria-label="Review detail cards">
+      <div className="boost-tabs" role="group" aria-label="Review detail cards">
         {cards.map((c, i) => {
           const done = isBoostCardDone(c, form.values, mediaCount)
           return (
             <button
               key={c}
               type="button"
-              role="tab"
-              aria-selected={i === index}
+              aria-current={i === index ? 'step' : undefined}
               className={`boost-tab${i === index ? ' active' : ''}${done ? ' done' : ''}`}
               onClick={() => {
                 cancelCascade()
+                restoreCard(card)
                 setIndex(i)
               }}
               disabled={saving}
@@ -454,13 +463,12 @@ const RatingsCard = ({ form, onDone }: { form: ReviewForm; onDone: () => void })
           {scores[aspect.key] ? `${scores[aspect.key]}/5` : 'not rated'}
         </span>
       </div>
-      <div className="tap-score-row" role="radiogroup" aria-label={aspect.label}>
+      <div className="tap-score-row" role="group" aria-label={aspect.label}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
             type="button"
-            role="radio"
-            aria-checked={scores[aspect.key] === n}
+            aria-pressed={scores[aspect.key] === n}
             className={`tap-score${scores[aspect.key] === n ? ' selected' : ''}`}
             onClick={() => moveOn(aspect.key, n)}
           >

@@ -162,7 +162,7 @@ export const BOOST_CARD_SHORT: Record<BoostCard, { emoji: string; label: string 
 }
 
 // A card counts as done when its required picks exist on the live values.
-// Ratings uses the same bar as the detail-area rule (RATINGS_AREA_MIN of 8);
+// Ratings uses the same bar as the detail-area rule (RATINGS_AREA_MIN of 4);
 // media means at least one attached item. Degree/language already answered on
 // screen 1 leave 'program' done before the deck even opens (e.g. a Language
 // Course pick infers both), which is exactly what lets the cascade skip it.
@@ -574,6 +574,7 @@ export const MORE_TAGS = [
   'Diverse',
   'Hard grading',
   'Easy grading',
+  'Weak teaching',
 ]
 
 export const DEGREE_LEVELS = [

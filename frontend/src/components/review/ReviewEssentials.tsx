@@ -8,7 +8,7 @@ import { DegreeField, RatingField, RecommendField, StartYearField, UniversityFie
 // fills program and instruction language; Exchange pins enrollment status).
 export const ReviewEssentials = ({ form }: { form: ReviewForm }) => (
   <div className="wizard-step active">
-    <div className="step-tagline">The essentials. All taps, no typing.</div>
+    <div className="step-tagline">The essentials. Under a minute.</div>
 
     <UniversityField form={form} />
     <RatingField form={form} />
