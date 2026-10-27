@@ -41,6 +41,7 @@ export const StarInput = ({ value, onChange }) => {
               value={rating}
               checked={value === rating}
               onChange={() => handleClick(rating)}
+              aria-label={labels[rating]}
             />
             <label
               key={`label-${rating}`}
