@@ -400,8 +400,8 @@ CREATE OR REPLACE FUNCTION public.update_reviews_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Vote-count bookkeeping is not an edit of the review.
-  IF (to_jsonb(NEW) - 'upvote_count' - 'updated_at')
-     = (to_jsonb(OLD) - 'upvote_count' - 'updated_at') THEN
+  IF (to_jsonb(NEW) - 'upvote_count' - 'updated_at' - 'review_kind')
+     = (to_jsonb(OLD) - 'upvote_count' - 'updated_at' - 'review_kind') THEN
     RETURN NEW;
   END IF;
   NEW.updated_at = NOW();
