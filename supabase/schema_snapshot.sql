@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 ALTER TABLE public.reviews
 DROP CONSTRAINT IF EXISTS chk_reviews_text_length,
 ADD CONSTRAINT chk_reviews_text_length
-  CHECK (text IS NULL OR char_length(text) BETWEEN 10 AND 5000)
+  CHECK (text IS NULL OR char_length(btrim(text)) BETWEEN 10 AND 5000)
   NOT VALID,
 DROP CONSTRAINT IF EXISTS chk_reviews_pros_length,
 ADD CONSTRAINT chk_reviews_pros_length
