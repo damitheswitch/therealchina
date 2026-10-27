@@ -65,7 +65,7 @@ const MyReviewCard = ({
         </div>
       </div>
       <ReviewContext review={review} />
-      {review.text ? (
+      {review.text?.trim() ? (
         <p className="review-text">{review.text}</p>
       ) : (
         <span className="quick-rating-badge">Quick rating</span>

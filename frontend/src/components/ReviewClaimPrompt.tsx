@@ -161,7 +161,7 @@ export const ReviewClaimPrompt = () => {
                   ) : (
                     <div className="claim-review-uni">{item.universityName}</div>
                   ))}
-                {item.text ? (
+                {item.text?.trim() ? (
                   <p className="claim-review-text">{item.text}</p>
                 ) : (
                   <span className="quick-rating-badge">Quick rating</span>
