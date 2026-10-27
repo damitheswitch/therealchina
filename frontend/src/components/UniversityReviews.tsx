@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { ReviewCard } from './ReviewCard'
 import { ReviewSortSelect } from './ReviewSortSelect'
+import { AskStudentBox } from './AskStudentBox'
 import { Icons } from './Icons'
 import { type ReviewSort, type ReviewSortChoice } from '../lib/reviewSort'
 import type { Tables } from '../types/database.types'
 
-type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
+type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'> & {
+  city?: string | null
+}
 
 // One university's review section, paginated server-side. The page mounts
 // this with key={university.id} so switching universities remounts the whole
@@ -117,13 +119,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
           )}
         </>
       ) : (
-        <div className="empty-state">
-          <h3>No reviews yet</h3>
-          <p>Be the first to share your experience at {university.name}.</p>
-          <Link to={`/review?uni=${university.slug}`} className="btn btn-primary mt-2">
-            <Icons.Pen /> Leave a Review
-          </Link>
-        </div>
+        <AskStudentBox university={university} />
       )}
     </div>
   )

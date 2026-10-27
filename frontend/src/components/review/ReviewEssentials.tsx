@@ -6,9 +6,26 @@ import { DegreeField, RatingField, RecommendField, StartYearField, UniversityFie
 // start year used to live in a Boost card nobody reached; here they are a
 // single tap each, and they carry smart defaults (a Language Course pick
 // fills program and instruction language; Exchange pins enrollment status).
-export const ReviewEssentials = ({ form }: { form: ReviewForm }) => (
+// ?prompt=<question> swaps the tagline for the ask-a-student banner.
+export const ReviewEssentials = ({
+  form,
+  promptQuestion,
+}: {
+  form: ReviewForm
+  promptQuestion?: string | null
+}) => (
   <div className="wizard-step active">
-    <div className="step-tagline">The essentials. Under a minute.</div>
+    {promptQuestion ? (
+      <div className="review-prompt-banner">
+        <span className="review-prompt-eyebrow">Answering a peer question</span>
+        <p className="review-prompt-question">&ldquo;{promptQuestion}&rdquo;</p>
+        <span className="review-prompt-sub">
+          Quick star rating first, then your answer on the next screen.
+        </span>
+      </div>
+    ) : (
+      <div className="step-tagline">The essentials. Under a minute.</div>
+    )}
 
     <UniversityField form={form} />
     <RatingField form={form} />
