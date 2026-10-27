@@ -14,8 +14,6 @@ import type { BoostCard } from './analytics'
 // The server minimum is university + rating (see _shared/reviewFields.ts) —
 // text is optional, and a textless review lands as a "quick rating".
 
-export const FAST_FLOW_SCREENS = 2
-
 // University slugs as they may appear in URL params. review-submit keeps its
 // own copy of this check (Deno can't import this file) — keep them in sync.
 export const UNI_SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/
@@ -62,6 +60,11 @@ export interface ReviewFieldValues {
   languagesSpoken: string[]
   emailConsent: boolean
   anonEmail: string
+  // Fields last written by inference rather than the reviewer. Smart-default
+  // helpers fill empty fields and roll back only what they set, so a
+  // deliberate pick is never clobbered. Internal only: payload builders pick
+  // fields explicitly, so this never reaches the server or a draft.
+  inferred: ReadonlySet<string>
 }
 
 export const emptyReviewFieldValues: ReviewFieldValues = {
@@ -94,6 +97,7 @@ export const emptyReviewFieldValues: ReviewFieldValues = {
   languagesSpoken: [],
   emailConsent: false,
   anonEmail: '',
+  inferred: new Set(),
 }
 
 // Strips the draft-only keys (v, step, media, savedAt) so the rest can be
@@ -112,7 +116,12 @@ export const draftPayloadFromState = (
   values: ReviewFieldValues,
   media: MediaItem[],
   step: number
-): ReviewDraftPayload => ({ ...values, media, step, v: DRAFT_PAYLOAD_VERSION })
+): ReviewDraftPayload => {
+  // `inferred` is provenance for live inference, not review content: it never
+  // enters the draft, and a resumed draft treats every value as deliberate.
+  const { inferred: _inferred, ...fields } = values
+  return { ...fields, media, step, v: DRAFT_PAYLOAD_VERSION }
+}
 
 // The writable review columns, shaped for submit and review-manage update
 // bodies. Server-side validation re-checks everything; this only normalizes
@@ -414,13 +423,17 @@ export const applyPolarityPick = (
   const previousAutoText = derivePolarityText(v.polarity)
   const textIsAuto = v.reviewText === '' || v.reviewText === previousAutoText
 
-  return {
-    polarity: picks,
-    selectedTags: [...manualTags, ...tags],
-    pros: [...manualPros, ...posPhrases].join(', '),
-    cons: [...manualCons, ...negPhrases].join(', '),
-    ...(textIsAuto ? { reviewText: derivePolarityText(picks) } : {}),
-  }
+  return markInferred(
+    v,
+    {
+      polarity: picks,
+      selectedTags: [...manualTags, ...tags],
+      pros: [...manualPros, ...posPhrases].join(', '),
+      cons: [...manualCons, ...negPhrases].join(', '),
+      ...(textIsAuto ? { reviewText: derivePolarityText(picks) } : {}),
+    },
+    'polarity'
+  )
 }
 
 // ---- Smart defaults -------------------------------------------------------------
@@ -435,6 +448,23 @@ export const LANGUAGE_COURSE_PROGRAM = 'Chinese Language (Mandarin)'
 export const LANGUAGE_COURSE_INSTRUCTION = 'Chinese (Mandarin)'
 export const EXCHANGE_DEGREE = 'Exchange'
 
+// `primary` is the field the user's action wrote directly; every other field
+// in the patch is inference-owned until a deliberate write clears the flag.
+// Rollback guards read the flag, not the value, so a user who typed the same
+// words an inference would have written keeps their pick.
+const markInferred = (
+  v: ReviewFieldValues,
+  patch: Partial<ReviewFieldValues>,
+  primary: keyof ReviewFieldValues
+): Partial<ReviewFieldValues> => {
+  const inferred = new Set(v.inferred)
+  inferred.delete(primary)
+  for (const key of Object.keys(patch)) {
+    if (key !== primary && key !== 'inferred') inferred.add(key)
+  }
+  return { ...patch, inferred }
+}
+
 export const applyDegreeLevel = (
   v: ReviewFieldValues,
   next: string
@@ -444,67 +474,97 @@ export const applyDegreeLevel = (
   const wasLangCourse = v.degreeLevel === LANGUAGE_COURSE_DEGREE
   const isLangCourse = next === LANGUAGE_COURSE_DEGREE
   if (isLangCourse && !wasLangCourse) {
-    if (!v.program || v.program === LANGUAGE_COURSE_PROGRAM) {
+    if (!v.program || v.inferred.has('program')) {
       patch.program = LANGUAGE_COURSE_PROGRAM
     }
-    if (!v.languageOfInstruction || v.languageOfInstruction === LANGUAGE_COURSE_INSTRUCTION) {
+    if (!v.languageOfInstruction || v.inferred.has('languageOfInstruction')) {
       patch.languageOfInstruction = LANGUAGE_COURSE_INSTRUCTION
     }
   } else if (wasLangCourse && !isLangCourse) {
-    if (v.program === LANGUAGE_COURSE_PROGRAM) patch.program = ''
-    if (v.languageOfInstruction === LANGUAGE_COURSE_INSTRUCTION) {
+    if (v.program === LANGUAGE_COURSE_PROGRAM && v.inferred.has('program')) patch.program = ''
+    if (
+      v.languageOfInstruction === LANGUAGE_COURSE_INSTRUCTION &&
+      v.inferred.has('languageOfInstruction')
+    ) {
       patch.languageOfInstruction = ''
     }
   }
 
-  if (next === EXCHANGE_DEGREE && v.degreeLevel !== EXCHANGE_DEGREE && !v.enrollmentStatus) {
+  if (
+    next === EXCHANGE_DEGREE &&
+    v.degreeLevel !== EXCHANGE_DEGREE &&
+    (!v.enrollmentStatus || v.inferred.has('enrollmentStatus'))
+  ) {
     patch.enrollmentStatus = 'exchange'
   } else if (
     v.degreeLevel === EXCHANGE_DEGREE &&
     next !== EXCHANGE_DEGREE &&
-    v.enrollmentStatus === 'exchange'
+    v.enrollmentStatus === 'exchange' &&
+    v.inferred.has('enrollmentStatus')
   ) {
     patch.enrollmentStatus = ''
   }
 
-  return patch
+  return markInferred(v, patch, 'degreeLevel')
 }
 
 // A recent start year on a blank enrollment status almost always means the
-// reviewer is still there; an end year means they finished. Exchange status
-// set by applyDegreeLevel is never overridden.
+// reviewer is still there; an end year means they finished. Start year only
+// fills an empty status; end year flips an inferred 'current' to 'alumni',
+// clears an inferred 'alumni' back out when the pick is removed, and never
+// touches a deliberate choice.
 export const applyStartYear = (
   v: ReviewFieldValues,
   year: number | '',
   now = new Date().getFullYear()
-): Partial<ReviewFieldValues> => ({
-  startYear: year,
-  ...(!v.enrollmentStatus && typeof year === 'number' && year >= now - 3
-    ? { enrollmentStatus: 'current' }
-    : {}),
-})
+): Partial<ReviewFieldValues> =>
+  markInferred(
+    v,
+    {
+      startYear: year,
+      ...(!v.enrollmentStatus && typeof year === 'number' && year >= now - 3
+        ? { enrollmentStatus: 'current' }
+        : {}),
+    },
+    'startYear'
+  )
 
-export const applyEndYear = (
-  v: ReviewFieldValues,
-  year: number | ''
-): Partial<ReviewFieldValues> => ({
-  endYear: year,
-  ...(typeof year === 'number' && (!v.enrollmentStatus || v.enrollmentStatus === 'current')
-    ? { enrollmentStatus: 'alumni' }
-    : {}),
-})
+export const applyEndYear = (v: ReviewFieldValues, year: number | ''): Partial<ReviewFieldValues> =>
+  markInferred(
+    v,
+    {
+      endYear: year,
+      ...(typeof year === 'number' &&
+      (!v.enrollmentStatus ||
+        (v.enrollmentStatus === 'current' && v.inferred.has('enrollmentStatus')))
+        ? { enrollmentStatus: 'alumni' }
+        : year === '' && v.enrollmentStatus === 'alumni' && v.inferred.has('enrollmentStatus')
+          ? { enrollmentStatus: '' }
+          : {}),
+    },
+    'endYear'
+  )
 
 // A program pick carries its own inference: Chinese Language (Mandarin) is
-// taught in Mandarin. Only fills the language field while it is empty.
-export const applyProgram = (
-  v: ReviewFieldValues,
-  program: string
-): Partial<ReviewFieldValues> => ({
-  program,
-  ...(program === LANGUAGE_COURSE_PROGRAM && !v.languageOfInstruction
-    ? { languageOfInstruction: LANGUAGE_COURSE_INSTRUCTION }
-    : {}),
-})
+// taught in Mandarin. Fills the language field while it is empty or still
+// inference-owned, and rolls its own value back when the program moves on.
+export const applyProgram = (v: ReviewFieldValues, program: string): Partial<ReviewFieldValues> =>
+  markInferred(
+    v,
+    {
+      program,
+      ...(program === LANGUAGE_COURSE_PROGRAM &&
+      (!v.languageOfInstruction || v.inferred.has('languageOfInstruction'))
+        ? { languageOfInstruction: LANGUAGE_COURSE_INSTRUCTION }
+        : v.program === LANGUAGE_COURSE_PROGRAM &&
+            program !== LANGUAGE_COURSE_PROGRAM &&
+            v.languageOfInstruction === LANGUAGE_COURSE_INSTRUCTION &&
+            v.inferred.has('languageOfInstruction')
+          ? { languageOfInstruction: '' }
+          : {}),
+    },
+    'program'
+  )
 
 // ---- Reactive rating ------------------------------------------------------------
 

@@ -24,6 +24,7 @@ import {
   applyProgram,
   applyStartYear,
   derivePolarityText,
+  LANGUAGE_COURSE_DEGREE,
   LANGUAGE_COURSE_PROGRAM,
   LANGUAGE_COURSE_INSTRUCTION,
   type ReviewFieldValues,
@@ -313,14 +314,74 @@ describe('smart defaults', () => {
   it('Exchange pins enrollment status and releases it on switch', () => {
     const on = applyDegreeLevel(values(), 'Exchange')
     expect(on.enrollmentStatus).toBe('exchange')
-    const off = applyDegreeLevel(
-      { ...values(), degreeLevel: 'Exchange', enrollmentStatus: 'exchange' },
-      'Bachelor'
-    )
+    const onState = { ...values(), ...on }
+    const off = applyDegreeLevel(onState, 'Bachelor')
     expect(off.enrollmentStatus).toBe('')
     // An explicit status is never overwritten.
     const kept = applyDegreeLevel(values({ enrollmentStatus: 'alumni' }), 'Exchange')
     expect(kept.enrollmentStatus).toBeUndefined()
+    // A deliberate 'exchange' pick survives switching degree away.
+    const deliberate = applyDegreeLevel(
+      values({ degreeLevel: 'Exchange', enrollmentStatus: 'exchange' }),
+      'Bachelor'
+    )
+    expect(deliberate.enrollmentStatus).toBeUndefined()
+  })
+
+  it('deliberate picks survive inference; inferred picks roll back', () => {
+    // Deliberate 'Chinese Language (Mandarin)' program stays when degree moves
+    // off Language Course — value equality alone used to erase it.
+    const deliberateProgram = applyDegreeLevel(
+      values({ degreeLevel: LANGUAGE_COURSE_DEGREE, program: LANGUAGE_COURSE_PROGRAM }),
+      'Bachelor'
+    )
+    expect(deliberateProgram.program).toBeUndefined()
+
+    // Inferred program/language do roll back when degree moves off.
+    const onState = {
+      ...values(),
+      ...applyDegreeLevel(values(), LANGUAGE_COURSE_DEGREE),
+    }
+    const back = applyDegreeLevel(onState, 'Bachelor')
+    expect(back.program).toBe('')
+    expect(back.languageOfInstruction).toBe('')
+  })
+
+  it('deliberate enrollment status is never flipped by a year pick', () => {
+    const v = values({ enrollmentStatus: 'current' })
+    expect(applyEndYear(v, 2024).enrollmentStatus).toBeUndefined()
+    // An inferred 'current' still rolls forward to 'alumni'.
+    const inferred = {
+      ...values(),
+      ...applyStartYear(values(), new Date().getFullYear()),
+    }
+    expect(applyEndYear(inferred, 2024).enrollmentStatus).toBe('alumni')
+  })
+
+  it('clearing the finished year rolls back only an inferred alumni', () => {
+    const withEnd = { ...values(), ...applyEndYear(values(), 2022) }
+    expect(withEnd.enrollmentStatus).toBe('alumni')
+    expect(applyEndYear(withEnd, '').enrollmentStatus).toBe('')
+    // A deliberate alumni pick stays put on "Still studying".
+    const deliberate = values({ enrollmentStatus: 'alumni', endYear: 2022 })
+    expect(applyEndYear(deliberate, '').enrollmentStatus).toBeUndefined()
+  })
+
+  it('switching program rolls back only the inferred instruction language', () => {
+    const langCourse = {
+      ...values(),
+      ...applyProgram(values(), LANGUAGE_COURSE_PROGRAM),
+    }
+    expect(langCourse.languageOfInstruction).toBe(LANGUAGE_COURSE_INSTRUCTION)
+    expect(applyProgram(langCourse, 'Clinical Medicine (MBBS)').languageOfInstruction).toBe('')
+    // A deliberate 'Chinese (Mandarin)' survives a program switch.
+    const deliberate = values({
+      program: LANGUAGE_COURSE_PROGRAM,
+      languageOfInstruction: LANGUAGE_COURSE_INSTRUCTION,
+    })
+    expect(
+      applyProgram(deliberate, 'Clinical Medicine (MBBS)').languageOfInstruction
+    ).toBeUndefined()
   })
 
   it('recent start year infers current; end year infers alumni', () => {

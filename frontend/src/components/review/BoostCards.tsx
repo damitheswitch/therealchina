@@ -155,14 +155,18 @@ export const BoostCards = ({
     }
   }
 
-  // Manual navigation while a cascade timer is pending wins: cancel the
-  // timer so a tap on a tab or Back does not get overridden 500ms later.
+  // Manual navigation wins over the cascade, including while a card save is
+  // still in flight: bumping the generation makes the pending navigation a
+  // no-op once the save resolves, so a tab tap or Back is never overridden
+  // by a setIndex fired half a second later.
+  const cascadeGenRef = useRef(0)
   const cancelCascade = () => {
+    cascadeGenRef.current += 1
+    advancingRef.current = false
     if (cascadeTimerRef.current !== null) {
       window.clearTimeout(cascadeTimerRef.current)
       cascadeTimerRef.current = null
       setCascadeMsg(null)
-      advancingRef.current = false
     }
   }
 
@@ -176,6 +180,7 @@ export const BoostCards = ({
     (fromCard: BoostCard) => {
       if (advancingRef.current) return
       advancingRef.current = true
+      const gen = ++cascadeGenRef.current
       cascadeTimerRef.current = window.setTimeout(() => {
         cascadeTimerRef.current = null
         const after = (refreshBaseline = true) => {
@@ -187,6 +192,7 @@ export const BoostCards = ({
             mediaStateRef.current.media.length
           )
           advancingRef.current = false
+          if (gen !== cascadeGenRef.current) return // manual navigation won
           if (next === -1) {
             onFinish()
           } else {

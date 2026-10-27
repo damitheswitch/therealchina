@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MediaItem, SubScores } from '../../lib/reviewSubmit'
 import { TUITION_RANGES, LIVING_COSTS } from '../../lib/constants'
 import { ENROLLMENT_OPTIONS, FUNDING_OPTIONS } from '../../lib/reviewDisplay'
@@ -47,12 +47,13 @@ const ChipSelect = ({
   onSelect: (value: string) => void
   allowDeselect?: boolean
 }) => (
-  <div className="chip-row">
+  <div className="chip-row" role="group">
     {options.map((opt) => (
       <button
         key={opt}
         type="button"
         className={`chip ${value === opt ? 'selected' : ''}`}
+        aria-pressed={value === opt}
         onClick={() => onSelect(allowDeselect && value === opt ? '' : opt)}
       >
         {opt}
@@ -214,32 +215,43 @@ export const RecommendField = ({
 // Hybrid program picker: the tracks most international students take are
 // one-tap chips; the full list stays reachable through the autocomplete.
 // applyProgram keeps the Chinese Language inference in one place.
-export const ProgramField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label" htmlFor="program">
-      Major / program
-    </label>
-    <div className="chip-row" style={{ marginBottom: '0.5rem' }}>
-      {POPULAR_PROGRAMS.map((p) => (
-        <button
-          key={p.value}
-          type="button"
-          className={`chip ${form.values.program === p.value ? 'selected' : ''}`}
-          onClick={() => form.applyValues((cur) => applyProgram(cur, p.value))}
-        >
-          {p.label}
-        </button>
-      ))}
+// The search input is a filter, not the field: keystrokes narrow the list and
+// only a pick (or committing typed text on blur/Enter) writes `program`.
+export const ProgramField = ({ form }: { form: ReviewForm }) => {
+  const [query, setQuery] = useState(form.values.program)
+  useEffect(() => setQuery(form.values.program), [form.values.program])
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor="program">
+        Major / program
+      </label>
+      <div className="chip-row" role="group" style={{ marginBottom: '0.5rem' }}>
+        {POPULAR_PROGRAMS.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            className={`chip ${form.values.program === p.value ? 'selected' : ''}`}
+            aria-pressed={form.values.program === p.value}
+            onClick={() => form.applyValues((cur) => applyProgram(cur, p.value))}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <ProgramAutocomplete
+        id="program"
+        placeholder="Or search any program, e.g. Architecture, Law, Finance"
+        value={query}
+        onChange={setQuery}
+        onSelect={(opt: { value?: string }) =>
+          form.applyValues((cur) => applyProgram(cur, opt.value ?? ''))
+        }
+        onCommitText={(text: string) => form.applyValues((cur) => applyProgram(cur, text.trim()))}
+      />
+      <span className="form-hint">Tap a popular track or search the full list.</span>
     </div>
-    <ProgramAutocomplete
-      id="program"
-      placeholder="Or search any program, e.g. Architecture, Law, Finance"
-      value={form.values.program}
-      onChange={(v: string) => form.applyValues((cur) => applyProgram(cur, v))}
-    />
-    <span className="form-hint">Tap a popular track or search the full list.</span>
-  </div>
-)
+  )
+}
 
 export const DegreeField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
@@ -255,12 +267,13 @@ export const DegreeField = ({ form }: { form: ReviewForm }) => (
 export const EnrollmentField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group" style={{ marginBottom: 0 }}>
     <label className="form-label">Enrollment status</label>
-    <div className="segmented">
+    <div className="segmented" role="group" aria-label="Enrollment status">
       {ENROLLMENT_OPTIONS.map((opt) => (
         <button
           key={opt.value}
           type="button"
           className={`seg ${form.values.enrollmentStatus === opt.value ? 'selected' : ''}`}
+          aria-pressed={form.values.enrollmentStatus === opt.value}
           onClick={() =>
             form.set(
               'enrollmentStatus',
@@ -414,12 +427,13 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
     <>
       <div className="form-group">
         <label className="form-label">Funding</label>
-        <div className="segmented">
+        <div className="segmented" role="group" aria-label="Funding">
           {FUNDING_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               className={`seg ${values.fundingType === opt.value ? 'selected' : ''}`}
+              aria-pressed={values.fundingType === opt.value}
               onClick={() => {
                 set('fundingType', values.fundingType === opt.value ? '' : opt.value)
                 if (opt.value === 'self') set('fundingCoverage', '')
@@ -434,10 +448,11 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
             <label className="form-label" style={{ marginBottom: '.3rem' }}>
               Coverage
             </label>
-            <div className="segmented">
+            <div className="segmented" role="group" aria-label="Coverage">
               <button
                 type="button"
                 className={`seg ${values.fundingCoverage === 'partial' ? 'selected' : ''}`}
+                aria-pressed={values.fundingCoverage === 'partial'}
                 onClick={() => set('fundingCoverage', 'partial')}
               >
                 Partial
@@ -445,6 +460,7 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
               <button
                 type="button"
                 className={`seg ${values.fundingCoverage === 'full' ? 'selected' : ''}`}
+                aria-pressed={values.fundingCoverage === 'full'}
                 onClick={() => set('fundingCoverage', 'full')}
               >
                 Full
@@ -567,12 +583,13 @@ export const TagsField = ({ form }: { form: ReviewForm }) => {
       <label className="form-label">
         Tags <span className="form-hint-inline">tap anything that fits</span>
       </label>
-      <div className="chip-row">
+      <div className="chip-row" role="group">
         {POPULAR_TAGS.map((tag) => (
           <button
             key={tag}
             type="button"
             className={`chip ${values.selectedTags.includes(tag) ? 'selected' : ''}`}
+            aria-pressed={values.selectedTags.includes(tag)}
             onClick={() => toggle(tag)}
           >
             {tag}
@@ -580,12 +597,13 @@ export const TagsField = ({ form }: { form: ReviewForm }) => {
         ))}
       </div>
       {showMore && (
-        <div className="chip-row" style={{ marginTop: '.5rem' }}>
+        <div className="chip-row" role="group" style={{ marginTop: '.5rem' }}>
           {MORE_TAGS.map((tag) => (
             <button
               key={tag}
               type="button"
               className={`chip ${values.selectedTags.includes(tag) ? 'selected' : ''}`}
+              aria-pressed={values.selectedTags.includes(tag)}
               onClick={() => toggle(tag)}
             >
               {tag}
