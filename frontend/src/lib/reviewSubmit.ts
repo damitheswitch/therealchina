@@ -37,6 +37,9 @@ export interface ReviewPayload {
   // Anonymous-only: per-review capability for post-publish Boost — the server
   // stores only its SHA-256 digest.
   boostToken?: string
+  // Signed-in only: publish under "Anonymous" — reviews.user_id stays NULL and
+  // the private reviewer_context owner link keeps the review in My Reviews.
+  postAnonymously?: boolean
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string; province?: string }

@@ -65,6 +65,7 @@ import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealStampOverlay } from './SealStampOverlay'
+import { SealBadge } from './SealBadge'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
@@ -199,6 +200,10 @@ export const ReviewWizard = ({
   const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
   const [alsoPostAnswer, setAlsoPostAnswer] = useState(true)
+  // Signed-in only: publish under "Anonymous" — the public row keeps
+  // user_id NULL and ownership is linked privately on reviewer_context.
+  // Named + Verified seal stays the default while logged in.
+  const [postAnon, setPostAnon] = useState(false)
   // Set when a requested draft lookup failed — lets a valid ?uni still
   // prefill after a bad ?draft= link instead of leaving an empty field.
   const [draftLookupFailed, setDraftLookupFailed] = useState(false)
@@ -851,6 +856,7 @@ export const ReviewWizard = ({
 
       const result = await submitReview({
         cfToken,
+        postAnonymously: Boolean(user && postAnon),
         claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
         boostToken: boostToken ?? undefined,
         universitySlug: !isNotListed && values.selectedUni ? values.selectedUni : undefined,
@@ -910,7 +916,7 @@ export const ReviewWizard = ({
             await submitAnswer({
               questionSlug: qSlugParam,
               body: values.reviewText.trim(),
-              anonymous: false,
+              anonymous: postAnon,
             })
           } catch (err) {
             console.error('Could not cross-post answer to Q&A thread:', err)
@@ -1059,6 +1065,7 @@ export const ReviewWizard = ({
             publishedAt={published.publishedAt}
             universitySlug={published.universitySlug}
             isAnonymous={!user}
+            postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
             onBoost={() => setPhase('boost')}
             onDone={finishFlow}
@@ -1075,6 +1082,7 @@ export const ReviewWizard = ({
           <PublishedReviewPreview
             values={values}
             media={mediaState.media}
+            anonymous={Boolean(user && postAnon)}
             date={new Date(published.publishedAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
@@ -1182,16 +1190,106 @@ export const ReviewWizard = ({
           </label>
         )}
 
-        {/* Guest identity notice — anonymous stays one click; signing in is a
-            modal, so the draft in state + localStorage survives either way. */}
-        {!user && step === 2 && (
-          <p className="form-hint" style={{ textAlign: 'center' }}>
-            You&apos;re posting as Anonymous.{' '}
-            <button type="button" className="link-inline" onClick={() => openAuthModal('login')}>
-              Sign in first
-            </button>{' '}
-            if you want your name and the Verified seal on it. Your draft stays saved.
-          </p>
+        {/* Attribution choice — everyone picks how the review appears before
+            publishing. Guests post anonymously or sign in for the seal (modal,
+            so the draft in state + localStorage survives); signed-in reviewers
+            can hide their name while keeping the review privately owned. */}
+        {step === 2 && (
+          <div className="attribution-card" role="radiogroup" aria-label="How your review appears">
+            <span className="form-label">How your review appears</span>
+            {!user ? (
+              <>
+                <label className="attribution-option selected">
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked
+                    readOnly
+                    disabled={loading}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post as Anonymous
+                      <span className="attribution-badge">🔒 100% Anonymous</span>
+                    </span>
+                    <span className="attribution-option-copy">
+                      Publicly shows &quot;Anonymous&quot;. We never share your identity, IP, or
+                      email with any university or third party.
+                    </span>
+                  </span>
+                </label>
+                <label className="attribution-option">
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={false}
+                    disabled={loading}
+                    onChange={() =>
+                      openAuthModal('register', {
+                        title: 'Add the Verified seal to your review',
+                        subtitle:
+                          'Use any nickname you like. Your email is never shown publicly, and your draft stays saved.',
+                        closable: true,
+                      })
+                    }
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post with nickname <SealBadge />
+                    </span>
+                    <span className="attribution-option-copy">
+                      Sign in or create a free account to put your chosen nickname and the red
+                      Verified seal on this review. Your draft stays saved right here.
+                    </span>
+                  </span>
+                </label>
+              </>
+            ) : (
+              <>
+                <label className={`attribution-option${postAnon ? '' : ' selected'}`}>
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={!postAnon}
+                    disabled={loading}
+                    onChange={() => setPostAnon(false)}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post as {profile?.display_name || 'yourself'} <SealBadge />
+                    </span>
+                    <span className="attribution-option-copy">
+                      Earns the red Verified seal. Future students trust verified reviews most.
+                    </span>
+                  </span>
+                </label>
+                <label className={`attribution-option${postAnon ? ' selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={postAnon}
+                    disabled={loading}
+                    onChange={() => setPostAnon(true)}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post as Anonymous
+                      <span className="attribution-badge">linked privately to your account</span>
+                    </span>
+                    <span className="attribution-option-copy">
+                      Publicly shows &quot;Anonymous&quot; with no link to your profile. You can
+                      still edit, delete, get reply alerts, or put your name on it later from My
+                      Reviews.
+                    </span>
+                  </span>
+                </label>
+              </>
+            )}
+          </div>
         )}
 
         {/* Anonymous Turnstile — lives on the publish screen now */}

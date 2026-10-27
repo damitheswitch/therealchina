@@ -19,10 +19,14 @@ export const PublishedReviewPreview = ({
   values,
   media,
   date,
+  anonymous = false,
 }: {
   values: ReviewFieldValues
   media: MediaItem[]
   date: string
+  // A signed-in reviewer who chose "Post as Anonymous" still sees the public
+  // truth here: no name, no seal.
+  anonymous?: boolean
 }) => {
   const { user } = useAuth()
   const { profile } = useProfileContext()
@@ -32,7 +36,8 @@ export const PublishedReviewPreview = ({
     [values, media]
   )
 
-  const authorName = user ? (profile?.display_name ?? 'You') : 'Anonymous'
+  const showIdentity = Boolean(user) && !anonymous
+  const authorName = showIdentity ? (profile?.display_name ?? 'You') : 'Anonymous'
 
   return (
     <div className="review-card">
@@ -40,12 +45,12 @@ export const PublishedReviewPreview = ({
         <StarRating rating={review.rating} />
         <div className="review-meta">
           <RecommendPill value={review.recommend} />
-          {user && <SealBadge />}
+          {showIdentity && <SealBadge />}
           <span>{date}</span>
         </div>
       </div>
       <div className="review-author">
-        <span className={`review-author-name${user ? '' : ' muted'}`}>{authorName}</span>
+        <span className={`review-author-name${showIdentity ? '' : ' muted'}`}>{authorName}</span>
       </div>
       <ReviewContext review={review} />
       <p className="review-text">{values.reviewText}</p>
@@ -65,6 +70,7 @@ export const ReviewSuccess = ({
   publishedAt,
   universitySlug,
   isAnonymous,
+  postedAnonymously = false,
   canBoost,
   onBoost,
   onDone,
@@ -74,6 +80,9 @@ export const ReviewSuccess = ({
   publishedAt: string
   universitySlug: string | null
   isAnonymous: boolean
+  // Signed-in reviewer who picked "Post as Anonymous" — the preview must show
+  // the public truth (Anonymous, no seal).
+  postedAnonymously?: boolean
   canBoost: boolean
   onBoost: () => void
   onDone: () => void
@@ -100,7 +109,12 @@ export const ReviewSuccess = ({
       <h2 className="step-title">Your review is live.</h2>
       <p className="step-sub">This is how it looks on the page.</p>
 
-      <PublishedReviewPreview values={form.values} media={media} date={date} />
+      <PublishedReviewPreview
+        values={form.values}
+        media={media}
+        date={date}
+        anonymous={postedAnonymously}
+      />
 
       <ReviewStrengthMeter review={preview} />
 
@@ -131,10 +145,21 @@ export const ReviewSuccess = ({
           >
             ×
           </button>
-          <h3 className="success-offer-title">Keep your review</h3>
-          <p className="step-sub" style={{ marginBottom: 'var(--sp-2)' }}>
-            Create a free account to get notified when someone replies to your review, edit it
-            later, or put your name on it. It stays anonymous unless you choose otherwise.
+          <h3 className="success-offer-title">Lock in private ownership of this review</h3>
+          <p className="step-sub" style={{ marginBottom: 'var(--sp-1)' }}>
+            Your review is live as Anonymous. Create a free account in 20 seconds to manage it
+            privately:
+          </p>
+          <ul className="success-offer-perks">
+            <li>Edit or delete this review anytime</li>
+            <li>Get email alerts when an applicant asks a follow-up question</li>
+            <li>
+              Keep it 100% Anonymous, or add your nickname and the Verified seal later with one
+              click
+            </li>
+          </ul>
+          <p className="form-hint" style={{ marginBottom: 'var(--sp-2)' }}>
+            🔒 Your email is never public, and you can hide your profile from the student directory.
           </p>
           <div className="success-actions">
             <button
@@ -142,14 +167,14 @@ export const ReviewSuccess = ({
               className="btn btn-primary btn-lg"
               onClick={() =>
                 openAuthModal('register', {
-                  title: 'Create a free account',
+                  title: 'Save your review to a private account',
                   subtitle:
-                    'Claim your review, get reply notifications, and manage it from your profile.',
+                    'Your review stays Anonymous publicly unless you choose to put your nickname on it.',
                   closable: true,
                 })
               }
             >
-              Create free account
+              Create free private account
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setOfferDismissed(true)}>
               Maybe later

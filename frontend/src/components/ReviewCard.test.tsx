@@ -104,9 +104,12 @@ describe('ReviewCard attribution', () => {
     expect(screen.queryByText('Anonymous')).not.toBeInTheDocument()
   })
 
-  it('falls back to "Former member" for a deleted/missing profile', () => {
+  it('shows "Verified student" when user_id is set but the profile is hidden or gone', () => {
+    // A user who unchecked "Show my profile in the student directory" is
+    // filtered out of profile_public — author arrives null while the account
+    // is still active. Deleted profiles land here too.
     renderCard({ ...baseReview, user_id: 'u-gone' }, null)
-    expect(screen.getByText('Former member')).toBeInTheDocument()
+    expect(screen.getByText('Verified student')).toBeInTheDocument()
     expect(screen.getByText('Verified')).toBeInTheDocument()
   })
 })

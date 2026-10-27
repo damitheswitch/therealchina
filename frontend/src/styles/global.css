@@ -5613,6 +5613,80 @@ a.claim-review-uni:hover {
   flex-wrap: wrap;
 }
 
+.success-offer-perks {
+  margin: 0 0 var(--sp-1);
+  padding-left: 1.2rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+/* Attribution & privacy choice on the publish screen */
+.attribution-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-2);
+}
+.attribution-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  background: var(--rice);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  padding: var(--sp-2);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.attribution-option:hover {
+  border-color: var(--ink-faint);
+}
+.attribution-option.selected {
+  border-color: var(--seal-red);
+  box-shadow: 0 0 0 3px rgba(166, 25, 46, 0.08);
+}
+.attribution-radio {
+  width: 18px;
+  height: 18px;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  accent-color: var(--seal-red);
+  cursor: pointer;
+}
+.attribution-option-body {
+  display: block;
+  min-width: 0;
+}
+.attribution-option-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+.attribution-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+  background: var(--rice-warm);
+  border: 1px solid var(--ink-line);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+}
+.attribution-option-copy {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+  line-height: 1.5;
+}
+
 .boost {
   margin-top: var(--sp-3);
 }
