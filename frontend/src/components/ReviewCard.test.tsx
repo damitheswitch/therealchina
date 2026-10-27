@@ -169,6 +169,31 @@ describe('ReviewCard collapsible behaviour', () => {
   })
 })
 
+// Quick ratings (migration 058): a review with no written text is a rating
+// plus optional tags. It keeps stars/pill/context, shows a small "Quick
+// rating" label, and renders no empty text block.
+describe('ReviewCard quick rating', () => {
+  it('shows the label and no text block for a rating-only review', () => {
+    renderCard({ ...baseReview, text: null, review_kind: 'quick' })
+    expect(screen.getByText('Quick rating')).toBeInTheDocument()
+    expect(document.querySelector('.review-text')).not.toBeInTheDocument()
+    expect(document.querySelector('.quick-rating-badge')).toBeInTheDocument()
+  })
+
+  it('still expands extras on a tag-only quick rating', () => {
+    renderCard({ ...baseReview, text: null, review_kind: 'quick', tags: ['safe'] })
+    expect(screen.getByText('Quick rating')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Read full review' }))
+    expect(screen.getByText('safe')).toBeInTheDocument()
+  })
+
+  it('does not label a written review', () => {
+    renderCard(baseReview)
+    expect(screen.queryByText('Quick rating')).not.toBeInTheDocument()
+    expect(screen.getByText('Short and sweet.')).toBeInTheDocument()
+  })
+})
+
 // The Phase 4 "Detailed" mark (lib/reviewDetail): 3+ filled detail areas
 // carry a gold accent on the card and the expand pill's halo — glow only,
 // no badge, and a screen-reader label so the mark isn't sighted-only.

@@ -45,6 +45,7 @@ export interface ReviewRow {
   user_id: string | null
   rating: number
   text: string | null
+  review_kind?: string | null
   program: string | null
   degree_level: string | null
   created_at: string

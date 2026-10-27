@@ -122,7 +122,7 @@ export const getOrCreateClaimToken = (): string | null => {
 export interface ClaimableReview {
   reviewId: string
   rating: number
-  text: string
+  text: string | null
   program: string | null
   createdAt: string | null
   universityName: string | null
