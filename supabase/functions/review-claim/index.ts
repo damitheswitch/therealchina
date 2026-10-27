@@ -128,7 +128,7 @@ async function handleClaim(req: Request): Promise<Response> {
         const r = row.reviews as unknown as {
           id: string
           rating: number
-          text: string
+          text: string | null
           program: string | null
           created_at: string | null
           universities: { name: string; slug: string } | null
