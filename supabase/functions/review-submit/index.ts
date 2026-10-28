@@ -184,6 +184,11 @@ async function handleSubmit(req: Request): Promise<Response> {
   }
 
   const isAnon = caller.role === 'anon'
+  // Signed-in reviewers may publish under "Anonymous" too: the public row
+  // keeps user_id NULL and the ownership link lands on the private
+  // reviewer_context row — the same shape an anonymous claim produces, so
+  // review-claim/review-manage/comment-notify treat it identically.
+  const postAnonymously = !isAnon && body.postAnonymously === true
 
   // Anonymous submissions must prove they are human before anything else runs.
   if (isAnon) {
@@ -334,7 +339,7 @@ async function handleSubmit(req: Request): Promise<Response> {
     .from('reviews')
     .insert({
       university_id: university.id,
-      user_id: isAnon ? null : caller.sub,
+      user_id: isAnon || postAnonymously ? null : caller.sub,
       ...fields,
     })
     .select('id')
@@ -378,6 +383,22 @@ async function handleSubmit(req: Request): Promise<Response> {
         // save that can only 403.
         boostAvailable = boostHash !== null
       }
+    }
+  }
+
+  // Signed-in anonymous publish: the public review row stays user_id NULL,
+  // and this private owner link is what lets the author see it under My
+  // Reviews, edit/delete/reveal it via review-manage, and receive comment
+  // notifications. Best-effort like the anonymous context insert above — the
+  // review itself is already saved.
+  if (postAnonymously && caller.sub) {
+    const { error: ownerError } = await supabaseAdmin.from('reviewer_context').insert({
+      review_id: review.id,
+      owner_id: caller.sub,
+      claimed_at: new Date().toISOString(),
+    })
+    if (ownerError) {
+      console.error('Anonymous owner context insert error:', ownerError)
     }
   }
 

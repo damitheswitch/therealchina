@@ -329,6 +329,9 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
                       {displayNameError}
                     </p>
                   )}
+                  <p className="form-hint">
+                    Pick any nickname or handle. You do not need to use your real name.
+                  </p>
                 </div>
               )}
 
@@ -393,6 +396,10 @@ export const AuthModal = ({ isOpen, onClose, initialMode = 'login', config = {} 
                   {loading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
                 </button>
               </div>
+
+              <p className="form-hint" style={{ textAlign: 'center' }}>
+                🔒 Your email is never public. We never share student data with universities.
+              </p>
             </form>
           </>
         )}

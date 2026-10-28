@@ -52,6 +52,7 @@ export const OnboardingForm = ({
     Array.isArray(initialProfile?.languages_spoken) ? initialProfile.languages_spoken : []
   )
   const [emailConsent, setEmailConsent] = useState(initialProfile?.email_consent === true)
+  const [isDiscoverable, setIsDiscoverable] = useState(initialProfile?.is_discoverable !== false)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export const OnboardingForm = ({
       Array.isArray(initialProfile?.languages_spoken) ? initialProfile.languages_spoken : []
     )
     setEmailConsent(initialProfile?.email_consent === true)
+    setIsDiscoverable(initialProfile?.is_discoverable !== false)
 
     if (displayNameEditable && initialDisplayName) {
       setDisplayNameError(validateDisplayName(initialDisplayName).error || '')
@@ -86,7 +88,7 @@ export const OnboardingForm = ({
   const buildUpdate = () => {
     const update = {
       onboarding_completed: true,
-      is_discoverable: true,
+      is_discoverable: isDiscoverable,
       bio: bio.trim() || null,
       location: location.trim() !== '__not_listed' ? location.trim() || null : null,
       university: university.trim() !== '__not_listed' ? university.trim() || null : null,
@@ -152,7 +154,7 @@ export const OnboardingForm = ({
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ onboarding_completed: true, is_discoverable: true })
+        .update({ onboarding_completed: true, is_discoverable: isDiscoverable })
         .eq('id', user.id)
 
       if (error) throw error
@@ -188,8 +190,8 @@ export const OnboardingForm = ({
               required
             />
             <p className="form-hint">
-              This is how you&apos;ll appear across TRC: reviews, directory, and flights. You can
-              change it later in Settings.
+              This is how you&apos;ll appear across TRC: reviews, directory, and flights. A nickname
+              or handle is totally fine, and you can change it anytime in Settings.
             </p>
             {displayNameError && (
               <p className="form-hint" style={{ color: 'var(--error)' }}>
@@ -405,10 +407,23 @@ export const OnboardingForm = ({
         </div>
       </div>
 
-      <p className="form-hint" style={{ textAlign: 'center' }}>
-        Your profile will appear in the student directory so other students can find you. You can
-        turn this off in Settings later.
-      </p>
+      <div className="form-group">
+        <label className="form-checkbox-label" htmlFor="onboarding-discoverable">
+          <input
+            id="onboarding-discoverable"
+            type="checkbox"
+            checked={isDiscoverable}
+            onChange={(e) => setIsDiscoverable(e.target.checked)}
+            className="form-checkbox"
+            disabled={saving}
+          />
+          <span>Show my profile in the student directory</span>
+        </label>
+        <p className="form-hint">
+          Uncheck this to stay unlisted in the directory. You can still post verified or anonymous
+          reviews.
+        </p>
+      </div>
 
       <div
         className="onboarding-actions"

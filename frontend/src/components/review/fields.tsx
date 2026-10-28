@@ -717,7 +717,7 @@ export const MediaField = ({
 export const AnonEmailField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <label className="form-label" htmlFor="anon-email">
-      Email <span className="form-hint-inline">optional, never shown publicly</span>
+      Email <span className="form-hint-inline">optional, private backup</span>
     </label>
     <input
       type="email"
@@ -728,7 +728,8 @@ export const AnonEmailField = ({ form }: { form: ReviewForm }) => (
       onChange={(e) => form.set('anonEmail', e.target.value)}
     />
     <span className="form-hint">
-      If you sign up with this email later, we can match the review to your account.
+      Never shown publicly or shared with any university. Only used to link this review to your
+      account if you sign up later.
     </span>
   </div>
 )

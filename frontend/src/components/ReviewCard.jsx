@@ -133,7 +133,9 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
               <span className="review-author-name">{author.display_name}</span>
             </Link>
           ) : (
-            <span className="review-author-name muted">Former member</span>
+            // user_id set but no public profile: the author left, or opted
+            // out of the directory (is_discoverable filters profile_public).
+            <span className="review-author-name muted">Verified student</span>
           )
         ) : (
           // user_id NULL = anonymous (never claimed, or claimed anonymously —
