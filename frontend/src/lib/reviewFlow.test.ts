@@ -17,6 +17,8 @@ import {
   isBoostCardDone,
   nextBoostCard,
   normalizeUniSlugParam,
+  parseRatingParam,
+  parseRecommendParam,
   recentYearChips,
   applyDegreeLevel,
   applyEndYear,
@@ -479,5 +481,33 @@ describe('normalizeUniSlugParam', () => {
   it('rejects overlong values the same way review-submit does', () => {
     expect(normalizeUniSlugParam('a'.repeat(121))).toBe('')
     expect(normalizeUniSlugParam('a'.repeat(120))).toBe('a'.repeat(120))
+  })
+})
+
+describe('parseRatingParam', () => {
+  it('accepts integer ratings 1 through 5', () => {
+    for (const raw of ['1', '2', '3', '4', '5']) {
+      expect(parseRatingParam(raw)).toBe(Number(raw))
+    }
+  })
+
+  it('treats anything outside 1-5 as no rating', () => {
+    for (const bad of [null, undefined, '', '  ', '0', '6', '-1', '4.5', 'abc', 'five', '5x']) {
+      expect(parseRatingParam(bad)).toBe(0)
+    }
+  })
+})
+
+describe('parseRecommendParam', () => {
+  it('accepts the three verdict values, trimmed and case-insensitive', () => {
+    expect(parseRecommendParam('yes')).toBe('yes')
+    expect(parseRecommendParam(' Maybe ')).toBe('maybe')
+    expect(parseRecommendParam('NO')).toBe('no')
+  })
+
+  it('treats anything else as no verdict', () => {
+    for (const bad of [null, undefined, '', '  ', 'y', 'sure', 'yes!', '0']) {
+      expect(parseRecommendParam(bad)).toBe('')
+    }
   })
 })
