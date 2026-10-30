@@ -111,14 +111,14 @@ export const getSubScores = (review: ReviewDisplayData): SubScore[] =>
   )
 
 // "to present" is only true for a current student; the wizard never asks for a finish
-// year, so everyone else gets a plain "from".
+// year, so everyone else gets a plain "Started" instead of an invented end.
 const formatYearRange = (
   start: number | null,
   end: number | null,
   status: string | null
 ): string => {
   if (start && end) return `${start} to ${end}`
-  if (start) return status === 'current' ? `${start} to present` : `from ${start}`
+  if (start) return status === 'current' ? `${start} to present` : `Started ${start}`
   if (end) return `until ${end}`
   return ''
 }

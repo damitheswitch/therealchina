@@ -1163,6 +1163,8 @@ export const ReviewWizard = ({
           ))}
         </div>
 
+        <DetailTrack values={values} media={mediaState.media} />
+
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}
         {otherDraft && (

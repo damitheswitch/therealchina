@@ -22,6 +22,7 @@ import {
   applyProgram,
   applyStartYear,
   type PolarityDir,
+  type PolarityPicks,
   type PolarityTopicKey,
 } from '../../lib/reviewFlow'
 import type { ReviewForm } from '../../hooks/useReviewForm'
@@ -501,17 +502,37 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
 
 // ---- Story ---------------------------------------------------------------------
 
+// Separate small bar for the six picks. It fills on its own and also feeds the
+// bigger detail bar above, because each pick fills tags, pros and cons.
+const PickMeter = ({ picks }: { picks: PolarityPicks }) => {
+  const n = Object.values(picks).filter(Boolean).length
+  const total = POLARITY_TOPICS.length
+  return (
+    <div className="pick-meter">
+      <div
+        className="pick-bar"
+        role="progressbar"
+        aria-label="Rows picked"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={n}
+      >
+        <div className="pick-bar-fill" style={{ width: `${(n / total) * 100}%` }} />
+      </div>
+      <span className="pick-count" aria-live="polite">
+        {n}/{total} picked{n < 2 && ', tap at least 2'}
+      </span>
+    </div>
+  )
+}
+
 // Six 👍 / 👎 rows covering the things students actually compare. Each tap
 // fans out into tags, pros/cons, and the auto-written review below it, so the
 // reader gets structured signal even when the reviewer never types a word.
 export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <span className="sr-only">What stood out. Tap a side per row.</span>
-    <span className="pick-count" aria-live="polite">
-      {Object.values(form.values.polarity).filter(Boolean).length} of {POLARITY_TOPICS.length}{' '}
-      picked
-      {Object.values(form.values.polarity).filter(Boolean).length < 2 && ', tap at least 2'}
-    </span>
+    <PickMeter picks={form.values.polarity} />
     <div className="polarity-grid">
       {POLARITY_TOPICS.map((topic) => {
         const pick = form.values.polarity[topic.key as PolarityTopicKey]

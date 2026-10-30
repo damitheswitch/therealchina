@@ -7231,9 +7231,27 @@ a.ask-student-q-replies:hover {
   display: none;
 }
 
+.pick-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.pick-bar {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--rice-warm, #ece6d6);
+}
+.pick-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--seal-red);
+  transition: width var(--t-fast, 0.2s) ease;
+}
 .pick-count {
-  display: block;
-  margin-bottom: 0.5rem;
+  flex: 0 0 auto;
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--ink-faint);

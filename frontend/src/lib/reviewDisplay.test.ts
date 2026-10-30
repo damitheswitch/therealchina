@@ -75,10 +75,10 @@ describe('buildContextLine', () => {
     )
   })
 
-  it('says "from" when the start year is known but the status is not current', () => {
-    expect(buildContextLine({ ...base, start_year: 2023 })).toBe('from 2023')
+  it('says "Started" when the start year is known but the status is not current', () => {
+    expect(buildContextLine({ ...base, start_year: 2023 })).toBe('Started 2023')
     expect(buildContextLine({ ...base, enrollment_status: 'alumni', start_year: 2019 })).toBe(
-      'Alumni · from 2019'
+      'Alumni · Started 2019'
     )
   })
 
