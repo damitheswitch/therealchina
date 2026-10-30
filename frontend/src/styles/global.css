@@ -7386,3 +7386,70 @@ a.ask-student-q-replies:hover {
   font-size: 0.88rem;
   color: var(--ink);
 }
+
+/* Suggested prompt cards: the whole card is one tap (stretched title link). The
+   action buttons sit above the overlay and stay separate targets. */
+.ask-student-q-item {
+  position: relative;
+}
+a.ask-student-q-stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+}
+.ask-student-q-actions {
+  position: relative;
+  z-index: 1;
+}
+
+/* Stacked hero buttons on university pages with no reviews yet */
+.uni-profile-cta-col .btn + .btn {
+  margin-top: 0.5rem;
+}
+.uni-profile-mobile-cta .btn + .btn {
+  margin-top: 0.6rem;
+}
+
+/* The dragon grows with the review */
+.detail-track-dragon.stage-egg {
+  font-size: 1rem;
+}
+.detail-track-dragon.stage-cracking {
+  font-size: 1.1rem;
+  animation: dragon-wobble 1.2s ease-in-out infinite;
+}
+.detail-track-dragon.stage-hatchling {
+  font-size: 1.15rem;
+}
+.detail-track-dragon.stage-young {
+  font-size: 1.35rem;
+}
+.detail-track-dragon.stage-dragon {
+  font-size: 1.65rem;
+}
+.detail-track-dragon.stage-golden {
+  font-size: 1.95rem;
+  filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.9));
+}
+.detail-track-dragon.stage-golden::after {
+  content: '✨';
+  position: absolute;
+  top: -0.2em;
+  right: -1.1em;
+  font-size: 0.6em;
+}
+@keyframes dragon-wobble {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-track-dragon.stage-cracking {
+    animation: none;
+  }
+}

@@ -110,6 +110,41 @@ type Phase = 'form' | 'success' | 'boost'
 // toward the gold pearl as detail areas fill on either side of publish. It
 // reads the same ReviewCardData shape the public card uses, so the count it
 // shows always matches the highlight the review will actually earn.
+// The dragon hatches and grows as detail areas fill: an egg at zero, a Chinese
+// dragon when all seven are in. Gold highlight still arrives at DETAILED_THRESHOLD.
+const DRAGON_STAGES = [
+  { min: 0, emoji: '🥚', name: 'Egg', cls: 'egg', hint: 'Add a detail to crack the egg.' },
+  { min: 1, emoji: '🥚', name: 'Cracking egg', cls: 'cracking', hint: 'Add another to hatch it.' },
+  {
+    min: 2,
+    emoji: '🦎',
+    name: 'Hatchling',
+    cls: 'hatchling',
+    hint: 'One more and it becomes a young dragon.',
+  },
+  {
+    min: 3,
+    emoji: '🐲',
+    name: 'Young dragon',
+    cls: 'young',
+    hint: 'Keep going to grow a full dragon.',
+  },
+  {
+    min: 5,
+    emoji: '🐉',
+    name: 'Dragon',
+    cls: 'dragon',
+    hint: 'Fill every area to make it a Chinese dragon.',
+  },
+  {
+    min: 7,
+    emoji: '🐉',
+    name: 'Chinese dragon',
+    cls: 'golden',
+    hint: 'Every detail is in.',
+  },
+] as const
+
 const DetailTrack = ({
   values,
   media,
@@ -120,27 +155,28 @@ const DetailTrack = ({
   const filled = filledDetailAreas(previewReviewFromFields(values, media)).length
   const pct = Math.min(100, (filled / DETAIL_AREA_COUNT) * 100)
   const earned = filled >= DETAILED_THRESHOLD
+  const stage = [...DRAGON_STAGES].reverse().find((s) => filled >= s.min) ?? DRAGON_STAGES[0]
   return (
     <div
       className="detail-track"
       role="status"
-      aria-label={`${filled} of ${DETAIL_AREA_COUNT} detail areas filled`}
+      aria-label={`${stage.name}: ${filled} of ${DETAIL_AREA_COUNT} detail areas filled`}
     >
       <div className="detail-track-bar">
         <div className="detail-track-fill" style={{ width: `${pct}%` }} />
         <span
-          className="detail-track-dragon"
+          className={`detail-track-dragon stage-${stage.cls}`}
           style={{ left: `calc(${pct}% - 0.6em)` }}
           aria-hidden="true"
         >
-          🐉
+          {stage.emoji}
         </span>
         <span className={`detail-track-pearl${earned ? ' earned' : ''}`} aria-hidden="true" />
       </div>
       <div className={`detail-track-label${earned ? ' earned' : ''}`}>
         {earned
-          ? 'Gold highlight earned'
-          : `${filled}/${DETAIL_AREA_COUNT} details: ${DETAILED_THRESHOLD} earns the gold highlight`}
+          ? `Gold highlight earned. ${stage.name}. ${stage.hint}`
+          : `${stage.name}, ${filled}/${DETAIL_AREA_COUNT} details. ${stage.hint} ${DETAILED_THRESHOLD} earns the gold highlight.`}
       </div>
     </div>
   )
