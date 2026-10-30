@@ -46,5 +46,5 @@ export const useTopReviewQuote = (
   }, [universityId, seeded])
 
   if (seeded) return (pickTopQuote(seeded) ?? pickNewestQuote(seeded)) as TopQuote | null
-  return fetched?.uid === universityId ? fetched.quote : null
+  return fetched && universityId && fetched.uid === universityId ? fetched.quote : null
 }

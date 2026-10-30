@@ -17,7 +17,15 @@ const VALID_SORTS: SortBy[] = ['name', 'rating', 'reviews', 'rank', 'rank_desc']
 // universities and a "waiting for a first review" board instead of 30 pages of
 // empty cards. Searching, filtering, sorting or paging switches to the full
 // directory, and /universities always shows everything.
-export const UniversityDirectory = ({ featured = false }: { featured?: boolean }) => {
+// `hideSearch` (homepage): the hero search box already drives ?q, so the grid
+// does not repeat it.
+export const UniversityDirectory = ({
+  featured = false,
+  hideSearch = false,
+}: {
+  featured?: boolean
+  hideSearch?: boolean
+}) => {
   const [params, setParams] = useSearchParams()
   const searchQuery = params.get('q') ?? ''
   const cityFilter = params.get('city') ?? ''
@@ -64,15 +72,17 @@ export const UniversityDirectory = ({ featured = false }: { featured?: boolean }
     <section className="section" id="grid">
       <div className="container">
         <div className="filter-bar">
-          <input
-            type="text"
-            id="uni-search"
-            className="search-input"
-            placeholder="Search by university name or city..."
-            aria-label="Search universities by name or city"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
+          {!hideSearch && (
+            <input
+              type="text"
+              id="uni-search"
+              className="search-input"
+              placeholder="Search by university name or city..."
+              aria-label="Search universities by name or city"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          )}
           <select
             id="uni-city-filter"
             className="filter-select"
