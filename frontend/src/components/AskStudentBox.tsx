@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Icons } from './Icons'
+import { copyText } from '../lib/copyText'
 import { useAuth } from '../contexts/AuthContext'
 import { useAuthModal } from '../contexts/AuthModalContext'
 import { useToast } from '../contexts/ToastContext'
@@ -74,16 +75,16 @@ export const AskStudentBox = ({ university }: { university: UniversityRef }) => 
 
   const copyShareSnippet = async (qTitle: string, targetUrl: string, key: string) => {
     const text = `Anyone studying at ${university.name}? Quick question: "${qTitle}"\n\nAnswer or share your experience here: ${targetUrl}`
-    try {
-      await navigator.clipboard.writeText(text)
+    if (await copyText(text)) {
       setCopiedKey(key)
       showToast('Copied message for WeChat / WhatsApp groups.', 'success')
       setTimeout(() => {
         setCopiedKey((prev) => (prev === key ? null : prev))
       }, 2500)
-    } catch {
-      showToast('Could not copy link. Try copying from the address bar.', 'error')
+      return
     }
+    // Last resort (blocked clipboard): show the text so it can be copied by hand.
+    window.prompt('Copy this message and paste it in your group:', text)
   }
 
   const buildAnswerAsReviewUrl = (qTitle: string, qSlug?: string) => {

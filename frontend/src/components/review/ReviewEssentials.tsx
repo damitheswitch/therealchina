@@ -1,6 +1,13 @@
 import type { ReviewForm } from '../../hooks/useReviewForm'
 import { useUniversityReviewCount } from '../../hooks/useUniversityReviewCount'
-import { DegreeField, RatingField, RecommendField, StartYearField, UniversityField } from './fields'
+import {
+  DegreeField,
+  RatingField,
+  RecommendField,
+  StartYearField,
+  StudyStatusField,
+  UniversityField,
+} from './fields'
 
 // Screen 1 of the tap-first flow: the two things a review cannot exist
 // without (which university, how good it is) plus one-tap context. Degree and
@@ -45,6 +52,7 @@ export const ReviewEssentials = ({
         <DegreeField form={form} />
         <StartYearField form={form} />
       </div>
+      <StudyStatusField form={form} />
     </div>
   )
 }

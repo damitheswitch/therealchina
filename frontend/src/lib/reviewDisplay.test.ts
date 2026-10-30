@@ -69,8 +69,17 @@ describe('buildContextLine', () => {
     expect(line).toBe('Studied Computer Science · Master · Alumni · 2019 to 2022')
   })
 
-  it('uses "present" when end_year is null', () => {
-    expect(buildContextLine({ ...base, start_year: 2023 })).toBe('2023 to present')
+  it('says "to present" only for a current student with no end_year', () => {
+    expect(buildContextLine({ ...base, enrollment_status: 'current', start_year: 2023 })).toBe(
+      'Current student · 2023 to present'
+    )
+  })
+
+  it('says "Started" when the start year is known but the status is not current', () => {
+    expect(buildContextLine({ ...base, start_year: 2023 })).toBe('Started 2023')
+    expect(buildContextLine({ ...base, enrollment_status: 'alumni', start_year: 2019 })).toBe(
+      'Alumni · Started 2019'
+    )
   })
 
   it('handles a lone end_year', () => {

@@ -22,6 +22,7 @@ import {
   applyProgram,
   applyStartYear,
   type PolarityDir,
+  type PolarityPicks,
   type PolarityTopicKey,
 } from '../../lib/reviewFlow'
 import type { ReviewForm } from '../../hooks/useReviewForm'
@@ -318,14 +319,18 @@ const YearChips = ({
             key={y}
             type="button"
             className={`chip ${value === y ? 'selected' : ''}`}
-            onClick={() => onChange(y)}
+            onClick={() => {
+              setShowAll(false)
+              onChange(y)
+            }}
           >
             {y}
           </button>
         ))}
         <button
           type="button"
-          className={`chip ${showAll || (value !== '' && !isRecent) ? 'selected' : ''}`}
+          className={`chip ${value !== '' && !isRecent ? 'selected' : ''}`}
+          aria-expanded={showAll || (value !== '' && !isRecent)}
           onClick={() => setShowAll((s) => !s)}
         >
           Earlier…
@@ -388,6 +393,61 @@ export const StartYearField = ({ form }: { form: ReviewForm }) => (
     />
   </div>
 )
+
+// Shown once a start year is picked: one tap says whether the reviewer is still
+// there. "I finished" reveals the finish-year chips. Without this the context
+// line has no honest end to show. Exchange students answer through their own
+// enrollment status, so the row steps aside for them.
+export const StudyStatusField = ({ form }: { form: ReviewForm }) => {
+  const { startYear, enrollmentStatus, endYear } = form.values
+  if (startYear === '' || enrollmentStatus === 'exchange') return null
+  const finished = enrollmentStatus === 'alumni' || endYear !== ''
+  const stillThere = enrollmentStatus === 'current' && !finished
+  return (
+    <div className="form-group">
+      <span className="form-label" id="study-status-label">
+        Still studying here? <span className="form-hint-inline">optional</span>
+      </span>
+      <div className="chip-row" role="group" aria-labelledby="study-status-label">
+        <button
+          type="button"
+          className={`chip ${stillThere ? 'selected' : ''}`}
+          aria-pressed={stillThere}
+          onClick={() => {
+            form.set('enrollmentStatus', stillThere ? '' : 'current')
+            form.set('endYear', '')
+          }}
+        >
+          Yes, still here
+        </button>
+        <button
+          type="button"
+          className={`chip ${finished ? 'selected' : ''}`}
+          aria-pressed={finished}
+          onClick={() => {
+            if (finished) {
+              form.set('enrollmentStatus', '')
+              form.set('endYear', '')
+            } else {
+              form.set('enrollmentStatus', 'alumni')
+            }
+          }}
+        >
+          I finished
+        </button>
+      </div>
+      {finished && (
+        <div style={{ marginTop: '0.75rem' }}>
+          <span className="form-label">Finish year</span>
+          <YearChips
+            value={endYear}
+            onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
 
 export const EndYearField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
@@ -497,12 +557,37 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
 
 // ---- Story ---------------------------------------------------------------------
 
+// Separate small bar for the six picks. It fills on its own and also feeds the
+// bigger detail bar above, because each pick fills tags, pros and cons.
+const PickMeter = ({ picks }: { picks: PolarityPicks }) => {
+  const n = Object.values(picks).filter(Boolean).length
+  const total = POLARITY_TOPICS.length
+  return (
+    <div className="pick-meter">
+      <div
+        className="pick-bar"
+        role="progressbar"
+        aria-label="Rows picked"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={n}
+      >
+        <div className="pick-bar-fill" style={{ width: `${(n / total) * 100}%` }} />
+      </div>
+      <span className="pick-count" aria-live="polite">
+        {n}/{total} picked{n < 2 && ', tap at least 2'}
+      </span>
+    </div>
+  )
+}
+
 // Six 👍 / 👎 rows covering the things students actually compare. Each tap
 // fans out into tags, pros/cons, and the auto-written review below it, so the
 // reader gets structured signal even when the reviewer never types a word.
 export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <span className="sr-only">What stood out. Tap a side per row.</span>
+    <PickMeter picks={form.values.polarity} />
     <div className="polarity-grid">
       {POLARITY_TOPICS.map((topic) => {
         const pick = form.values.polarity[topic.key as PolarityTopicKey]
@@ -553,15 +638,30 @@ export const ReviewTextField = ({
   // produced — an edited or replaced box is the reviewer's own words.
   const autoBuilt =
     values.reviewText.length > 0 && values.reviewText === derivePolarityText(values.polarity)
+  // Brief highlight each time the taps rewrite the text, so it is clear the box just changed.
+  const [flash, setFlash] = useState(false)
+  useEffect(() => {
+    if (!story || !autoBuilt) return
+    setFlash(true)
+    const timer = setTimeout(() => setFlash(false), 900)
+    return () => clearTimeout(timer)
+  }, [story, autoBuilt, values.reviewText])
   return (
     <div className="form-group">
       <label className="form-label" htmlFor="review-text">
-        {story ? 'Add one thing in your own words' : 'Your review in your own words'}{' '}
-        <span className="form-hint-inline">optional</span>
+        {story
+          ? autoBuilt
+            ? 'Your review so far'
+            : 'Add one thing in your own words'
+          : 'Your review in your own words'}{' '}
+        <span className="form-hint-inline">
+          {story && autoBuilt ? 'edit anything' : 'optional'}
+        </span>
       </label>
       <textarea
         id="review-text"
-        className="form-textarea"
+        className={`form-textarea${story && autoBuilt ? ' auto-built' : ''}${flash ? ' flash' : ''}`}
+        rows={story && autoBuilt ? 5 : undefined}
         placeholder={
           placeholder ??
           'Picks above write this for you. Edit it, replace it, or leave it empty for a quick rating.'
@@ -569,10 +669,10 @@ export const ReviewTextField = ({
         value={values.reviewText}
         onChange={(e) => set('reviewText', e.target.value)}
       />
-      <span className="form-hint">
+      <span className={`form-hint${story ? ' story-hint' : ''}`}>
         {autoBuilt
           ? story
-            ? 'Written from your picks. Edit it freely.'
+            ? 'Written from your taps. Tap the box to edit it, add details or rewrite it.'
             : 'Written from your picks. Edit it freely, or clear it for a quick rating.'
           : story
             ? 'At least 10 characters if you write something.'

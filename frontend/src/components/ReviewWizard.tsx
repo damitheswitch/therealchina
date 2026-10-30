@@ -92,6 +92,8 @@ const SCREEN_STAGES: Record<number, ReviewStage> = {
   2: 'story',
   3: 'post',
 }
+// Minimum taps on "What stood out" so every review carries some structured signal.
+const MIN_POLARITY_PICKS = 2
 const SCREEN_LABELS = ['The essentials', 'What stood out', 'Post it']
 
 type Phase = 'form' | 'success' | 'boost'
@@ -254,8 +256,6 @@ export const ReviewWizard = ({
   // Submit state
   const [loading, setLoading] = useState(false)
   const [showStamp, setShowStamp] = useState(false)
-  // Screen 2: set after the first Continue tap with nothing picked or written.
-  const [nudgeShown, setNudgeShown] = useState(false)
   const [pendingSuccess, setPendingSuccess] = useState<(() => void) | null>(null)
 
   // Turnstile (anonymous) — rendered on the publish screen.
@@ -768,30 +768,17 @@ export const ReviewWizard = ({
     if (s === 2) {
       const t = values.reviewText.trim()
       if (t.length > 0 && t.length < 10) {
-        return 'A few more words, or clear it and post stars only.'
+        return 'A few more words, or clear the box.'
+      }
+      // Applicants need a balanced view: at least 2 taps, ideally one good and one bad.
+      // Answering a peer question may use a written answer instead.
+      const picked = Object.values(values.polarity).filter(Boolean).length
+      if (picked < MIN_POLARITY_PICKS && !(promptParam && t.length >= 10)) {
+        return 'Tap at least 2 rows, ideally one good and one bad. It tells applicants what is really there.'
       }
       return null
     }
     return null
-  }
-
-  const storyEmpty = values.reviewText.trim() === '' && Object.keys(values.polarity).length === 0
-
-  // "Post my stars only": drop the picks and any auto-written text, then go straight to Post it.
-  const skipStory = () => {
-    const err = validateScreen(1)
-    if (err) return
-    form.applyValues((cur) => ({
-      ...cur,
-      polarity: {},
-      reviewText: '',
-      selectedTags: [],
-      pros: '',
-      cons: '',
-    }))
-    clearError()
-    setStep(3)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const goNext = () => {
@@ -800,12 +787,6 @@ export const ReviewWizard = ({
       setError(err)
       reportValidationFailure(step)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-    // Screen 2 with nothing picked or written: one gentle nudge, then let them through.
-    if (step === 2 && storyEmpty && !nudgeShown) {
-      setNudgeShown(true)
-      document.querySelector<HTMLButtonElement>('.pol-btn.pos')?.focus()
       return
     }
     clearError()
@@ -1067,6 +1048,18 @@ export const ReviewWizard = ({
     showToast('All saved. Thanks for the detail.', 'success')
   }, [showToast])
 
+  // Back goes to the page that sent the reviewer here (a university page, a question
+  // thread). With no history to return to, fall back to the reviewed university or home.
+  const leaveHref =
+    values.selectedUni && values.selectedUni !== '__not_listed'
+      ? `/university/${values.selectedUni}`
+      : '/'
+  const leaveWizard = (e?: { preventDefault: () => void }) => {
+    e?.preventDefault()
+    if ((window.history.state?.idx ?? 0) > 0) navigate(-1)
+    else navigate(leaveHref)
+  }
+
   const finishFlow = () => {
     navigate(published?.universitySlug ? `/university/${published.universitySlug}` : '/')
   }
@@ -1141,7 +1134,12 @@ export const ReviewWizard = ({
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
       <div className="section">
-        <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
+        <Link
+          to={leaveHref}
+          onClick={leaveWizard}
+          className="btn btn-outline"
+          style={{ marginBottom: 'var(--sp-2)' }}
+        >
           <Icons.ArrowLeft /> Back
         </Link>
         <h1 className="section-title">
@@ -1164,6 +1162,8 @@ export const ReviewWizard = ({
             </span>
           ))}
         </div>
+
+        <DetailTrack values={values} media={mediaState.media} />
 
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}
@@ -1200,14 +1200,7 @@ export const ReviewWizard = ({
 
         {step === 1 && <ReviewEssentials form={form} promptQuestion={promptParam} />}
 
-        {step === 2 && (
-          <ReviewStory
-            form={form}
-            promptQuestion={promptParam}
-            showNudge={nudgeShown && storyEmpty}
-            onSkip={skipStory}
-          />
-        )}
+        {step === 2 && <ReviewStory form={form} promptQuestion={promptParam} />}
 
         {step === 3 && (
           <div className="wizard-step active">
@@ -1225,11 +1218,6 @@ export const ReviewWizard = ({
                 anonymous={Boolean(user && postAnon) || !user}
               />
             </div>
-            {storyEmpty && (
-              <button type="button" className="skip-link" onClick={() => setStep(2)}>
-                Add a reason first
-              </button>
-            )}
           </div>
         )}
 
@@ -1387,7 +1375,7 @@ export const ReviewWizard = ({
             </p>
           )}
           {step === 1 ? (
-            <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+            <button type="button" className="btn btn-ghost" onClick={() => leaveWizard()}>
               ← Back
             </button>
           ) : (

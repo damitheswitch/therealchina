@@ -11,14 +11,9 @@ import { PolarityMatrixField, ReviewTextField } from './fields'
 export const ReviewStory = ({
   form,
   promptQuestion,
-  showNudge = false,
-  onSkip,
 }: {
   form: ReviewForm
   promptQuestion?: string | null
-  // Shown once when the reviewer taps Continue with nothing picked or written.
-  showNudge?: boolean
-  onSkip: () => void
 }) => (
   <div className="wizard-step active">
     {promptQuestion ? (
@@ -36,21 +31,13 @@ export const ReviewStory = ({
     ) : (
       <>
         <h2 className="step-title">What stood out</h2>
-        <p className="step-sub">Tap one side per row. Your picks write the review.</p>
+        <p className="step-sub">
+          Tap at least 2 rows, ideally one good thing and one bad. Your taps write the review.
+        </p>
       </>
     )}
 
     <PolarityMatrixField form={form} />
     <ReviewTextField form={form} story placeholder={storyPlaceholder(form.values.polarity)} />
-    {showNudge && (
-      <p className="story-nudge" role="status">
-        {promptQuestion
-          ? 'One tap or one sentence helps the student who asked.'
-          : `One tap on any row tells applicants why you gave ${form.values.rating} ${form.values.rating === 1 ? 'star' : 'stars'}.`}
-      </p>
-    )}
-    <button type="button" className="skip-link" onClick={onSkip}>
-      Post my stars only
-    </button>
   </div>
 )
