@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// reviewDetail pulls in the Supabase client, which throws on import without
+// env vars (CI has none). The helpers under test never touch it.
+vi.mock('./supabaseClient', () => ({ supabase: {} }))
 import { giftHeadline, giftSteps } from './giftProgress'
 import type { RewardEvaluation } from './reviewReward'
 
