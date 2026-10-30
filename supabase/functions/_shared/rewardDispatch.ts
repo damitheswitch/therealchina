@@ -12,6 +12,7 @@ import {
   evaluateReward,
   newRewardCode,
   normalizeEmail,
+  withHandoff,
   type RewardMissing,
   type RewardReviewRow,
 } from './reward.ts'
@@ -24,6 +25,10 @@ export interface RewardResult {
   state: RewardState
   code?: string
   missing?: RewardMissing[]
+  // The owner's WeChat ID, returned only once the review earned the gift
+  // ('sent', or 'failed' when the email bounced) so the success screen can
+  // show the handoff right away. Never sent to anyone who has not earned it.
+  wechatId?: string
 }
 
 const FROM_EMAIL =
@@ -173,6 +178,11 @@ async function sendRewardEmail(to: string, code: string): Promise<string | null>
 // Checks whether the review is full and, the first time it is, sends the gift
 // email. Safe to call after every save: it is a no-op once the gift is sent.
 export async function maybeDispatchReward(reviewId: string): Promise<RewardResult> {
+  const result = await dispatchReward(reviewId)
+  return withHandoff(result, Deno.env.get('REWARD_WECHAT_ID'))
+}
+
+async function dispatchReward(reviewId: string): Promise<RewardResult> {
   try {
     const { data: row, error: rowError } = await supabaseAdmin
       .from('review_rewards')

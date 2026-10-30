@@ -44,6 +44,8 @@ export interface ReviewPayload {
   // Asked for the thank-you gift. Guests also send reviewerContext.email; members are
   // contacted at their sign-up email.
   rewardRequested?: boolean
+  // Gift code from a classmate's share link (?ref=), counted server-side.
+  ref?: string
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string; province?: string }

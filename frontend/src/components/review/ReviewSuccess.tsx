@@ -12,7 +12,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useProfileContext } from '../../contexts/ProfileContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
 import { SITE } from '../../lib/seo/site'
-import { rewardConfirmation, type RewardResult } from '../../lib/reviewReward'
+import { REWARD_UI_ENABLED, rewardConfirmation, type RewardResult } from '../../lib/reviewReward'
+import { GiftHandoff, ShareReview } from './GiftShare'
 
 // Renders the just-published review the way it appears on the university
 // page. Driven straight off form values, so it fills in live while the
@@ -152,10 +153,14 @@ export const ReviewSuccess = ({
 
       <ReviewStrengthMeter review={preview} />
 
-      {rewardLine && (
-        <p className="reward-confirm" role="status">
-          <span aria-hidden="true">🎁</span> {rewardLine}
-        </p>
+      {reward?.wechatId ? (
+        <GiftHandoff reward={reward} />
+      ) : (
+        rewardLine && (
+          <p className="reward-confirm" role="status">
+            <span aria-hidden="true">🎁</span> {rewardLine}
+          </p>
+        )
       )}
 
       {canBoost && !nicknamePending && (
@@ -256,6 +261,15 @@ export const ReviewSuccess = ({
             </button>
           </div>
         </div>
+      )}
+
+      {!nicknamePending && (
+        <ShareReview
+          universitySlug={universitySlug}
+          universityName={form.values.selectedUniName}
+          code={reward?.code}
+          giftOn={REWARD_UI_ENABLED}
+        />
       )}
 
       <div className="wizard-nav" style={{ justifyContent: 'flex-start' }}>

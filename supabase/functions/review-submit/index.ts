@@ -23,6 +23,7 @@ import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
 import { anonRateKey } from '../_shared/rateKey.ts'
 import { withRandomSuffix } from '../_shared/slug.ts'
 import { maybeDispatchReward, requestReward, type RewardResult } from '../_shared/rewardDispatch.ts'
+import { REWARD_CODE_RE } from '../_shared/reward.ts'
 import {
   UNI_SLUG_MAX,
   parseNewUniversity,
@@ -400,6 +401,27 @@ async function handleSubmit(req: Request): Promise<Response> {
     })
     if (ownerError) {
       console.error('Anonymous owner context insert error:', ownerError)
+    }
+  }
+
+  // Referral: the review came through a share link (?ref=<gift code>). Only a
+  // code that belongs to an existing gift is kept, so the owner can count
+  // referrals per reviewer without junk rows. Best effort, never fails the review.
+  const refCode = typeof body.ref === 'string' ? body.ref.trim().toUpperCase() : ''
+  if (REWARD_CODE_RE.test(refCode)) {
+    const { data: referrer } = await supabaseAdmin
+      .from('review_rewards')
+      .select('review_id, user_id')
+      .eq('reward_code', refCode)
+      .maybeSingle()
+    const selfReferral = Boolean(!isAnon && referrer?.user_id && referrer.user_id === caller.sub)
+    if (referrer && referrer.review_id !== review.id && !selfReferral) {
+      const { error: refError } = await supabaseAdmin.from('review_referrals').insert({
+        review_id: review.id,
+        ref_code: refCode,
+        referrer_review_id: referrer.review_id,
+      })
+      if (refError) console.error('Referral insert error:', refError)
     }
   }
 
