@@ -8,11 +8,11 @@ const DEFAULT_SCRIPT_URL = 'https://cloud.umami.is/script.js'
 const DEFAULT_ALLOWED_HOSTNAMES = new URL(PROD_ORIGIN).hostname
 const BEFORE_SEND_HANDLER = 'trcAnalyticsBeforeSend'
 
-export type ReviewFlow = 'legacy_5' | 'fast_2' | 'tap_2'
+export type ReviewFlow = 'legacy_5' | 'fast_2' | 'tap_2' | 'tap_3'
 export type ReviewEntry = 'new' | 'resumed' | 'unknown'
 export type ReviewAuth = 'anonymous' | 'signed_in'
 export type ReviewStep = 1 | 2 | 3 | 4 | 5
-export type ReviewStage = 'basics' | 'ratings' | 'details' | 'story' | 'about_you'
+export type ReviewStage = 'basics' | 'ratings' | 'details' | 'story' | 'about_you' | 'post'
 export type ReviewFailureReason =
   | 'turnstile_client'
   | 'turnstile_server'
@@ -117,7 +117,8 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
 }
 
 const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive) => boolean> = {
-  flow: (value) => value === 'legacy_5' || value === 'fast_2' || value === 'tap_2',
+  flow: (value) =>
+    value === 'legacy_5' || value === 'fast_2' || value === 'tap_2' || value === 'tap_3',
   entry: (value) => value === 'new' || value === 'resumed' || value === 'unknown',
   auth: (value) => value === 'anonymous' || value === 'signed_in',
   step: (value) => Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 5,
@@ -126,7 +127,8 @@ const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive)
     value === 'ratings' ||
     value === 'details' ||
     value === 'story' ||
-    value === 'about_you',
+    value === 'about_you' ||
+    value === 'post',
   reason: (value) =>
     value === 'turnstile_client' ||
     value === 'turnstile_server' ||

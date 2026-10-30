@@ -7188,3 +7188,61 @@ a.ask-student-q-replies:hover {
   color: var(--ink-faint);
   text-align: center;
 }
+
+.skip-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: var(--sp-1) 0 var(--sp-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.skip-link:hover {
+  color: var(--ink-soft);
+}
+.story-nudge {
+  margin-bottom: var(--sp-2);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.14);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.preview-eyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.post-preview {
+  margin-bottom: var(--sp-2);
+}
+.email-disclosure {
+  margin-bottom: var(--sp-3);
+}
+.email-disclosure summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.wizard-nav-hint {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.attribution-radio {
+  width: 20px;
+  height: 20px;
+}

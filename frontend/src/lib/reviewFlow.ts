@@ -712,3 +712,12 @@ export const previewReviewFromFields = (
   rating_extracurricular: values.subscores.rating_extracurricular ?? null,
   rating_career: values.subscores.rating_career ?? null,
 })
+
+// Placeholder for the optional story box: asks about the first thing the
+// reviewer marked as a problem, otherwise nudges toward one insider detail.
+export const storyPlaceholder = (picks: PolarityPicks): string => {
+  const neg = POLARITY_TOPICS.find((t) => picks[t.key] === 'neg')
+  return neg
+    ? `What should the next student know about ${neg.label.toLowerCase()}?`
+    : 'One detail only a student there would know.'
+}

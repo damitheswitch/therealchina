@@ -15,11 +15,8 @@ export const ReviewEssentials = ({
   form: ReviewForm
   promptQuestion?: string | null
 }) => {
-  const { selectedUni, selectedUniName, rating } = form.values
+  const { selectedUni, selectedUniName } = form.values
   const reviewCount = useUniversityReviewCount(selectedUni)
-  // Required taps left on this screen; the goal-gradient nudge counts down to zero.
-  const tapsLeft = (selectedUni ? 0 : 1) + (rating ? 0 : 1)
-
   return (
     <div className="wizard-step active">
       {promptQuestion ? (
@@ -31,11 +28,7 @@ export const ReviewEssentials = ({
           </span>
         </div>
       ) : (
-        <div className="step-tagline">
-          {tapsLeft === 0
-            ? 'All set. Hit Continue.'
-            : `${tapsLeft} ${tapsLeft === 1 ? 'tap' : 'taps'} to go. Under a minute.`}
-        </div>
+        <div className="step-tagline">Anonymous by default. Takes about a minute.</div>
       )}
 
       <UniversityField form={form} />

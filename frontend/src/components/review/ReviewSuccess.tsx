@@ -145,7 +145,7 @@ export const ReviewSuccess = ({
 
       <ReviewStrengthMeter review={preview} />
 
-      {canBoost && (
+      {canBoost && !nicknamePending && (
         <div className="success-offer">
           <h3 className="success-offer-title">Make it more useful in 60 seconds?</h3>
           <p className="step-sub" style={{ marginBottom: 'var(--sp-2)' }}>
@@ -154,9 +154,6 @@ export const ReviewSuccess = ({
           <div className="success-actions">
             <button type="button" className="btn btn-primary btn-lg" onClick={onBoost}>
               Add more detail
-            </button>
-            <button type="button" className="btn btn-ghost" onClick={(e) => guardLeave(e, onDone)}>
-              Done
             </button>
           </div>
         </div>

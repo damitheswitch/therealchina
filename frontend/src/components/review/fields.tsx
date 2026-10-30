@@ -502,9 +502,7 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
 // reader gets structured signal even when the reviewer never types a word.
 export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
-    <label className="form-label">
-      What stood out <span className="form-hint-inline">tap a side per row</span>
-    </label>
+    <span className="sr-only">What stood out. Tap a side per row.</span>
     <div className="polarity-grid">
       {POLARITY_TOPICS.map((topic) => {
         const pick = form.values.polarity[topic.key as PolarityTopicKey]
@@ -540,7 +538,16 @@ export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
   </div>
 )
 
-export const ReviewTextField = ({ form }: { form: ReviewForm }) => {
+export const ReviewTextField = ({
+  form,
+  story = false,
+  placeholder,
+}: {
+  form: ReviewForm
+  // Story screen variant: reads as a small optional extra, not a rating-only warning.
+  story?: boolean
+  placeholder?: string
+}) => {
   const { values, set } = form
   // "Written from your picks" only while the text still is what the matrix
   // produced — an edited or replaced box is the reviewer's own words.
@@ -549,19 +556,27 @@ export const ReviewTextField = ({ form }: { form: ReviewForm }) => {
   return (
     <div className="form-group">
       <label className="form-label" htmlFor="review-text">
-        Your review in your own words <span className="form-hint-inline">optional</span>
+        {story ? 'Add one thing in your own words' : 'Your review in your own words'}{' '}
+        <span className="form-hint-inline">optional</span>
       </label>
       <textarea
         id="review-text"
         className="form-textarea"
-        placeholder="Picks above write this for you. Edit it, replace it, or leave it empty for a quick rating."
+        placeholder={
+          placeholder ??
+          'Picks above write this for you. Edit it, replace it, or leave it empty for a quick rating.'
+        }
         value={values.reviewText}
         onChange={(e) => set('reviewText', e.target.value)}
       />
       <span className="form-hint">
         {autoBuilt
-          ? 'Written from your picks. Edit it freely, or clear it for a quick rating.'
-          : 'Leave empty for a quick rating, or write at least 10 characters.'}
+          ? story
+            ? 'Written from your picks. Edit it freely.'
+            : 'Written from your picks. Edit it freely, or clear it for a quick rating.'
+          : story
+            ? 'At least 10 characters if you write something.'
+            : 'Leave empty for a quick rating, or write at least 10 characters.'}
       </span>
     </div>
   )
