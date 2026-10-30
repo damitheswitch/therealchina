@@ -63,7 +63,6 @@ import { useProfileContext } from '../contexts/ProfileContext'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
-import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealStampOverlay } from './SealStampOverlay'
 import { SealBadge } from './SealBadge'
 import { ReviewEssentials } from './review/ReviewEssentials'
@@ -71,14 +70,14 @@ import { ReviewStory } from './review/ReviewStory'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
-import type { MediaState } from './review/fields'
+import { AnonEmailField, type MediaState } from './review/fields'
 
 // ---- Constants ----------------------------------------------------------------
 
 // The tap-first flow's analytics tag. Event names and meanings are unchanged —
 // only `flow` distinguishes which layout produced them, so the v2 funnel can
 // be compared against fast_2 directly.
-const FLOW = 'tap_2' as const
+const FLOW = 'tap_3' as const
 
 // Screen index -> the step-viewed event + stage enum it emits. Step numbers
 // stay positional ("Nth screen shown") and stages stay semantic, so the
@@ -86,12 +85,14 @@ const FLOW = 'tap_2' as const
 const SCREEN_EVENTS: Record<number, ReviewEventName> = {
   1: 'review_step_1_viewed',
   2: 'review_step_2_viewed',
+  3: 'review_step_3_viewed',
 }
 const SCREEN_STAGES: Record<number, ReviewStage> = {
   1: 'basics',
   2: 'story',
+  3: 'post',
 }
-const SCREEN_LABELS = ['The essentials', 'Your story']
+const SCREEN_LABELS = ['The essentials', 'What stood out', 'Post it']
 
 type Phase = 'form' | 'success' | 'boost'
 
@@ -148,7 +149,6 @@ export const ReviewWizard = ({
 }) => {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
-  const { openAuthModal } = useAuthModal()
   const { profile } = useProfileContext()
   const { showToast } = useToast()
 
@@ -204,6 +204,9 @@ export const ReviewWizard = ({
   // user_id NULL and ownership is linked privately on reviewer_context.
   // Named + Verified seal stays the default while logged in.
   const [postAnon, setPostAnon] = useState(false)
+  // Guest who picked "Post with nickname": publishes now as Anonymous, then gets
+  // the account step on the success screen (the claim flow attaches the name).
+  const [wantsNickname, setWantsNickname] = useState(false)
   // Set when a requested draft lookup failed — lets a valid ?uni still
   // prefill after a bad ?draft= link instead of leaving an empty field.
   const [draftLookupFailed, setDraftLookupFailed] = useState(false)
@@ -251,6 +254,8 @@ export const ReviewWizard = ({
   // Submit state
   const [loading, setLoading] = useState(false)
   const [showStamp, setShowStamp] = useState(false)
+  // Screen 2: set after the first Continue tap with nothing picked or written.
+  const [nudgeShown, setNudgeShown] = useState(false)
   const [pendingSuccess, setPendingSuccess] = useState<(() => void) | null>(null)
 
   // Turnstile (anonymous) — rendered on the publish screen.
@@ -260,7 +265,7 @@ export const ReviewWizard = ({
   // ---- Draft persistence -----------------------------------------------------
 
   const draftPayload = useMemo<ReviewDraftPayload>(
-    () => draftPayloadFromState(values, mediaState.media, step),
+    () => draftPayloadFromState(values, mediaState.media, Math.min(step, 2)),
     [values, mediaState.media, step]
   )
 
@@ -512,7 +517,7 @@ export const ReviewWizard = ({
           flow: FLOW,
           entry: reviewEntry,
           auth: reviewAuth,
-          step: step as 1 | 2,
+          step: step as 1 | 2 | 3,
           stage: SCREEN_STAGES[step],
         },
       })
@@ -735,7 +740,7 @@ export const ReviewWizard = ({
         data: {
           flow: FLOW,
           auth: reviewAuth,
-          step: screen as 1 | 2,
+          step: screen as 1 | 2 | 3,
           stage: SCREEN_STAGES[screen],
         },
       })
@@ -763,11 +768,30 @@ export const ReviewWizard = ({
     if (s === 2) {
       const t = values.reviewText.trim()
       if (t.length > 0 && t.length < 10) {
-        return 'A few more words, or clear it and post a quick rating.'
+        return 'A few more words, or clear it and post stars only.'
       }
       return null
     }
     return null
+  }
+
+  const storyEmpty = values.reviewText.trim() === '' && Object.keys(values.polarity).length === 0
+
+  // "Post my stars only": drop the picks and any auto-written text, then go straight to Post it.
+  const skipStory = () => {
+    const err = validateScreen(1)
+    if (err) return
+    form.applyValues((cur) => ({
+      ...cur,
+      polarity: {},
+      reviewText: '',
+      selectedTags: [],
+      pros: '',
+      cons: '',
+    }))
+    clearError()
+    setStep(3)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const goNext = () => {
@@ -778,8 +802,14 @@ export const ReviewWizard = ({
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
+    // Screen 2 with nothing picked or written: one gentle nudge, then let them through.
+    if (step === 2 && storyEmpty && !nudgeShown) {
+      setNudgeShown(true)
+      document.querySelector<HTMLButtonElement>('.pol-btn.pos')?.focus()
+      return
+    }
     clearError()
-    setStep((s) => Math.min(s + 1, 2))
+    setStep((s) => Math.min(s + 1, 3))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -815,6 +845,7 @@ export const ReviewWizard = ({
     }
     const storyErr = validateScreen(2)
     if (storyErr) {
+      setStep(2)
       setError(storyErr)
       reportValidationFailure(2)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -896,8 +927,6 @@ export const ReviewWizard = ({
         },
       })
 
-      showToast('Review submitted! Thank you.', 'success')
-
       // The review is live — the draft it came from is done. Server drafts are
       // deleted by id (or by university when the row was created earlier);
       // anonymous progress lives in localStorage and is cleared the same way.
@@ -959,7 +988,8 @@ export const ReviewWizard = ({
       // the plain success screen is all that exists.
       setPendingSuccess(() => () => {
         const canBoost = Boolean(user) || getBoostToken(result.reviewId) !== null
-        setPhase(canBoost ? 'boost' : 'success')
+        // Nickname guests see the account step first; the Boost offer follows it.
+        setPhase(canBoost && !(!user && wantsNickname) ? 'boost' : 'success')
       })
       setShowStamp(true)
     } catch (error) {
@@ -1065,6 +1095,7 @@ export const ReviewWizard = ({
             publishedAt={published.publishedAt}
             universitySlug={published.universitySlug}
             isAnonymous={!user}
+            wantsNickname={wantsNickname}
             postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
             onBoost={() => setPhase('boost')}
@@ -1134,8 +1165,6 @@ export const ReviewWizard = ({
           ))}
         </div>
 
-        <DetailTrack values={values} media={mediaState.media} />
-
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}
         {otherDraft && (
@@ -1171,9 +1200,40 @@ export const ReviewWizard = ({
 
         {step === 1 && <ReviewEssentials form={form} promptQuestion={promptParam} />}
 
-        {step === 2 && <ReviewStory form={form} isAnonymous={!user} promptQuestion={promptParam} />}
+        {step === 2 && (
+          <ReviewStory
+            form={form}
+            promptQuestion={promptParam}
+            showNudge={nudgeShown && storyEmpty}
+            onSkip={skipStory}
+          />
+        )}
 
-        {user && step === 2 && qSlugParam && !answerParam && (
+        {step === 3 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">How it will appear</h2>
+            <span className="preview-eyebrow">Preview</span>
+            <div className="post-preview">
+              <PublishedReviewPreview
+                values={values}
+                media={mediaState.media}
+                date={new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+                anonymous={Boolean(user && postAnon) || !user}
+              />
+            </div>
+            {storyEmpty && (
+              <button type="button" className="skip-link" onClick={() => setStep(2)}>
+                Add a reason first
+              </button>
+            )}
+          </div>
+        )}
+
+        {user && step === 3 && qSlugParam && !answerParam && (
           <label
             className="form-checkbox-label"
             htmlFor="cross-post-qa"
@@ -1194,19 +1254,19 @@ export const ReviewWizard = ({
             publishing. Guests post anonymously or sign in for the seal (modal,
             so the draft in state + localStorage survives); signed-in reviewers
             can hide their name while keeping the review privately owned. */}
-        {step === 2 && (
+        {step === 3 && (
           <div className="attribution-card" role="radiogroup" aria-label="How your review appears">
             <span className="form-label">How your review appears</span>
             {!user ? (
               <>
-                <label className="attribution-option selected">
+                <label className={`attribution-option${wantsNickname ? '' : ' selected'}`}>
                   <input
                     type="radio"
                     name="review-attribution"
                     className="attribution-radio"
-                    checked
-                    readOnly
+                    checked={!wantsNickname}
                     disabled={loading}
+                    onChange={() => setWantsNickname(false)}
                   />
                   <span className="attribution-option-body">
                     <span className="attribution-option-title">
@@ -1219,29 +1279,22 @@ export const ReviewWizard = ({
                     </span>
                   </span>
                 </label>
-                <label className="attribution-option">
+                <label className={`attribution-option${wantsNickname ? ' selected' : ''}`}>
                   <input
                     type="radio"
                     name="review-attribution"
                     className="attribution-radio"
-                    checked={false}
+                    checked={wantsNickname}
                     disabled={loading}
-                    onChange={() =>
-                      openAuthModal('register', {
-                        title: 'Add the Verified seal to your review',
-                        subtitle:
-                          'Use any nickname you like. Your email is never shown publicly, and your draft stays saved.',
-                        closable: true,
-                      })
-                    }
+                    onChange={() => setWantsNickname(true)}
                   />
                   <span className="attribution-option-body">
                     <span className="attribution-option-title">
                       Post with nickname <SealBadge />
                     </span>
                     <span className="attribution-option-copy">
-                      Sign in or create a free account to put your chosen nickname and the red
-                      Verified seal on this review. Your draft stays saved right here.
+                      Publish now, then make a free account in about 20 seconds to add your nickname
+                      and the red Verified seal. Nothing blocks you before you post.
                     </span>
                   </span>
                 </label>
@@ -1292,8 +1345,15 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {/* Anonymous Turnstile — lives on the publish screen now */}
-        {!user && step === 2 && (
+        {!user && step === 3 && (
+          <details className="email-disclosure">
+            <summary>Add a private backup email</summary>
+            <AnonEmailField form={form} />
+          </details>
+        )}
+
+        {/* Anonymous Turnstile — warms up on the story screen, finishes on Post it */}
+        {!user && step >= 2 && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               ref={reviewTurnstileRef}
@@ -1315,6 +1375,17 @@ export const ReviewWizard = ({
         )}
 
         <div className="wizard-nav wizard-nav-sticky">
+          {step === 3 && (
+            <p className="wizard-nav-hint">
+              {user
+                ? postAnon
+                  ? 'Shows as Anonymous.'
+                  : `Shows as ${profile?.display_name || 'you'} with the Verified seal.`
+                : wantsNickname
+                  ? 'Shows as Anonymous until you add your nickname.'
+                  : 'Shows as Anonymous.'}
+            </p>
+          )}
           {step === 1 ? (
             <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
               ← Back
@@ -1324,12 +1395,12 @@ export const ReviewWizard = ({
               ← Back
             </button>
           )}
-          {step === 1 && (
+          {step < 3 && (
             <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
               Continue →
             </button>
           )}
-          {step === 2 && (
+          {step === 3 && (
             <button
               type="button"
               className="btn btn-primary btn-lg"
@@ -1339,10 +1410,10 @@ export const ReviewWizard = ({
               {loading
                 ? 'Publishing...'
                 : !user && !reviewTurnstileReady
-                  ? 'Verifying you are human...'
+                  ? 'Checking your connection...'
                   : values.reviewText.trim()
-                    ? 'Publish review 📜'
-                    : 'Publish quick rating ⚡'}
+                    ? 'Publish review'
+                    : 'Publish rating'}
             </button>
           )}
         </div>

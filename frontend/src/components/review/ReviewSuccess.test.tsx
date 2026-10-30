@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { ReviewSuccess } from './ReviewSuccess'
 import { emptyReviewFieldValues } from '../../lib/reviewFlow'
@@ -41,10 +41,14 @@ const renderSuccess = ({
   values = {},
   isAnonymous = false,
   canBoost = true,
+  wantsNickname = false,
+  onDone = vi.fn(),
 }: {
   values?: Partial<typeof emptyReviewFieldValues>
   isAnonymous?: boolean
   canBoost?: boolean
+  wantsNickname?: boolean
+  onDone?: () => void
 } = {}) =>
   render(
     <MemoryRouter>
@@ -54,9 +58,10 @@ const renderSuccess = ({
         publishedAt="2026-10-10T12:00:00Z"
         universitySlug="fudan-university"
         isAnonymous={isAnonymous}
+        wantsNickname={wantsNickname}
         canBoost={canBoost}
         onBoost={vi.fn()}
-        onDone={vi.fn()}
+        onDone={onDone}
       />
     </MemoryRouter>
   )
@@ -109,5 +114,31 @@ describe('ReviewSuccess strength meter (author-only)', () => {
     renderSuccess({ isAnonymous: true, canBoost: false })
     expect(screen.getByRole('meter', { name: 'Review strength' })).toBeInTheDocument()
     expect(screen.queryByText('Make it more useful in 60 seconds?')).not.toBeInTheDocument()
+  })
+})
+
+describe('ReviewSuccess nickname step (publish first, account last)', () => {
+  it('shows the account step for a guest who chose a nickname', () => {
+    authState.user = null
+    renderSuccess({ isAnonymous: true, wantsNickname: true, canBoost: false })
+    fireEvent.click(screen.getByRole('button', { name: 'Create account and add nickname' }))
+    expect(openAuthModal).toHaveBeenCalledWith('register', expect.any(Object))
+  })
+
+  it('warns once before leaving, then lets the guest leave', () => {
+    authState.user = null
+    const onDone = vi.fn()
+    renderSuccess({ isAnonymous: true, wantsNickname: true, canBoost: false, onDone })
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert').textContent).toMatch(/stays Anonymous/)
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+    expect(onDone).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not show the step to a guest who stayed anonymous', () => {
+    authState.user = null
+    renderSuccess({ isAnonymous: true, wantsNickname: false, canBoost: false })
+    expect(screen.queryByText('Last step: add your nickname')).toBeNull()
   })
 })
