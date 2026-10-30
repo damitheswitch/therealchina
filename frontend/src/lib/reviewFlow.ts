@@ -26,6 +26,21 @@ export const normalizeUniSlugParam = (raw: string | null | undefined): string =>
   return UNI_SLUG_RE.test(s) && s.length <= UNI_SLUG_MAX_LEN ? s : ''
 }
 
+// The inline rate widget passes its picks through the URL. Anything outside
+// 1-5 is not a rating — 0 means "no star picked", which is also what the
+// form stores for an untouched rating.
+export const parseRatingParam = (raw: string | null | undefined): number => {
+  const n = Number(raw)
+  return Number.isInteger(n) && n >= 1 && n <= 5 ? n : 0
+}
+
+export const parseRecommendParam = (
+  raw: string | null | undefined
+): 'yes' | 'no' | 'maybe' | '' => {
+  const s = (raw || '').trim().toLowerCase()
+  return s === 'yes' || s === 'no' || s === 'maybe' ? s : ''
+}
+
 // Every field a review can carry, as the wizard holds it. One shape feeds the
 // submit payload, the edit/update payload, and each Boost save — the server
 // writes the whole validated field set on every call, so callers always send

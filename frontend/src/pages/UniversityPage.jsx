@@ -9,6 +9,7 @@ import { buildUniversityExtras } from '../lib/universityExtras'
 import { StarRating } from '../components/StarRating'
 import { SealBadge } from '../components/SealBadge'
 import { ReviewSummary } from '../components/ReviewSummary'
+import { InlineRatePrompt } from '../components/InlineRatePrompt'
 import { UniversityReviews } from '../components/UniversityReviews'
 import {
   UniversityPrograms,
@@ -397,6 +398,7 @@ export const UniversityPage = () => {
           <UniversityGuides />
         </aside>
         <div className="uni-reviews-cell">
+          <InlineRatePrompt key={`rate-${university.id}`} university={university} />
           <UniversityReviews key={university.id} university={university} />
         </div>
       </div>

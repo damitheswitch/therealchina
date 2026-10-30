@@ -52,6 +52,8 @@ import {
   draftPayloadFromState,
   fieldValuesFromDraft,
   normalizeUniSlugParam,
+  parseRatingParam,
+  parseRecommendParam,
   previewReviewFromFields,
   UNI_SLUG_RE,
   type ReviewFieldValues,
@@ -210,6 +212,12 @@ export const ReviewWizard = ({
   // format-checks): anything that can't be a slug is treated as no param at
   // all — an empty field beats a broken lookup and a dead-end publish.
   const uniParam = normalizeUniSlugParam(searchParams.get('uni'))
+  // Picks carried over from the inline rate widget on the university page:
+  // the star and verdict the visitor already tapped, plus any words they
+  // typed. Same normalize-or-empty rule as the slug — a bogus param is no param.
+  const ratingParam = parseRatingParam(searchParams.get('rating'))
+  const recommendParam = parseRecommendParam(searchParams.get('recommend'))
+  const textParam = searchParams.get('answer') || searchParams.get('text') || ''
 
   const form = useReviewForm(
     editMode && initial
@@ -232,7 +240,12 @@ export const ReviewWizard = ({
           cons: initial.cons,
           reviewText: initial.reviewText,
         }
-      : { selectedUni: draftParam ? '' : uniParam, reviewText: searchParams.get('answer') || '' }
+      : {
+          selectedUni: draftParam ? '' : uniParam,
+          rating: draftParam ? 0 : ratingParam,
+          recommend: draftParam ? '' : recommendParam,
+          reviewText: textParam,
+        }
   )
   // `form` is a new object whenever values change; `applyValues`/`set` are
   // stable. Effects and callbacks that apply drafts must depend on the stable
@@ -273,7 +286,11 @@ export const ReviewWizard = ({
 
   // Flow state
   const [phase, setPhase] = useState<Phase>('form')
-  const [step, setStep] = useState(1)
+  // A ?uni + ?rating pair means the visitor already answered screen 1 on the
+  // university page — open straight on the story screen.
+  const [step, setStep] = useState(() =>
+    !editMode && !draftParam && Boolean(uniParam) && ratingParam > 0 ? 2 : 1
+  )
   const [error, setError] = useState<string | null>(null)
   const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
   const [boostIndex, setBoostIndex] = useState(0)
@@ -523,6 +540,17 @@ export const ReviewWizard = ({
           setReviewEntry(
             resolveReviewEntry({ loaded, requested: Boolean(draftParam), lookupFailed })
           )
+          // A star or verdict tapped on the university page seconds ago is a
+          // fresher pick than anything a resumed draft carries for those
+          // fields — overlay the URL values and open on the story screen.
+          if (uniParam && ratingParam > 0) {
+            applyValues({
+              rating: ratingParam,
+              ...(recommendParam ? { recommend: recommendParam } : {}),
+              ...(textParam ? { reviewText: textParam } : {}),
+            })
+            setStep(2)
+          }
           setDraftLoading(false)
         }
       }
@@ -536,9 +564,13 @@ export const ReviewWizard = ({
     user,
     draftParam,
     uniParam,
+    ratingParam,
+    recommendParam,
+    textParam,
     prefilledUni,
     prefilledUniLoading,
     applyDraftPayload,
+    applyValues,
     showToast,
   ])
 

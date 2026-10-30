@@ -7179,6 +7179,149 @@ a.ask-student-q-replies:hover {
   color: var(--ink);
 }
 
+/* Inline 1-tap rating prompt on UniversityPage */
+.inline-rate-card {
+  background: linear-gradient(180deg, #fff 0%, var(--rice) 100%);
+  border: 1.5px solid var(--ink-line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-3);
+  margin-bottom: var(--sp-3);
+  transition:
+    border-color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+.inline-rate-card.expanded {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 3px var(--gold-tint),
+    var(--shadow-card);
+}
+.inline-rate-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.inline-rate-copy {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+.inline-rate-eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--seal-red);
+  margin-bottom: 0.2rem;
+}
+.inline-rate-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0 0 0.25rem;
+}
+.inline-rate-sub {
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+  margin: 0;
+}
+.inline-rate-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+.inline-rate-controls .star-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.inline-rate-controls .star-input-labels {
+  min-height: 1.1rem;
+  font-size: 0.78rem;
+}
+.inline-rate-verdicts {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.inline-verdict-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.inline-verdict-pill:hover {
+  border-color: var(--seal-red);
+}
+.inline-verdict-pill.selected {
+  border-color: var(--seal-red);
+  background: var(--seal-red-tint);
+  color: var(--seal-red);
+}
+.inline-rate-drawer {
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-2);
+  border-top: 1px dashed var(--ink-line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.inline-rate-vibe {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--rice);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--ink-line);
+}
+.inline-rate-textarea {
+  min-height: 68px;
+  resize: vertical;
+}
+.inline-rate-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+@media (max-width: 700px) {
+  .inline-rate-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  /* In a column the row basis (240px) becomes a height; let the copy size itself. */
+  .inline-rate-copy {
+    flex: 0 0 auto;
+  }
+  .inline-rate-controls,
+  .inline-rate-controls .star-input-wrap {
+    align-items: flex-start;
+    width: 100%;
+  }
+  .inline-rate-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .social-proof {
   margin: -0.4rem 0 var(--sp-2);
   font-size: 0.82rem;
