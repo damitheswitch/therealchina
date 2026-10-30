@@ -1067,6 +1067,18 @@ export const ReviewWizard = ({
     showToast('All saved. Thanks for the detail.', 'success')
   }, [showToast])
 
+  // Back goes to the page that sent the reviewer here (a university page, a question
+  // thread). With no history to return to, fall back to the reviewed university or home.
+  const leaveHref =
+    values.selectedUni && values.selectedUni !== '__not_listed'
+      ? `/university/${values.selectedUni}`
+      : '/'
+  const leaveWizard = (e?: { preventDefault: () => void }) => {
+    e?.preventDefault()
+    if ((window.history.state?.idx ?? 0) > 0) navigate(-1)
+    else navigate(leaveHref)
+  }
+
   const finishFlow = () => {
     navigate(published?.universitySlug ? `/university/${published.universitySlug}` : '/')
   }
@@ -1141,7 +1153,12 @@ export const ReviewWizard = ({
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
       <div className="section">
-        <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
+        <Link
+          to={leaveHref}
+          onClick={leaveWizard}
+          className="btn btn-outline"
+          style={{ marginBottom: 'var(--sp-2)' }}
+        >
           <Icons.ArrowLeft /> Back
         </Link>
         <h1 className="section-title">
@@ -1387,7 +1404,7 @@ export const ReviewWizard = ({
             </p>
           )}
           {step === 1 ? (
-            <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+            <button type="button" className="btn btn-ghost" onClick={() => leaveWizard()}>
               ← Back
             </button>
           ) : (

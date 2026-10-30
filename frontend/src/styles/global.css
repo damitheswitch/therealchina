@@ -2464,7 +2464,10 @@ h3 {
     'photos aside'
     'verdict aside'
     'reviews aside';
-  gap: var(--sp-3);
+  /* Row spacing lives on the cells so empty rows (no photos, no verdict yet)
+     add no gap. */
+  column-gap: var(--sp-3);
+  row-gap: 0;
   align-items: start;
 }
 .uni-profile-layout > * {
@@ -7245,4 +7248,54 @@ a.ask-student-q-replies:hover {
 .attribution-radio {
   width: 20px;
   height: 20px;
+}
+
+/* Cells that render nothing (no photos, no verdict yet) must not leave grid gaps. */
+.uni-photos-cell:empty,
+.uni-verdict-cell:empty {
+  display: none;
+}
+
+.pick-count {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+.form-textarea.auto-built {
+  border-color: var(--gold, #c4a03c);
+  background: #fff;
+}
+.form-textarea.flash {
+  animation: auto-text-flash 0.9s ease-out;
+}
+@keyframes auto-text-flash {
+  from {
+    box-shadow: 0 0 0 4px rgba(196, 160, 60, 0.45);
+  }
+  to {
+    box-shadow: 0 0 0 0 rgba(196, 160, 60, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .form-textarea.flash {
+    animation: none;
+  }
+}
+
+.uni-photos-cell:not(:empty),
+.uni-verdict-cell:not(:empty) {
+  margin-bottom: var(--sp-3);
+}
+@media (max-width: 900px) {
+  .uni-reviews-cell {
+    margin-bottom: var(--sp-3);
+  }
+}
+
+/* The story box hint explains the auto-written text; keep it on phones too. */
+.form-group .form-hint.story-hint {
+  display: block;
+  margin-top: 0.4rem;
 }

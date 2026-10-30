@@ -318,14 +318,18 @@ const YearChips = ({
             key={y}
             type="button"
             className={`chip ${value === y ? 'selected' : ''}`}
-            onClick={() => onChange(y)}
+            onClick={() => {
+              setShowAll(false)
+              onChange(y)
+            }}
           >
             {y}
           </button>
         ))}
         <button
           type="button"
-          className={`chip ${showAll || (value !== '' && !isRecent) ? 'selected' : ''}`}
+          className={`chip ${value !== '' && !isRecent ? 'selected' : ''}`}
+          aria-expanded={showAll || (value !== '' && !isRecent)}
           onClick={() => setShowAll((s) => !s)}
         >
           Earlier…
@@ -503,6 +507,9 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
 export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <span className="sr-only">What stood out. Tap a side per row.</span>
+    <span className="pick-count" aria-live="polite">
+      {Object.keys(form.values.polarity).length} of {POLARITY_TOPICS.length} picked
+    </span>
     <div className="polarity-grid">
       {POLARITY_TOPICS.map((topic) => {
         const pick = form.values.polarity[topic.key as PolarityTopicKey]
@@ -553,15 +560,30 @@ export const ReviewTextField = ({
   // produced — an edited or replaced box is the reviewer's own words.
   const autoBuilt =
     values.reviewText.length > 0 && values.reviewText === derivePolarityText(values.polarity)
+  // Brief highlight each time the taps rewrite the text, so it is clear the box just changed.
+  const [flash, setFlash] = useState(false)
+  useEffect(() => {
+    if (!story || !autoBuilt) return
+    setFlash(true)
+    const timer = setTimeout(() => setFlash(false), 900)
+    return () => clearTimeout(timer)
+  }, [story, autoBuilt, values.reviewText])
   return (
     <div className="form-group">
       <label className="form-label" htmlFor="review-text">
-        {story ? 'Add one thing in your own words' : 'Your review in your own words'}{' '}
-        <span className="form-hint-inline">optional</span>
+        {story
+          ? autoBuilt
+            ? 'Your review so far'
+            : 'Add one thing in your own words'
+          : 'Your review in your own words'}{' '}
+        <span className="form-hint-inline">
+          {story && autoBuilt ? 'edit anything' : 'optional'}
+        </span>
       </label>
       <textarea
         id="review-text"
-        className="form-textarea"
+        className={`form-textarea${story && autoBuilt ? ' auto-built' : ''}${flash ? ' flash' : ''}`}
+        rows={story && autoBuilt ? 5 : undefined}
         placeholder={
           placeholder ??
           'Picks above write this for you. Edit it, replace it, or leave it empty for a quick rating.'
@@ -569,10 +591,10 @@ export const ReviewTextField = ({
         value={values.reviewText}
         onChange={(e) => set('reviewText', e.target.value)}
       />
-      <span className="form-hint">
+      <span className={`form-hint${story ? ' story-hint' : ''}`}>
         {autoBuilt
           ? story
-            ? 'Written from your picks. Edit it freely.'
+            ? 'Written from your taps. Tap the box to edit it, add details or rewrite it.'
             : 'Written from your picks. Edit it freely, or clear it for a quick rating.'
           : story
             ? 'At least 10 characters if you write something.'
