@@ -1,0 +1,148 @@
+{
+  "template_version": "1.0",
+  "campaign_id": "review-contributors",
+  "status": "draft",
+  "owner": "TRC founder",
+  "created_at": "2026-10-27",
+  "decision_basis": "Owner-confirmed contributor-first priority, English, WeChat/Instagram, peer voice, and future review-reward direction. Exact reward mechanics, creative, and launch remain pending.",
+  "audience": {
+    "primary_track": "contributors",
+    "segment": "Current students and alumni with firsthand university experience, wherever they live. Begin with the founder's student network.",
+    "geographies": [],
+    "languages": ["English"],
+    "need": "Help the next student with a candid account and receive a useful thank-you when the planned reward launches.",
+    "barriers_to_validate": [
+      "Time",
+      "Privacy concerns",
+      "Unclear reason to contribute"
+    ]
+  },
+  "objective": "Increase genuine, useful, detailed university reviews first; sign-ups and filled profiles are supporting outcomes.",
+  "content_type": "contribution_request",
+  "offer_or_value": "Help future students understand real university life. Future planned thank-you: 2GB of VPN data for a full or approximately 90%-complete review, images optional. Not yet available or approved for announcement.",
+  "core_message": "Tell the next student what your university is really like, with a useful thank-you for the time you put in.",
+  "claims": [
+    {
+      "evidence_id": "C02",
+      "wording": "Share your university experience on TRC.",
+      "source": "frontend/src/App.jsx and marketing/brand/claims-register.md",
+      "checked_at": "2026-10-27",
+      "limitations": "Review route exists in repository; live device/network flow still needs testing.",
+      "approval": "pending"
+    }
+  ],
+  "cta": {
+    "text": "Share your university experience",
+    "destination": "/review",
+    "destination_tested_at": null,
+    "network_and_device_notes": "Test intended WeChat and other device/network journeys, including guest submission, account claiming while remaining anonymous, and future reward delivery. Do not promise untraceability or an unverified signed-in anonymous toggle."
+  },
+  "distribution": {
+    "channels": ["WeChat", "Instagram"],
+    "placements": [],
+    "organic_or_paid": "proposed_organic",
+    "community_permission": "Owner has a WeChat group and will use student groups. Confirm permission/rules for each group.",
+    "schedule": null
+  },
+  "deliverables": [
+    {
+      "asset_id": "dorm-detail-static-a",
+      "format": "static_post",
+      "placement": "",
+      "language": "",
+      "dimensions": null,
+      "duration_seconds": null,
+      "variant_hypothesis": "A specific dorm-life prompt may be easier to answer than a broad request."
+    },
+    {
+      "asset_id": "next-student-video-b",
+      "format": "short_video",
+      "placement": "",
+      "language": "",
+      "dimensions": null,
+      "duration_seconds": null,
+      "variant_hypothesis": "Showing how one practical detail helps a future student may make contribution feel worthwhile."
+    }
+  ],
+  "creative": {
+    "selected_angle": "Owner direction: make the useful reward prominent without burying the mission. Final hook/layout still to select; no live reward announcement before readiness.",
+    "reference_assets": [],
+    "must_include": [
+      "A direct invitation explaining whom the review helps",
+      "One contribution CTA, not a paid-plan upsell",
+      "If the future reward is advertised, prominent 2GB allowance, eligibility, availability, provider relationship, and delivery terms",
+      "Anonymous reviews eligible; no required public social handle",
+      "Accurate account-versus-public-identity explanation for the verified journey"
+    ],
+    "must_avoid": [
+      "Requests for positive ratings only",
+      "Unapproved rewards",
+      "A claimed completion time",
+      "Invented testimonials or seeded reviews",
+      "A paid-plan upsell in the same asset",
+      "Implied unlimited free VPN",
+      "Guaranteed anonymity or safety from identification",
+      "Mandatory photos, invented detail, or pressure to be positive"
+    ]
+  },
+  "commercial": {
+    "relationship": "planned_in_kind_review_reward_not_live",
+    "partner": "Founder reports a friend's single-location VPN server; fulfillment and terms not finalized.",
+    "offer_terms_reference": null,
+    "partner_review_status": "pending",
+    "disclosure": null,
+    "disclosure_placements": [],
+    "public_policy_alignment": "not_checked"
+  },
+  "measurement": {
+    "primary_metric": "Genuine, useful, detailed published reviews",
+    "definition": "Finalize a useful-detail definition before counting qualifying reviews. Do not equate existing site detail labels with the pending approximately 90% reward criterion. Exclude demo, known spam, duplicates, and deleted content.",
+    "data_source": "Confirm existing aggregate outcome reporting before launch.",
+    "secondary_metrics": [
+      "Review starts if measurable",
+      "Contribution detail and moderation outcomes",
+      "Sign-ups",
+      "Profile completion under a separately agreed definition"
+    ],
+    "quality_guardrails": [
+      "No rating pressure",
+      "No duplicate incentives",
+      "No private data in tracking",
+      "Negative and anonymous reviews eligible on the same detail standard",
+      "Fulfillment email is not automatic provider-marketing consent"
+    ],
+    "attribution_method": "Undecided. Do not claim campaign-level attribution from an overall count.",
+    "baseline": null,
+    "target": null,
+    "review_date": null
+  },
+  "budget": {
+    "currency": null,
+    "generation_limit": null,
+    "ad_spend_limit": null,
+    "approval": "not_requested"
+  },
+  "approval": {
+    "strategy": "pending",
+    "claims": "pending",
+    "rights_and_privacy": "pending",
+    "final_assets": "pending",
+    "approved_by": null,
+    "approved_at": null,
+    "approved_asset_versions": []
+  },
+  "open_questions": [
+    "What is the first creative format and founder presence?",
+    "Which review details define the approximately 90% threshold without requiring photos or irrelevant answers?",
+    "How will 2GB redemption, expiry, provider capacity, duplicate prevention, and email delivery work?",
+    "Is any profile-linked discount still wanted, and on what terms?",
+    "Can intended users complete the relevant anonymous/account journey on their actual network?",
+    "What existing aggregate data can measure outcomes without new sensitive tracking?"
+  ],
+  "results": {
+    "date_range": null,
+    "observed_outcomes": null,
+    "limitations": [],
+    "next_test": null
+  }
+}

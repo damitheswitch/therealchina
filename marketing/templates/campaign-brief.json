@@ -1,0 +1,102 @@
+{
+  "template_version": "1.0",
+  "campaign_id": "",
+  "status": "draft",
+  "owner": "",
+  "created_at": "",
+  "decision_basis": "Draft template. Empty fields are unknown, not approved defaults.",
+  "audience": {
+    "primary_track": "",
+    "segment": "",
+    "geographies": [],
+    "languages": [],
+    "need": "",
+    "barriers_to_validate": []
+  },
+  "objective": "",
+  "content_type": "",
+  "offer_or_value": "",
+  "core_message": "",
+  "claims": [
+    {
+      "evidence_id": "",
+      "wording": "",
+      "source": "",
+      "checked_at": "",
+      "limitations": "",
+      "approval": "pending"
+    }
+  ],
+  "cta": {
+    "text": "",
+    "destination": "",
+    "destination_tested_at": null,
+    "network_and_device_notes": ""
+  },
+  "distribution": {
+    "channels": [],
+    "placements": [],
+    "organic_or_paid": "",
+    "community_permission": "",
+    "schedule": null
+  },
+  "deliverables": [
+    {
+      "asset_id": "",
+      "format": "",
+      "placement": "",
+      "language": "",
+      "dimensions": null,
+      "duration_seconds": null,
+      "variant_hypothesis": ""
+    }
+  ],
+  "creative": {
+    "selected_angle": "",
+    "reference_assets": [],
+    "must_include": [],
+    "must_avoid": []
+  },
+  "commercial": {
+    "relationship": "none",
+    "partner": null,
+    "offer_terms_reference": null,
+    "partner_review_status": "not_applicable",
+    "disclosure": null,
+    "disclosure_placements": [],
+    "public_policy_alignment": "not_checked"
+  },
+  "measurement": {
+    "primary_metric": "",
+    "definition": "",
+    "data_source": "",
+    "secondary_metrics": [],
+    "quality_guardrails": [],
+    "attribution_method": "",
+    "baseline": null,
+    "target": null,
+    "review_date": null
+  },
+  "budget": {
+    "currency": null,
+    "generation_limit": null,
+    "ad_spend_limit": null,
+    "approval": "not_requested"
+  },
+  "approval": {
+    "strategy": "pending",
+    "claims": "pending",
+    "rights_and_privacy": "pending",
+    "final_assets": "pending",
+    "approved_by": null,
+    "approved_at": null,
+    "approved_asset_versions": []
+  },
+  "open_questions": [],
+  "results": {
+    "date_range": null,
+    "observed_outcomes": null,
+    "limitations": [],
+    "next_test": null
+  }
+}

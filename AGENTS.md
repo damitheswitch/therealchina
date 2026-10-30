@@ -215,6 +215,35 @@ Files under `src/lib/seo/`, `scripts/`, `routes.generated.ts`, `netlify.toml`,
 `vite.config.js` (workbox), `supabase/migrations/*slug*`: fill in the "SEO
 impact" section of the PR template and expect a required review.
 
+## Agent skills
+
+Project skills live in `.devin/skills/` and are committed:
+
+- `trc-db-change` — run order for anything under `supabase/` or Edge Functions.
+- `trc-pre-ship` — the required verification gates before commit/PR/deploy.
+
+`.claude/skills/` contains junctions to the same files so Claude Code reads
+them too. If a junction is missing (fresh clone), recreate it:
+`mklink /J .claude\skills\<name> .devin\skills\<name>` (or copy the folder).
+
+User-level skills (Supabase Postgres best practices, `tdd`, `code-review`,
+`codebase-design`, `grilling`/`grill-me`, `ponytail`) are installed globally on
+this machine, not in the repo — upstream copies from `supabase/agent-skills`,
+`mattpocock/skills`, and `DietrichGebert/ponytail`. Re-fetch from those repos
+to update; don't hand-edit vendored copies.
+
+## Marketing
+
+For campaigns, social posts, ads, images, or video, start with
+`marketing/README.md` and its brand, claims, and commercial-policy references.
+Use `.devin/skills/trc-campaign-planning/`, `trc-asset-production/`, and
+`trc-creative-qa/` for planning, production, and review respectively.
+Keep contributor acquisition and researcher acquisition distinct. Treat the
+marketing kit's proposed defaults as drafts, not owner approvals. Commercial
+campaigns must resolve any conflict with current public trust policies before
+launch. Do not publish, spend, share leads, or contact partners without explicit
+authorization.
+
 ## When in doubt
 
 - Prefer the safer / more explicit option.
