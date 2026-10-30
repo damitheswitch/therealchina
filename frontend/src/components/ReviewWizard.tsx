@@ -63,7 +63,6 @@ import { useProfileContext } from '../contexts/ProfileContext'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
-import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealStampOverlay } from './SealStampOverlay'
 import { SealBadge } from './SealBadge'
 import { ReviewEssentials } from './review/ReviewEssentials'
@@ -148,7 +147,6 @@ export const ReviewWizard = ({
 }) => {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
-  const { openAuthModal } = useAuthModal()
   const { profile } = useProfileContext()
   const { showToast } = useToast()
 
@@ -204,6 +202,9 @@ export const ReviewWizard = ({
   // user_id NULL and ownership is linked privately on reviewer_context.
   // Named + Verified seal stays the default while logged in.
   const [postAnon, setPostAnon] = useState(false)
+  // Guest who picked "Post with nickname": publishes now as Anonymous, then gets
+  // the account step on the success screen (the claim flow attaches the name).
+  const [wantsNickname, setWantsNickname] = useState(false)
   // Set when a requested draft lookup failed — lets a valid ?uni still
   // prefill after a bad ?draft= link instead of leaving an empty field.
   const [draftLookupFailed, setDraftLookupFailed] = useState(false)
@@ -1065,6 +1066,7 @@ export const ReviewWizard = ({
             publishedAt={published.publishedAt}
             universitySlug={published.universitySlug}
             isAnonymous={!user}
+            wantsNickname={wantsNickname}
             postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
             onBoost={() => setPhase('boost')}
@@ -1199,14 +1201,14 @@ export const ReviewWizard = ({
             <span className="form-label">How your review appears</span>
             {!user ? (
               <>
-                <label className="attribution-option selected">
+                <label className={`attribution-option${wantsNickname ? '' : ' selected'}`}>
                   <input
                     type="radio"
                     name="review-attribution"
                     className="attribution-radio"
-                    checked
-                    readOnly
+                    checked={!wantsNickname}
                     disabled={loading}
+                    onChange={() => setWantsNickname(false)}
                   />
                   <span className="attribution-option-body">
                     <span className="attribution-option-title">
@@ -1219,29 +1221,22 @@ export const ReviewWizard = ({
                     </span>
                   </span>
                 </label>
-                <label className="attribution-option">
+                <label className={`attribution-option${wantsNickname ? ' selected' : ''}`}>
                   <input
                     type="radio"
                     name="review-attribution"
                     className="attribution-radio"
-                    checked={false}
+                    checked={wantsNickname}
                     disabled={loading}
-                    onChange={() =>
-                      openAuthModal('register', {
-                        title: 'Add the Verified seal to your review',
-                        subtitle:
-                          'Use any nickname you like. Your email is never shown publicly, and your draft stays saved.',
-                        closable: true,
-                      })
-                    }
+                    onChange={() => setWantsNickname(true)}
                   />
                   <span className="attribution-option-body">
                     <span className="attribution-option-title">
                       Post with nickname <SealBadge />
                     </span>
                     <span className="attribution-option-copy">
-                      Sign in or create a free account to put your chosen nickname and the red
-                      Verified seal on this review. Your draft stays saved right here.
+                      Publish now, then make a free account in about 20 seconds to add your nickname
+                      and the red Verified seal. Nothing blocks you before you post.
                     </span>
                   </span>
                 </label>
