@@ -1155,11 +1155,14 @@ CREATE POLICY "Public read access to university_stats"
   TO public USING (true);
 
 ALTER TABLE public.flight_listings ENABLE ROW LEVEL SECURITY;
+-- No direct guest access (064): the table holds user_id and free-text notes.
+REVOKE ALL ON public.flight_listings FROM PUBLIC, anon;
 
-DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.flight_listings;
-CREATE POLICY "Public read access to active flight listings"
+-- Signed-in only (064). Guests read flight_listings_public instead.
+DROP POLICY IF EXISTS "Authenticated read access to active flight listings" ON public.flight_listings;
+CREATE POLICY "Authenticated read access to active flight listings"
   ON public.flight_listings FOR SELECT
-  TO public
+  TO authenticated
   USING (is_active = true OR auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Authenticated insert access to flight listings" ON public.flight_listings;
@@ -1286,8 +1289,36 @@ LEFT JOIN public.profiles p
   )
 WHERE fl.is_active = true OR auth.uid() = fl.user_id;
 
-GRANT SELECT ON public.flight_listings_with_profile TO anon;
+-- Members only (064): it carries user_id and notes.
+REVOKE ALL ON public.flight_listings_with_profile FROM PUBLIC, anon;
 GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
+
+-- Guest flight board (064): route, dates, space, price and a first-name label.
+-- No user_id, notes or contact fields.
+CREATE OR REPLACE VIEW public.flight_listings_public AS
+SELECT
+  fl.id,
+  fl.departure_country,
+  fl.arrival_country,
+  fl.departure_city,
+  fl.arrival_city,
+  fl.departure_date,
+  fl.arrival_date,
+  fl.available_kgs,
+  fl.price_per_kg,
+  fl.currency,
+  fl.created_at,
+  NULLIF(left(split_part(btrim(p.display_name), ' ', 1), 30), '') AS poster_label
+FROM public.flight_listings fl
+LEFT JOIN public.profiles p
+  ON fl.user_id = p.id
+  AND p.is_discoverable = true
+  AND p.onboarding_completed = true
+  AND p.display_name IS NOT NULL
+WHERE fl.is_active = true;
+
+REVOKE ALL ON public.flight_listings_public FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.flight_listings_public TO anon, authenticated;
 
 -- ---------------------------------------------------------
 -- 8. Function grants
