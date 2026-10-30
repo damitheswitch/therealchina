@@ -4,6 +4,15 @@
 **Owner decision so far:** fix the review flow before building incentives (see §2).
 **Audience:** the project owner and any coding agent picking up a piece of this.
 
+**Marketing clarification, 2026-10-27:** contributors are the permanent first
+priority, current students and alumni regardless of location. Useful detailed
+reviews come before sign-ups and profile completion. A future 2GB VPN thank-you
+for full/approximately 90%-complete reviews is direction only; eligibility,
+fulfillment, privacy, and release remain pending. See
+[Phase 7](07-incentives.md) and the
+[marketing discussion record](../../marketing/review-questions.md).
+This note does not establish the present deployment status of historical phases.
+
 ## How to use this doc
 
 - This is the **root plan**. It is deliberately too big to build as one PR.

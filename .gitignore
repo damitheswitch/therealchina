@@ -33,6 +33,8 @@ supabase/functions/**/deno.lock
 
 # Local tool configuration
 .devin/*.local.*
+.claude/settings.local.json
+.claude/skills/
 .bolt/
 
 # Python

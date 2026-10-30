@@ -1,0 +1,139 @@
+{
+  "template_version": "1.0",
+  "campaign_id": "research-from-abroad",
+  "status": "draft",
+  "owner": "TRC founder",
+  "created_at": "2026-10-27",
+  "decision_basis": "Owner direction: contributors permanently first; prospective students benefit from firsthand accounts and optional student connections. Folder name is historical, not a location restriction.",
+  "audience": {
+    "primary_track": "prospective_students",
+    "segment": "Prospective students and interested readers seeking firsthand Chinese-university experiences, regardless of location.",
+    "geographies": [],
+    "languages": ["English"],
+    "need": "Hear candid experiences from inside the university and connect with students where contact details are voluntarily shared.",
+    "barriers_to_validate": [
+      "Trust in information",
+      "Relevance to their study plans",
+      "Sparse or outdated reviews"
+    ]
+  },
+  "objective": "Bring relevant prospective students to explore university information and reviews.",
+  "content_type": "editorial",
+  "offer_or_value": "Candid accounts from happy, mixed, or frustrated students, with direct connections where reviewers choose to share contact details.",
+  "core_message": "Hear from students at the university, including what they wish they had known before joining.",
+  "claims": [
+    {
+      "evidence_id": "C01",
+      "wording": "TRC focuses on Chinese university reviews for international students.",
+      "source": "frontend/src/lib/seo/site.ts and marketing/brand/claims-register.md",
+      "checked_at": "2026-10-27",
+      "limitations": "Do not imply comprehensive review coverage or independent enrollment checks.",
+      "approval": "pending"
+    }
+  ],
+  "cta": {
+    "text": "Hear from students at the university",
+    "destination": "/universities",
+    "destination_tested_at": null,
+    "network_and_device_notes": "Check current review substance and voluntary contact availability for promoted schools. Do not promise a contact for every school/review, guaranteed replies, or information unavailable anywhere else."
+  },
+  "distribution": {
+    "channels": [],
+    "placements": [],
+    "organic_or_paid": "",
+    "community_permission": "Unknown if community distribution is selected.",
+    "schedule": null
+  },
+  "deliverables": [
+    {
+      "asset_id": "research-checklist-carousel-a",
+      "format": "carousel",
+      "placement": "",
+      "language": "",
+      "dimensions": null,
+      "duration_seconds": null,
+      "variant_hypothesis": "A practical checklist of details to investigate may attract people making a real study decision."
+    },
+    {
+      "asset_id": "research-walkthrough-video-b",
+      "format": "short_video",
+      "placement": "",
+      "language": "",
+      "dimensions": null,
+      "duration_seconds": null,
+      "variant_hypothesis": "An accurate walkthrough of how to explore TRC may reduce uncertainty about its usefulness."
+    }
+  ],
+  "creative": {
+    "selected_angle": "",
+    "reference_assets": [],
+    "must_include": [
+      "Practical research value",
+      "One CTA",
+      "Genuine current UI if shown"
+    ],
+    "must_avoid": [
+      "Guaranteed admissions or scholarships",
+      "Claims all reviews are independently verified",
+      "Invented costs or review counts",
+      "Generated campus scenes presented as documentary evidence",
+      "Unrelated product sales in the same asset",
+      "Guaranteed student contacts or replies",
+      "Unsupported exclusivity claims about Reddit, Instagram, or YouTube"
+    ]
+  },
+  "commercial": {
+    "relationship": "none",
+    "partner": null,
+    "offer_terms_reference": null,
+    "partner_review_status": "not_applicable",
+    "disclosure": null,
+    "disclosure_placements": [],
+    "public_policy_alignment": "not_checked"
+  },
+  "measurement": {
+    "primary_metric": "Useful research visits",
+    "definition": "Proposed definition: campaign arrivals that go on to view a university/review destination. Confirm measurement capability before adoption.",
+    "data_source": "Confirm existing aggregate analytics and whether the proposed journey is observable.",
+    "secondary_metrics": [
+      "Landing visits",
+      "Relevant outbound CTA clicks where measurable"
+    ],
+    "quality_guardrails": [
+      "Destination relevance",
+      "Accurate coverage claims",
+      "No personal data in campaign parameters"
+    ],
+    "attribution_method": "Use non-sensitive campaign/creative labels if supported and approved. Report limits; clicks alone are not useful visits.",
+    "baseline": null,
+    "target": null,
+    "review_date": null
+  },
+  "budget": {
+    "currency": null,
+    "generation_limit": null,
+    "ad_spend_limit": null,
+    "approval": "not_requested"
+  },
+  "approval": {
+    "strategy": "pending",
+    "claims": "pending",
+    "rights_and_privacy": "pending",
+    "final_assets": "pending",
+    "approved_by": null,
+    "approved_at": null,
+    "approved_asset_versions": []
+  },
+  "open_questions": [
+    "Which countries, languages, and study stages are the first priority?",
+    "Which two channels can the owner sustain?",
+    "Which existing pages currently offer enough substance to promote?",
+    "Can existing analytics measure the proposed useful-visit definition?"
+  ],
+  "results": {
+    "date_range": null,
+    "observed_outcomes": null,
+    "limitations": [],
+    "next_test": null
+  }
+}

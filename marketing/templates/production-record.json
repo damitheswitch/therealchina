@@ -1,0 +1,94 @@
+{
+  "template_version": "1.0",
+  "campaign_id": "",
+  "brief_reference": "brief.json",
+  "asset_id": "",
+  "version": "v01",
+  "status": "draft",
+  "creative_hypothesis": "",
+  "placement": "",
+  "language": "",
+  "copy": {
+    "hook": "",
+    "body_or_script": "",
+    "on_screen_text": [],
+    "caption": "",
+    "cta": "",
+    "disclosure": null
+  },
+  "specification": {
+    "width": null,
+    "height": null,
+    "duration_seconds": null,
+    "fps": null,
+    "file_format": "",
+    "safe_area_reference": "",
+    "placement_requirements_checked_at": null
+  },
+  "references": [
+    {
+      "reference_id": "",
+      "location": "",
+      "purpose": "",
+      "rights_or_permission_reference": "",
+      "supplied_to_tool": false
+    }
+  ],
+  "generation_runs": [
+    {
+      "run_id": "",
+      "shot_id": null,
+      "tool": "",
+      "model_and_version": "",
+      "generated_at": null,
+      "prompt_file": "",
+      "negative_prompt_if_supported": null,
+      "reference_ids": [],
+      "settings": {},
+      "seed_if_supported": null,
+      "output_location": "",
+      "selected": false,
+      "cost_and_currency_if_known": null
+    }
+  ],
+  "shots": [
+    {
+      "shot_id": "",
+      "start_seconds": null,
+      "end_seconds": null,
+      "narrative_purpose": "",
+      "visual": "",
+      "continuity": "",
+      "camera_and_motion": "",
+      "voiceover": "",
+      "on_screen_text": "",
+      "claim_evidence_ids": [],
+      "keyframe_reference": null,
+      "keyframe_approval": "pending",
+      "motion_output_location": null
+    }
+  ],
+  "finishing": {
+    "editable_source_location": "",
+    "logo_master_reference": "",
+    "fonts_and_rights": [],
+    "music_voice_and_footage_rights": [],
+    "captions_location": null,
+    "synthetic_media_disclosure_decision": "",
+    "export_locations": []
+  },
+  "review": {
+    "qa_record": "qa.md",
+    "verdict": "not_reviewed",
+    "reviewer": null,
+    "reviewed_at": null,
+    "blockers": [],
+    "owner_approval_reference": null
+  },
+  "publication": {
+    "separately_authorized_by": null,
+    "published_at": null,
+    "published_locations": [],
+    "results_reference": null
+  }
+}
