@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { ReviewSuccess } from './ReviewSuccess'
 import { emptyReviewFieldValues } from '../../lib/reviewFlow'
 import type { ReviewForm } from '../../hooks/useReviewForm'
+import type { RewardResult } from '../../lib/reviewReward'
 
 // reviewFlow pulls in reviewDrafts → supabaseClient, which throws on import
 // without env vars (CI has none). The test never touches the client; a stub
@@ -140,5 +141,48 @@ describe('ReviewSuccess nickname step (publish first, account last)', () => {
     authState.user = null
     renderSuccess({ isAnonymous: true, wantsNickname: false, canBoost: false })
     expect(screen.queryByText('Last step: add your nickname')).toBeNull()
+  })
+})
+
+describe('ReviewSuccess gift handoff and share card', () => {
+  const renderWithReward = (reward: RewardResult) =>
+    render(
+      <MemoryRouter>
+        <ReviewSuccess
+          form={formWith({ selectedUniName: 'Fudan University' })}
+          media={[]}
+          publishedAt="2026-10-10T12:00:00Z"
+          universitySlug="fudan-university"
+          isAnonymous={false}
+          reward={reward}
+          canBoost={false}
+          onBoost={vi.fn()}
+          onDone={vi.fn()}
+        />
+      </MemoryRouter>
+    )
+
+  it('shows the WeChat ID and code once the gift is earned', () => {
+    renderWithReward({ state: 'sent', code: 'TRC-ABC123', wechatId: 'trc_owner' })
+    expect(screen.getByText(/Check your email/)).toBeInTheDocument()
+    expect(screen.getByText('trc_owner')).toBeInTheDocument()
+    expect(screen.getByText('TRC-ABC123')).toBeInTheDocument()
+  })
+
+  it('falls back to WeChat when the email failed', () => {
+    renderWithReward({ state: 'failed', code: 'TRC-ABC123', wechatId: 'trc_owner' })
+    expect(screen.getByText(/email did not go through/)).toBeInTheDocument()
+    expect(screen.getByText('trc_owner')).toBeInTheDocument()
+  })
+
+  it('keeps the WeChat block hidden while the review is not full', () => {
+    renderWithReward({ state: 'waiting', code: 'TRC-ABC123', missing: ['words'] })
+    expect(screen.queryByRole('region', { name: 'Claim your gift' })).not.toBeInTheDocument()
+  })
+
+  it('offers a share card naming the university', () => {
+    renderWithReward({ state: 'off' })
+    expect(screen.getByText('Know someone else at Fudan University?')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Copy message and link/ })).toBeInTheDocument()
   })
 })
