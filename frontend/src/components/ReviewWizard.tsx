@@ -72,7 +72,7 @@ import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
 import { AnonEmailField, type MediaState } from './review/fields'
 import { GiftProgress } from './review/GiftProgress'
-import { RewardEmailNotice } from './review/RewardEmailNotice'
+import { RewardEmailNotice, type RewardMissing } from './review/RewardEmailNotice'
 import {
   REWARD_UI_ENABLED,
   readReferral,
@@ -1507,7 +1507,8 @@ export const ReviewWizard = ({
         <RewardEmailNotice
           email={user.email ?? 'your account email'}
           full={rewardEval.full}
-          missing={rewardEval.missing}
+          missing={rewardEval.missing as RewardMissing[]}
+          onFix={() => setShowRewardNotice(false)}
           onClose={() => setShowRewardNotice(false)}
           onChoose={(wantsGift) => {
             setShowRewardNotice(false)
