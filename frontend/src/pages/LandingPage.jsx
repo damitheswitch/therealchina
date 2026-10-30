@@ -30,7 +30,7 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      <UniversityDirectory />
+      <UniversityDirectory featured />
     </>
   )
 }
