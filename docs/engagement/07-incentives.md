@@ -166,3 +166,76 @@ The dragon's endpoint and visual treatment also remain undecided.
 
 Defined per approved sub-plan. Sessions 7A and 7B are proposed handoffs, not
 completed work or proof of release.
+
+## Free VPN gift for full reviews (built 2026-10-30, off by default)
+
+**Status:** built on a feature branch, not released. Nothing shows to reviewers
+until both switches are on.
+
+**What it is.** A reviewer who writes a full review can get a free 2GB VPN
+trial from a friend of the owner. The email carries the owner's WeChat ID and
+asks for an optional small proof. Buyers get a TRC discount and 150GB of online
+storage. The owner adds reviewers to the TRC WeChat group by hand.
+
+**Full review (checked on the server, never reads the rating).**
+1. 40 or more units of the reviewer's own words (words, plus one unit per 2
+   Chinese characters). The sentence the "What stood out" taps write does not
+   count. Filler and keyboard mashing are rejected.
+2. At least 2 taps on "What stood out".
+3. At least 4 of 5 detail areas: major, category ratings (4 of 8), costs or
+   funding, dates, photo.
+4. Review is live. Near-duplicate text (trigram similarity 0.85 or more against
+   any live review in the last 180 days) is declined; 0.6 or more is flagged.
+
+Code: `supabase/functions/_shared/reward.ts` (server), `frontend/src/lib/reviewReward.ts`
+(client mirror). Both run the same fixtures in `reward.fixtures.json`.
+
+**Switches.** Client build flag `VITE_REVIEW_REWARD=on`. Server secret
+`REWARD_ENABLED=true` plus `REWARD_WECHAT_ID`, `REWARD_HASH_SECRET` and
+`RESEND_API_KEY`. If any server value is missing the gift email is not sent and
+the reviewer sees "Gifts are paused" (their email stays saved).
+
+**Secrets.** `REWARD_ENABLED`, `REWARD_WECHAT_ID` (dami_theSwitch),
+`REWARD_OWNER_NAME`, `REWARD_DISCOUNT_TEXT`, `REWARD_HASH_SECRET` (any long
+random string), `REWARD_SUPPORT_EMAIL` (default nihao@therealchina.net).
+
+**Who gets contacted.** Guests: the private email typed on screen 3, kept on
+`reviewer_context.email`. Members: the email on their account. The table
+`review_rewards` stores the gift state and a one-way hash of the email, never
+the address. A daily job deletes the guest's stored email 90 days after the gift.
+
+**When the email goes out.** `review-submit`, `review-boost` and `review-manage`
+all call `maybeDispatchReward` after a save, so a review that becomes full later
+(for example through the extra-detail cards) sends the email at that moment.
+
+**Owner queue (Supabase SQL editor).**
+
+```sql
+SELECT rr.reward_code, rr.status, coalesce(rc.email, au.email) AS email,
+       rr.sent_at, u.name AS university, r.deleted_at IS NOT NULL AS deleted,
+       r.updated_at > rr.sent_at AS edited_after_send, rr.flags
+FROM public.review_rewards rr
+JOIN public.reviews r ON r.id = rr.review_id
+JOIN public.universities u ON u.id = r.university_id
+LEFT JOIN public.reviewer_context rc ON rc.review_id = rr.review_id
+LEFT JOIN auth.users au ON au.id = rr.user_id
+WHERE rr.status IN ('sent', 'contacted')
+ORDER BY rr.sent_at;
+
+UPDATE public.review_rewards SET status = 'contacted' WHERE reward_code = 'TRC-XXXXXX';
+UPDATE public.review_rewards
+SET status = 'fulfilled', handled_at = now(), owner_note = 'link sent'
+WHERE reward_code = 'TRC-XXXXXX';
+```
+
+**Claims the owner must confirm before turning it on.**
+
+| Claim | What has to be true | Fallback wording |
+|---|---|---|
+| "very fast" | Tested from several Chinese networks | "a fast VPN" or "a VPN" |
+| "150GB of online storage" | Comes with every paid plan | "extra online storage" |
+| "limited time" | A real end date or gift count, stated on the policy page | Drop "(limited time)" |
+| "2GB, one time" | The friend agrees to the amount | "a free trial" |
+
+**Switch it off.** Set `REWARD_ENABLED` to anything other than `true`, or turn
+the client flag off. Existing rows stay as they are.

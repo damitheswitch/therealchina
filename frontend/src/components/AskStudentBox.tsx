@@ -344,7 +344,9 @@ export const AskStudentBox = ({ university }: { university: UniversityRef }) => 
                       <span className="guide-tag">{categoryLabel(t.category)}</span>
                       <span className="ask-student-q-meta">Suggested prompt</span>
                     </div>
-                    <span className="ask-student-q-title">{t.question}</span>
+                    <Link to={reviewUrl} className="ask-student-q-title ask-student-q-stretch">
+                      {t.question}
+                    </Link>
                     <p className="ask-student-q-excerpt">{t.body}</p>
                   </div>
                   <div className="ask-student-q-actions">

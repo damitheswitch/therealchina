@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { REWARD_UI_ENABLED } from '../lib/reviewReward'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { ReviewCard } from './ReviewCard'
 import { ReviewSortSelect } from './ReviewSortSelect'
@@ -61,6 +63,12 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
         <h2 className="section-title">Student Reviews{totalCount > 0 ? ` (${totalCount})` : ''}</h2>
         {totalCount > 1 && <ReviewSortSelect value={resolvedSort} onChange={handleSortChange} />}
       </div>
+      {REWARD_UI_ENABLED && (
+        <p className="reward-hint">
+          Some reviewers get a small thank-you gift for a full review. The gift is the same for any
+          rating. <Link to="/editorial-policy#gifts">How gifts work</Link>
+        </p>
+      )}
 
       {loading ? (
         <div className="empty-state">

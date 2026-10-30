@@ -41,6 +41,10 @@ export interface ReviewEventData {
   duration_band?: PublishDurationBand
   card?: BoostCard
   after_card?: BoostAfterCard
+  // Thank-you gift funnel (fixed values only, no review content).
+  reward_stage?: 'form' | 'success'
+  reward_state?: string
+  reward_eligible?: boolean
 }
 
 export type ReviewEventName =
@@ -57,6 +61,9 @@ export type ReviewEventName =
   | 'review_published'
   | 'boost_card_completed'
   | 'boost_exited'
+  | 'reward_offer_viewed'
+  | 'reward_full_reached'
+  | 'reward_requested'
 
 export interface ReviewAnalyticsEvent {
   name: ReviewEventName
@@ -98,6 +105,9 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_published',
   'boost_card_completed',
   'boost_exited',
+  'reward_offer_viewed',
+  'reward_full_reached',
+  'reward_requested',
 ])
 
 const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[]> = {
@@ -111,9 +121,12 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
   review_validation_failed: ['flow', 'auth', 'step', 'stage'],
   review_submit_attempted: ['flow', 'entry', 'auth'],
   review_submit_failed: ['flow', 'entry', 'auth', 'reason'],
-  review_published: ['flow', 'entry', 'auth', 'duration_band'],
+  review_published: ['flow', 'entry', 'auth', 'duration_band', 'reward_eligible'],
   boost_card_completed: ['flow', 'auth', 'card'],
   boost_exited: ['flow', 'auth', 'after_card'],
+  reward_offer_viewed: ['flow', 'auth', 'reward_stage'],
+  reward_full_reached: ['flow', 'auth', 'reward_stage'],
+  reward_requested: ['flow', 'auth', 'reward_state'],
 }
 
 const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive) => boolean> = {
@@ -150,6 +163,17 @@ const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive)
     value === 'details' ||
     value === 'pros_cons' ||
     value === 'media',
+  reward_stage: (value) => value === 'form' || value === 'success',
+  reward_state: (value) =>
+    value === 'sent' ||
+    value === 'waiting' ||
+    value === 'email_used' ||
+    value === 'email_blocked' ||
+    value === 'failed' ||
+    value === 'paused' ||
+    value === 'declined' ||
+    value === 'off',
+  reward_eligible: (value) => typeof value === 'boolean',
   after_card: (value) =>
     value === 'program' ||
     value === 'ratings' ||

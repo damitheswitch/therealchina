@@ -1,6 +1,8 @@
 // Trust/legal page content — one source for all static policy pages.
 // Keep copy factual and dated. When a policy changes, update here AND bump
 // `updated` — the date renders on the page and in sitemap lastmod.
+const GIFTS_ON = import.meta.env.VITE_REVIEW_REWARD === 'on'
+
 export interface TrustSection {
   h: string
   id: string // anchor target — retired standalone slugs 301 to these
@@ -33,7 +35,10 @@ export const TRUST_PAGES: TrustDoc[] = [
         h: 'Why it exists',
         id: 'why-it-exists',
         body: [
-          'Choosing a Chinese university from abroad is a leap of faith. Agencies earn commissions for steering students to partner schools, and ranking tables say nothing about daily life. TRC exists so students can hear from other students. No sponsorships, no partner placements, no reviews for sale.',
+          'Choosing a Chinese university from abroad is a leap of faith. Agencies earn commissions for steering students to partner schools, and ranking tables say nothing about daily life. TRC exists so students can hear from other students. ' +
+            (GIFTS_ON
+              ? 'Universities and agencies cannot pay for placement, and nobody can buy a review or a rating.'
+              : 'No sponsorships, no partner placements, no reviews for sale.'),
         ],
       },
       {
@@ -92,6 +97,19 @@ export const TRUST_PAGES: TrustDoc[] = [
           "Don't post content about people who aren't you, personal data, or hate speech. Don't review a university you never attended. One review per person per university.",
         ],
       },
+      ...(GIFTS_ON
+        ? [
+            {
+              h: 'Thank-you gifts',
+              id: 'gifts',
+              body: [
+                'Reviewers who finish a full review can get a thank-you gift: a free VPN and online services trial from a trusted friend of TRC who runs the service.',
+                "The gift is for any full review. A full review has the reviewer's own words and a few details, like their major or costs. The rating does not matter. A 1-star review gets the same gift as a 5-star review.",
+                'We never ask anyone to praise TRC, a university or the service. We never change, hide or reorder a review because of a gift. Questions: nihao@therealchina.net.',
+              ],
+            },
+          ]
+        : []),
       {
         h: 'What gets removed',
         id: 'removals',
@@ -131,6 +149,11 @@ export const TRUST_PAGES: TrustDoc[] = [
           'Account data (email, display name), the content you submit (reviews, photos, profile fields), and the technical logs needed to keep the site running. Reviews marked anonymous are not linked to your account publicly.',
           'We use Umami Cloud to measure how people use the review form so we can improve it. We do not send review text, email addresses, or account identifiers to Umami.',
           'Public pages also run Google Analytics so we can see which content people read and where they arrive from. It records page views and basic device data, and it sets its own cookie. Signed-in app pages, like your profile and the review form itself, are not sent to Google.',
+          ...(GIFTS_ON
+            ? [
+                'If you ask for the thank-you gift, we use your email to send the steps. For guests, this is the private email you type on the last screen. For members, it is your sign-up email. It is never public, never used for newsletters, and never given to the service provider. We delete it 90 days after the gift email.',
+              ]
+            : []),
         ],
       },
       {

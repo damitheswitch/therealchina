@@ -3,6 +3,8 @@ import type { MediaItem, SubScores } from '../../lib/reviewSubmit'
 import { TUITION_RANGES, LIVING_COSTS } from '../../lib/constants'
 import { ENROLLMENT_OPTIONS, FUNDING_OPTIONS } from '../../lib/reviewDisplay'
 import { formatLocation } from '../../lib/chinaDivisions'
+import { SITE } from '../../lib/seo/site'
+import { describeMissing, suggestEmailFix, type RewardMissing } from '../../lib/reviewReward'
 import {
   DEGREE_LEVELS,
   INSTRUCTION_LANGS,
@@ -829,25 +831,63 @@ export const MediaField = ({
 
 // ---- About you (anonymous only) ---------------------------------------------------
 
-export const AnonEmailField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label" htmlFor="anon-email">
-      Email <span className="form-hint-inline">optional, private backup</span>
-    </label>
-    <input
-      type="email"
-      id="anon-email"
-      className="form-input"
-      placeholder="you@example.com"
-      value={form.values.anonEmail}
-      onChange={(e) => form.set('anonEmail', e.target.value)}
-    />
-    <span className="form-hint">
-      Never shown publicly or shared with any university. Only used to link this review to your
-      account if you sign up later.
-    </span>
-  </div>
-)
+export const AnonEmailField = ({
+  form,
+  reward,
+}: {
+  form: ReviewForm
+  // Gift mode: the field becomes the gift email, with its own honest copy.
+  reward?: { full: boolean; missing: RewardMissing[] } | null
+}) => {
+  const email = form.values.anonEmail
+  const fix = reward ? suggestEmailFix(email) : null
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor="anon-email">
+        {reward ? 'Email for your free VPN gift' : 'Email'}{' '}
+        <span className="form-hint-inline">
+          {reward ? 'private, never shown' : 'optional, private backup'}
+        </span>
+      </label>
+      <input
+        type="email"
+        id="anon-email"
+        className="form-input"
+        placeholder="you@example.com"
+        autoComplete="email"
+        value={email}
+        onChange={(e) => form.set('anonEmail', e.target.value)}
+      />
+      {fix && (
+        <p className="reward-hint" role="status">
+          Did you mean {fix}?{' '}
+          <button type="button" className="link-inline" onClick={() => form.set('anonEmail', fix)}>
+            Yes, fix it
+          </button>
+        </p>
+      )}
+      {reward ? (
+        <>
+          <p className="reward-hint">
+            {reward.full
+              ? 'Your review is full. We will email you the steps to get your free VPN right after you publish.'
+              : `Add ${describeMissing(reward.missing)} and we will email your free VPN steps as soon as your review is full.`}
+          </p>
+          <p className="reward-hint">
+            Your email is never public and never shared with any university. We use it to send your
+            gift steps, and to link this review to your account if you sign up later. We delete it
+            90 days after your gift. Questions: {SITE.contactEmail}
+          </p>
+        </>
+      ) : (
+        <span className="form-hint">
+          Never shown publicly or shared with any university. Only used to link this review to your
+          account if you sign up later.
+        </span>
+      )}
+    </div>
+  )
+}
 
 // Anonymous "about you" fields beyond email are gone from the fast flow: they
 // never reached review columns (they live on the private reviewer_context
