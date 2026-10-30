@@ -7192,31 +7192,6 @@ a.ask-student-q-replies:hover {
   text-align: center;
 }
 
-.skip-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  margin: var(--sp-1) 0 var(--sp-3);
-  padding: 0;
-  border: 0;
-  background: none;
-  font-size: 0.85rem;
-  color: var(--ink-faint);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-.skip-link:hover {
-  color: var(--ink-soft);
-}
-.story-nudge {
-  margin-bottom: var(--sp-2);
-  padding: 0.6rem 0.9rem;
-  border-radius: var(--r-md);
-  background: rgba(196, 160, 60, 0.14);
-  font-size: 0.85rem;
-  color: var(--ink-soft);
-}
 .preview-eyebrow {
   display: block;
   margin-bottom: 0.4rem;

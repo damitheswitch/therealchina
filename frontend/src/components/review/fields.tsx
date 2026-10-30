@@ -508,7 +508,9 @@ export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <span className="sr-only">What stood out. Tap a side per row.</span>
     <span className="pick-count" aria-live="polite">
-      {Object.keys(form.values.polarity).length} of {POLARITY_TOPICS.length} picked
+      {Object.values(form.values.polarity).filter(Boolean).length} of {POLARITY_TOPICS.length}{' '}
+      picked
+      {Object.values(form.values.polarity).filter(Boolean).length < 2 && ', tap at least 2'}
     </span>
     <div className="polarity-grid">
       {POLARITY_TOPICS.map((topic) => {
