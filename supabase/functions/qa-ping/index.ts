@@ -18,7 +18,8 @@ import {
 //   GET or POST with ?t=<token>
 //       Unsubscribe. No login: the token is an HMAC (QA_PING_SECRET) over the
 //       recipient, so only addresses we emailed can be switched off. GET
-//       redirects to the site, POST (mail-client one-click) answers JSON.
+//       only redirects to a confirm button on the site; POST (that button,
+//       or a mail client's one-click) unsubscribes and answers JSON.
 //
 // Recipients: members whose profiles.email_consent is true (confirmed auth
 // address) and anonymous reviewers whose reviewer_context has an email AND
@@ -257,14 +258,17 @@ async function applyUnsubscribe(token: string): Promise<boolean> {
   return !error
 }
 
+// GET never changes anything: mail scanners open links to check them, which
+// would silently unsubscribe people. It sends the reader to a confirm button
+// on the site, and that button (or a mail client's one-click POST) does it.
 async function handleUnsubscribe(req: Request, token: string): Promise<Response> {
-  const ok = await applyUnsubscribe(token)
   if (req.method === 'GET') {
     return new Response(null, {
       status: 302,
-      headers: { Location: `${SITE_URL}/community?unsubscribed=${ok ? '1' : 'error'}` },
+      headers: { Location: `${SITE_URL}/community?unsubscribe=${encodeURIComponent(token)}` },
     })
   }
+  const ok = await applyUnsubscribe(token)
   return jsonResponse(req, ok ? { ok: true } : { error: 'Invalid link' }, ok ? 200 : 400)
 }
 

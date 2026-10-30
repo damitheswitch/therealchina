@@ -4,6 +4,7 @@ import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
 import { COMMUNITY_CATEGORIES, categoryLabel } from '../lib/community'
 import { useCommunityQuestions } from '../hooks/useCommunity'
+import { unsubscribeFromPings } from '../lib/communityApi'
 
 type View = 'newest' | 'unanswered' | 'top'
 
@@ -23,7 +24,8 @@ export const CommunityPage = () => {
   const [params, setParams] = useSearchParams()
   const view = viewFromParam(params.get('tab'))
   const cat = params.get('c')
-  const unsubscribed = params.get('unsubscribed')
+  const unsubscribeToken = params.get('unsubscribe')
+  const [unsubState, setUnsubState] = useState<'idle' | 'working' | 'done' | 'error'>('idle')
   const [catsOpen, setCatsOpen] = useState(true)
   const [navOpen, setNavOpen] = useState(false)
   const { questions: allQuestions, loading, error, refetch } = useCommunityQuestions()
@@ -157,12 +159,34 @@ export const CommunityPage = () => {
             </Link>
           </header>
 
-          {unsubscribed && (
-            <p className="form-hint" role="status">
-              {unsubscribed === '1'
-                ? "You're unsubscribed. We won't email you about new questions."
-                : 'That unsubscribe link did not work. Reply to any of our emails and we will sort it out.'}
-            </p>
+          {unsubscribeToken && (
+            <div className="form-hint" role="status">
+              {unsubState === 'done' ? (
+                <p>You&apos;re unsubscribed. We won&apos;t email you about new questions.</p>
+              ) : unsubState === 'error' ? (
+                <p>
+                  That unsubscribe link did not work. Reply to any of our emails and we will sort it
+                  out.
+                </p>
+              ) : (
+                <p>
+                  Stop emails about new questions at your university?{' '}
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    disabled={unsubState === 'working'}
+                    onClick={async () => {
+                      setUnsubState('working')
+                      setUnsubState(
+                        (await unsubscribeFromPings(unsubscribeToken)) ? 'done' : 'error'
+                      )
+                    }}
+                  >
+                    Unsubscribe
+                  </button>
+                </p>
+              )}
+            </div>
           )}
 
           {loading ? (

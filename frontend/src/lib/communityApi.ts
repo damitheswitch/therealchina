@@ -275,3 +275,19 @@ export const setQuestionNotify = async (questionId: string, enabled: boolean): P
   })
   if (error) throw error
 }
+
+// Confirm button behind the "Stop these emails" link in reviewer pings. The
+// link itself only opens the page, so a mail scanner cannot unsubscribe anyone.
+export const unsubscribeFromPings = async (token: string): Promise<boolean> => {
+  const base = import.meta.env.VITE_SUPABASE_URL
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+  try {
+    const res = await fetch(`${base}/functions/v1/qa-ping?t=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
