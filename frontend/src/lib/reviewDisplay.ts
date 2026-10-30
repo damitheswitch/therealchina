@@ -110,9 +110,15 @@ export const getSubScores = (review: ReviewDisplayData): SubScore[] =>
     (s): s is SubScore => typeof s.value === 'number'
   )
 
-const formatYearRange = (start: number | null, end: number | null): string => {
+// "to present" is only true for a current student; the wizard never asks for a finish
+// year, so everyone else gets a plain "Started" instead of an invented end.
+const formatYearRange = (
+  start: number | null,
+  end: number | null,
+  status: string | null
+): string => {
   if (start && end) return `${start} to ${end}`
-  if (start) return `${start} to present`
+  if (start) return status === 'current' ? `${start} to present` : `Started ${start}`
   if (end) return `until ${end}`
   return ''
 }
@@ -125,7 +131,7 @@ export const buildContextLine = (review: ReviewDisplayData): string => {
   if (review.degree_level) parts.push(review.degree_level)
   if (review.enrollment_status)
     parts.push(ENROLLMENT_LABELS[review.enrollment_status] ?? review.enrollment_status)
-  const years = formatYearRange(review.start_year, review.end_year)
+  const years = formatYearRange(review.start_year, review.end_year, review.enrollment_status)
   if (years) parts.push(years)
   return parts.join(' · ')
 }

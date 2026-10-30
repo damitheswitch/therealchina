@@ -11,6 +11,8 @@ import { RecommendPill, ReviewContext, ReviewExtras, ReviewStrengthMeter } from 
 import { useAuth } from '../../contexts/AuthContext'
 import { useProfileContext } from '../../contexts/ProfileContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
+import { SITE } from '../../lib/seo/site'
+import { rewardConfirmation, type RewardResult } from '../../lib/reviewReward'
 
 // Renders the just-published review the way it appears on the university
 // page. Driven straight off form values, so it fills in live while the
@@ -70,6 +72,8 @@ export const ReviewSuccess = ({
   publishedAt,
   universitySlug,
   isAnonymous,
+  wantsNickname = false,
+  reward,
   postedAnonymously = false,
   canBoost,
   onBoost,
@@ -80,6 +84,11 @@ export const ReviewSuccess = ({
   publishedAt: string
   universitySlug: string | null
   isAnonymous: boolean
+  // Guest who chose "Post with nickname": the account step is the last thing
+  // they see, and leaving without it shows a warning first.
+  wantsNickname?: boolean
+  // Thank-you gift state from the server after publish or a later save.
+  reward?: RewardResult
   // Signed-in reviewer who picked "Post as Anonymous" — the preview must show
   // the public truth (Anonymous, no seal).
   postedAnonymously?: boolean
@@ -89,6 +98,28 @@ export const ReviewSuccess = ({
 }) => {
   const { openAuthModal } = useAuthModal()
   const [offerDismissed, setOfferDismissed] = useState(false)
+  const [confirmingSkip, setConfirmingSkip] = useState(false)
+  const rewardLine = rewardConfirmation(reward, SITE.contactEmail)
+  const rewardWaiting = reward?.state === 'waiting'
+  const nicknamePending = isAnonymous && wantsNickname && !offerDismissed
+
+  const openNicknameSignup = () =>
+    openAuthModal('register', {
+      title: 'Add your nickname to your review',
+      subtitle:
+        'Pick any nickname you like. Your email is never shown publicly, and your review is already saved.',
+      closable: true,
+    })
+
+  // Leaving before the account step shows the warning once; a second click leaves.
+  const guardLeave = (e: React.MouseEvent, leave?: () => void) => {
+    if (nicknamePending && !confirmingSkip) {
+      e.preventDefault()
+      setConfirmingSkip(true)
+      return
+    }
+    leave?.()
+  }
 
   const date = new Date(publishedAt).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -107,7 +138,10 @@ export const ReviewSuccess = ({
   return (
     <div className="wizard-step active">
       <h2 className="step-title">Your review is live.</h2>
-      <p className="step-sub">This is how it looks on the page.</p>
+      <p className="step-sub">
+        Thanks. Students deciding on this university will read this. Here is how it looks on the
+        page.
+      </p>
 
       <PublishedReviewPreview
         values={form.values}
@@ -118,9 +152,19 @@ export const ReviewSuccess = ({
 
       <ReviewStrengthMeter review={preview} />
 
-      {canBoost && (
+      {rewardLine && (
+        <p className="reward-confirm" role="status">
+          <span aria-hidden="true">🎁</span> {rewardLine}
+        </p>
+      )}
+
+      {canBoost && !nicknamePending && (
         <div className="success-offer">
-          <h3 className="success-offer-title">Make it more useful in 60 seconds?</h3>
+          <h3 className="success-offer-title">
+            {rewardWaiting
+              ? 'Add details to get your free VPN'
+              : 'Make it more useful in 60 seconds?'}
+          </h3>
           <p className="step-sub" style={{ marginBottom: 'var(--sp-2)' }}>
             Program, ratings, costs. One card at a time, each saved as you go.
           </p>
@@ -128,14 +172,45 @@ export const ReviewSuccess = ({
             <button type="button" className="btn btn-primary btn-lg" onClick={onBoost}>
               Add more detail
             </button>
-            <button type="button" className="btn btn-ghost" onClick={onDone}>
-              Done
+          </div>
+        </div>
+      )}
+
+      {nicknamePending && (
+        <div className="success-offer" role="region" aria-label="Add your nickname">
+          <h3 className="success-offer-title">Last step: add your nickname</h3>
+          <p className="step-sub" style={{ marginBottom: 'var(--sp-1)' }}>
+            Your review is live as Anonymous. Make a free account to put your nickname and the
+            Verified seal on it.
+          </p>
+          <ul className="success-offer-perks">
+            <li>Edit or delete this review anytime</li>
+            <li>Get an email when someone asks a follow-up question</li>
+            <li>Upvote, comment and message other students</li>
+          </ul>
+          {confirmingSkip && (
+            <p className="form-hint" role="alert" style={{ marginBottom: 'var(--sp-2)' }}>
+              Without an account this review stays Anonymous. You cannot edit or delete it, and you
+              cannot upvote, comment or message students. You can still add an account later from
+              this browser.
+            </p>
+          )}
+          <div className="success-actions">
+            <button type="button" className="btn btn-primary btn-lg" onClick={openNicknameSignup}>
+              Create account and add nickname
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => (confirmingSkip ? setOfferDismissed(true) : setConfirmingSkip(true))}
+            >
+              {confirmingSkip ? 'Stay anonymous' : 'Skip'}
             </button>
           </div>
         </div>
       )}
 
-      {isAnonymous && !offerDismissed && (
+      {isAnonymous && !wantsNickname && !offerDismissed && (
         <div className="success-offer">
           <button
             type="button"
@@ -185,15 +260,19 @@ export const ReviewSuccess = ({
 
       <div className="wizard-nav" style={{ justifyContent: 'flex-start' }}>
         {universitySlug ? (
-          <Link to={`/university/${universitySlug}`} className="btn btn-outline">
+          <Link
+            to={`/university/${universitySlug}`}
+            className="btn btn-outline"
+            onClick={(e) => guardLeave(e)}
+          >
             See it on the page →
           </Link>
         ) : (
-          <Link to="/universities" className="btn btn-outline">
+          <Link to="/universities" className="btn btn-outline" onClick={(e) => guardLeave(e)}>
             Browse universities →
           </Link>
         )}
-        <button type="button" className="btn btn-ghost" onClick={onDone}>
+        <button type="button" className="btn btn-ghost" onClick={(e) => guardLeave(e, onDone)}>
           Done
         </button>
       </div>

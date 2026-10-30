@@ -65,7 +65,6 @@ import { useProfileContext } from '../contexts/ProfileContext'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
-import { useAuthModal } from '../contexts/AuthModalContext'
 import { SealStampOverlay } from './SealStampOverlay'
 import { SealBadge } from './SealBadge'
 import { ReviewEssentials } from './review/ReviewEssentials'
@@ -73,14 +72,22 @@ import { ReviewStory } from './review/ReviewStory'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
-import type { MediaState } from './review/fields'
+import { AnonEmailField, type MediaState } from './review/fields'
+import { RewardTeaser } from './review/RewardTeaser'
+import { RewardEmailNotice } from './review/RewardEmailNotice'
+import {
+  REWARD_UI_ENABLED,
+  describeMissing,
+  evaluateRewardFields,
+  type RewardResult,
+} from '../lib/reviewReward'
 
 // ---- Constants ----------------------------------------------------------------
 
 // The tap-first flow's analytics tag. Event names and meanings are unchanged —
 // only `flow` distinguishes which layout produced them, so the v2 funnel can
 // be compared against fast_2 directly.
-const FLOW = 'tap_2' as const
+const FLOW = 'tap_3' as const
 
 // Screen index -> the step-viewed event + stage enum it emits. Step numbers
 // stay positional ("Nth screen shown") and stages stay semantic, so the
@@ -88,12 +95,16 @@ const FLOW = 'tap_2' as const
 const SCREEN_EVENTS: Record<number, ReviewEventName> = {
   1: 'review_step_1_viewed',
   2: 'review_step_2_viewed',
+  3: 'review_step_3_viewed',
 }
 const SCREEN_STAGES: Record<number, ReviewStage> = {
   1: 'basics',
   2: 'story',
+  3: 'post',
 }
-const SCREEN_LABELS = ['The essentials', 'Your story']
+// Minimum taps on "What stood out" so every review carries some structured signal.
+const MIN_POLARITY_PICKS = 2
+const SCREEN_LABELS = ['The essentials', 'What stood out', 'Post it']
 
 type Phase = 'form' | 'success' | 'boost'
 
@@ -101,6 +112,41 @@ type Phase = 'form' | 'success' | 'boost'
 // toward the gold pearl as detail areas fill on either side of publish. It
 // reads the same ReviewCardData shape the public card uses, so the count it
 // shows always matches the highlight the review will actually earn.
+// The dragon hatches and grows as detail areas fill: an egg at zero, a Chinese
+// dragon when all seven are in. Gold highlight still arrives at DETAILED_THRESHOLD.
+const DRAGON_STAGES = [
+  { min: 0, emoji: '🥚', name: 'Egg', cls: 'egg', hint: 'Add a detail to crack the egg.' },
+  { min: 1, emoji: '🥚', name: 'Cracking egg', cls: 'cracking', hint: 'Add another to hatch it.' },
+  {
+    min: 2,
+    emoji: '🦎',
+    name: 'Hatchling',
+    cls: 'hatchling',
+    hint: 'One more and it becomes a young dragon.',
+  },
+  {
+    min: 3,
+    emoji: '🐲',
+    name: 'Young dragon',
+    cls: 'young',
+    hint: 'Keep going to grow a full dragon.',
+  },
+  {
+    min: 5,
+    emoji: '🐉',
+    name: 'Dragon',
+    cls: 'dragon',
+    hint: 'Fill every area to make it a Chinese dragon.',
+  },
+  {
+    min: 7,
+    emoji: '🐉',
+    name: 'Chinese dragon',
+    cls: 'golden',
+    hint: 'Every detail is in.',
+  },
+] as const
+
 const DetailTrack = ({
   values,
   media,
@@ -111,27 +157,28 @@ const DetailTrack = ({
   const filled = filledDetailAreas(previewReviewFromFields(values, media)).length
   const pct = Math.min(100, (filled / DETAIL_AREA_COUNT) * 100)
   const earned = filled >= DETAILED_THRESHOLD
+  const stage = [...DRAGON_STAGES].reverse().find((s) => filled >= s.min) ?? DRAGON_STAGES[0]
   return (
     <div
       className="detail-track"
       role="status"
-      aria-label={`${filled} of ${DETAIL_AREA_COUNT} detail areas filled`}
+      aria-label={`${stage.name}: ${filled} of ${DETAIL_AREA_COUNT} detail areas filled`}
     >
       <div className="detail-track-bar">
         <div className="detail-track-fill" style={{ width: `${pct}%` }} />
         <span
-          className="detail-track-dragon"
+          className={`detail-track-dragon stage-${stage.cls}`}
           style={{ left: `calc(${pct}% - 0.6em)` }}
           aria-hidden="true"
         >
-          🐉
+          {stage.emoji}
         </span>
         <span className={`detail-track-pearl${earned ? ' earned' : ''}`} aria-hidden="true" />
       </div>
       <div className={`detail-track-label${earned ? ' earned' : ''}`}>
         {earned
-          ? 'Gold highlight earned'
-          : `${filled}/${DETAIL_AREA_COUNT} details: ${DETAILED_THRESHOLD} earns the gold highlight`}
+          ? `Gold highlight earned. ${stage.name}. ${stage.hint}`
+          : `${stage.name}, ${filled}/${DETAIL_AREA_COUNT} details. ${stage.hint} ${DETAILED_THRESHOLD} earns the gold highlight.`}
       </div>
     </div>
   )
@@ -150,7 +197,6 @@ export const ReviewWizard = ({
 }) => {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
-  const { openAuthModal } = useAuthModal()
   const { profile } = useProfileContext()
   const { showToast } = useToast()
 
@@ -217,6 +263,16 @@ export const ReviewWizard = ({
   // user_id NULL and ownership is linked privately on reviewer_context.
   // Named + Verified seal stays the default while logged in.
   const [postAnon, setPostAnon] = useState(false)
+  // Guest who picked "Post with nickname": publishes now as Anonymous, then gets
+  // the account step on the success screen (the claim flow attaches the name).
+  const [wantsNickname, setWantsNickname] = useState(false)
+  // Thank-you gift: the last result the server reported, whether the signed-in
+  // reviewer has answered the "send my gift?" notice, and the notice itself.
+  const [reward, setReward] = useState<RewardResult | undefined>(undefined)
+  const [showRewardNotice, setShowRewardNotice] = useState(false)
+  const rewardOn = REWARD_UI_ENABLED
+  const rewardOfferViewedRef = useRef(false)
+  const rewardFullReachedRef = useRef(false)
   // Set when a requested draft lookup failed — lets a valid ?uni still
   // prefill after a bad ?draft= link instead of leaving an empty field.
   const [draftLookupFailed, setDraftLookupFailed] = useState(false)
@@ -277,7 +333,7 @@ export const ReviewWizard = ({
   // ---- Draft persistence -----------------------------------------------------
 
   const draftPayload = useMemo<ReviewDraftPayload>(
-    () => draftPayloadFromState(values, mediaState.media, step),
+    () => draftPayloadFromState(values, mediaState.media, Math.min(step, 2)),
     [values, mediaState.media, step]
   )
 
@@ -544,7 +600,7 @@ export const ReviewWizard = ({
           flow: FLOW,
           entry: reviewEntry,
           auth: reviewAuth,
-          step: step as 1 | 2,
+          step: step as 1 | 2 | 3,
           stage: SCREEN_STAGES[step],
         },
       })
@@ -754,6 +810,33 @@ export const ReviewWizard = ({
     }))
   }, [profile, editMode, uniParam, applyValues])
 
+  // ---- Thank-you gift ---------------------------------------------------------
+
+  const rewardEval = useMemo(
+    () => evaluateRewardFields(values, mediaState.media),
+    [values, mediaState.media]
+  )
+  const guestGiftEmail = values.anonEmail.trim()
+  const guestGiftEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestGiftEmail)
+
+  useEffect(() => {
+    if (!rewardOn || phase !== 'form' || rewardOfferViewedRef.current) return
+    rewardOfferViewedRef.current = true
+    void trackReviewEvent({
+      name: 'reward_offer_viewed',
+      data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
+    })
+  }, [rewardOn, phase, reviewAuth])
+
+  useEffect(() => {
+    if (!rewardOn || !rewardEval.full || rewardFullReachedRef.current) return
+    rewardFullReachedRef.current = true
+    void trackReviewEvent({
+      name: 'reward_full_reached',
+      data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
+    })
+  }, [rewardOn, rewardEval.full, reviewAuth])
+
   // ---- Validation --------------------------------------------------------------
 
   const clearError = useCallback(() => setError(null), [])
@@ -767,7 +850,7 @@ export const ReviewWizard = ({
         data: {
           flow: FLOW,
           auth: reviewAuth,
-          step: screen as 1 | 2,
+          step: screen as 1 | 2 | 3,
           stage: SCREEN_STAGES[screen],
         },
       })
@@ -795,7 +878,13 @@ export const ReviewWizard = ({
     if (s === 2) {
       const t = values.reviewText.trim()
       if (t.length > 0 && t.length < 10) {
-        return 'A few more words, or clear it and post a quick rating.'
+        return 'A few more words, or clear the box.'
+      }
+      // Applicants need a balanced view: at least 2 taps, ideally one good and one bad.
+      // Answering a peer question may use a written answer instead.
+      const picked = Object.values(values.polarity).filter(Boolean).length
+      if (picked < MIN_POLARITY_PICKS && !(promptParam && t.length >= 10)) {
+        return 'Tap at least 2 rows, ideally one good and one bad. It tells applicants what is really there.'
       }
       return null
     }
@@ -811,7 +900,7 @@ export const ReviewWizard = ({
       return
     }
     clearError()
-    setStep((s) => Math.min(s + 1, 2))
+    setStep((s) => Math.min(s + 1, 3))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -831,7 +920,7 @@ export const ReviewWizard = ({
     }
   }
 
-  const handlePublish = async () => {
+  const handlePublish = async (giftChoice?: boolean) => {
     if (submitInFlightRef.current) return
     beginReviewAttempt()
 
@@ -847,6 +936,7 @@ export const ReviewWizard = ({
     }
     const storyErr = validateScreen(2)
     if (storyErr) {
+      setStep(2)
       setError(storyErr)
       reportValidationFailure(2)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -889,6 +979,7 @@ export const ReviewWizard = ({
       const result = await submitReview({
         cfToken,
         postAnonymously: Boolean(user && postAnon),
+        rewardRequested: rewardOn && (user ? giftChoice === true : guestGiftEmailValid),
         claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
         boostToken: boostToken ?? undefined,
         universitySlug: !isNotListed && values.selectedUni ? values.selectedUni : undefined,
@@ -925,10 +1016,16 @@ export const ReviewWizard = ({
           entry: reviewEntry,
           auth: reviewAuth,
           duration_band: publishDurationBand(attemptStartedAtRef.current),
+          ...(rewardOn ? { reward_eligible: rewardEval.full } : {}),
         },
       })
-
-      showToast('Review submitted! Thank you.', 'success')
+      if (result.reward && result.reward.state !== 'off') {
+        setReward(result.reward)
+        void trackReviewEvent({
+          name: 'reward_requested',
+          data: { flow: FLOW, auth: reviewAuth, reward_state: result.reward.state },
+        })
+      }
 
       // The review is live — the draft it came from is done. Server drafts are
       // deleted by id (or by university when the row was created earlier);
@@ -991,7 +1088,8 @@ export const ReviewWizard = ({
       // the plain success screen is all that exists.
       setPendingSuccess(() => () => {
         const canBoost = Boolean(user) || getBoostToken(result.reviewId) !== null
-        setPhase(canBoost ? 'boost' : 'success')
+        // Nickname guests see the account step first; the Boost offer follows it.
+        setPhase(canBoost && !(!user && wantsNickname) ? 'boost' : 'success')
       })
       setShowStamp(true)
     } catch (error) {
@@ -1027,12 +1125,14 @@ export const ReviewWizard = ({
     if (!published) return false
     try {
       if (user) {
-        await updateReview(
+        const next = await updateReview(
           published.reviewId,
           buildReviewFields(valuesRef.current, mediaStateRef.current.media)
         )
+        if (next && next.state !== 'off') setReward(next)
       } else {
-        await boostReview(published.reviewId, buildBoostPatch(valuesRef.current, card))
+        const next = await boostReview(published.reviewId, buildBoostPatch(valuesRef.current, card))
+        if (next && next.state !== 'off') setReward(next)
       }
       return true
     } catch (err) {
@@ -1069,6 +1169,18 @@ export const ReviewWizard = ({
     showToast('All saved. Thanks for the detail.', 'success')
   }, [showToast])
 
+  // Back goes to the page that sent the reviewer here (a university page, a question
+  // thread). With no history to return to, fall back to the reviewed university or home.
+  const leaveHref =
+    values.selectedUni && values.selectedUni !== '__not_listed'
+      ? `/university/${values.selectedUni}`
+      : '/'
+  const leaveWizard = (e?: { preventDefault: () => void }) => {
+    e?.preventDefault()
+    if ((window.history.state?.idx ?? 0) > 0) navigate(-1)
+    else navigate(leaveHref)
+  }
+
   const finishFlow = () => {
     navigate(published?.universitySlug ? `/university/${published.universitySlug}` : '/')
   }
@@ -1097,6 +1209,8 @@ export const ReviewWizard = ({
             publishedAt={published.publishedAt}
             universitySlug={published.universitySlug}
             isAnonymous={!user}
+            wantsNickname={wantsNickname}
+            reward={reward}
             postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
             onBoost={() => setPhase('boost')}
@@ -1142,7 +1256,12 @@ export const ReviewWizard = ({
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
       <div className="section">
-        <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
+        <Link
+          to={leaveHref}
+          onClick={leaveWizard}
+          className="btn btn-outline"
+          style={{ marginBottom: 'var(--sp-2)' }}
+        >
           <Icons.ArrowLeft /> Back
         </Link>
         <h1 className="section-title">
@@ -1167,6 +1286,7 @@ export const ReviewWizard = ({
         </div>
 
         <DetailTrack values={values} media={mediaState.media} />
+        {rewardOn && <RewardTeaser evaluation={rewardEval} />}
 
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}
@@ -1203,9 +1323,34 @@ export const ReviewWizard = ({
 
         {step === 1 && <ReviewEssentials form={form} promptQuestion={promptParam} />}
 
-        {step === 2 && <ReviewStory form={form} isAnonymous={!user} promptQuestion={promptParam} />}
+        {step === 2 && (
+          <ReviewStory
+            form={form}
+            promptQuestion={promptParam}
+            rewardUnits={rewardOn ? rewardEval.ownUnits : undefined}
+          />
+        )}
 
-        {user && step === 2 && qSlugParam && !answerParam && (
+        {step === 3 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">How it will appear</h2>
+            <span className="preview-eyebrow">Preview</span>
+            <div className="post-preview">
+              <PublishedReviewPreview
+                values={values}
+                media={mediaState.media}
+                date={new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+                anonymous={Boolean(user && postAnon) || !user}
+              />
+            </div>
+          </div>
+        )}
+
+        {user && step === 3 && qSlugParam && !answerParam && (
           <label
             className="form-checkbox-label"
             htmlFor="cross-post-qa"
@@ -1226,19 +1371,19 @@ export const ReviewWizard = ({
             publishing. Guests post anonymously or sign in for the seal (modal,
             so the draft in state + localStorage survives); signed-in reviewers
             can hide their name while keeping the review privately owned. */}
-        {step === 2 && (
+        {step === 3 && (
           <div className="attribution-card" role="radiogroup" aria-label="How your review appears">
             <span className="form-label">How your review appears</span>
             {!user ? (
               <>
-                <label className="attribution-option selected">
+                <label className={`attribution-option${wantsNickname ? '' : ' selected'}`}>
                   <input
                     type="radio"
                     name="review-attribution"
                     className="attribution-radio"
-                    checked
-                    readOnly
+                    checked={!wantsNickname}
                     disabled={loading}
+                    onChange={() => setWantsNickname(false)}
                   />
                   <span className="attribution-option-body">
                     <span className="attribution-option-title">
@@ -1251,29 +1396,22 @@ export const ReviewWizard = ({
                     </span>
                   </span>
                 </label>
-                <label className="attribution-option">
+                <label className={`attribution-option${wantsNickname ? ' selected' : ''}`}>
                   <input
                     type="radio"
                     name="review-attribution"
                     className="attribution-radio"
-                    checked={false}
+                    checked={wantsNickname}
                     disabled={loading}
-                    onChange={() =>
-                      openAuthModal('register', {
-                        title: 'Add the Verified seal to your review',
-                        subtitle:
-                          'Use any nickname you like. Your email is never shown publicly, and your draft stays saved.',
-                        closable: true,
-                      })
-                    }
+                    onChange={() => setWantsNickname(true)}
                   />
                   <span className="attribution-option-body">
                     <span className="attribution-option-title">
                       Post with nickname <SealBadge />
                     </span>
                     <span className="attribution-option-copy">
-                      Sign in or create a free account to put your chosen nickname and the red
-                      Verified seal on this review. Your draft stays saved right here.
+                      Publish now, then make a free account in about 20 seconds to add your nickname
+                      and the red Verified seal. Nothing blocks you before you post.
                     </span>
                   </span>
                 </label>
@@ -1324,8 +1462,45 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {/* Anonymous Turnstile — lives on the publish screen now */}
-        {!user && step === 2 && (
+        {!user && step === 3 && rewardOn && (
+          <AnonEmailField
+            form={form}
+            reward={{ full: rewardEval.full, missing: rewardEval.missing }}
+          />
+        )}
+        {!user && step === 3 && !rewardOn && (
+          <details className="email-disclosure">
+            <summary>Add a private backup email</summary>
+            <AnonEmailField form={form} />
+          </details>
+        )}
+
+        {/* Last chance to add words or taps before publishing; the rest (ratings, costs)
+            comes from the detail cards right after publishing. */}
+        {rewardOn && step === 3 && !rewardEval.full && (
+          <div className="reward-nudge" role="status">
+            {rewardEval.missing.some((m) => m === 'words' || m === 'taps') ? (
+              <>
+                <p>
+                  Your review is not full yet. Add{' '}
+                  {describeMissing(rewardEval.missing.filter((m) => m !== 'details'))} to get the
+                  free VPN.
+                </p>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setStep(2)}>
+                  Add them now
+                </button>
+              </>
+            ) : (
+              <p>
+                Almost there. After you publish, the extra detail cards (ratings and costs) finish
+                your free VPN gift.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Anonymous Turnstile — warms up on the story screen, finishes on Post it */}
+        {!user && step >= 2 && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               ref={reviewTurnstileRef}
@@ -1347,8 +1522,19 @@ export const ReviewWizard = ({
         )}
 
         <div className="wizard-nav wizard-nav-sticky">
+          {step === 3 && (
+            <p className="wizard-nav-hint">
+              {user
+                ? postAnon
+                  ? 'Shows as Anonymous.'
+                  : `Shows as ${profile?.display_name || 'you'} with the Verified seal.`
+                : wantsNickname
+                  ? 'Shows as Anonymous until you add your nickname.'
+                  : 'Shows as Anonymous.'}
+            </p>
+          )}
           {step === 1 ? (
-            <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+            <button type="button" className="btn btn-ghost" onClick={() => leaveWizard()}>
               ← Back
             </button>
           ) : (
@@ -1356,29 +1542,42 @@ export const ReviewWizard = ({
               ← Back
             </button>
           )}
-          {step === 1 && (
+          {step < 3 && (
             <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
               Continue →
             </button>
           )}
-          {step === 2 && (
+          {step === 3 && (
             <button
               type="button"
               className="btn btn-primary btn-lg"
               disabled={loading || (!user && !reviewTurnstileReady)}
-              onClick={handlePublish}
+              onClick={() => (rewardOn && user ? setShowRewardNotice(true) : handlePublish())}
             >
               {loading
                 ? 'Publishing...'
                 : !user && !reviewTurnstileReady
-                  ? 'Verifying you are human...'
+                  ? 'Checking your connection...'
                   : values.reviewText.trim()
-                    ? 'Publish review 📜'
-                    : 'Publish quick rating ⚡'}
+                    ? 'Publish review'
+                    : 'Publish rating'}
             </button>
           )}
         </div>
       </div>
+
+      {showRewardNotice && user && (
+        <RewardEmailNotice
+          email={user.email ?? 'your account email'}
+          full={rewardEval.full}
+          missing={rewardEval.missing}
+          onClose={() => setShowRewardNotice(false)}
+          onChoose={(wantsGift) => {
+            setShowRewardNotice(false)
+            void handlePublish(wantsGift)
+          }}
+        />
+      )}
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>

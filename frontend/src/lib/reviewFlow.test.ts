@@ -10,6 +10,7 @@ import {
   BOOST_CARD_ORDER,
   BOOST_CARD_SHORT,
   buildBoostPatch,
+  storyPlaceholder,
   buildReviewFields,
   draftPayloadFromState,
   emptyReviewFieldValues,
@@ -509,5 +510,18 @@ describe('parseRecommendParam', () => {
     for (const bad of [null, undefined, '', '  ', 'y', 'sure', 'yes!', '0']) {
       expect(parseRecommendParam(bad)).toBe('')
     }
+  })
+})
+
+describe('storyPlaceholder', () => {
+  it('asks about the first topic marked as a problem', () => {
+    expect(storyPlaceholder({ classes: 'pos', dorms: 'neg' })).toBe(
+      'What should the next student know about dorms?'
+    )
+  })
+
+  it('falls back to an insider-detail prompt with no negative pick', () => {
+    expect(storyPlaceholder({})).toBe('One detail only a student there would know.')
+    expect(storyPlaceholder({ food: 'pos' })).toBe('One detail only a student there would know.')
   })
 })

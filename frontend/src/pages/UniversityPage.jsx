@@ -162,9 +162,14 @@ export const UniversityPage = () => {
         <Icons.Pen /> Leave a Review
       </Link>
     ) : (
-      <a href="#ask-student" onClick={scrollToAsk} className="btn btn-primary btn-lg">
-        <Icons.Chat /> Ask a Student
-      </a>
+      <>
+        <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
+          <Icons.Pen /> Be the first to review
+        </Link>
+        <a href="#ask-student" onClick={scrollToAsk} className="btn btn-outline btn-lg">
+          <Icons.Chat /> Ask a Student
+        </a>
+      </>
     )
 
   const seoTitle = `${university.name} Reviews`

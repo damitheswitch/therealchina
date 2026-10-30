@@ -1977,6 +1977,9 @@ h3 {
 }
 
 /* ===== University Review Summary ===== */
+.uni-summary-toggle {
+  display: none;
+}
 .uni-summary {
   background: #fff;
   border: 1px solid var(--ink-line);
@@ -2170,6 +2173,24 @@ h3 {
 @media (max-width: 768px) {
   .uni-summary-grid {
     grid-template-columns: 1fr;
+  }
+  .uni-summary-toggle {
+    display: block;
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--ink-line);
+    border-radius: var(--r-md);
+    background: transparent;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .uni-summary:not(.is-open) .uni-summary-grid,
+  .uni-summary:not(.is-open) .uni-summary-footer {
+    display: none;
+  }
+  .uni-summary.is-open .uni-summary-toggle {
+    margin-bottom: var(--sp-2);
   }
   .cat-list {
     grid-template-columns: 1fr 1fr;
@@ -2443,7 +2464,10 @@ h3 {
     'photos aside'
     'verdict aside'
     'reviews aside';
-  gap: var(--sp-3);
+  /* Row spacing lives on the cells so empty rows (no photos, no verdict yet)
+     add no gap. */
+  column-gap: var(--sp-3);
+  row-gap: 0;
   align-items: start;
 }
 .uni-profile-layout > * {
@@ -5806,6 +5830,7 @@ a.claim-review-uni:hover {
   flex: 1;
 }
 .pol-btn {
+  min-height: 44px;
   padding: 0.5rem 0.4rem;
   border-radius: var(--r-sm);
   border: 1.5px solid var(--ink-line);
@@ -6010,6 +6035,14 @@ a.claim-review-uni:hover {
     padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom));
     background: #fff;
     border-top: 1px solid var(--ink-line);
+    gap: var(--sp-1);
+  }
+  .wizard-nav-sticky .btn-primary {
+    flex: 1;
+  }
+  .wizard-nav-sticky .btn-ghost {
+    flex: 0 0 auto;
+    padding-inline: var(--sp-1);
   }
 }
 
@@ -7049,7 +7082,6 @@ a.ask-student-q-replies:hover {
 
   /* Chips: one horizontally scrollable strip, no wrapping rows */
   .ask-student-chips-block .chip-row {
-    flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
     margin: 0 calc(-1 * var(--sp-3));
@@ -7079,7 +7111,6 @@ a.ask-student-q-replies:hover {
   .ask-student-q-actions {
     flex-direction: row;
     align-items: center;
-    flex-wrap: nowrap;
     width: 100%;
     min-width: 0;
     gap: 0.5rem;
@@ -7276,6 +7307,10 @@ a.ask-student-q-replies:hover {
     flex-direction: column;
     align-items: flex-start;
   }
+  /* In a column the row basis (240px) becomes a height; let the copy size itself. */
+  .inline-rate-copy {
+    flex: 0 0 auto;
+  }
   .inline-rate-controls,
   .inline-rate-controls .star-input-wrap {
     align-items: flex-start;
@@ -7284,5 +7319,280 @@ a.ask-student-q-replies:hover {
   .inline-rate-footer .btn {
     width: 100%;
     justify-content: center;
+  }
+}
+
+.social-proof {
+  margin: -0.4rem 0 var(--sp-2);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+.wizard-nav-hint {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.preview-eyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.post-preview {
+  margin-bottom: var(--sp-2);
+}
+.email-disclosure {
+  margin-bottom: var(--sp-3);
+}
+.email-disclosure summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.wizard-nav-hint {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.attribution-radio {
+  width: 20px;
+  height: 20px;
+}
+
+/* Cells that render nothing (no photos, no verdict yet) must not leave grid gaps. */
+.uni-photos-cell:empty,
+.uni-verdict-cell:empty {
+  display: none;
+}
+
+.pick-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.pick-bar {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--rice-warm, #ece6d6);
+}
+.pick-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--seal-red);
+  transition: width var(--t-fast, 0.2s) ease;
+}
+.pick-count {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+.form-textarea.auto-built {
+  border-color: var(--gold, #c4a03c);
+  background: #fff;
+}
+.form-textarea.flash {
+  animation: auto-text-flash 0.9s ease-out;
+}
+@keyframes auto-text-flash {
+  from {
+    box-shadow: 0 0 0 4px rgba(196, 160, 60, 0.45);
+  }
+  to {
+    box-shadow: 0 0 0 0 rgba(196, 160, 60, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .form-textarea.flash {
+    animation: none;
+  }
+}
+
+.uni-photos-cell:not(:empty),
+.uni-verdict-cell:not(:empty) {
+  margin-bottom: var(--sp-3);
+}
+@media (max-width: 900px) {
+  .uni-reviews-cell {
+    margin-bottom: var(--sp-3);
+  }
+}
+
+/* The story box hint explains the auto-written text; keep it on phones too. */
+.form-group .form-hint.story-hint {
+  display: block;
+  margin-top: 0.4rem;
+}
+
+/* Thank-you gift offer (review flow) */
+.reward-teaser {
+  margin: 0 0 var(--sp-2);
+  border: 1px solid rgba(196, 160, 60, 0.55);
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.1);
+}
+.reward-teaser-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.8rem;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.reward-teaser-title {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.reward-teaser-count {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.reward-teaser-body {
+  padding: 0 0.8rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.reward-teaser-body p {
+  margin: 0 0 0.5rem;
+}
+.reward-checklist {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+.reward-checklist li {
+  padding: 0.15rem 0 0.15rem 1.5rem;
+  position: relative;
+}
+.reward-checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0.2rem;
+  top: 0.35rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 1.5px solid var(--ink-faint);
+  border-radius: 50%;
+}
+.reward-checklist li.done::before {
+  background: var(--success, #2e7d5b);
+  border-color: var(--success, #2e7d5b);
+}
+.reward-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.reward-nudge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: var(--sp-2);
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.14);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.reward-nudge p {
+  margin: 0;
+}
+.reward-confirm {
+  margin: var(--sp-2) 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-md);
+  background: rgba(46, 125, 91, 0.1);
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+/* Suggested prompt cards: the whole card is one tap (stretched title link). The
+   action buttons sit above the overlay and stay separate targets. */
+.ask-student-q-item {
+  position: relative;
+}
+a.ask-student-q-stretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+}
+.ask-student-q-actions {
+  position: relative;
+  z-index: 1;
+}
+
+/* Stacked hero buttons on university pages with no reviews yet */
+.uni-profile-cta-col .btn + .btn {
+  margin-top: 0.5rem;
+}
+.uni-profile-mobile-cta .btn + .btn {
+  margin-top: 0.6rem;
+}
+
+/* The dragon grows with the review */
+.detail-track-dragon.stage-egg {
+  font-size: 1rem;
+}
+.detail-track-dragon.stage-cracking {
+  font-size: 1.1rem;
+  animation: dragon-wobble 1.2s ease-in-out infinite;
+}
+.detail-track-dragon.stage-hatchling {
+  font-size: 1.15rem;
+}
+.detail-track-dragon.stage-young {
+  font-size: 1.35rem;
+}
+.detail-track-dragon.stage-dragon {
+  font-size: 1.65rem;
+}
+.detail-track-dragon.stage-golden {
+  font-size: 1.95rem;
+  filter: drop-shadow(0 0 6px rgba(201, 162, 39, 0.9));
+}
+.detail-track-dragon.stage-golden::after {
+  content: '✨';
+  position: absolute;
+  top: -0.2em;
+  right: -1.1em;
+  font-size: 0.6em;
+}
+@keyframes dragon-wobble {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-track-dragon.stage-cracking {
+    animation: none;
   }
 }

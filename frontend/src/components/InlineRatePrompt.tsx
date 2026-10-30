@@ -129,7 +129,7 @@ export const InlineRatePrompt = ({ university }: { university: UniversityRef }) 
 
           <div className="inline-rate-footer">
             <span className="form-hint">
-              Next step: optional tags and 1-click publish. No account required.
+              Next: tap at least 2 things that stood out, then publish. No account required.
             </span>
             <button type="button" className="btn btn-primary" onClick={handleContinue}>
               Continue to publish →

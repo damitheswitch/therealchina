@@ -1,0 +1,477 @@
+{
+  "cases": [
+    {
+      "name": "full review with harsh tags and own words",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "same review with positive tags is also full",
+      "row": {
+        "deleted_at": null,
+        "text": "Highlights include strong professors and classes, and comfortable international dorms. I stayed here for two years and the experience was great. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Strong academics",
+          "Good dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "only the tapped sentence is not enough words",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "words"
+        ]
+      }
+    },
+    {
+      "name": "short own words",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. It was okay and I liked the city and my friends there a lot.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "words"
+        ]
+      }
+    },
+    {
+      "name": "filler text is rejected",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good good",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "words"
+        ]
+      }
+    },
+    {
+      "name": "keyboard mashing is rejected",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center. aaaaaaaaaaaa",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "words"
+        ]
+      }
+    },
+    {
+      "name": "one tap is not enough",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "taps"
+        ]
+      }
+    },
+    {
+      "name": "three detail areas are not enough",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": null,
+        "degree_level": null,
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "details"
+        ]
+      }
+    },
+    {
+      "name": "photo counts as a detail area",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": null,
+        "degree_level": null,
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": [
+          {
+            "url": "https://x/y.jpg",
+            "type": "image"
+          }
+        ]
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "chinese own words count",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. 我在这里学习了两年，课程安排经常改变，宿舍条件一般，但是国际处的老师很有礼貌，城市生活很方便，价格也比较合适，我还是会再次选择这所大学。我在这里学习了两年，课程安排经常改变，宿舍条件一般，但是国际处的老师很有礼貌，城市生活很方便，价格也比较合适，我还是会再次选择这所大学。我在这里学习了两年，课程安排经常改变，宿舍条件一般，但是国际处的老师很有礼貌，城市生活很方便，价格也比较合适，我还是会再次选择这所大学。",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "deleted review is never full",
+      "row": {
+        "deleted_at": "2026-10-01T00:00:00Z",
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": []
+      }
+    },
+    {
+      "name": "pros and cons written by taps do not count as own words",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms.",
+        "pros": "",
+        "cons": "inconsistent teaching quality, crowded or aging dorms",
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "words"
+        ]
+      }
+    },
+    {
+      "name": "custom pros and cons count as own words",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms.",
+        "pros": "",
+        "cons": "I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    }
+  ]
+}

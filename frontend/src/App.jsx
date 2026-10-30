@@ -1,5 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useNavigationType,
+} from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { LoginDraftBanner } from './components/LoginDraftBanner'
@@ -73,7 +80,14 @@ function App() {
   const { user, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const navType = useNavigationType()
   const isOnboarding = location.pathname === '/onboarding'
+
+  // New page, new scroll position. Back/forward (POP) and #anchors keep the browser's own behaviour.
+  useEffect(() => {
+    if (navType === 'POP' || location.hash) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname, location.hash, navType])
 
   // Redirect an anonymous reviewer to their review after they sign in/up
   useEffect(() => {

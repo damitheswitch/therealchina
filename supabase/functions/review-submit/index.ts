@@ -22,6 +22,7 @@ import { verifyTurnstile } from '../_shared/turnstile.ts'
 import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
 import { anonRateKey } from '../_shared/rateKey.ts'
 import { withRandomSuffix } from '../_shared/slug.ts'
+import { maybeDispatchReward, requestReward, type RewardResult } from '../_shared/rewardDispatch.ts'
 import {
   UNI_SLUG_MAX,
   parseNewUniversity,
@@ -402,6 +403,20 @@ async function handleSubmit(req: Request): Promise<Response> {
     }
   }
 
+  // Thank-you gift: only when the reviewer asked for it. A guest must have
+  // typed an email (stored above on the private reviewer_context row); a member's
+  // email is read from their account at send time. Best effort: never fails
+  // the review.
+  let reward: RewardResult = { state: 'off' }
+  if (body.rewardRequested === true && (!isAnon || reviewerContext?.email)) {
+    const code = await requestReward(
+      review.id,
+      isAnon ? 'anonymous' : 'signed_in',
+      isAnon ? null : (caller.sub ?? null)
+    )
+    if (code) reward = await maybeDispatchReward(review.id)
+  }
+
   return jsonResponse(
     req,
     {
@@ -409,6 +424,7 @@ async function handleSubmit(req: Request): Promise<Response> {
       universitySlug: university.slug,
       universityCreated: university.created,
       boostAvailable,
+      reward,
     },
     200
   )
