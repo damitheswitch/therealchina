@@ -23,6 +23,7 @@ export const CommunityPage = () => {
   const [params, setParams] = useSearchParams()
   const view = viewFromParam(params.get('tab'))
   const cat = params.get('c')
+  const unsubscribed = params.get('unsubscribed')
   const [catsOpen, setCatsOpen] = useState(true)
   const [navOpen, setNavOpen] = useState(false)
   const { questions: allQuestions, loading, error, refetch } = useCommunityQuestions()
@@ -148,13 +149,21 @@ export const CommunityPage = () => {
               <h1>Community</h1>
               <p className="community-sub">
                 Ask what the guides do not cover. Answers come from students who have been through
-                it.
+                it. We&apos;ll email you when a student answers.
               </p>
             </div>
             <Link to="/community/ask" className="btn btn-primary">
               <Icons.Pen /> Ask a question
             </Link>
           </header>
+
+          {unsubscribed && (
+            <p className="form-hint" role="status">
+              {unsubscribed === '1'
+                ? "You're unsubscribed. We won't email you about new questions."
+                : 'That unsubscribe link did not work. Reply to any of our emails and we will sort it out.'}
+            </p>
+          )}
 
           {loading ? (
             <div className="empty-state">

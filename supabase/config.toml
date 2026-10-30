@@ -38,8 +38,8 @@ verify_jwt = false
 verify_jwt = false
 
 # community-submit verifies the caller's JWT inside the function itself
-# (authenticated + onboarded only; anonymous Q&A writes are disabled by
-# decision), like review-manage.
+# (questions and reports: authenticated + onboarded; answers also accept
+# guests behind Turnstile + rate limits), like review-manage.
 [functions.community-submit]
 verify_jwt = false
 
@@ -47,6 +47,12 @@ verify_jwt = false
 # via the shared-secret x-notify-secret header (QA_NOTIFY_SECRET). There is
 # no user JWT to verify, so the gateway check would reject it.
 [functions.qa-notify]
+verify_jwt = false
+
+# qa-ping is invoked server-to-server by community-submit (x-notify-secret)
+# and also serves the one-click unsubscribe link in its emails, which is
+# authenticated by an HMAC token (QA_PING_SECRET). No user JWT either way.
+[functions.qa-ping]
 verify_jwt = false
 
 # content-report verifies the caller's JWT inside the function (signed-in

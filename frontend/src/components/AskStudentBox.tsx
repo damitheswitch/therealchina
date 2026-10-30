@@ -228,6 +228,7 @@ export const AskStudentBox = ({ university }: { university: UniversityRef }) => 
               Ask anonymously
             </label>
           </div>
+          <p className="form-hint">We&apos;ll email you when a student answers.</p>
 
           {showDetails && (
             <div className="form-group ask-student-details">

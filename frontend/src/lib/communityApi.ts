@@ -5,7 +5,7 @@ import type { CommunityAnswer, CommunityAuthor, CommunityQuestion } from './comm
 // Live Community Q&A data. All reads hit the qa_*_public views — the base
 // tables are not client-readable, so anonymous authorship is masked in the
 // database. All writes go through community-submit (authenticated +
-// onboarded + rate limited) or the vote/accept/notify RPCs.
+// onboarded + rate limited; answers also from guests behind Turnstile) or the vote/accept/notify RPCs.
 
 interface QuestionRow {
   id: string
@@ -213,10 +213,13 @@ export const submitQuestion = async (input: {
   return { slug: data.slug as string }
 }
 
+// Guests (not signed in) pass the Turnstile token instead of an account; the
+// server stores their answer as Anonymous with no owner.
 export const submitAnswer = async (input: {
   questionSlug: string
   body: string
   anonymous: boolean
+  cfToken?: string
 }): Promise<{ id: string }> => {
   const data = await invokeSubmit({ action: 'answer', ...input })
   return { id: data.id as string }
