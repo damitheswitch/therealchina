@@ -7596,3 +7596,30 @@ a.ask-student-q-stretch::after {
     animation: none;
   }
 }
+
+/* ===== First-review board (homepage) ===== */
+.first-review-board {
+  margin-top: var(--sp-6);
+  padding: var(--sp-4);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+}
+.first-review-list {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+.first-review-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.first-review-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
