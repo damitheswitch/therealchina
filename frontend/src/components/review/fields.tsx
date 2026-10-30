@@ -394,6 +394,61 @@ export const StartYearField = ({ form }: { form: ReviewForm }) => (
   </div>
 )
 
+// Shown once a start year is picked: one tap says whether the reviewer is still
+// there. "I finished" reveals the finish-year chips. Without this the context
+// line has no honest end to show. Exchange students answer through their own
+// enrollment status, so the row steps aside for them.
+export const StudyStatusField = ({ form }: { form: ReviewForm }) => {
+  const { startYear, enrollmentStatus, endYear } = form.values
+  if (startYear === '' || enrollmentStatus === 'exchange') return null
+  const finished = enrollmentStatus === 'alumni' || endYear !== ''
+  const stillThere = enrollmentStatus === 'current' && !finished
+  return (
+    <div className="form-group">
+      <span className="form-label" id="study-status-label">
+        Still studying here? <span className="form-hint-inline">optional</span>
+      </span>
+      <div className="chip-row" role="group" aria-labelledby="study-status-label">
+        <button
+          type="button"
+          className={`chip ${stillThere ? 'selected' : ''}`}
+          aria-pressed={stillThere}
+          onClick={() => {
+            form.set('enrollmentStatus', stillThere ? '' : 'current')
+            form.set('endYear', '')
+          }}
+        >
+          Yes, still here
+        </button>
+        <button
+          type="button"
+          className={`chip ${finished ? 'selected' : ''}`}
+          aria-pressed={finished}
+          onClick={() => {
+            if (finished) {
+              form.set('enrollmentStatus', '')
+              form.set('endYear', '')
+            } else {
+              form.set('enrollmentStatus', 'alumni')
+            }
+          }}
+        >
+          I finished
+        </button>
+      </div>
+      {finished && (
+        <div style={{ marginTop: '0.75rem' }}>
+          <span className="form-label">Finish year</span>
+          <YearChips
+            value={endYear}
+            onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export const EndYearField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
     <label className="form-label">
