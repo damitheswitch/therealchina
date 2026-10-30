@@ -1977,6 +1977,9 @@ h3 {
 }
 
 /* ===== University Review Summary ===== */
+.uni-summary-toggle {
+  display: none;
+}
 .uni-summary {
   background: #fff;
   border: 1px solid var(--ink-line);
@@ -2170,6 +2173,24 @@ h3 {
 @media (max-width: 768px) {
   .uni-summary-grid {
     grid-template-columns: 1fr;
+  }
+  .uni-summary-toggle {
+    display: block;
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid var(--ink-line);
+    border-radius: var(--r-md);
+    background: transparent;
+    font-weight: 600;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .uni-summary:not(.is-open) .uni-summary-grid,
+  .uni-summary:not(.is-open) .uni-summary-footer {
+    display: none;
+  }
+  .uni-summary.is-open .uni-summary-toggle {
+    margin-bottom: var(--sp-2);
   }
   .cat-list {
     grid-template-columns: 1fr 1fr;

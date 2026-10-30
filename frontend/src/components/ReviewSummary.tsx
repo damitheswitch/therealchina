@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Icons } from './Icons'
 import { StarRating } from './StarRating'
 import { formatReviewerMix, getRecommendMeta } from '../lib/reviewDisplay'
@@ -47,6 +48,9 @@ const CostScale = ({
 // from buildReviewSummary() over ALL of the university's reviews, so it
 // stays correct even though the review list below is paginated.
 export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
+  // Mobile only: the charts collapse behind a toggle so the first review is
+  // not pushed ~950px down. CSS keeps everything visible on desktop.
+  const [open, setOpen] = useState(false)
   if (summary.reviewCount === 0) return null
 
   const { reviewCount, ratingDist, recommend, subscores, topTags, enrollment } = summary
@@ -55,8 +59,17 @@ export const ReviewSummary = ({ summary }: { summary: ReviewSummaryData }) => {
   const hasFooter = topTags.length > 0 || hasCost || reviewerMix !== ''
 
   return (
-    <section className="uni-summary">
+    <section className={`uni-summary${open ? ' is-open' : ''}`}>
       <h2 className="uni-summary-title">Student verdict</h2>
+
+      <button
+        type="button"
+        className="uni-summary-toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? 'Hide scores & costs' : 'See scores & costs'}
+      </button>
 
       <div className="uni-summary-grid">
         <div className="sum-col">
