@@ -4,6 +4,7 @@ import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
 import { COMMUNITY_CATEGORIES, categoryLabel } from '../lib/community'
 import { useCommunityQuestions } from '../hooks/useCommunity'
+import { unsubscribeFromPings } from '../lib/communityApi'
 
 type View = 'newest' | 'unanswered' | 'top'
 
@@ -23,6 +24,8 @@ export const CommunityPage = () => {
   const [params, setParams] = useSearchParams()
   const view = viewFromParam(params.get('tab'))
   const cat = params.get('c')
+  const unsubscribeToken = params.get('unsubscribe')
+  const [unsubState, setUnsubState] = useState<'idle' | 'working' | 'done' | 'error'>('idle')
   const [catsOpen, setCatsOpen] = useState(true)
   const [navOpen, setNavOpen] = useState(false)
   const { questions: allQuestions, loading, error, refetch } = useCommunityQuestions()
@@ -148,13 +151,43 @@ export const CommunityPage = () => {
               <h1>Community</h1>
               <p className="community-sub">
                 Ask what the guides do not cover. Answers come from students who have been through
-                it.
+                it. We&apos;ll email you when a student answers.
               </p>
             </div>
             <Link to="/community/ask" className="btn btn-primary">
               <Icons.Pen /> Ask a question
             </Link>
           </header>
+
+          {unsubscribeToken && (
+            <div className="form-hint" role="status">
+              {unsubState === 'done' ? (
+                <p>You&apos;re unsubscribed. We won&apos;t email you about new questions.</p>
+              ) : unsubState === 'error' ? (
+                <p>
+                  That unsubscribe link did not work. Reply to any of our emails and we will sort it
+                  out.
+                </p>
+              ) : (
+                <p>
+                  Stop emails about new questions at your university?{' '}
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    disabled={unsubState === 'working'}
+                    onClick={async () => {
+                      setUnsubState('working')
+                      setUnsubState(
+                        (await unsubscribeFromPings(unsubscribeToken)) ? 'done' : 'error'
+                      )
+                    }}
+                  >
+                    Unsubscribe
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
 
           {loading ? (
             <div className="empty-state">

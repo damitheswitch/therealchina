@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { Turnstile } from '@marsidev/react-turnstile'
+import type { TurnstileInstance } from '@marsidev/react-turnstile'
 import { Link, useParams } from 'react-router-dom'
 import { Seo } from '../components/Seo'
 import { Icons } from '../components/Icons'
@@ -85,6 +87,11 @@ const QuestionView = ({
   const [reported, setReported] = useState<Set<string>>(new Set())
   const [justPostedAnswer, setJustPostedAnswer] = useState<string | null>(null)
   const [copiedShare, setCopiedShare] = useState(false)
+  // Guest answers: the Turnstile widget mounts on first keystroke, so visitors
+  // who only read never load it.
+  const guestTurnstileRef = useRef<TurnstileInstance | undefined>(undefined)
+  const [guestTurnstileReady, setGuestTurnstileReady] = useState(false)
+  const [guestInviteOpen, setGuestInviteOpen] = useState(false)
 
   const buildConvertReviewUrl = (answerText?: string) => {
     if (!question.university) return '/review'
@@ -166,17 +173,31 @@ const QuestionView = ({
   const postAnswer = async () => {
     const text = draft.trim()
     if (!text) return
-    if (!user) {
-      openAuthModal('login')
-      return
-    }
     if (posting) return
     setPosting(true)
     try {
-      await submitAnswer({ questionSlug: question.slug, body: text, anonymous: postAnon })
+      let cfToken: string | undefined
+      if (!user) {
+        if (!guestTurnstileRef.current) {
+          throw new Error('The verification check is still loading. Try again in a moment.')
+        }
+        cfToken = await guestTurnstileRef.current.getResponsePromise(30000, 250)
+        if (!cfToken) throw new Error('Verification failed. Please try again.')
+      }
+      await submitAnswer({
+        questionSlug: question.slug,
+        body: text,
+        anonymous: postAnon,
+        cfToken,
+      })
       setJustPostedAnswer(text)
       setDraft('')
       setPostAnon(false)
+      if (!user) {
+        // Tokens are single use.
+        guestTurnstileRef.current?.reset()
+        setGuestInviteOpen(true)
+      }
       showToast('Answer posted.', 'success')
       // Reload from the database — what renders is what persisted.
       await refetch()
@@ -377,16 +398,84 @@ const QuestionView = ({
             )}
           </>
         ) : (
-          <div className="qa-empty answer-login">
-            <span>Been through this? Sign in to share what happened.</span>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => openAuthModal('login')}
-            >
-              Sign in to answer
-            </button>
-          </div>
+          <>
+            <label htmlFor="answer-draft" className="sr-only">
+              Your answer
+            </label>
+            <textarea
+              id="answer-draft"
+              className="form-textarea"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Been through this? Share what actually happened: steps, costs, office names, what you would do differently."
+            />
+            <p className="form-hint">
+              You can answer without an account. It will show as Anonymous.
+            </p>
+            {draft.trim().length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <Turnstile
+                  ref={guestTurnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''}
+                  onWidgetLoad={() => setGuestTurnstileReady(true)}
+                  onError={(error) => {
+                    console.error('[Turnstile] answer widget error:', error)
+                    showToast(
+                      'Verification challenge error. Please refresh and try again.',
+                      'error'
+                    )
+                  }}
+                  onExpire={() => guestTurnstileRef.current?.reset()}
+                  options={{
+                    execution: 'render',
+                    size: 'normal',
+                    appearance: 'interaction-only',
+                    action: 'community-answer',
+                  }}
+                />
+              </div>
+            )}
+            <div className="answer-form-row">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={postAnswer}
+                disabled={posting || !guestTurnstileReady}
+              >
+                {posting ? 'Posting…' : 'Post answer'}
+              </button>
+            </div>
+            {guestInviteOpen && (
+              <div className="convert-review-banner" role="status">
+                <div>
+                  <strong>Answer posted.</strong> Create a free account to ask your own questions
+                  and get an email when a student answers.
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() =>
+                    openAuthModal('register', {
+                      title: 'Create your free account',
+                      subtitle:
+                        'Ask your own questions and get an email when a student answers. Your earlier answer stays anonymous.',
+                      closable: true,
+                    })
+                  }
+                >
+                  Create free account
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setGuestInviteOpen(false)}
+                  aria-label="Close this message"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

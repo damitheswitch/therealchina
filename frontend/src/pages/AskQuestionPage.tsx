@@ -191,6 +191,11 @@ export const AskQuestionPage = () => {
                 />
                 Email me when someone answers
               </label>
+              <p className="form-hint">
+                {notifyOnAnswer
+                  ? "We'll email you when a student answers."
+                  : "We won't email you about answers."}
+              </p>
             </div>
             <button type="submit" className="btn btn-primary" disabled={posting}>
               {posting ? 'Posting…' : 'Post question'}

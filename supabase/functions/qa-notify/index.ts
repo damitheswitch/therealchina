@@ -15,6 +15,8 @@ import { safeEqual } from '../_shared/safeEqual.ts'
 // same claim-then-send + log pipeline, but nothing to provision per
 // environment in the database.
 //
+// Guest answers (migration 063) have author_id NULL and always read as Someone.
+//
 // Skip reasons: question_deleted, answer_deleted, opted_out
 // (notify_on_answer=false, the author's own toggle), self_answer,
 // no_owner_email, throttled, daily_cap, already_processed.
@@ -155,14 +157,18 @@ async function handleNotify(req: Request): Promise<Response> {
   } = await supabaseAdmin.auth.admin.getUserById(question.author_id)
   if (ownerError || !owner?.email) return skip('no_owner_email')
 
-  const { data: answerer } = await supabaseAdmin
-    .from('profiles')
-    .select('display_name')
-    .eq('id', answer.author_id)
-    .maybeSingle()
   // "Post anonymously" is display-only — an anonymous answer shows "Someone"
-  // in the email just like it does on the page.
-  const answererName = answer.is_anonymous ? 'Someone' : answerer?.display_name || 'Someone'
+  // in the email just like it does on the page. Guest answers (author_id
+  // NULL) are always anonymous and have no profile to look up.
+  let answererName = 'Someone'
+  if (!answer.is_anonymous && answer.author_id) {
+    const { data: answerer } = await supabaseAdmin
+      .from('profiles')
+      .select('display_name')
+      .eq('id', answer.author_id)
+      .maybeSingle()
+    answererName = answerer?.display_name || 'Someone'
+  }
 
   const excerpt =
     answer.body.length > EXCERPT_LEN ? `${answer.body.slice(0, EXCERPT_LEN)}…` : answer.body

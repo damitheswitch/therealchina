@@ -2,28 +2,33 @@ import {
   corsHeaders,
   jsonResponse,
   getCaller,
+  getClientIP,
   checkRateLimit,
   supabaseAdmin,
   SUPABASE_URL,
 } from '../_shared/guard.ts'
 import { asTrimmedString } from '../_shared/reviewFields.ts'
+import { verifyTurnstile } from '../_shared/turnstile.ts'
+import { anonRateKey } from '../_shared/rateKey.ts'
 import { isWeakSlug, slugify, withRandomSuffix } from '../_shared/slug.ts'
 import { SITE_URL, sendOwnerAlert } from '../_shared/alert.ts'
 
-// Gated write path for Community Q&A (Phase 6). All three actions require a
-// signed-in caller whose profile has completed onboarding — anonymous
-// *write* is disabled by owner decision, so no Turnstile is needed here.
-// "Post anonymously" is display-only: author_id always records the caller so
-// abuse stays traceable for moderation.
+// Gated write path for Community Q&A (Phase 6). Questions and reports need a
+// signed-in caller whose profile has completed onboarding. Answers also accept
+// guests (migration 063): no account, Turnstile + per-IP and global rate
+// limits, stored with author_id NULL and is_anonymous (nobody owns them, so
+// nobody can edit or delete them). "Post anonymously" for signed-in users is
+// display-only: author_id always records the caller so abuse stays traceable.
 //
 //   question  → {title, body, category, city?, universitySlug?, anonymous,
 //                notifyOnAnswer} → {slug}
-//   answer    → {questionSlug, body, anonymous} → {id}
+//   answer    → {questionSlug, body, anonymous, cfToken? (guests)} → {id}
 //   report    → {targetType: 'question'|'answer', targetId, reason?} → {}
 //
-// Rate limits (per authenticated user, shared record_upload_attempt counter):
-// questions 10/h, answers 20/h, reports 30/h. Fails closed when the
-// limiter is unavailable.
+// Rate limits (shared record_upload_attempt counter): per user questions
+// 10/h, answers 20/h, reports 30/h; per guest IP answers 5/h plus a global
+// guest cap of 150/h. Fails closed when the limiter or Turnstile is
+// unavailable.
 
 const QA_CATEGORIES = new Set([
   'visas',
@@ -44,6 +49,82 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // qa_questions.slug CHECK caps slugs at 140 characters.
 const QUESTION_SLUG_MAX = 140
 const QUESTION_INSERT_ATTEMPTS = 4
+
+const GUEST_ANSWER_TURNSTILE_ACTION = 'community-answer'
+const GUEST_ANSWERS_PER_IP_PER_HOUR = 5
+const GUEST_ANSWERS_GLOBAL_PER_HOUR = 150
+
+// Fire-and-forget on the Edge runtime (the request must not wait on email);
+// awaited elsewhere so local runs still finish the work.
+async function runInBackground(work: Promise<unknown>) {
+  const rt = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } })
+    .EdgeRuntime
+  if (rt?.waitUntil) rt.waitUntil(work)
+  else await work
+}
+
+async function pingReviewers(questionId: string) {
+  // Best effort: a failed ping never fails the question post.
+  const secret = Deno.env.get('QA_NOTIFY_SECRET')
+  if (!secret) return
+  await runInBackground(
+    fetch(`${SUPABASE_URL}/functions/v1/qa-ping`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-notify-secret': secret },
+      body: JSON.stringify({ question_id: questionId }),
+    }).catch((err) => console.error('qa-ping dispatch failed:', err))
+  )
+}
+
+async function postGuestAnswer(req: Request, body: Record<string, unknown>) {
+  const questionSlug = asTrimmedString(body.questionSlug, 140)
+  const text = asTrimmedString(body.body, 5000)
+  const cfToken = body.cfToken
+
+  if (!questionSlug || !SLUG_RE.test(questionSlug)) {
+    return jsonResponse(req, { error: 'Question not found' }, 404)
+  }
+  if (!text || text.length < 10) {
+    return jsonResponse(req, { error: 'Say a bit more (at least 10 characters).' }, 400)
+  }
+  if (!cfToken || typeof cfToken !== 'string') {
+    return jsonResponse(req, { error: 'Verification required. Please try again.' }, 400)
+  }
+
+  const ip = getClientIP(req)
+  // Human check first so unverified traffic cannot spend the shared limits.
+  if (!(await verifyTurnstile(cfToken, ip, GUEST_ANSWER_TURNSTILE_ACTION))) {
+    return jsonResponse(req, { error: 'Verification failed. Please try again.' }, 403)
+  }
+  const tooMany = { error: 'Too many answers right now. Try again in a little while.' }
+  if (!(await checkRateLimit(anonRateKey('qa-a-guest-ip:', ip), GUEST_ANSWERS_PER_IP_PER_HOUR))) {
+    return jsonResponse(req, tooMany, 429)
+  }
+  if (!(await checkRateLimit('qa-a-guest-global', GUEST_ANSWERS_GLOBAL_PER_HOUR))) {
+    return jsonResponse(req, tooMany, 429)
+  }
+
+  const { data: question } = await supabaseAdmin
+    .from('qa_questions')
+    .select('id')
+    .eq('slug', questionSlug)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (!question) return jsonResponse(req, { error: 'Question not found' }, 404)
+
+  const { data: answer, error } = await supabaseAdmin
+    .from('qa_answers')
+    .insert({ question_id: question.id, author_id: null, is_anonymous: true, body: text })
+    .select('id')
+    .single()
+  if (error || !answer) {
+    console.error('Guest answer insert error:', error)
+    return jsonResponse(req, { error: 'Could not post that. Please try again.' }, 500)
+  }
+
+  await notifyAnswer(answer.id)
+  return jsonResponse(req, { id: answer.id }, 200)
+}
 
 async function notifyAnswer(answerId: string) {
   // Queue hop: community-submit is the only write path, so it calls
@@ -75,7 +156,19 @@ Deno.serve(async (req) => {
   }
 
   const caller = await getCaller(req)
-  if (!caller || caller.role !== 'authenticated' || !caller.sub) {
+  if (!caller) return jsonResponse(req, { error: 'Sign in to post.' }, 401)
+
+  let body: Record<string, unknown>
+  try {
+    body = await req.json()
+  } catch {
+    return jsonResponse(req, { error: 'Invalid JSON' }, 400)
+  }
+  const action = typeof body.action === 'string' ? body.action : ''
+
+  if (caller.role !== 'authenticated' || !caller.sub) {
+    // Public-key callers may only answer, as a guest.
+    if (action === 'answer') return await postGuestAnswer(req, body)
     return jsonResponse(req, { error: 'Sign in to post.' }, 401)
   }
 
@@ -88,15 +181,6 @@ Deno.serve(async (req) => {
   if (!profile?.onboarding_completed) {
     return jsonResponse(req, { error: 'Complete your profile setup first.' }, 403)
   }
-
-  let body: Record<string, unknown>
-  try {
-    body = await req.json()
-  } catch {
-    return jsonResponse(req, { error: 'Invalid JSON' }, 400)
-  }
-
-  const action = typeof body.action === 'string' ? body.action : ''
 
   // ---- Post a question ----
   if (action === 'question') {
@@ -163,10 +247,13 @@ Deno.serve(async (req) => {
           is_anonymous: anonymous,
           notify_on_answer: notifyOnAnswer,
         })
-        .select('slug')
+        .select('id, slug')
         .single()
 
-      if (!error && data) return jsonResponse(req, { slug: data.slug }, 200)
+      if (!error && data) {
+        if (universityId) await pingReviewers(data.id)
+        return jsonResponse(req, { slug: data.slug }, 200)
+      }
       if (error?.code !== '23505') {
         console.error('Question insert error:', error)
         return jsonResponse(req, { error: 'Could not post that. Please try again.' }, 500)

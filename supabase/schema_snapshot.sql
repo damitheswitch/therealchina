@@ -1859,13 +1859,16 @@ CREATE INDEX IF NOT EXISTS idx_qa_questions_active ON public.qa_questions(delete
 CREATE TABLE IF NOT EXISTS public.qa_answers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
-  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- NULL author_id = guest answer (migration 063): always is_anonymous, no owner.
+  author_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
   body TEXT NOT NULL,
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT qa_answers_body_length
-    CHECK (char_length(btrim(body)) BETWEEN 10 AND 5000)
+    CHECK (char_length(btrim(body)) BETWEEN 10 AND 5000),
+  CONSTRAINT qa_answers_guest_anonymous
+    CHECK (author_id IS NOT NULL OR is_anonymous)
 );
 
 CREATE INDEX IF NOT EXISTS idx_qa_answers_question ON public.qa_answers(question_id);
@@ -1968,7 +1971,7 @@ SELECT
   a.question_id,
   a.body,
   CASE WHEN a.is_anonymous THEN NULL ELSE a.author_id END AS author_id,
-  (auth.uid() IS NOT NULL AND auth.uid() = a.author_id) AS is_author,
+  COALESCE(auth.uid() IS NOT NULL AND auth.uid() = a.author_id, FALSE) AS is_author,
   a.created_at,
   (SELECT count(*) FROM public.qa_answer_votes v
     WHERE v.answer_id = a.id) AS upvote_count,
@@ -2178,6 +2181,28 @@ CREATE INDEX IF NOT EXISTS idx_qa_email_log_question_recipient
 ALTER TABLE public.qa_email_log ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.qa_email_log FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.qa_email_log TO service_role;
+
+-- Reviewer pings (migration 063): one row per "a question about your
+-- university" email sent to a past reviewer. Drives the 7 day per-recipient
+-- throttle. recipient_email is lowercased. Service role only.
+CREATE TABLE IF NOT EXISTS public.qa_ping_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  recipient_email TEXT NOT NULL,
+  recipient_kind TEXT NOT NULL CHECK (recipient_kind IN ('member', 'anonymous')),
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'sent', 'failed')),
+  detail TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT qa_ping_log_question_recipient UNIQUE (question_id, recipient_email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_qa_ping_log_recipient
+  ON public.qa_ping_log (recipient_email, created_at);
+
+ALTER TABLE public.qa_ping_log ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.qa_ping_log FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.qa_ping_log TO service_role;
 
 -- ---------------------------------------------------------
 -- 14. Content reports and orphan media cleanup (migration 050)
