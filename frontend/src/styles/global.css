@@ -5827,6 +5827,7 @@ a.claim-review-uni:hover {
   flex: 1;
 }
 .pol-btn {
+  min-height: 44px;
   padding: 0.5rem 0.4rem;
   border-radius: var(--r-sm);
   border: 1.5px solid var(--ink-line);
@@ -6031,6 +6032,14 @@ a.claim-review-uni:hover {
     padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom));
     background: #fff;
     border-top: 1px solid var(--ink-line);
+    gap: var(--sp-1);
+  }
+  .wizard-nav-sticky .btn-primary {
+    flex: 1;
+  }
+  .wizard-nav-sticky .btn-ghost {
+    flex: 0 0 auto;
+    padding-inline: var(--sp-1);
   }
 }
 
@@ -7070,7 +7079,6 @@ a.ask-student-q-replies:hover {
 
   /* Chips: one horizontally scrollable strip, no wrapping rows */
   .ask-student-chips-block .chip-row {
-    flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
     margin: 0 calc(-1 * var(--sp-3));
@@ -7100,7 +7108,6 @@ a.ask-student-q-replies:hover {
   .ask-student-q-actions {
     flex-direction: row;
     align-items: center;
-    flex-wrap: nowrap;
     width: 100%;
     min-width: 0;
     gap: 0.5rem;
@@ -7167,4 +7174,17 @@ a.ask-student-q-replies:hover {
   flex-wrap: wrap;
   font-size: 0.9rem;
   color: var(--ink);
+}
+
+.social-proof {
+  margin: -0.4rem 0 var(--sp-2);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+.wizard-nav-hint {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  text-align: center;
 }

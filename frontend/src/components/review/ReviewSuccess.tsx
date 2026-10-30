@@ -131,7 +131,10 @@ export const ReviewSuccess = ({
   return (
     <div className="wizard-step active">
       <h2 className="step-title">Your review is live.</h2>
-      <p className="step-sub">This is how it looks on the page.</p>
+      <p className="step-sub">
+        Thanks. Students deciding on this university will read this. Here is how it looks on the
+        page.
+      </p>
 
       <PublishedReviewPreview
         values={form.values}

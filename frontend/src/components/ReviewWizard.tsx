@@ -1310,6 +1310,7 @@ export const ReviewWizard = ({
         )}
 
         <div className="wizard-nav wizard-nav-sticky">
+          {step === 2 && <p className="wizard-nav-hint">About 30 seconds. Anonymous by default.</p>}
           {step === 1 ? (
             <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
               ← Back
