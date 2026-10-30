@@ -12,8 +12,8 @@ export const FirstReviewBoard = () => {
     <section className="first-review-board" aria-labelledby="first-review-title">
       <h2 id="first-review-title">Waiting for a first review</h2>
       <p className="muted">
-        Study at one of these? Yours would be the first story future students see. It takes about 30
-        seconds and stays anonymous.
+        Study at one of these? Yours would be the first story future students see. It takes about a
+        minute and stays anonymous.
       </p>
       <ul className="first-review-list">
         {candidates.map((u) => (

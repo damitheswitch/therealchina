@@ -196,8 +196,8 @@ export const MyReviews = () => {
         !error && (
           <div className="empty-state">
             <p>
-              No reviews yet. <Link to="/review">Share your experience</Link>. It takes two minutes
-              and helps the next student more than you think.
+              No reviews yet. <Link to="/review">Share your experience</Link>. It takes about a
+              minute and helps the next student more than you think.
             </p>
           </div>
         )
