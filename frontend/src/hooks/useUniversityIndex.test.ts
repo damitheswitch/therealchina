@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// The hook module imports the Supabase client, which throws without env vars
+// (CI has none). The search helper under test never touches it.
+vi.mock('../lib/supabaseClient', () => ({ supabase: {} }))
 import { searchUniversityIndex, type UniversityIndexEntry } from './useUniversityIndex'
 
 const u = (
