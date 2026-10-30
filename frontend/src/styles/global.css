@@ -4558,6 +4558,41 @@ a.claim-review-uni:hover {
 }
 
 /* ===== Flight Listings ===== */
+/* Guest hero above the public board */
+.flight-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-2);
+}
+.flight-hero-body {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+.flight-hero-body .page-subtitle {
+  margin-bottom: 0;
+}
+.flight-hero-actions {
+  display: flex;
+  gap: var(--sp-1);
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .flight-hero {
+    gap: var(--sp-1);
+  }
+  .flight-hero-icon {
+    display: none;
+  }
+  .flight-hero-actions {
+    width: 100%;
+  }
+  .flight-hero-actions .btn {
+    flex: 1 1 0;
+  }
+}
+
 /* Inline filter toolbar + Post CTA */
 .flight-toolbar {
   display: flex;

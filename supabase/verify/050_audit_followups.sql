@@ -110,8 +110,9 @@ SELECT set_config('request.jwt.claims', '{"role":"anon"}', true);
 SET LOCAL ROLE anon;
 INSERT INTO probe_results
 SELECT 'past and upcoming active listings shown',
-  CASE WHEN EXISTS (SELECT 1 FROM public.flight_listings_with_profile WHERE id = '00000000-0000-4000-8000-0000000050d1')
-        AND EXISTS (SELECT 1 FROM public.flight_listings_with_profile WHERE id = '00000000-0000-4000-8000-0000000050d2')
+  -- Guests read the public view since 064 (no direct table or member-view access).
+  CASE WHEN EXISTS (SELECT 1 FROM public.flight_listings_public WHERE id = '00000000-0000-4000-8000-0000000050d1')
+        AND EXISTS (SELECT 1 FROM public.flight_listings_public WHERE id = '00000000-0000-4000-8000-0000000050d2')
        THEN 'PASS' ELSE 'FAIL' END;
 RESET ROLE;
 

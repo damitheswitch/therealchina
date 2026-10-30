@@ -1039,6 +1039,23 @@ export type Database = {
       }
     }
     Views: {
+      flight_listings_public: {
+        Row: {
+          arrival_city: string | null
+          arrival_country: string | null
+          arrival_date: string | null
+          available_kgs: number | null
+          created_at: string | null
+          currency: string | null
+          departure_city: string | null
+          departure_country: string | null
+          departure_date: string | null
+          id: string | null
+          poster_label: string | null
+          price_per_kg: number | null
+        }
+        Relationships: []
+      }
       flight_listings_with_profile: {
         Row: {
           arrival_city: string | null

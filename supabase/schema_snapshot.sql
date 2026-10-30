@@ -1358,10 +1358,12 @@ CREATE POLICY "Public read access to university_stats"
 
 ALTER TABLE public.flight_listings ENABLE ROW LEVEL SECURITY;
 
+-- Migration 064: members only. Guests read flight_listings_public instead.
 DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.flight_listings;
-CREATE POLICY "Public read access to active flight listings"
+DROP POLICY IF EXISTS "Authenticated read access to active flight listings" ON public.flight_listings;
+CREATE POLICY "Authenticated read access to active flight listings"
   ON public.flight_listings FOR SELECT
-  TO public
+  TO authenticated
   USING (is_active = true OR auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Authenticated insert access to flight listings" ON public.flight_listings;
@@ -1488,8 +1490,39 @@ LEFT JOIN public.profiles p
   )
 WHERE fl.is_active = true OR auth.uid() = fl.user_id;
 
-GRANT SELECT ON public.flight_listings_with_profile TO anon;
+-- Migration 064: members only (anon could read user_id and notes here).
+REVOKE ALL ON public.flight_listings_with_profile FROM PUBLIC, anon;
 GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
+
+-- Migration 064: guest-safe board. No user_id, notes or contact data; the
+-- poster label is the first word of a discoverable profile's display name.
+CREATE OR REPLACE VIEW public.flight_listings_public AS
+SELECT
+  fl.id,
+  fl.departure_country,
+  fl.arrival_country,
+  fl.departure_city,
+  fl.arrival_city,
+  fl.departure_date,
+  fl.arrival_date,
+  fl.available_kgs,
+  fl.price_per_kg,
+  fl.currency,
+  fl.created_at,
+  NULLIF(left(split_part(btrim(p.display_name), ' ', 1), 30), '') AS poster_label
+FROM public.flight_listings fl
+LEFT JOIN public.profiles p
+  ON fl.user_id = p.id
+  AND p.is_discoverable = true
+  AND p.onboarding_completed = true
+  AND p.display_name IS NOT NULL
+WHERE fl.is_active = true;
+
+REVOKE ALL ON public.flight_listings_public FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.flight_listings_public TO anon, authenticated;
+
+-- Migration 064: anon has no direct access to the listings table.
+REVOKE ALL ON public.flight_listings FROM PUBLIC, anon;
 
 -- ---------------------------------------------------------
 -- 8. Function grants
