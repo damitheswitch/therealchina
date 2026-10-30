@@ -71,6 +71,14 @@ import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
 import { AnonEmailField, type MediaState } from './review/fields'
+import { RewardTeaser } from './review/RewardTeaser'
+import { RewardEmailNotice } from './review/RewardEmailNotice'
+import {
+  REWARD_UI_ENABLED,
+  describeMissing,
+  evaluateRewardFields,
+  type RewardResult,
+} from '../lib/reviewReward'
 
 // ---- Constants ----------------------------------------------------------------
 
@@ -209,6 +217,13 @@ export const ReviewWizard = ({
   // Guest who picked "Post with nickname": publishes now as Anonymous, then gets
   // the account step on the success screen (the claim flow attaches the name).
   const [wantsNickname, setWantsNickname] = useState(false)
+  // Thank-you gift: the last result the server reported, whether the signed-in
+  // reviewer has answered the "send my gift?" notice, and the notice itself.
+  const [reward, setReward] = useState<RewardResult | undefined>(undefined)
+  const [showRewardNotice, setShowRewardNotice] = useState(false)
+  const rewardOn = REWARD_UI_ENABLED
+  const rewardOfferViewedRef = useRef(false)
+  const rewardFullReachedRef = useRef(false)
   // Set when a requested draft lookup failed — lets a valid ?uni still
   // prefill after a bad ?draft= link instead of leaving an empty field.
   const [draftLookupFailed, setDraftLookupFailed] = useState(false)
@@ -727,6 +742,33 @@ export const ReviewWizard = ({
     }))
   }, [profile, editMode, uniParam, applyValues])
 
+  // ---- Thank-you gift ---------------------------------------------------------
+
+  const rewardEval = useMemo(
+    () => evaluateRewardFields(values, mediaState.media),
+    [values, mediaState.media]
+  )
+  const guestGiftEmail = values.anonEmail.trim()
+  const guestGiftEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestGiftEmail)
+
+  useEffect(() => {
+    if (!rewardOn || phase !== 'form' || rewardOfferViewedRef.current) return
+    rewardOfferViewedRef.current = true
+    void trackReviewEvent({
+      name: 'reward_offer_viewed',
+      data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
+    })
+  }, [rewardOn, phase, reviewAuth])
+
+  useEffect(() => {
+    if (!rewardOn || !rewardEval.full || rewardFullReachedRef.current) return
+    rewardFullReachedRef.current = true
+    void trackReviewEvent({
+      name: 'reward_full_reached',
+      data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
+    })
+  }, [rewardOn, rewardEval.full, reviewAuth])
+
   // ---- Validation --------------------------------------------------------------
 
   const clearError = useCallback(() => setError(null), [])
@@ -810,7 +852,7 @@ export const ReviewWizard = ({
     }
   }
 
-  const handlePublish = async () => {
+  const handlePublish = async (giftChoice?: boolean) => {
     if (submitInFlightRef.current) return
     beginReviewAttempt()
 
@@ -869,6 +911,7 @@ export const ReviewWizard = ({
       const result = await submitReview({
         cfToken,
         postAnonymously: Boolean(user && postAnon),
+        rewardRequested: rewardOn && (user ? giftChoice === true : guestGiftEmailValid),
         claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
         boostToken: boostToken ?? undefined,
         universitySlug: !isNotListed && values.selectedUni ? values.selectedUni : undefined,
@@ -905,8 +948,16 @@ export const ReviewWizard = ({
           entry: reviewEntry,
           auth: reviewAuth,
           duration_band: publishDurationBand(attemptStartedAtRef.current),
+          ...(rewardOn ? { reward_eligible: rewardEval.full } : {}),
         },
       })
+      if (result.reward && result.reward.state !== 'off') {
+        setReward(result.reward)
+        void trackReviewEvent({
+          name: 'reward_requested',
+          data: { flow: FLOW, auth: reviewAuth, reward_state: result.reward.state },
+        })
+      }
 
       // The review is live — the draft it came from is done. Server drafts are
       // deleted by id (or by university when the row was created earlier);
@@ -1006,12 +1057,14 @@ export const ReviewWizard = ({
     if (!published) return false
     try {
       if (user) {
-        await updateReview(
+        const next = await updateReview(
           published.reviewId,
           buildReviewFields(valuesRef.current, mediaStateRef.current.media)
         )
+        if (next && next.state !== 'off') setReward(next)
       } else {
-        await boostReview(published.reviewId, buildBoostPatch(valuesRef.current, card))
+        const next = await boostReview(published.reviewId, buildBoostPatch(valuesRef.current, card))
+        if (next && next.state !== 'off') setReward(next)
       }
       return true
     } catch (err) {
@@ -1089,6 +1142,7 @@ export const ReviewWizard = ({
             universitySlug={published.universitySlug}
             isAnonymous={!user}
             wantsNickname={wantsNickname}
+            reward={reward}
             postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
             onBoost={() => setPhase('boost')}
@@ -1164,6 +1218,7 @@ export const ReviewWizard = ({
         </div>
 
         <DetailTrack values={values} media={mediaState.media} />
+        {rewardOn && <RewardTeaser evaluation={rewardEval} />}
 
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}
@@ -1200,7 +1255,13 @@ export const ReviewWizard = ({
 
         {step === 1 && <ReviewEssentials form={form} promptQuestion={promptParam} />}
 
-        {step === 2 && <ReviewStory form={form} promptQuestion={promptParam} />}
+        {step === 2 && (
+          <ReviewStory
+            form={form}
+            promptQuestion={promptParam}
+            rewardUnits={rewardOn ? rewardEval.ownUnits : undefined}
+          />
+        )}
 
         {step === 3 && (
           <div className="wizard-step active">
@@ -1333,11 +1394,41 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {!user && step === 3 && (
+        {!user && step === 3 && rewardOn && (
+          <AnonEmailField
+            form={form}
+            reward={{ full: rewardEval.full, missing: rewardEval.missing }}
+          />
+        )}
+        {!user && step === 3 && !rewardOn && (
           <details className="email-disclosure">
             <summary>Add a private backup email</summary>
             <AnonEmailField form={form} />
           </details>
+        )}
+
+        {/* Last chance to add words or taps before publishing; the rest (ratings, costs)
+            comes from the detail cards right after publishing. */}
+        {rewardOn && step === 3 && !rewardEval.full && (
+          <div className="reward-nudge" role="status">
+            {rewardEval.missing.some((m) => m === 'words' || m === 'taps') ? (
+              <>
+                <p>
+                  Your review is not full yet. Add{' '}
+                  {describeMissing(rewardEval.missing.filter((m) => m !== 'details'))} to get the
+                  free VPN.
+                </p>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => setStep(2)}>
+                  Add them now
+                </button>
+              </>
+            ) : (
+              <p>
+                Almost there. After you publish, the extra detail cards (ratings and costs) finish
+                your free VPN gift.
+              </p>
+            )}
+          </div>
         )}
 
         {/* Anonymous Turnstile — warms up on the story screen, finishes on Post it */}
@@ -1393,7 +1484,7 @@ export const ReviewWizard = ({
               type="button"
               className="btn btn-primary btn-lg"
               disabled={loading || (!user && !reviewTurnstileReady)}
-              onClick={handlePublish}
+              onClick={() => (rewardOn && user ? setShowRewardNotice(true) : handlePublish())}
             >
               {loading
                 ? 'Publishing...'
@@ -1406,6 +1497,19 @@ export const ReviewWizard = ({
           )}
         </div>
       </div>
+
+      {showRewardNotice && user && (
+        <RewardEmailNotice
+          email={user.email ?? 'your account email'}
+          full={rewardEval.full}
+          missing={rewardEval.missing}
+          onClose={() => setShowRewardNotice(false)}
+          onChoose={(wantsGift) => {
+            setShowRewardNotice(false)
+            void handlePublish(wantsGift)
+          }}
+        />
+      )}
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>

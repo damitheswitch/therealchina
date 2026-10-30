@@ -7292,3 +7292,97 @@ a.ask-student-q-replies:hover {
   display: block;
   margin-top: 0.4rem;
 }
+
+/* Thank-you gift offer (review flow) */
+.reward-teaser {
+  margin: 0 0 var(--sp-2);
+  border: 1px solid rgba(196, 160, 60, 0.55);
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.1);
+}
+.reward-teaser-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 0.8rem;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.reward-teaser-title {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.reward-teaser-count {
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.reward-teaser-body {
+  padding: 0 0.8rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.reward-teaser-body p {
+  margin: 0 0 0.5rem;
+}
+.reward-checklist {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+.reward-checklist li {
+  padding: 0.15rem 0 0.15rem 1.5rem;
+  position: relative;
+}
+.reward-checklist li::before {
+  content: '';
+  position: absolute;
+  left: 0.2rem;
+  top: 0.35rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border: 1.5px solid var(--ink-faint);
+  border-radius: 50%;
+}
+.reward-checklist li.done::before {
+  background: var(--success, #2e7d5b);
+  border-color: var(--success, #2e7d5b);
+}
+.reward-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.reward-nudge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: var(--sp-2);
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.14);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.reward-nudge p {
+  margin: 0;
+}
+.reward-confirm {
+  margin: var(--sp-2) 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-md);
+  background: rgba(46, 125, 91, 0.1);
+  font-size: 0.88rem;
+  color: var(--ink);
+}

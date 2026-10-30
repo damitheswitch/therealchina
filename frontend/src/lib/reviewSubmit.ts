@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { parseFunctionError } from './mediaUpload'
+import type { RewardResult } from './reviewReward'
 
 export interface MediaItem {
   url: string
@@ -40,6 +41,9 @@ export interface ReviewPayload {
   // Signed-in only: publish under "Anonymous" — reviews.user_id stays NULL and
   // the private reviewer_context owner link keeps the review in My Reviews.
   postAnonymously?: boolean
+  // Asked for the thank-you gift. Guests also send reviewerContext.email; members are
+  // contacted at their sign-up email.
+  rewardRequested?: boolean
   universitySlug?: string
   universityName?: string
   newUniversity?: { name: string; city: string; province?: string }
@@ -73,6 +77,8 @@ export interface ReviewSubmitResult {
   // false, the client must not store the token or offer Boost — saves would
   // always 403.
   boostAvailable?: boolean
+  // Gift state after this save (always "off" unless the reviewer asked for it).
+  reward?: RewardResult
 }
 
 export class ReviewSubmitError extends Error {

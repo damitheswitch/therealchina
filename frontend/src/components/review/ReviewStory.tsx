@@ -1,5 +1,6 @@
 import type { ReviewForm } from '../../hooks/useReviewForm'
 import { storyPlaceholder } from '../../lib/reviewFlow'
+import { MIN_OWN_UNITS } from '../../lib/reviewReward'
 import { PolarityMatrixField, ReviewTextField } from './fields'
 
 // Screen 2 of the tap-first flow: the verdict matrix. Six 👍 / 👎 rows build
@@ -11,9 +12,12 @@ import { PolarityMatrixField, ReviewTextField } from './fields'
 export const ReviewStory = ({
   form,
   promptQuestion,
+  rewardUnits,
 }: {
   form: ReviewForm
   promptQuestion?: string | null
+  // Own-words count for the gift offer; undefined hides the counter.
+  rewardUnits?: number
 }) => (
   <div className="wizard-step active">
     {promptQuestion ? (
@@ -39,5 +43,12 @@ export const ReviewStory = ({
 
     <PolarityMatrixField form={form} />
     <ReviewTextField form={form} story placeholder={storyPlaceholder(form.values.polarity)} />
+    {rewardUnits !== undefined && (
+      <p className="reward-hint" aria-live="polite">
+        {rewardUnits >= MIN_OWN_UNITS
+          ? 'Enough words for the gift.'
+          : `${rewardUnits} of ${MIN_OWN_UNITS} words in your own words for the gift. The tapped sentence does not count.`}
+      </p>
+    )}
   </div>
 )

@@ -11,6 +11,8 @@ import { RecommendPill, ReviewContext, ReviewExtras, ReviewStrengthMeter } from 
 import { useAuth } from '../../contexts/AuthContext'
 import { useProfileContext } from '../../contexts/ProfileContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
+import { SITE } from '../../lib/seo/site'
+import { rewardConfirmation, type RewardResult } from '../../lib/reviewReward'
 
 // Renders the just-published review the way it appears on the university
 // page. Driven straight off form values, so it fills in live while the
@@ -71,6 +73,7 @@ export const ReviewSuccess = ({
   universitySlug,
   isAnonymous,
   wantsNickname = false,
+  reward,
   postedAnonymously = false,
   canBoost,
   onBoost,
@@ -84,6 +87,8 @@ export const ReviewSuccess = ({
   // Guest who chose "Post with nickname": the account step is the last thing
   // they see, and leaving without it shows a warning first.
   wantsNickname?: boolean
+  // Thank-you gift state from the server after publish or a later save.
+  reward?: RewardResult
   // Signed-in reviewer who picked "Post as Anonymous" — the preview must show
   // the public truth (Anonymous, no seal).
   postedAnonymously?: boolean
@@ -94,6 +99,8 @@ export const ReviewSuccess = ({
   const { openAuthModal } = useAuthModal()
   const [offerDismissed, setOfferDismissed] = useState(false)
   const [confirmingSkip, setConfirmingSkip] = useState(false)
+  const rewardLine = rewardConfirmation(reward, SITE.contactEmail)
+  const rewardWaiting = reward?.state === 'waiting'
   const nicknamePending = isAnonymous && wantsNickname && !offerDismissed
 
   const openNicknameSignup = () =>
@@ -145,9 +152,19 @@ export const ReviewSuccess = ({
 
       <ReviewStrengthMeter review={preview} />
 
+      {rewardLine && (
+        <p className="reward-confirm" role="status">
+          <span aria-hidden="true">🎁</span> {rewardLine}
+        </p>
+      )}
+
       {canBoost && !nicknamePending && (
         <div className="success-offer">
-          <h3 className="success-offer-title">Make it more useful in 60 seconds?</h3>
+          <h3 className="success-offer-title">
+            {rewardWaiting
+              ? 'Add details to get your free VPN'
+              : 'Make it more useful in 60 seconds?'}
+          </h3>
           <p className="step-sub" style={{ marginBottom: 'var(--sp-2)' }}>
             Program, ratings, costs. One card at a time, each saved as you go.
           </p>

@@ -30,6 +30,7 @@ import {
   jsonResponse,
 } from '../_shared/guard.ts'
 import { validateReviewFields, type MediaItem } from '../_shared/reviewFields.ts'
+import { maybeDispatchReward } from '../_shared/rewardDispatch.ts'
 
 // Edits and deletes are far less abuse-prone than submissions — same hourly
 // budget as authenticated submissions is more than enough.
@@ -237,7 +238,9 @@ async function handleManage(req: Request): Promise<Response> {
     await purgeUnreferencedMedia(removedUrls, reviewId)
   }
 
-  return jsonResponse(req, { reviewId }, 200)
+  // An edit may be what makes the review full: send the gift email now.
+  const reward = await maybeDispatchReward(reviewId)
+  return jsonResponse(req, { reviewId, reward }, 200)
 }
 
 // ---- Main ------------------------------------------------------------------------
