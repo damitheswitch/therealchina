@@ -76,13 +76,15 @@ BEGIN
 
   PERFORM set_config('request.jwt.claims', '{"role":"anon"}', true);
   SET LOCAL ROLE anon;
-  SELECT count(*) INTO v_count FROM public.flight_listings WHERE id = '00000000-0000-4000-8000-0000000051f1';
+  -- Guests read the public view since 064.
+  SELECT count(*) INTO v_count FROM public.flight_listings_public WHERE id = '00000000-0000-4000-8000-0000000051f1';
   RESET ROLE;
   INSERT INTO probe_results VALUES ('active departed listing visible for past flights tab',
     CASE WHEN v_count = 1 THEN 'PASS' ELSE 'FAIL: ' || v_count END);
 
   SET LOCAL ROLE anon;
-  SELECT count(*) INTO v_count FROM public.flight_listings WHERE id = '00000000-0000-4000-8000-0000000051f2';
+  -- Guests read the public view since 064.
+  SELECT count(*) INTO v_count FROM public.flight_listings_public WHERE id = '00000000-0000-4000-8000-0000000051f2';
   RESET ROLE;
   INSERT INTO probe_results VALUES ('upcoming listing visible to anon',
     CASE WHEN v_count = 1 THEN 'PASS' ELSE 'FAIL: ' || v_count END);
