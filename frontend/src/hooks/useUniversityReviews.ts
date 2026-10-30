@@ -233,7 +233,7 @@ export const useUniversityReviews = (
   }, [universityId, seeded, reloadTick])
   const firstReviewId = seeded
     ? seededFirstId
-    : fetchedFirstId?.uid === universityId
+    : fetchedFirstId && universityId && fetchedFirstId.uid === universityId
       ? fetchedFirstId.id
       : null
 
