@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { useFlightListings } from './useFlightListings'
 
-const { queries, ownerPages, board, from } = vi.hoisted(() => {
+const { queries, tables, ownerPages, board, from } = vi.hoisted(() => {
   const queries: { filters: Record<string, unknown>; orders: string[] }[] = []
+  const tables: string[] = []
   const ownerPages: { data: unknown[] | null; error: unknown }[] = []
   const board: { data: unknown[]; error: unknown } = { data: [], error: null }
-  const from = vi.fn(() => {
+  const from = vi.fn((table: string) => {
+    tables.push(table)
     const state = { filters: {} as Record<string, unknown>, orders: [] as string[] }
     queries.push(state)
     const query = {
@@ -33,13 +35,14 @@ const { queries, ownerPages, board, from } = vi.hoisted(() => {
     }
     return query
   })
-  return { queries, ownerPages, board, from }
+  return { queries, tables, ownerPages, board, from }
 })
 
 vi.mock('../lib/supabaseClient', () => ({ supabase: { from } }))
 
 beforeEach(() => {
   queries.length = 0
+  tables.length = 0
   ownerPages.length = 0
   board.data = []
   board.error = null
@@ -66,6 +69,27 @@ describe('owner flight pagination', () => {
     const { result } = renderHook(() => useFlightListings())
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(queries).toHaveLength(2)
+    expect(tables).toEqual(['flight_listings_public', 'flight_listings_public'])
+  })
+
+  it('maps guest rows to listings without owner or contact data', async () => {
+    board.data = [{ id: 'g1', poster_label: 'Mei', notes: 'leak', user_id: 'leak' }]
+    const { result } = renderHook(() => useFlightListings())
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.listings).toHaveLength(1)
+    expect(result.current.listings[0]).toMatchObject({
+      id: 'g1',
+      display_name: 'Mei',
+      user_id: null,
+      notes: null,
+      social_handles: [],
+    })
+  })
+
+  it('reads members from the profile view', async () => {
+    const { result } = renderHook(() => useFlightListings({ userId: 'owner' }))
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(tables.every((t) => t === 'flight_listings_with_profile')).toBe(true)
   })
 
   it('surfaces errors on later owner pages instead of silently truncating', async () => {

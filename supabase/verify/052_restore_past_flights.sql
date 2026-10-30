@@ -18,14 +18,14 @@ SELECT 'table policy has no departure-date filter',
 FROM pg_policies
 WHERE schemaname = 'public'
   AND tablename = 'flight_listings'
-  AND policyname = 'Public read access to active flight listings';
+  AND policyname IN ('Public read access to active flight listings', 'Authenticated read access to active flight listings');
 
 INSERT INTO probe_results
 SELECT 'table policy present', CASE WHEN count(*) = 1 THEN 'PASS' ELSE 'FAIL: ' || count(*) END
 FROM pg_policies
 WHERE schemaname = 'public'
   AND tablename = 'flight_listings'
-  AND policyname = 'Public read access to active flight listings';
+  AND policyname IN ('Public read access to active flight listings', 'Authenticated read access to active flight listings');
 
 SELECT * FROM probe_results;
 

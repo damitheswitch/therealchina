@@ -71,7 +71,12 @@ export const FlightListingsPage = () => {
     loading,
     error: listingsError,
     refetch: refetchListings,
-  } = useFlightListings({ enabled: !!user, userId: user?.id ?? null })
+  } = useFlightListings({ enabled: !authLoading, userId: user?.id ?? null })
+
+  // Signing out while on My Flights would leave a tab guests cannot see.
+  useEffect(() => {
+    if (!user && viewTab === 'my_flights') setViewTab('upcoming')
+  }, [user, viewTab])
 
   // Surface fetch errors as a toast (preserves previous inline behavior).
   useEffect(() => {
@@ -102,7 +107,29 @@ export const FlightListingsPage = () => {
     }
   }, [user, fetchOwnProfile])
 
+  const handleRequireAuthToPost = () => {
+    openAuthModal('register', {
+      title: 'Create an account to post your flight',
+      subtitle:
+        'Posting needs an account so travelers and senders can reach you, and so we can keep spam off the board. Browsing stays open to everyone.',
+      closable: true,
+    })
+  }
+
+  const handleRequireAuthToContact = () => {
+    openAuthModal('register', {
+      title: 'Sign up to contact travelers',
+      subtitle:
+        'Contact details are only shown to signed-in members. Sign up for free to message the person flying your way.',
+      closable: true,
+    })
+  }
+
   const handleStartPosting = async () => {
+    if (!user) {
+      handleRequireAuthToPost()
+      return
+    }
     setEditingListing(null)
     const currentProfile = ownProfile || (await fetchOwnProfile())
     if (!hasSocialHandles(currentProfile)) {
@@ -224,40 +251,39 @@ export const FlightListingsPage = () => {
     return <div className="loading">Loading...</div>
   }
 
-  if (!user) {
-    return (
-      <div className="container empty-state" style={{ paddingTop: '6rem' }}>
-        <Icons.Plane size={48} />
-        <h1>Get paid to fly</h1>
-        <p>List your unused luggage space for cash, or hire a traveler to carry your parcel.</p>
-        <div
-          style={{
-            marginTop: '1rem',
-            display: 'flex',
-            gap: '0.75rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <button onClick={() => openAuthModal('register')} className="btn btn-primary">
-            Create account
-          </button>
-          <button onClick={() => openAuthModal('login')} className="btn btn-outline">
-            Sign in
-          </button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="container" style={{ paddingTop: 'var(--sp-4)', paddingBottom: 'var(--sp-4)' }}>
       <Seo path="/flights" title="Flight listings" index={false} />
-      <div className="section-header">
-        <h1 className="section-title">Flight Listings</h1>
-        <p className="page-subtitle">Find people flying your way and send packages through them</p>
-        <FlightSafetyNotice />
-      </div>
+      {user ? (
+        <div className="section-header">
+          <h1 className="section-title">Flight Listings</h1>
+          <p className="page-subtitle">
+            Find people flying your way and send packages through them
+          </p>
+          <FlightSafetyNotice />
+        </div>
+      ) : (
+        <div className="section-header">
+          <div className="flight-hero">
+            <Icons.Plane size={32} className="flight-hero-icon" />
+            <div className="flight-hero-body">
+              <h1 className="section-title">Get paid to fly</h1>
+              <p className="page-subtitle">
+                List your unused luggage space for cash, or hire a traveler to carry your parcel.
+              </p>
+            </div>
+            <div className="flight-hero-actions">
+              <button onClick={() => openAuthModal('register')} className="btn btn-primary btn-sm">
+                Create account
+              </button>
+              <button onClick={() => openAuthModal('login')} className="btn btn-outline btn-sm">
+                Sign in
+              </button>
+            </div>
+          </div>
+          <FlightSafetyNotice />
+        </div>
+      )}
 
       {/* Inline filter toolbar + Post CTA */}
       <div className="flight-toolbar">
@@ -313,7 +339,7 @@ export const FlightListingsPage = () => {
 
         <div className="flight-toolbar-spacer" />
 
-        {user && !showForm && (
+        {!showForm && (
           <button onClick={handleStartPosting} className="btn btn-primary btn-sm">
             <Icons.Plus /> Post Your Flight
           </button>
@@ -350,16 +376,18 @@ export const FlightListingsPage = () => {
                 Past <span className="flight-tab-word">Flights</span>{' '}
                 <span className="flight-tab-count">({counts.past})</span>
               </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={viewTab === 'my_flights'}
-                className={`flight-tab-btn ${viewTab === 'my_flights' ? 'active' : ''}`}
-                onClick={() => handleTabChange('my_flights')}
-              >
-                My <span className="flight-tab-word">Flights</span>{' '}
-                <span className="flight-tab-count">({counts.mine})</span>
-              </button>
+              {user && (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={viewTab === 'my_flights'}
+                  className={`flight-tab-btn ${viewTab === 'my_flights' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('my_flights')}
+                >
+                  My <span className="flight-tab-word">Flights</span>{' '}
+                  <span className="flight-tab-count">({counts.mine})</span>
+                </button>
+              )}
               <button
                 type="button"
                 role="tab"
@@ -402,7 +430,7 @@ export const FlightListingsPage = () => {
                     ? 'No flights posted yet'
                     : viewTab === 'all'
                       ? 'No flight listings found'
-                      : 'No upcoming flight listings found'}
+                      : 'No upcoming flights yet'}
               </h3>
               <p>
                 {hasActiveFilters
@@ -411,7 +439,7 @@ export const FlightListingsPage = () => {
                     ? 'No historical flight listings have been recorded yet.'
                     : viewTab === 'my_flights'
                       ? "You haven't posted any flights yet."
-                      : 'Be the first to post a flight listing!'}
+                      : 'Nobody has listed an upcoming trip right now. Post yours and you will be the first traveler people see.'}
               </p>
               {viewTab === 'upcoming' && counts.past > 0 && !hasActiveFilters && (
                 <button
@@ -423,7 +451,7 @@ export const FlightListingsPage = () => {
                   View past flights ({counts.past})
                 </button>
               )}
-              {user && !hasActiveFilters && viewTab !== 'past' && (
+              {!hasActiveFilters && viewTab !== 'past' && (
                 <button
                   type="button"
                   onClick={handleStartPosting}
@@ -445,6 +473,7 @@ export const FlightListingsPage = () => {
                   onDelete={handleListingDeleted}
                   onEdit={handleEditListing}
                   onToggleActive={handleToggleActive}
+                  onRequireAuth={user ? undefined : handleRequireAuthToContact}
                 />
               ))}
             </div>
