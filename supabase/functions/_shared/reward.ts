@@ -7,7 +7,7 @@
 
 export const MIN_OWN_UNITS = 40
 export const MIN_POLARITY_TAGS = 2
-export const MIN_DETAIL_AREAS = 4
+export const MIN_DETAIL_AREAS = 2
 const RATINGS_AREA_MIN = 4
 
 export type RewardMissing = 'words' | 'taps' | 'details'
@@ -226,6 +226,8 @@ export function evaluateReward(row: RewardReviewRow): RewardEvaluation {
 
 // Crockford base32 without I, L, O, U (matches the CHECK on reward_code).
 const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+// Shape of a code from newRewardCode(), used to validate ?ref= share links.
+export const REWARD_CODE_RE = /^TRC-[0-9A-HJKMNP-TV-Z]{6}$/
 
 export function newRewardCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(6))
@@ -239,4 +241,16 @@ export function normalizeEmail(raw: string): string {
   let local = localRaw.split('+')[0]
   if (domain === 'gmail.com') local = local.replace(/\./g, '')
   return `${local}@${domain}`
+}
+
+// Adds the WeChat handoff to an earned gift. A failed send still carries a
+// code, so the reviewer can claim it on WeChat even when the email bounced.
+// Any other state never reveals the ID.
+export function withHandoff<T extends { state: string; code?: string }>(
+  result: T,
+  wechatId: string | undefined
+): T & { wechatId?: string } {
+  if (!wechatId || !result.code) return result
+  if (result.state !== 'sent' && result.state !== 'failed') return result
+  return { ...result, wechatId }
 }

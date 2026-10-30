@@ -867,23 +867,38 @@ export const AnonEmailField = ({
         </p>
       )}
       {reward ? (
-        <>
-          <p className="reward-hint">
-            {reward.full
-              ? 'Your review is full. We will email you the steps to get your free VPN right after you publish.'
-              : `Add ${describeMissing(reward.missing)} and we will email your free VPN steps as soon as your review is full.`}
-          </p>
-          <p className="reward-hint">
-            Your email is never public and never shared with any university. We use it to send your
-            gift steps, and to link this review to your account if you sign up later. We delete it
-            90 days after your gift. Questions: {SITE.contactEmail}
-          </p>
-        </>
+        <p className="reward-hint">
+          {reward.full
+            ? 'Your review is full. Right after you publish, we email you the steps and show you how to claim your gift.'
+            : `Add ${describeMissing(reward.missing)} and we will email your free VPN steps as soon as your review is full.`}
+        </p>
       ) : (
         <span className="form-hint">
           Never shown publicly or shared with any university. Only used to link this review to your
           account if you sign up later.
         </span>
+      )}
+      {email.trim() && (
+        <label className="form-checkbox-label" htmlFor="anon-email-consent">
+          <input
+            id="anon-email-consent"
+            type="checkbox"
+            className="form-checkbox"
+            checked={form.values.emailConsent}
+            onChange={(e) => form.set('emailConsent', e.target.checked)}
+          />
+          Email me when a future student asks about my university, and about student discounts from
+          services we trust. Unsubscribe anytime.
+        </label>
+      )}
+      {reward && (
+        <p className="reward-hint">
+          Your email is never public and never shared with any university or the gift provider.
+          {form.values.emailConsent
+            ? ' We keep it until you unsubscribe.'
+            : ' We delete it 90 days after your gift.'}{' '}
+          Questions: {SITE.contactEmail}
+        </p>
       )}
     </div>
   )

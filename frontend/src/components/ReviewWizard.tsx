@@ -54,11 +54,9 @@ import {
   normalizeUniSlugParam,
   parseRatingParam,
   parseRecommendParam,
-  previewReviewFromFields,
   UNI_SLUG_RE,
   type ReviewFieldValues,
 } from '../lib/reviewFlow'
-import { DETAILED_THRESHOLD, DETAIL_AREA_COUNT, filledDetailAreas } from '../lib/reviewDetail'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
 import { useProfileContext } from '../contexts/ProfileContext'
@@ -73,10 +71,12 @@ import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
 import { BoostCards } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
 import { AnonEmailField, type MediaState } from './review/fields'
-import { RewardTeaser } from './review/RewardTeaser'
+import { GiftProgress } from './review/GiftProgress'
 import { RewardEmailNotice } from './review/RewardEmailNotice'
 import {
   REWARD_UI_ENABLED,
+  readReferral,
+  rememberReferral,
   describeMissing,
   evaluateRewardFields,
   type RewardResult,
@@ -107,82 +107,6 @@ const MIN_POLARITY_PICKS = 2
 const SCREEN_LABELS = ['The essentials', 'What stood out', 'Post it']
 
 type Phase = 'form' | 'success' | 'boost'
-
-// Slim "details collected" track under the progress dots: the dragon glides
-// toward the gold pearl as detail areas fill on either side of publish. It
-// reads the same ReviewCardData shape the public card uses, so the count it
-// shows always matches the highlight the review will actually earn.
-// The dragon hatches and grows as detail areas fill: an egg at zero, a Chinese
-// dragon when all seven are in. Gold highlight still arrives at DETAILED_THRESHOLD.
-const DRAGON_STAGES = [
-  { min: 0, emoji: '🥚', name: 'Egg', cls: 'egg', hint: 'Add a detail to crack the egg.' },
-  { min: 1, emoji: '🥚', name: 'Cracking egg', cls: 'cracking', hint: 'Add another to hatch it.' },
-  {
-    min: 2,
-    emoji: '🦎',
-    name: 'Hatchling',
-    cls: 'hatchling',
-    hint: 'One more and it becomes a young dragon.',
-  },
-  {
-    min: 3,
-    emoji: '🐲',
-    name: 'Young dragon',
-    cls: 'young',
-    hint: 'Keep going to grow a full dragon.',
-  },
-  {
-    min: 5,
-    emoji: '🐉',
-    name: 'Dragon',
-    cls: 'dragon',
-    hint: 'Fill every area to make it a Chinese dragon.',
-  },
-  {
-    min: 7,
-    emoji: '🐉',
-    name: 'Chinese dragon',
-    cls: 'golden',
-    hint: 'Every detail is in.',
-  },
-] as const
-
-const DetailTrack = ({
-  values,
-  media,
-}: {
-  values: ReviewFieldValues
-  media: MediaState['media']
-}) => {
-  const filled = filledDetailAreas(previewReviewFromFields(values, media)).length
-  const pct = Math.min(100, (filled / DETAIL_AREA_COUNT) * 100)
-  const earned = filled >= DETAILED_THRESHOLD
-  const stage = [...DRAGON_STAGES].reverse().find((s) => filled >= s.min) ?? DRAGON_STAGES[0]
-  return (
-    <div
-      className="detail-track"
-      role="status"
-      aria-label={`${stage.name}: ${filled} of ${DETAIL_AREA_COUNT} detail areas filled`}
-    >
-      <div className="detail-track-bar">
-        <div className="detail-track-fill" style={{ width: `${pct}%` }} />
-        <span
-          className={`detail-track-dragon stage-${stage.cls}`}
-          style={{ left: `calc(${pct}% - 0.6em)` }}
-          aria-hidden="true"
-        >
-          {stage.emoji}
-        </span>
-        <span className={`detail-track-pearl${earned ? ' earned' : ''}`} aria-hidden="true" />
-      </div>
-      <div className={`detail-track-label${earned ? ' earned' : ''}`}>
-        {earned
-          ? `Gold highlight earned. ${stage.name}. ${stage.hint}`
-          : `${stage.name}, ${filled}/${DETAIL_AREA_COUNT} details. ${stage.hint} ${DETAILED_THRESHOLD} earns the gold highlight.`}
-      </div>
-    </div>
-  )
-}
 
 export const ReviewWizard = ({
   searchParams,
@@ -314,6 +238,11 @@ export const ReviewWizard = ({
   // not the render closure it was defined in.
   const valuesRef = useRef(values)
   const mediaStateRef = useRef(mediaState)
+  // A classmate's share link (?ref=<gift code>): keep it for the publish call.
+  const refParam = searchParams.get('ref')
+  useEffect(() => {
+    rememberReferral(refParam)
+  }, [refParam])
   useEffect(() => {
     valuesRef.current = values
   }, [values])
@@ -980,6 +909,7 @@ export const ReviewWizard = ({
         cfToken,
         postAnonymously: Boolean(user && postAnon),
         rewardRequested: rewardOn && (user ? giftChoice === true : guestGiftEmailValid),
+        ref: readReferral(),
         claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
         boostToken: boostToken ?? undefined,
         universitySlug: !isNotListed && values.selectedUni ? values.selectedUni : undefined,
@@ -1236,7 +1166,11 @@ export const ReviewWizard = ({
               timeZone: 'UTC',
             })}
           />
-          <DetailTrack values={values} media={mediaState.media} />
+          <GiftProgress
+            values={values}
+            media={mediaState.media}
+            evaluation={rewardOn ? rewardEval : undefined}
+          />
           <BoostCards
             form={form}
             mediaState={mediaState}
@@ -1285,8 +1219,11 @@ export const ReviewWizard = ({
           ))}
         </div>
 
-        <DetailTrack values={values} media={mediaState.media} />
-        {rewardOn && <RewardTeaser evaluation={rewardEval} />}
+        <GiftProgress
+          values={values}
+          media={mediaState.media}
+          evaluation={rewardOn ? rewardEval : undefined}
+        />
 
         {/* A saved draft for a different university — surfaced so a ?uni
             link never silently buries work in progress. */}

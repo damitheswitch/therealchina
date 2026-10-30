@@ -12,7 +12,7 @@ export const REWARD_UI_ENABLED = import.meta.env.VITE_REVIEW_REWARD === 'on'
 
 export const MIN_OWN_UNITS = 40
 export const MIN_POLARITY_TAGS = 2
-export const MIN_DETAIL_AREAS = 4
+export const MIN_DETAIL_AREAS = 2
 const RATINGS_AREA_MIN = 4
 
 export type RewardMissing = 'words' | 'taps' | 'details'
@@ -24,6 +24,8 @@ export interface RewardResult {
   state: RewardState
   code?: string
   missing?: RewardMissing[]
+  // Owner's WeChat ID, sent by the server only once the gift is earned.
+  wechatId?: string
 }
 
 export interface RewardReviewRow {
@@ -296,5 +298,44 @@ export const rewardConfirmation = (
       return `We could not give a gift for this review. Questions: ${contactEmail}.`
     default:
       return null
+  }
+}
+
+// ---- Share links and referrals ------------------------------------------------------
+
+const REF_KEY = 'trc_review_ref'
+export const REWARD_CODE_RE = /^TRC-[0-9A-HJKMNP-TV-Z]{6}$/
+
+// Link a reviewer sends to classmates: opens the review flow on the same
+// university, carrying the reviewer's gift code so the server can count it.
+export const reviewShareLink = (
+  origin: string,
+  universitySlug: string | null,
+  code: string | undefined
+): string => {
+  const params = new URLSearchParams()
+  if (universitySlug) params.set('uni', universitySlug)
+  if (code && REWARD_CODE_RE.test(code)) params.set('ref', code)
+  const query = params.toString()
+  return `${origin}/review${query ? `?${query}` : ''}`
+}
+
+// Remember a ?ref= code for this tab so it survives the walk through the flow.
+export const rememberReferral = (raw: string | null): void => {
+  const code = raw?.trim().toUpperCase() ?? ''
+  if (!REWARD_CODE_RE.test(code)) return
+  try {
+    sessionStorage.setItem(REF_KEY, code)
+  } catch {
+    // Private mode or blocked storage: the referral is simply not counted.
+  }
+}
+
+export const readReferral = (): string | undefined => {
+  try {
+    const code = sessionStorage.getItem(REF_KEY) ?? ''
+    return REWARD_CODE_RE.test(code) ? code : undefined
+  } catch {
+    return undefined
   }
 }

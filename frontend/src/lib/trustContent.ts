@@ -151,7 +151,7 @@ export const TRUST_PAGES: TrustDoc[] = [
           'Public pages also run Google Analytics so we can see which content people read and where they arrive from. It records page views and basic device data, and it sets its own cookie. Signed-in app pages, like your profile and the review form itself, are not sent to Google.',
           ...(GIFTS_ON
             ? [
-                'If you ask for the thank-you gift, we use your email to send the steps. For guests, this is the private email you type on the last screen. For members, it is your sign-up email. It is never public, never used for newsletters, and never given to the service provider. We delete it 90 days after the gift email.',
+                'If you ask for the thank-you gift, we use your email to send the steps. For guests, this is the private email you type on the last screen. For members, it is your sign-up email. It is never public and never given to the service provider. We delete it 90 days after the gift email, unless you ticked the box to hear when students ask about your university. Then we keep it until you unsubscribe.',
               ]
             : []),
         ],

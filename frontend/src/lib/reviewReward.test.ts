@@ -8,6 +8,9 @@ vi.mock('./supabaseClient', () => ({ supabase: {} }))
 import {
   describeMissing,
   evaluateReward,
+  readReferral,
+  rememberReferral,
+  reviewShareLink,
   rewardConfirmation,
   suggestEmailFix,
   type RewardReviewRow,
@@ -89,5 +92,22 @@ describe('rewardConfirmation', () => {
       const line = rewardConfirmation({ state, code: 'TRC-AAAAAA' }, 'a@b.c') ?? ''
       expect(/[–—]/.test(line)).toBe(false)
     }
+  })
+})
+
+describe('share links and referrals', () => {
+  it('builds a review link with the university and a valid code', () => {
+    expect(reviewShareLink('https://x.test', 'fudan-university', 'TRC-ABC123')).toBe(
+      'https://x.test/review?uni=fudan-university&ref=TRC-ABC123'
+    )
+    expect(reviewShareLink('https://x.test', null, 'bogus')).toBe('https://x.test/review')
+  })
+
+  it('remembers only well-formed codes', () => {
+    sessionStorage.clear()
+    rememberReferral('nope')
+    expect(readReferral()).toBeUndefined()
+    rememberReferral(' trc-abc123 ')
+    expect(readReferral()).toBe('TRC-ABC123')
   })
 })

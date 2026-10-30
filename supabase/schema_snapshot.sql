@@ -2420,6 +2420,22 @@ ALTER TABLE public.review_rewards ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.review_rewards FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.review_rewards TO service_role;
 
+-- Share-link referrals (062). Written only by review-submit after checking the
+-- ref code belongs to an existing gift. No client access.
+CREATE TABLE IF NOT EXISTS public.review_referrals (
+  review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
+  ref_code TEXT NOT NULL CHECK (ref_code ~ '^TRC-[0-9A-HJKMNP-TV-Z]{6}$'),
+  referrer_review_id UUID NOT NULL REFERENCES public.reviews(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (review_id <> referrer_review_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_referrals_ref_code ON public.review_referrals(ref_code);
+
+ALTER TABLE public.review_referrals ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.review_referrals FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.review_referrals TO service_role;
+
 -- Called by the Edge Functions right before sending. Locks the row, enforces
 -- one gift per email key and a copy-paste check on the reviewer's own words,
 -- and returns 'send', 'email_used', 'duplicate_text' or 'skip'.
@@ -2508,6 +2524,7 @@ GRANT EXECUTE ON FUNCTION public.dispatch_review_reward(UUID, TEXT, TEXT, INT, T
   TO service_role;
 
 -- Daily retention: drop the guest's private email 90 days after the gift email
+-- unless they opted in to student-question emails (reviewer_context.email_consent, 062)
 -- (or 90 days after the request if the review never became full), mark stale
 -- requests expired, and delete the bookkeeping rows after a year.
 CREATE OR REPLACE FUNCTION public.cleanup_review_rewards()
@@ -2522,6 +2539,7 @@ BEGIN
   FROM public.review_rewards rr
   WHERE rr.review_id = rc.review_id
     AND rc.email IS NOT NULL
+    AND rc.email_consent = FALSE
     AND COALESCE(rr.sent_at, rr.requested_at) < NOW() - INTERVAL '90 days';
 
   UPDATE public.review_rewards
