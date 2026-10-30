@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
+import { MobileTabBar } from './components/MobileTabBar'
 import { LoginDraftBanner } from './components/LoginDraftBanner'
 // LandingPage stays in the entry chunk: it is what most visits load first.
 import { LandingPage } from './pages/LandingPage'
@@ -151,6 +152,7 @@ function App() {
         </Suspense>
       </main>
       {!isOnboarding && <Footer />}
+      <MobileTabBar />
       <AuthModal
         isOpen={isOpen}
         onClose={closeAuthModal}

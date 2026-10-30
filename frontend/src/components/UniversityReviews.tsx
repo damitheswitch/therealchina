@@ -33,6 +33,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
     commentCounts,
     upvotes,
     resolvedSort,
+    firstReviewId,
   } = useUniversityReviews(university.id, page, sort)
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -58,7 +59,12 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
   }
 
   return (
-    <div className="section uni-reviews" style={{ paddingTop: 'var(--sp-2)' }} ref={sectionRef}>
+    <div
+      id="reviews"
+      className="section uni-reviews"
+      style={{ paddingTop: 'var(--sp-2)' }}
+      ref={sectionRef}
+    >
       <div className="reviews-head">
         <h2 className="section-title">Student Reviews{totalCount > 0 ? ` (${totalCount})` : ''}</h2>
         {totalCount > 1 && <ReviewSortSelect value={resolvedSort} onChange={handleSortChange} />}
@@ -98,6 +104,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
                   author={review.user_id ? (authors[review.user_id] ?? null) : null}
                   upvote={upvotes[review.id]}
                   commentCount={commentCounts[review.id]}
+                  isFirst={review.id === firstReviewId}
                 />
               ))}
             </div>

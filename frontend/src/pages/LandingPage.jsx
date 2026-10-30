@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 import { UniversityDirectory } from '../components/UniversityDirectory'
+import { HeroSearch } from '../components/HeroSearch'
+import { HeroReviewQuote } from '../components/HeroReviewQuote'
 import { Seo } from '../components/Seo'
 import { stringify, websiteSchema, orgSchema } from '../lib/seo/jsonld'
+import { REWARD_UI_ENABLED } from '../lib/reviewReward'
 import { Icons } from '../components/Icons'
 
 // LandingPage component
@@ -15,22 +18,26 @@ export const LandingPage = () => {
       />
       <section className="hero">
         <div className="container hero-inner">
-          <h1>Real reviews from real students.</h1>
+          <h1>What studying in China is really like</h1>
           <p className="hero-subtitle">
-            Authentic, community-driven university reviews for international students in China.
+            Costs, dorms, visas and teaching, told by international students who live it.
           </p>
+          <HeroSearch />
+          <HeroReviewQuote />
           <div className="hero-buttons">
-            <a href="#grid" className="btn btn-primary btn-lg">
-              Browse Universities
-            </a>
-            <Link to="/review" className="btn btn-outline btn-lg">
+            <Link to="/review" className="btn btn-primary btn-lg">
               <Icons.Pen /> Leave a Review
             </Link>
           </div>
+          {REWARD_UI_ENABLED && (
+            <Link to="/review" className="hero-reward-chip">
+              <span aria-hidden="true">🧧</span> Free VPN gift for a full review
+            </Link>
+          )}
         </div>
       </section>
 
-      <UniversityDirectory featured />
+      <UniversityDirectory featured hideSearch />
     </>
   )
 }

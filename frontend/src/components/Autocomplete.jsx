@@ -224,6 +224,9 @@ export const Autocomplete = ({
               {renderOption(option, index === highlightedIndex)}
             </li>
           ))}
+          {loading && suggestions.length === 0 && (
+            <li className="autocomplete-option muted">Loading...</li>
+          )}
           {showNotListed && (
             <li
               role="option"
@@ -238,9 +241,6 @@ export const Autocomplete = ({
             >
               {notListedText}
             </li>
-          )}
-          {loading && suggestions.length === 0 && (
-            <li className="autocomplete-option muted">Loading...</li>
           )}
         </ul>
       )}

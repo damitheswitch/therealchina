@@ -12,6 +12,7 @@ import {
   type ReviewSortable,
 } from '../lib/reviewSort'
 import { REVIEW_COLUMNS, REVIEW_DETAIL_COLUMNS } from '../lib/queryColumns'
+import { earliestReviewId } from '../lib/firstReview'
 import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
@@ -202,6 +203,40 @@ export const useUniversityReviews = (
     return () => controller.abort()
   }, [universityId, page, sort, seeded, all, reloadTick])
 
+  // Earliest review of the university, for the "First review" label. Seeded
+  // pages already hold every review; otherwise one single-row query (the
+  // list is paginated, so the first review may not be on the visible page).
+  const [fetchedFirstId, setFetchedFirstId] = useState<{ uid: string; id: string | null } | null>(
+    null
+  )
+  const seededFirstId = useMemo(() => (seeded ? earliestReviewId(all) : null), [seeded, all])
+  useEffect(() => {
+    if (!universityId || seeded) return
+    const controller = new AbortController()
+    const run = async () => {
+      const { data, error: firstError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('university_id', universityId)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(1)
+        .abortSignal(controller.signal)
+      if (controller.signal.aborted || firstError) return
+      setFetchedFirstId({
+        uid: universityId,
+        id: (data as { id: string }[] | null)?.[0]?.id ?? null,
+      })
+    }
+    run()
+    return () => controller.abort()
+  }, [universityId, seeded, reloadTick])
+  const firstReviewId = seeded
+    ? seededFirstId
+    : fetchedFirstId && universityId && fetchedFirstId.uid === universityId
+      ? fetchedFirstId.id
+      : null
+
   // Engagement counts for the visible page — batched `.in()` queries so the
   // cards show "Comments (n)" / "Upvote (n)" without each fetching per-row
   // (same convention as useRecentReviews; cards must not query per-row).
@@ -275,6 +310,7 @@ export const useUniversityReviews = (
     commentCounts,
     upvotes,
     resolvedSort,
+    firstReviewId,
     refetch: () => setReloadTick((tick) => tick + 1),
   }
 }

@@ -33,8 +33,9 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  * @param {object | null} [props.author]
  * @param {{ count: number, upvoted?: boolean }} [props.upvote]
  * @param {number | null} [props.commentCount]
+ * @param {boolean} [props.isFirst] earliest published review of its university
  */
-export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
+export const ReviewCard = ({ review, author, upvote, commentCount = null, isFirst = false }) => {
   const { id, rating, text, media, created_at, user_id, recommend } = review
   // Quick rating = no written text (same definition the reviews.review_kind
   // generated column uses). Rating/tags still render; the empty text block
@@ -119,6 +120,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
         <StarRating rating={rating} />
         <div className="review-meta">
           <RecommendPill value={recommend} />
+          {isFirst && <span className="first-review-badge">First review</span>}
           {isQuick && <span className="quick-rating-badge">Quick rating</span>}
           {user_id && <SealBadge />}
           <span>{date}</span>
