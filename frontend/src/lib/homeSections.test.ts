@@ -5,7 +5,11 @@ import { describe, it, expect, vi } from 'vitest'
 vi.mock('./supabaseClient', () => ({ supabase: {} }))
 
 import {
+  nearestSlide,
   pickLandingReviews,
+  pickLogoStrip,
+  slideStops,
+  stepIndex,
   pickOpenQuestions,
   reviewContextParts,
   type HomeQuestionRow,
@@ -141,5 +145,53 @@ describe('pickOpenQuestions', () => {
 
   it('returns an empty list when everything is answered', () => {
     expect(pickOpenQuestions([question({ id: 'a', answer_count: 1 })])).toEqual([])
+  })
+})
+
+describe('pickLogoStrip', () => {
+  const row = (id: string, logo_url: string | null) => ({
+    id,
+    name: `Uni ${id}`,
+    slug: `uni-${id}`,
+    logo_url,
+  })
+  const sr = (n: number) => `https://www.shanghairanking.cn/_uni/logo/${n}.png`
+
+  it('keeps only mirrored logos, drops duplicates and caps the list', () => {
+    const out = pickLogoStrip(
+      [
+        row('a', sr(1)),
+        row('b', null),
+        row('c', 'https://example.com/x.png'),
+        row('d', sr(1)),
+        row('e', sr(2)),
+      ],
+      2
+    )
+    expect(out.map((l) => l.id)).toEqual(['a', 'e'])
+    expect(out[0].src).toContain('/logos/1.png')
+  })
+})
+
+describe('carousel helpers', () => {
+  it('steps and wraps in both directions', () => {
+    expect(stepIndex(0, 1, 4)).toBe(1)
+    expect(stepIndex(3, 1, 4)).toBe(0)
+    expect(stepIndex(0, -1, 4)).toBe(3)
+    expect(stepIndex(0, 1, 0)).toBe(0)
+  })
+
+  it('collapses slides past the scroll range into one final stop', () => {
+    expect(slideStops([0, 300, 600, 900], 300)).toEqual([0, 300])
+    expect(slideStops([0, 300, 600, 900], 900)).toEqual([0, 300, 600, 900])
+    expect(slideStops([0, 300], 0)).toEqual([0])
+  })
+
+  it('finds the slide nearest the scroll position', () => {
+    const stops = [0, 300, 600, 700]
+    expect(nearestSlide(0, 700, stops)).toBe(0)
+    expect(nearestSlide(170, 700, stops)).toBe(1)
+    expect(nearestSlide(699, 700, stops)).toBe(3)
+    expect(nearestSlide(5, 0, [0])).toBe(0)
   })
 })

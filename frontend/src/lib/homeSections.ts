@@ -1,3 +1,4 @@
+import { firstPartyLogo } from './logo'
 import { countUnits, looksLikeFiller, ownWordsText } from './reviewReward'
 
 // Pure selection helpers for the homepage sections. No I/O, so they run in
@@ -7,6 +8,8 @@ export const HOME_REVIEW_MIN_UNITS = 20
 export const HOME_REVIEW_COUNT = 4
 export const HOME_QUESTION_COUNT = 3
 export const HOME_FLIGHT_COUNT = 2
+export const HOME_LOGO_COUNT = 8
+export const CAROUSEL_INTERVAL_MS = 5000
 
 export interface HomeReviewRow {
   id: string
@@ -118,3 +121,61 @@ export const pickOpenQuestions = (
       return a.created_at < b.created_at ? 1 : -1
     })
     .slice(0, max)
+
+export interface HomeLogo {
+  id: string
+  name: string
+  slug: string
+  src: string
+}
+
+// Hero logo wall: only universities whose logo is mirrored under /logos, never
+// the same logo twice.
+export const pickLogoStrip = (
+  rows: { id: string; name: string; slug: string; logo_url: string | null }[],
+  max = HOME_LOGO_COUNT
+): HomeLogo[] => {
+  const seen = new Set<string>()
+  const out: HomeLogo[] = []
+  for (const r of rows) {
+    const src = firstPartyLogo(r.logo_url)
+    if (!src || seen.has(src)) continue
+    seen.add(src)
+    out.push({ id: r.id, name: r.name, slug: r.slug, src })
+    if (out.length >= max) break
+  }
+  return out
+}
+
+// Step through `count` slides, wrapping at both ends.
+export const stepIndex = (current: number, dir: 1 | -1, count: number): number =>
+  count <= 0 ? 0 : (((current + dir) % count) + count) % count
+
+// Scroll positions the carousel can rest on. Slides past the scroll range
+// collapse into one final stop at the far end, so every dot is reachable.
+export const slideStops = (offsets: readonly number[], maxScroll: number): number[] => {
+  if (maxScroll <= 2 || offsets.length === 0) return [0]
+  return [...offsets.filter((o) => o < maxScroll - 2), maxScroll]
+}
+
+// Which slide a scrolled track is showing: the one whose left edge is nearest
+// the scroll position. At the far end the last slide wins even when it cannot
+// reach the left edge.
+export const nearestSlide = (
+  scrollLeft: number,
+  maxScroll: number,
+  offsets: readonly number[]
+): number => {
+  if (offsets.length === 0) return 0
+  if (maxScroll > 0 && scrollLeft >= maxScroll - 2) return offsets.length - 1
+  let best = 0
+  let bestDist = Infinity
+  offsets.forEach((o, i) => {
+    const d = Math.abs(o - scrollLeft)
+    if (d < bestDist) {
+      best = i
+      bestDist = d
+    }
+  })
+  return best
+}
