@@ -8155,7 +8155,7 @@ a.ask-student-q-stretch::after {
 }
 .home-section-title {
   font-family: var(--font-display);
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--ink);
 }
@@ -8245,23 +8245,98 @@ a.ask-student-q-stretch::after {
 }
 @media (min-width: 768px) {
   .home-review-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    overflow: visible;
     margin: 0;
-    padding: 0;
+    padding-left: 0;
+    padding-right: 0;
+    scroll-padding-left: 0;
   }
   .home-review-card {
+    flex-basis: calc(50% - var(--sp-1));
     max-width: none;
-  }
-  .home-section-title {
-    font-size: 1.6rem;
   }
 }
 @media (min-width: 1100px) {
-  .home-review-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .home-review-card {
+    flex-basis: calc(25% - var(--sp-2) * 3 / 4);
   }
+}
+
+/* Carousel controls, empty and loading states */
+.home-carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+.home-carousel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  cursor: pointer;
+}
+.home-carousel-btn:hover {
+  border-color: var(--seal-red);
+}
+.home-carousel-dots {
+  display: flex;
+  align-items: center;
+}
+.home-carousel-dot {
+  position: relative;
+  width: 24px;
+  height: 44px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.home-carousel-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ink-line);
+}
+.home-carousel-dot[aria-current='true']::after {
+  background: var(--seal-red);
+}
+.home-carousel-btn:focus-visible,
+.home-carousel-dot:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 2px;
+}
+.home-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  color: var(--ink-soft);
+}
+.home-skeleton {
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+}
+.home-skeleton-cards {
+  height: 168px;
+}
+.home-skeleton-rows {
+  height: 76px;
 }
 
 /* Open questions */

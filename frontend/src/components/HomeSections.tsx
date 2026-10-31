@@ -5,14 +5,28 @@ import {
   useOpenQuestions,
   useUpcomingFlights,
 } from '../hooks/useHomeSections'
-import { reviewContextParts } from '../lib/homeSections'
 import { REWARD_UI_ENABLED } from '../lib/reviewReward'
 import type { PublicFlightRow } from '../lib/flightListings'
 import { Icons } from './Icons'
+import { ReviewCarousel } from './ReviewCarousel'
 import { StarRating } from './StarRating'
 
-// Live sections of the home page. Each renders nothing until it has real data,
-// so a quiet database never shows an empty heading.
+// Live sections of the home page. Every section always renders: a light
+// skeleton while loading, a one-line empty state when there is nothing to show
+// (or the request failed).
+
+const HomeEmpty = ({ text, to, action }: { text: string; to: string; action: string }) => (
+  <div className="home-empty">
+    <p>{text}</p>
+    <Link to={to} className="home-section-link">
+      {action}
+    </Link>
+  </div>
+)
+
+const HomeSkeleton = ({ className }: { className: string }) => (
+  <div className={`home-skeleton ${className}`} aria-hidden="true" />
+)
 
 const formatCount = (n: number): string => n.toLocaleString('en-US')
 
@@ -36,9 +50,8 @@ export const HomeStatLine = () => {
 
 export const HomeStudentsSay = () => {
   const reviews = useLandingReviews()
-  if (!reviews) return null
   return (
-    <section className="home-section" aria-labelledby="home-say-title">
+    <section className="home-section" aria-labelledby="home-say-title" aria-busy={reviews === null}>
       <div className="container">
         <div className="home-section-head">
           <h2 id="home-say-title" className="home-section-title">
@@ -48,29 +61,13 @@ export const HomeStudentsSay = () => {
             See all reviews
           </Link>
         </div>
-        <ul className="home-review-row">
-          {reviews.map(({ row, body, universityName, universitySlug }) => {
-            const context = reviewContextParts(row)
-            return (
-              <li key={row.id} className="home-review-card">
-                <StarRating rating={row.rating} />
-                <p className="home-review-text">{body}</p>
-                <div className="home-review-meta">
-                  <Link to={`/university/${universitySlug}`} className="home-review-uni">
-                    {universityName}
-                  </Link>
-                  {context.length > 0 && (
-                    <span className="home-review-context">
-                      {context.map((c) => (
-                        <span key={c}>{c}</span>
-                      ))}
-                    </span>
-                  )}
-                </div>
-              </li>
-            )
-          })}
-        </ul>
+        {reviews === null ? (
+          <HomeSkeleton className="home-skeleton-cards" />
+        ) : reviews.length === 0 ? (
+          <HomeEmpty text="No reviews to show yet." to="/review" action="Write the first one" />
+        ) : (
+          <ReviewCarousel reviews={reviews} />
+        )}
       </div>
     </section>
   )
@@ -78,9 +75,12 @@ export const HomeStudentsSay = () => {
 
 export const HomeStudentsAsking = () => {
   const questions = useOpenQuestions()
-  if (!questions) return null
   return (
-    <section className="home-section" aria-labelledby="home-asking-title">
+    <section
+      className="home-section"
+      aria-labelledby="home-asking-title"
+      aria-busy={questions === null}
+    >
       <div className="container">
         <div className="home-section-head">
           <h2 id="home-asking-title" className="home-section-title">
@@ -93,28 +93,39 @@ export const HomeStudentsAsking = () => {
         <p className="home-section-sub">
           Nobody has answered these yet. If you know, you can reply without an account.
         </p>
-        <ul className="home-ask-list">
-          {questions.map((q) => {
-            const where = q.university_name ?? q.city
-            return (
-              <li key={q.id} className="home-ask-row">
-                <div className="home-ask-body">
-                  <Link to={`/community/q/${q.slug}`} className="home-ask-title">
-                    {q.title}
-                  </Link>
-                  {where && <span className="home-ask-where">{where}</span>}
-                </div>
-                <Link
-                  to={`/community/q/${q.slug}`}
-                  className="btn btn-outline home-ask-action"
-                  aria-label={`Answer: ${q.title}`}
-                >
-                  Answer
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+        {questions === null ? (
+          <HomeSkeleton className="home-skeleton-rows" />
+        ) : questions.length === 0 ? (
+          <HomeEmpty text="No open questions right now." to="/community/ask" action="Ask one" />
+        ) : (
+          <>
+            <p className="home-section-sub">
+              Nobody has answered these yet. If you know, you can reply without an account.
+            </p>
+            <ul className="home-ask-list">
+              {questions.map((q) => {
+                const where = q.university_name ?? q.city
+                return (
+                  <li key={q.id} className="home-ask-row">
+                    <div className="home-ask-body">
+                      <Link to={`/community/q/${q.slug}`} className="home-ask-title">
+                        {q.title}
+                      </Link>
+                      {where && <span className="home-ask-where">{where}</span>}
+                    </div>
+                    <Link
+                      to={`/community/q/${q.slug}`}
+                      className="btn btn-outline home-ask-action"
+                      aria-label={`Answer: ${q.title}`}
+                    >
+                      Answer
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        )}
       </div>
     </section>
   )
@@ -164,9 +175,12 @@ const flightFacts = (f: PublicFlightRow): string[] => {
 
 export const HomeFlights = () => {
   const flights = useUpcomingFlights()
-  if (!flights) return null
   return (
-    <section className="home-section" aria-labelledby="home-flights-title">
+    <section
+      className="home-section"
+      aria-labelledby="home-flights-title"
+      aria-busy={flights === null}
+    >
       <div className="container">
         <div className="home-section-head">
           <h2 id="home-flights-title" className="home-section-title">
@@ -176,23 +190,35 @@ export const HomeFlights = () => {
             See all flights
           </Link>
         </div>
-        <p className="home-section-sub">
-          Students with spare luggage space on the way to or from China.
-        </p>
-        <ul className="home-flight-list">
-          {flights.map((f) => (
-            <li key={f.id ?? routeOf(f) + f.departure_date}>
-              <Link to="/flights" className="home-flight-card">
-                <span className="home-flight-route">{routeOf(f)}</span>
-                <span className="home-flight-facts">
-                  {flightFacts(f).map((fact) => (
-                    <span key={fact}>{fact}</span>
-                  ))}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {flights === null ? (
+          <HomeSkeleton className="home-skeleton-rows" />
+        ) : flights.length === 0 ? (
+          <HomeEmpty
+            text="No flights listed yet. Flying to or from China soon?"
+            to="/flights"
+            action="List your spare kilos"
+          />
+        ) : (
+          <>
+            <p className="home-section-sub">
+              Students with spare luggage space on the way to or from China.
+            </p>
+            <ul className="home-flight-list">
+              {flights.map((f) => (
+                <li key={f.id ?? routeOf(f) + f.departure_date}>
+                  <Link to="/flights" className="home-flight-card">
+                    <span className="home-flight-route">{routeOf(f)}</span>
+                    <span className="home-flight-facts">
+                      {flightFacts(f).map((fact) => (
+                        <span key={fact}>{fact}</span>
+                      ))}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
     </section>
   )

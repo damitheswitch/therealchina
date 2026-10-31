@@ -12,7 +12,12 @@ import { PUBLIC_FLIGHT_COLUMNS, todayLocal, type PublicFlightRow } from '../lib/
 
 // Live homepage sections. Everything loads in the browser after mount, so the
 // prerendered HTML never contains these blocks and hydration always matches.
-// Each hook returns null until it has something worth showing.
+// List hooks return null while loading and an array once settled: an empty
+// array means "nothing to show" (or the request failed), so the section can
+// render a short empty state instead of vanishing.
+
+// Shared fallback so the effect dependency never changes between renders.
+const NO_ITEMS: never[] = []
 
 const isAbort = (err: unknown): boolean => {
   const e = err as { name?: string; message?: string }
@@ -20,7 +25,11 @@ const isAbort = (err: unknown): boolean => {
 }
 
 // Runs `load` once with an abort signal; failures leave the section hidden.
-const useLiveSection = <T>(label: string, load: (signal: AbortSignal) => Promise<T | null>) => {
+const useLiveSection = <T>(
+  label: string,
+  load: (signal: AbortSignal) => Promise<T | null>,
+  onFail: T | null = null
+) => {
   const [value, setValue] = useState<T | null>(null)
   useEffect(() => {
     const controller = new AbortController()
@@ -31,12 +40,13 @@ const useLiveSection = <T>(label: string, load: (signal: AbortSignal) => Promise
       } catch (err) {
         if (controller.signal.aborted || isAbort(err)) return
         console.error(`Error fetching ${label}:`, err)
+        setValue(onFail)
       }
     }
     run()
     return () => controller.abort()
-    // `load` is a module-level function, so it never changes between renders.
-  }, [label, load])
+    // `load` and `onFail` are module-level constants, so they never change.
+  }, [label, load, onFail])
   return value
 }
 
@@ -77,7 +87,7 @@ const loadReviews = async (signal: AbortSignal): Promise<LandingReview[] | null>
     .abortSignal(signal)
   if (error) throw error
   const picks = pickLandingReviews(data ?? [])
-  if (picks.length === 0) return null
+  if (picks.length === 0) return []
   const ids = [...new Set(picks.map((p) => p.row.university_id))]
   const { data: unis, error: uniError } = await supabase
     .from('universities')
@@ -91,11 +101,11 @@ const loadReviews = async (signal: AbortSignal): Promise<LandingReview[] | null>
     const uni = byId.get(p.row.university_id)
     if (uni) out.push({ ...p, universityName: uni.name, universitySlug: uni.slug })
   }
-  return out.length > 0 ? out : null
+  return out
 }
 
 export const useLandingReviews = (): LandingReview[] | null =>
-  useLiveSection('landing reviews', loadReviews)
+  useLiveSection('landing reviews', loadReviews, NO_ITEMS)
 
 const QUESTION_CANDIDATES = 30
 
@@ -112,11 +122,11 @@ const loadQuestions = async (signal: AbortSignal): Promise<HomeQuestionRow[] | n
     .abortSignal(signal)
   if (error) throw error
   const picks = pickOpenQuestions((data ?? []) as HomeQuestionRow[], HOME_QUESTION_COUNT)
-  return picks.length > 0 ? picks : null
+  return picks
 }
 
 export const useOpenQuestions = (): HomeQuestionRow[] | null =>
-  useLiveSection('open questions', loadQuestions)
+  useLiveSection('open questions', loadQuestions, NO_ITEMS)
 
 const loadFlights = async (signal: AbortSignal): Promise<PublicFlightRow[] | null> => {
   const { data, error } = await supabase
@@ -129,8 +139,8 @@ const loadFlights = async (signal: AbortSignal): Promise<PublicFlightRow[] | nul
     .abortSignal(signal)
   if (error) throw error
   const rows = (data ?? []) as PublicFlightRow[]
-  return rows.length > 0 ? rows : null
+  return rows
 }
 
 export const useUpcomingFlights = (): PublicFlightRow[] | null =>
-  useLiveSection('upcoming flights', loadFlights)
+  useLiveSection('upcoming flights', loadFlights, NO_ITEMS)
