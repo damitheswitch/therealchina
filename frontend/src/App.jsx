@@ -19,6 +19,7 @@ import { ReviewClaimPrompt } from './components/ReviewClaimPrompt'
 import { useAuthModal } from './contexts/AuthModalContext'
 import { useAuth } from './contexts/AuthContext'
 import { TRUST_REDIRECTS } from './lib/trustContent'
+import { isTabBarHidden } from './lib/tabBar'
 
 // Route-level code splitting: each page becomes its own chunk, fetched on
 // first navigation. Pages use named exports, hence the default-mapping.
@@ -110,7 +111,7 @@ function App() {
     <>
       {!isOnboarding && <Header />}
       {!isOnboarding && <LoginDraftBanner />}
-      <main>
+      <main data-tab-bar={isTabBarHidden(location.pathname) ? 'hidden' : undefined}>
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/onboarding" element={<OnboardingPage />} />
