@@ -119,10 +119,29 @@ Deno.test('boost patch supports partial subscores and null clears', () => {
   assertEquals(patch, { rating_cost: 4, rating_social: null })
 })
 
+Deno.test('boost patch accepts text with the review-submit bounds', () => {
+  assertEquals(validateBoostPatch({ text: '  Teachers   were kind and dorms felt small.  ' }), {
+    text: 'Teachers were kind and dorms felt small.',
+  })
+  assertEquals(validateBoostPatch({ text: 'x'.repeat(5000) }), { text: 'x'.repeat(5000) })
+  assertEquals(validateBoostPatch({ text: 'Great food', pros: 'Cheap' }), {
+    text: 'Great food',
+    pros: 'Cheap',
+  })
+})
+
+Deno.test('boost patch rejects empty, too short and too long text', () => {
+  assertThrows(() => validateBoostPatch({ text: '' }))
+  assertThrows(() => validateBoostPatch({ text: '    ' }))
+  assertThrows(() => validateBoostPatch({ text: null }))
+  assertThrows(() => validateBoostPatch({ text: 'too short' }))
+  assertThrows(() => validateBoostPatch({ text: 'x'.repeat(5001) }))
+  assertThrows(() => validateBoostPatch({ text: 42 }))
+})
+
 Deno.test('boost patch rejects every protected field', () => {
   for (const key of [
     'rating',
-    'text',
     'universityId',
     'universitySlug',
     'userId',

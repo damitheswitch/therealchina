@@ -986,6 +986,7 @@ $$;
 -- serialize against these locks), enforces the 24h window, the 30-save budget,
 -- the 20 wrong-token lockout, and the column allowlist; returns a status code
 -- the review-boost Edge Function maps to HTTP. Service-role only.
+-- Migration 065 adds `text` to the allowlist (10 to 5000 chars after trim).
 CREATE OR REPLACE FUNCTION public.apply_anonymous_boost(
   p_review_id UUID,
   p_boost_hash TEXT,
@@ -1013,7 +1014,7 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM jsonb_object_keys(p_patch) AS k
     WHERE k NOT IN (
-      'program', 'degree_level',
+      'text', 'program', 'degree_level',
       'rating_academics', 'rating_campus', 'rating_accommodation',
       'rating_cost', 'rating_intl_office', 'rating_social',
       'rating_extracurricular', 'rating_career',
@@ -1022,6 +1023,16 @@ BEGIN
       'funding_type', 'funding_coverage', 'pros', 'cons'
     )
   ) THEN
+    RETURN 'bad_fields';
+  END IF;
+
+  -- Migration 065: text must be a string with the same bounds as review-submit
+  -- (chk_reviews_text_length: 10 to 5000 characters after trim). A Boost can
+  -- add words, never blank the review.
+  IF p_patch ? 'text' AND (
+       jsonb_typeof(p_patch->'text') <> 'string'
+       OR char_length(btrim(p_patch->>'text')) NOT BETWEEN 10 AND 5000
+     ) THEN
     RETURN 'bad_fields';
   END IF;
 
@@ -1080,6 +1091,7 @@ BEGIN
     THEN p_patch->>'funding_type' ELSE v_review.funding_type END;
 
   UPDATE public.reviews SET
+    text                    = CASE WHEN p_patch ? 'text'                    THEN btrim(p_patch->>'text')                      ELSE text END,
     program                 = CASE WHEN p_patch ? 'program'                 THEN p_patch->>'program'                          ELSE program END,
     degree_level            = CASE WHEN p_patch ? 'degree_level'            THEN p_patch->>'degree_level'                     ELSE degree_level END,
     rating_academics        = CASE WHEN p_patch ? 'rating_academics'        THEN (p_patch->>'rating_academics')::int          ELSE rating_academics END,

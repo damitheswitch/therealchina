@@ -104,7 +104,7 @@ export const TRUST_PAGES: TrustDoc[] = [
               id: 'gifts',
               body: [
                 'Reviewers who finish a full review can get a thank-you gift: a free VPN and online services trial from a trusted friend of TRC who runs the service.',
-                "The gift is for any full review. A full review has the reviewer's own words and a few details, like their major or costs. The rating does not matter. A 1-star review gets the same gift as a 5-star review.",
+                'The gift is for any full review. A full review has at least 10 words of your own, 2 taps on What stood out, the quick ratings (4 or more), the cost and your major. If you took a language course, that counts as your major. The star rating itself does not matter. A 1-star review gets the same gift as a 5-star review.',
                 'We never ask anyone to praise TRC, a university or the service. We never change, hide or reorder a review because of a gift. Questions: nihao@therealchina.net.',
               ],
             },

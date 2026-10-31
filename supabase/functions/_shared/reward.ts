@@ -5,12 +5,18 @@
 // "recommend" answer: a harsh honest review earns the same gift as a glowing
 // one.
 
-export const MIN_OWN_UNITS = 40
+export const MIN_OWN_UNITS = 10
 export const MIN_POLARITY_TAGS = 2
-export const MIN_DETAIL_AREAS = 2
 const RATINGS_AREA_MIN = 4
 
-export type RewardMissing = 'words' | 'taps' | 'details'
+// The three areas every gift needs: the quick ratings, the cost and the major.
+// Timing and media are welcome but never count toward the gift.
+export const REQUIRED_GIFT_AREAS = ['ratings', 'money', 'program'] as const
+
+// Value reviews.degree_level takes for a language-course year (no major to name).
+const LANGUAGE_COURSE_DEGREE = 'Language Course'
+
+export type RewardMissing = 'words' | 'taps' | 'ratings' | 'money' | 'program'
 
 // Mirror of POLARITY_TOPICS in frontend/src/lib/reviewFlow.ts. Needed to tell
 // the sentence the "What stood out" taps write apart from the reviewer's own
@@ -176,26 +182,19 @@ const SUBSCORE_KEYS = [
   'rating_career',
 ] as const
 
-// The five detail areas the gift counts (the gold-highlight areas minus the
-// two the taps fill on their own: tags and pros/cons).
+// Which of the required gift areas the review covers, in REQUIRED_GIFT_AREAS
+// order. A language-course year has no major, so the degree level stands in.
 export function rewardDetailAreas(row: RewardReviewRow): string[] {
   const areas: string[] = []
-  if (has(row.program) || has(row.degree_level)) areas.push('program')
   if (SUBSCORE_KEYS.filter((k) => typeof row[k] === 'number').length >= RATINGS_AREA_MIN) {
     areas.push('ratings')
   }
   if (has(row.tuition_range) || has(row.living_cost_range) || has(row.funding_type)) {
     areas.push('money')
   }
-  if (
-    has(row.enrollment_status) ||
-    typeof row.start_year === 'number' ||
-    typeof row.end_year === 'number' ||
-    has(row.language_of_instruction)
-  ) {
-    areas.push('timing')
+  if (has(row.program) || row.degree_level?.trim() === LANGUAGE_COURSE_DEGREE) {
+    areas.push('program')
   }
-  if (Array.isArray(row.media) && row.media.length > 0) areas.push('media')
   return areas
 }
 
@@ -214,7 +213,9 @@ export function evaluateReward(row: RewardReviewRow): RewardEvaluation {
   const missing: RewardMissing[] = []
   if (ownUnits < MIN_OWN_UNITS || looksLikeFiller(ownText)) missing.push('words')
   if (polarityTagCount(row.tags ?? []) < MIN_POLARITY_TAGS) missing.push('taps')
-  if (areas.length < MIN_DETAIL_AREAS) missing.push('details')
+  for (const area of REQUIRED_GIFT_AREAS) {
+    if (!areas.includes(area)) missing.push(area)
+  }
   return {
     full: row.deleted_at === null && missing.length === 0,
     missing,
