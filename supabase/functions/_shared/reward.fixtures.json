@@ -71,6 +71,41 @@
       }
     },
     {
+      "name": "all five requirements present is full",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
       "name": "only the tapped sentence is not enough words",
       "row": {
         "deleted_at": null,
@@ -108,10 +143,10 @@
       }
     },
     {
-      "name": "short own words",
+      "name": "nine own words is not enough",
       "row": {
         "deleted_at": null,
-        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. It was okay and I liked the city and my friends there a lot.",
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed.",
         "pros": null,
         "cons": null,
         "tags": [
@@ -142,6 +177,41 @@
         "missing": [
           "words"
         ]
+      }
+    },
+    {
+      "name": "ten own words is enough",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
       }
     },
     {
@@ -255,10 +325,335 @@
       }
     },
     {
-      "name": "one detail area is not enough",
+      "name": "missing ratings alone",
       "row": {
         "deleted_at": null,
-        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": null,
+        "rating_campus": null,
+        "rating_accommodation": null,
+        "rating_cost": null,
+        "rating_intl_office": null,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "ratings"
+        ]
+      }
+    },
+    {
+      "name": "three of eight ratings is not enough",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": null,
+        "rating_intl_office": null,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "ratings"
+        ]
+      }
+    },
+    {
+      "name": "four of eight ratings is enough",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": null,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "missing money alone",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": null,
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "money"
+        ]
+      }
+    },
+    {
+      "name": "tuition alone counts as money",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": "3000-6000",
+        "living_cost_range": null,
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "funding type alone counts as money",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "Computer Science",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": null,
+        "funding_type": "csc",
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "missing program alone",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": null,
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "program"
+        ]
+      }
+    },
+    {
+      "name": "degree level alone is not a program",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": "   ",
+        "degree_level": "Master",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "program"
+        ]
+      }
+    },
+    {
+      "name": "language course counts as program",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
+        "pros": null,
+        "cons": null,
+        "tags": [
+          "Weak teaching",
+          "Bad dorms"
+        ],
+        "program": null,
+        "degree_level": "Language Course",
+        "rating_academics": 3,
+        "rating_campus": 4,
+        "rating_accommodation": 2,
+        "rating_cost": 4,
+        "rating_intl_office": 3,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": "1500-2500",
+        "funding_type": null,
+        "enrollment_status": "alumni",
+        "start_year": 2021,
+        "end_year": 2023,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": true,
+        "missing": []
+      }
+    },
+    {
+      "name": "timing alone does not count",
+      "row": {
+        "deleted_at": null,
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
         "pros": null,
         "cons": null,
         "tags": [
@@ -287,15 +682,17 @@
       "expect": {
         "full": false,
         "missing": [
-          "details"
+          "ratings",
+          "money",
+          "program"
         ]
       }
     },
     {
-      "name": "photo counts as a detail area",
+      "name": "media alone does not count",
       "row": {
         "deleted_at": null,
-        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. I stayed here for two years and the experience was mixed. The classes were fine but the teachers often changed the schedule without warning. My dorm room was small and the shower broke twice. The international office replied slowly but they were always polite. I would still choose it again for the price and for the location in the city center.",
+        "text": "The main challenges are inconsistent teaching quality and crowded or aging dorms. Teachers were kind, dorms felt small, canteen prices stayed cheap.",
         "pros": null,
         "cons": null,
         "tags": [
@@ -304,16 +701,16 @@
         ],
         "program": null,
         "degree_level": null,
-        "rating_academics": 3,
-        "rating_campus": 4,
-        "rating_accommodation": 2,
-        "rating_cost": 4,
-        "rating_intl_office": 3,
+        "rating_academics": null,
+        "rating_campus": null,
+        "rating_accommodation": null,
+        "rating_cost": null,
+        "rating_intl_office": null,
         "rating_social": null,
         "rating_extracurricular": null,
         "rating_career": null,
         "tuition_range": null,
-        "living_cost_range": "1500-2500",
+        "living_cost_range": null,
         "funding_type": null,
         "enrollment_status": "alumni",
         "start_year": 2021,
@@ -327,8 +724,50 @@
         ]
       },
       "expect": {
-        "full": true,
-        "missing": []
+        "full": false,
+        "missing": [
+          "ratings",
+          "money",
+          "program"
+        ]
+      }
+    },
+    {
+      "name": "everything missing lists every kind in order",
+      "row": {
+        "deleted_at": null,
+        "text": null,
+        "pros": null,
+        "cons": null,
+        "tags": [],
+        "program": null,
+        "degree_level": null,
+        "rating_academics": null,
+        "rating_campus": null,
+        "rating_accommodation": null,
+        "rating_cost": null,
+        "rating_intl_office": null,
+        "rating_social": null,
+        "rating_extracurricular": null,
+        "rating_career": null,
+        "tuition_range": null,
+        "living_cost_range": null,
+        "funding_type": null,
+        "enrollment_status": null,
+        "start_year": null,
+        "end_year": null,
+        "language_of_instruction": null,
+        "media": []
+      },
+      "expect": {
+        "full": false,
+        "missing": [
+          "words",
+          "taps",
+          "ratings",
+          "money",
+          "program"
+        ]
       }
     },
     {
