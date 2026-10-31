@@ -3,8 +3,6 @@ import { UniversityDirectory } from '../components/UniversityDirectory'
 import { HeroSearch } from '../components/HeroSearch'
 import {
   HomeStatLine,
-  HomeHeroLogos,
-  HomeSeamSeal,
   HomeStudentsSay,
   HomeStudentsAsking,
   HomeContributorBand,
@@ -26,27 +24,23 @@ export const LandingPage = () => {
       />
       <section className="hero">
         <div className="container hero-inner">
-          <div className="hero-copy">
-            <h1>What studying in China is really like</h1>
-            <p className="hero-subtitle">
-              Costs, dorms, visas and teaching, told by international students who live it.
-            </p>
-            <HeroSearch />
-            <HomeStatLine />
-            <div className="hero-buttons">
-              <Link to="/review" className="btn btn-primary btn-lg">
-                <Icons.Pen /> Leave a Review
-              </Link>
-              {REWARD_UI_ENABLED && (
-                <Link to="/review" className="hero-reward-chip">
-                  Free VPN gift for a full review
-                </Link>
-              )}
-            </div>
+          <h1>What studying in China is really like</h1>
+          <p className="hero-subtitle">
+            Costs, dorms, visas and teaching, told by international students who live it.
+          </p>
+          <HeroSearch />
+          <HomeStatLine />
+          <div className="hero-buttons">
+            <Link to="/review" className="btn btn-primary btn-lg">
+              <Icons.Pen /> Leave a Review
+            </Link>
           </div>
-          <HomeHeroLogos />
+          {REWARD_UI_ENABLED && (
+            <Link to="/review" className="hero-reward-chip">
+              <span aria-hidden="true">🧧</span> Free VPN gift for a full review
+            </Link>
+          )}
         </div>
-        <HomeSeamSeal />
       </section>
 
       <HomeStudentsSay />

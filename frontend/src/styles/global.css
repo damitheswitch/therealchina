@@ -1841,32 +1841,25 @@ h3 {
 
 /* ===== Hero ===== */
 .hero {
-  position: relative;
-  background: var(--rice-deep);
-  padding: var(--sp-5) 0 4.5rem;
+  background: linear-gradient(180deg, var(--rice-warm) 0%, var(--rice) 100%);
+  padding: var(--sp-5) 0 var(--sp-4);
+  border-bottom: 1px solid var(--ink-line);
 }
 .hero-inner {
-  display: grid;
-  gap: var(--sp-4);
-  text-align: left;
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
 }
 .hero h1 {
-  max-width: 14ch;
-  margin-bottom: var(--sp-2);
-  font-size: clamp(2.5rem, 1.2rem + 5.2vw, 4.5rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
+  margin-bottom: var(--sp-1);
 }
 .hero-subtitle {
-  max-width: 34rem;
-  font-size: 1.15rem;
-  line-height: 1.55;
+  font-size: 1.1rem;
   color: var(--ink-soft);
-  margin-bottom: var(--sp-4);
+  margin-bottom: var(--sp-3);
 }
 .hero-search {
-  margin: 0 0 var(--sp-2);
+  margin: 0 auto var(--sp-3);
   max-width: 560px;
 }
 .hero-search-input {
@@ -1875,118 +1868,24 @@ h3 {
   padding: 1rem 1.25rem 1rem 2.9rem;
   font-size: 1.1rem;
   background-position: 1rem center;
-  box-shadow: none;
+  box-shadow: 0 2px 10px rgba(26, 22, 19, 0.08);
 }
 .hero-reward-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
+  display: inline-block;
+  margin-top: var(--sp-2);
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--r-full);
+  background: var(--seal-red-tint);
   color: var(--seal-red-dark);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1.5px;
+  text-decoration: none;
 }
 .hero-buttons {
   display: flex;
-  align-items: center;
-  gap: var(--sp-1) var(--sp-3);
-  flex-wrap: wrap;
-}
-
-/* Real campus logos: one swipeable row on phones, a wall beside the copy on desktop */
-.home-logo-wall {
-  list-style: none;
-  display: flex;
   gap: var(--sp-1);
-  overflow-x: auto;
-  scrollbar-width: none;
-  margin: 0 calc(var(--sp-2) * -1);
-  padding: 0 var(--sp-2);
-}
-.home-logo-wall::-webkit-scrollbar {
-  display: none;
-}
-.home-logo-tile {
-  display: grid;
-  place-items: center;
-  width: 4rem;
-  height: 4rem;
-  border-radius: var(--r-md);
-  background: #fff;
-  transition: transform var(--t-fast);
-}
-.home-logo-tile img {
-  width: 70%;
-  height: 70%;
-  object-fit: contain;
-}
-.home-logo-tile:hover {
-  transform: translateY(-2px);
-}
-
-/* The "real" chop, pressed across the seam below the hero */
-.home-seam-seal {
-  position: absolute;
-  z-index: 2;
-  right: var(--sp-2);
-  bottom: -2.25rem;
-  display: grid;
-  place-items: center;
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: var(--r-sm);
-  background: var(--seal-red);
-  color: var(--rice);
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 2.6rem;
-  line-height: 1;
-  transform: rotate(-5deg);
-  pointer-events: none;
-}
-.home-seam-seal::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 3px;
-  border: 2px solid currentColor;
-  opacity: 0.85;
-}
-
-@media (min-width: 768px) {
-  .hero {
-    padding: var(--sp-8) 0 7rem;
-  }
-  .home-seam-seal {
-    right: max(var(--sp-3), calc((100% - 1200px) / 2 + var(--sp-3)));
-    bottom: -3.25rem;
-    width: 6.5rem;
-    height: 6.5rem;
-    font-size: 3.9rem;
-  }
-}
-@media (min-width: 900px) {
-  .hero-inner {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-    align-items: center;
-    gap: var(--sp-7);
-  }
-  .home-logo-wall {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--sp-2);
-    margin: 0;
-    padding: 0;
-    overflow: visible;
-  }
-  .home-logo-tile {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-    border-radius: var(--r-lg);
-  }
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* ===== University Profile Header ===== */
@@ -8236,141 +8135,34 @@ a.ask-student-q-stretch::after {
 }
 
 /* ===== Home sections (landing page) =====
-   The page reads as a row of colour fields, each marked with a red seal chop:
-   hero (deep rice), reviews (rice), questions (warm rice), contributor band
-   (seal red), flights (ink), then the directory (rice). Fields separate by
-   tone, not by lines. Brand tokens only; 44px tap targets. */
+   Live sections under the hero: reviews, open questions, contributor band,
+   flights. Brand tokens only; spacing on the 8px scale; 44px tap targets. */
 .home-stat-line {
-  margin: 0 0 var(--sp-3);
+  margin: 0 auto var(--sp-3);
   font-size: 0.95rem;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
-
-.home-chapter {
-  padding: var(--sp-7) 0;
+.home-section {
+  padding: var(--sp-4) 0 0;
 }
-.home-chapter--paper {
-  background: var(--rice);
-  padding-top: 4.5rem;
-}
-.home-chapter--warm {
-  background: var(--rice-warm);
-}
-.home-chapter--red {
-  background: var(--seal-red);
-  color: var(--rice);
-  padding: var(--sp-6) 0;
-}
-.home-chapter--ink {
-  background: var(--ink);
-  color: var(--rice);
-}
-@media (min-width: 768px) {
-  .home-chapter {
-    padding: var(--sp-8) 0;
-  }
-  .home-chapter--paper {
-    padding-top: 6.5rem;
-  }
-  .home-chapter--red {
-    padding: var(--sp-7) 0;
-  }
-}
-@media (min-width: 1100px) {
-  .home-chapter {
-    padding: 6.5rem 0;
-  }
-  .home-chapter--paper {
-    padding-top: 8rem;
-  }
-  .home-chapter--red {
-    padding: 5rem 0;
-  }
-}
-
-.home-chapter a:focus-visible,
-.home-chapter button:focus-visible,
-.hero a:focus-visible {
-  outline: 2px solid var(--seal-red);
-  outline-offset: 3px;
-}
-.home-chapter--red a:focus-visible,
-.home-chapter--ink a:focus-visible {
-  outline-color: var(--gold-light);
-}
-
-/* Seal chop that marks a chapter */
-.home-seal {
-  position: relative;
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: var(--r-sm);
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 1.6rem;
-  line-height: 1;
-  transform: rotate(-3deg);
-}
-.home-seal::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border-radius: 3px;
-  border: 1.5px solid currentColor;
-  opacity: 0.85;
-}
-.home-seal--red {
-  background: var(--seal-red);
-  color: var(--rice);
-}
-.home-seal--rice {
-  background: var(--rice);
-  color: var(--seal-red);
-}
-@media (min-width: 768px) {
-  .home-seal {
-    width: 3.5rem;
-    height: 3.5rem;
-    font-size: 2rem;
-  }
-}
-
-/* Section heads */
 .home-section-head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--sp-1) var(--sp-3);
-  margin-bottom: var(--sp-4);
-}
-.home-section-heading {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  min-width: 0;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
 }
 .home-section-title {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 1.1rem + 3vw, 3rem);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-  color: inherit;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--ink);
 }
 .home-section-sub {
-  margin: calc(var(--sp-2) * -1) 0 var(--sp-3);
-  max-width: 52ch;
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-2);
   color: var(--ink-soft);
-  font-size: 1rem;
-}
-.home-chapter--ink .home-section-sub {
-  color: var(--ink-line);
+  font-size: 0.95rem;
 }
 .home-section-link {
   display: inline-flex;
@@ -8379,120 +8171,52 @@ a.ask-student-q-stretch::after {
   color: var(--seal-red-dark);
   font-weight: 600;
   font-size: 0.95rem;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1.5px;
+  white-space: nowrap;
+  text-decoration: none;
 }
 .home-section-link:hover {
-  color: var(--seal-red);
-}
-.home-chapter--ink .home-section-link {
-  color: var(--gold-light);
-}
-.home-chapter--ink .home-section-link:hover {
-  color: var(--rice);
-}
-
-/* Loading and empty states: compact, one or two lines */
-.home-hold {
-  min-height: 7rem;
-  border-radius: var(--r-md);
-  background: rgba(26, 22, 19, 0.045);
-}
-.home-hold--tall {
-  min-height: 15rem;
-}
-.home-chapter--ink .home-hold {
-  background: rgba(250, 246, 239, 0.06);
-}
-.home-empty {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 var(--sp-2);
-  padding: var(--sp-1) var(--sp-3);
-  border-radius: var(--r-md);
-  background: rgba(26, 22, 19, 0.05);
-  color: var(--ink-soft);
-}
-.home-empty > span {
-  padding: 0.5rem 0;
-}
-.home-empty-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--seal-red-dark);
-  font-weight: 600;
   text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1.5px;
 }
-.home-empty-link:hover {
-  color: var(--seal-red);
-}
-.home-chapter--ink .home-empty {
-  background: rgba(250, 246, 239, 0.07);
-  color: var(--ink-line);
-}
-.home-chapter--ink .home-empty-link {
-  color: var(--gold-light);
-}
-.home-chapter--ink .home-empty-link:hover {
-  color: var(--rice);
+.home-section a:focus-visible,
+.home-band a:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 2px;
 }
 
-/* Review carousel: native scroll-snap, so swipe always works */
-.home-carousel {
-  position: relative;
-}
+/* Review row: swipes inside itself on phones, grid from tablet up */
 .home-review-row {
-  position: relative;
   list-style: none;
   display: flex;
   gap: var(--sp-2);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   overscroll-behavior-x: contain;
-  scrollbar-width: none;
+  padding-bottom: var(--sp-1);
   margin: 0 calc(var(--sp-2) * -1);
-  padding: 0 var(--sp-2);
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
   scroll-padding-left: var(--sp-2);
 }
-.home-review-row::-webkit-scrollbar {
-  display: none;
-}
 .home-review-card {
-  flex: 0 0 86%;
-  max-width: 380px;
+  flex: 0 0 82%;
+  max-width: 340px;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-2);
-  padding: var(--sp-3);
+  gap: var(--sp-1);
+  padding: var(--sp-2);
   background: #fff;
-  border-radius: var(--r-lg);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
 }
 .home-review-text {
   color: var(--ink);
-  font-size: 1.05rem;
-  line-height: 1.6;
+  line-height: 1.55;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 6;
-  line-clamp: 6;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   overflow: hidden;
-}
-.home-review-text::before {
-  content: '\201C';
-  display: block;
-  height: 1.75rem;
-  margin-left: -0.2em;
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 3.5rem;
-  line-height: 1;
-  color: var(--seal-red);
 }
 .home-review-meta {
   margin-top: auto;
@@ -8503,112 +8227,40 @@ a.ask-student-q-stretch::after {
 .home-review-uni {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
   min-height: 44px;
-  color: var(--ink);
+  color: var(--seal-red-dark);
   font-weight: 600;
-  line-height: 1.3;
+  text-decoration: none;
 }
 .home-review-uni:hover {
-  color: var(--seal-red-dark);
-}
-.home-review-logo {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 10px;
-  background: var(--rice-warm);
-  overflow: hidden;
-}
-.home-review-logo img,
-.home-review-logo .uni-logo-fallback {
-  width: 100%;
-  height: 100%;
-  padding: 4px;
+  text-decoration: underline;
 }
 .home-review-context,
 .home-flight-facts {
   display: flex;
   flex-wrap: wrap;
   gap: 4px var(--sp-2);
-  font-size: 0.875rem;
-  color: var(--ink-soft);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
 }
 @media (min-width: 768px) {
   .home-review-row {
-    margin: 0 calc(var(--sp-3) * -1);
-    padding: 0 var(--sp-3);
-    scroll-padding-left: var(--sp-3);
-    gap: var(--sp-3);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    margin: 0;
+    padding: 0;
   }
   .home-review-card {
-    flex-basis: calc(50% - var(--sp-3) / 2);
     max-width: none;
+  }
+  .home-section-title {
+    font-size: 1.6rem;
   }
 }
 @media (min-width: 1100px) {
-  .home-review-card {
-    flex-basis: calc(33.333% - var(--sp-3) * 2 / 3);
-  }
-}
-
-.home-carousel-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
-}
-.home-carousel-btn {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-full);
-  background: var(--ink);
-  color: var(--rice);
-  transition:
-    background-color var(--t-fast),
-    transform var(--t-fast);
-}
-.home-carousel-btn:hover {
-  background: var(--seal-red);
-}
-.home-carousel-btn:active {
-  transform: scale(0.94);
-}
-.home-carousel-dots {
-  display: flex;
-  align-items: center;
-}
-.home-carousel-dot {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 44px;
-}
-.home-carousel-dot::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: var(--r-full);
-  background: rgba(26, 22, 19, 0.28);
-  transition:
-    background-color var(--t-mid),
-    transform var(--t-mid);
-}
-.home-carousel-dot:hover::before {
-  background: rgba(26, 22, 19, 0.55);
-}
-.home-carousel-dot[aria-current='true']::before {
-  background: var(--seal-red);
-  transform: scale(1.5);
-}
-@media (min-width: 768px) {
-  .home-carousel-controls {
-    justify-content: flex-start;
+  .home-review-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -8625,9 +8277,10 @@ a.ask-student-q-stretch::after {
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-3);
+  padding: var(--sp-2);
   background: #fff;
-  border-radius: var(--r-lg);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
 }
 .home-ask-body {
   min-width: 0;
@@ -8638,16 +8291,16 @@ a.ask-student-q-stretch::after {
 .home-ask-title {
   color: var(--ink);
   font-weight: 600;
-  font-size: 1.1rem;
   line-height: 1.4;
+  text-decoration: none;
   overflow-wrap: anywhere;
 }
 .home-ask-title:hover {
   color: var(--seal-red-dark);
 }
 .home-ask-where {
-  font-size: 0.875rem;
-  color: var(--ink-soft);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
 }
 .home-ask-action {
   flex: none;
@@ -8657,71 +8310,58 @@ a.ask-student-q-stretch::after {
 }
 
 /* Contributor band */
+.home-band {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4) 0;
+  background: var(--rice-warm);
+  border-top: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--ink-line);
+}
 .home-band-inner {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-3);
-}
-.home-band-copy {
-  display: flex;
   align-items: flex-start;
   gap: var(--sp-2);
 }
 .home-band-title {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 1.1rem + 3vw, 3rem);
-  font-weight: 900;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: 1.4rem;
+  font-weight: 600;
   margin-bottom: var(--sp-1);
 }
 .home-band-text {
   max-width: 52ch;
-  color: var(--seal-red-tint);
-  font-size: 1.05rem;
+  color: var(--ink-soft);
   line-height: 1.55;
-}
-.home-band-btn {
-  background: var(--rice);
-  color: var(--seal-red-dark);
-}
-.home-band-btn:hover {
-  background: #fff;
-  transform: none;
 }
 @media (min-width: 768px) {
   .home-band-inner {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: var(--sp-6);
+    gap: var(--sp-4);
   }
 }
 
-/* Flights, on the ink field */
+/* Flights */
 .home-flight-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-height: 44px;
-  padding: var(--sp-3);
-  background: rgba(250, 246, 239, 0.07);
-  border-radius: var(--r-lg);
-  transition: background-color var(--t-fast);
+  padding: var(--sp-2);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: border-color var(--t-fast);
 }
 .home-flight-card:hover {
-  background: rgba(250, 246, 239, 0.13);
+  border-color: var(--seal-red);
 }
 .home-flight-route {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.3rem;
-  line-height: 1.25;
-  color: var(--rice);
-}
-.home-chapter--ink .home-flight-facts {
-  color: var(--ink-line);
+  color: var(--ink);
+  font-weight: 600;
 }
 @media (min-width: 768px) {
   .home-flight-list {
@@ -8732,53 +8372,5 @@ a.ask-student-q-stretch::after {
   }
   .home-flight-card {
     height: 100%;
-  }
-}
-
-/* Entrance: hero copy and logos rise once, the seam seal is pressed on.
-   Plain CSS, so it works before hydration and is off for reduced motion. */
-@media (prefers-reduced-motion: no-preference) {
-  .hero-copy > * {
-    animation: home-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .hero-copy > :nth-child(2) {
-    animation-delay: 70ms;
-  }
-  .hero-copy > :nth-child(3) {
-    animation-delay: 140ms;
-  }
-  .hero-copy > :nth-child(4) {
-    animation-delay: 200ms;
-  }
-  .hero-copy > :nth-child(5) {
-    animation-delay: 260ms;
-  }
-  .home-logo-wall li {
-    animation: home-rise 640ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: 240ms;
-  }
-  .home-logo-wall li:nth-child(n + 3) {
-    animation-delay: 300ms;
-  }
-  .home-logo-wall li:nth-child(n + 5) {
-    animation-delay: 360ms;
-  }
-  .home-logo-wall li:nth-child(n + 7) {
-    animation-delay: 420ms;
-  }
-  .home-seam-seal {
-    animation: home-stamp 520ms cubic-bezier(0.16, 1, 0.3, 1) 520ms both;
-  }
-}
-@keyframes home-rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-}
-@keyframes home-stamp {
-  from {
-    opacity: 0;
-    transform: rotate(-14deg) scale(1.4);
   }
 }
