@@ -67,6 +67,7 @@ export const UserDropdown = () => {
     { to: '/reviews', label: 'Reviews', icon: <Icons.Star size={16} /> },
     { to: '/community', label: 'Community', icon: <Icons.Chat /> },
     { to: '/flights?post=1', label: 'Get paid to fly', icon: <Icons.Plane />, active: '/flights' },
+    { to: '/users', label: 'Members', icon: <Icons.Users /> },
     { to: '/guides', label: 'Guides', icon: <Icons.Info /> },
   ]
 
