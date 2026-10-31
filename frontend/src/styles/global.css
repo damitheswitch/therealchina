@@ -3089,7 +3089,8 @@ h3 {
 
 /* ===== Section ===== */
 .section {
-  padding: var(--sp-4) 0;
+  --section-pad-bottom: var(--sp-4);
+  padding: var(--sp-4) 0 var(--section-pad-bottom);
 }
 .section-title {
   margin-bottom: var(--sp-2);
@@ -6097,6 +6098,10 @@ a.claim-review-uni:hover {
     z-index: 20;
     margin-left: calc(-1 * var(--sp-2));
     margin-right: calc(-1 * var(--sp-2));
+    /* The bar is the last thing in its .section: cancel the section's bottom
+       padding so the bar's lower edge meets the footer. Safe-area spacing
+       stays inside the bar. */
+    margin-bottom: calc(-1 * var(--section-pad-bottom, 0px));
     padding: var(--sp-2) var(--sp-2) calc(var(--sp-2) + env(safe-area-inset-bottom));
     background: #fff;
     border-top: 1px solid var(--ink-line);
