@@ -24,16 +24,18 @@ describe('giftSteps', () => {
       rating: 4,
       polarityTaps: 0,
       filledAreas: 0,
-      evaluation: evaluation(['words'], 12),
+      evaluation: evaluation(['words', 'money'] as RewardEvaluation['missing'], 4),
     })
     expect(steps.map((s) => [s.key, s.done])).toEqual([
       ['started', true],
       ['rating', true],
       ['taps', true],
       ['words', false],
-      ['details', true],
+      ['ratings', true],
+      ['money', false],
+      ['program', true],
     ])
-    expect(steps.find((s) => s.key === 'words')?.label).toContain('(12/40)')
+    expect(steps.find((s) => s.key === 'words')?.label).toContain('(4/')
   })
 
   it('leads to the gold highlight when the gift is off', () => {

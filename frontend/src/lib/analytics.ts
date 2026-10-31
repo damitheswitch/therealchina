@@ -25,13 +25,7 @@ export type PublishDurationBand = 'under_1m' | '1_to_2m' | '2_to_5m' | 'over_5m'
 // Post-publish Boost cards (Phase 2): one logical card per unit of optional
 // detail. The ratings card is the 8-aspect sub-score stack saved as a whole.
 export type BoostCard =
-  | 'words'
-  | 'program'
-  | 'ratings'
-  | 'money'
-  | 'details'
-  | 'pros_cons'
-  | 'media'
+  'words' | 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
 // For boost_exited, `after_card` is the last card completed before leaving;
 // 'none' means Boost was exited before any card saved.
 export type BoostAfterCard = BoostCard | 'none'
@@ -126,6 +120,7 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
   review_step_3_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_4_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_5_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
+  review_step_6_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_story_viewed: ['flow', 'entry', 'auth'],
   review_validation_failed: ['flow', 'auth', 'step', 'stage'],
   review_submit_attempted: ['flow', 'entry', 'auth'],

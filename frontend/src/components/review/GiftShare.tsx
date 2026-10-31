@@ -19,7 +19,14 @@ const CopyButton = ({ text, label }: { text: string; label: string }) => {
 // Shown once the gift is earned: the email is the record, WeChat is where the
 // owner hands the gift over. Both appear together because Gmail often does not
 // open in China without a VPN, which is the thing being given.
-export const GiftHandoff = ({ reward }: { reward: RewardResult }) => {
+export const GiftHandoff = ({
+  reward,
+  bonus = false,
+}: {
+  reward: RewardResult
+  // Photo or a longer text: the reviewer also gets the discounts.
+  bonus?: boolean
+}) => {
   if (!reward.wechatId || !reward.code) return null
   const emailWorked = reward.state === 'sent'
   return (
@@ -48,6 +55,15 @@ export const GiftHandoff = ({ reward }: { reward: RewardResult }) => {
           </span>
         </li>
       </ol>
+      {bonus && (
+        <p className="gift-handoff-bonus">
+          <span aria-hidden="true">✨</span> Bonus unlocked: you also get student discounts on
+          services we trust. Ask us about them on WeChat.
+        </p>
+      )}
+      <p className="fine-print">
+        Thank you for helping the next student choose. Reviews like yours are why this site works.
+      </p>
     </div>
   )
 }

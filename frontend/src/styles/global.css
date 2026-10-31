@@ -8105,3 +8105,54 @@ a.ask-student-q-stretch::after {
     transition: none;
   }
 }
+
+/* Gift streak: bonus box on the photo screen, fix-it rows on Post it, and the
+   bonus line on the success handoff. */
+.gift-bonus {
+  margin: 0 0 var(--sp-2);
+  padding: 0.75rem 0.9rem;
+  border: 1px dashed rgba(196, 160, 60, 0.8);
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.1);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.gift-fix-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.gift-fix-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.gift-fix-row span:last-child {
+  color: var(--seal-red);
+  font-size: 1.2rem;
+}
+.gift-fix-row:hover,
+.gift-fix-row:focus-visible {
+  border-color: var(--seal-red);
+}
+.gift-handoff-bonus {
+  margin: var(--sp-1) 0 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.14);
+  font-size: 0.88rem;
+}

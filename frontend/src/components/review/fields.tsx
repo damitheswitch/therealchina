@@ -897,7 +897,10 @@ export const AnonEmailField = ({
           {form.values.emailConsent
             ? ' We keep it until you unsubscribe.'
             : ' We delete it 90 days after your gift.'}{' '}
-          Questions: {SITE.contactEmail}
+          Questions:{' '}
+          <a href={`mailto:${SITE.contactEmail}`} className="fine-print-link">
+            {SITE.contactEmail}
+          </a>
         </p>
       )}
     </div>

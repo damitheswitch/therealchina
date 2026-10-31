@@ -7,7 +7,7 @@ import { MIN_OWN_UNITS, MIN_POLARITY_TAGS, type RewardEvaluation } from './revie
 // server's "full review" rule; with it off, they lead to the gold highlight.
 
 export interface GiftStep {
-  key: 'started' | 'rating' | 'taps' | 'words' | 'details'
+  key: 'started' | 'rating' | 'taps' | 'words' | 'details' | 'ratings' | 'money' | 'program'
   label: string
   done: boolean
 }
@@ -31,22 +31,17 @@ export const giftSteps = ({
     { key: 'rating', label: 'Star rating', done: rating > 0 },
   ]
   if (evaluation) {
+    const has = (m: string) => !(evaluation.missing as string[]).includes(m)
     steps.push(
-      {
-        key: 'taps',
-        label: `${MIN_POLARITY_TAGS} taps on What stood out`,
-        done: !evaluation.missing.includes('taps'),
-      },
+      { key: 'taps', label: `${MIN_POLARITY_TAGS} taps on What stood out`, done: has('taps') },
       {
         key: 'words',
-        label: `${MIN_OWN_UNITS} words in your own words (${Math.min(evaluation.ownUnits, MIN_OWN_UNITS)}/${MIN_OWN_UNITS})`,
-        done: !evaluation.missing.includes('words'),
+        label: `${MIN_OWN_UNITS} words of your own (${Math.min(evaluation.ownUnits, MIN_OWN_UNITS)}/${MIN_OWN_UNITS})`,
+        done: has('words'),
       },
-      {
-        key: 'details',
-        label: 'Your degree and start year (or costs, ratings, a photo)',
-        done: !evaluation.missing.includes('details'),
-      }
+      { key: 'ratings', label: 'Quick ratings', done: has('ratings') },
+      { key: 'money', label: 'The cost', done: has('money') },
+      { key: 'program', label: 'Your major', done: has('program') }
     )
   } else {
     steps.push(
