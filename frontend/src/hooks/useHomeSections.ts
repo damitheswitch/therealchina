@@ -1,0 +1,136 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import {
+  HOME_FLIGHT_COUNT,
+  HOME_QUESTION_COUNT,
+  pickLandingReviews,
+  pickOpenQuestions,
+  type HomeQuestionRow,
+  type HomeReviewPick,
+} from '../lib/homeSections'
+import { PUBLIC_FLIGHT_COLUMNS, todayLocal, type PublicFlightRow } from '../lib/flightListings'
+
+// Live homepage sections. Everything loads in the browser after mount, so the
+// prerendered HTML never contains these blocks and hydration always matches.
+// Each hook returns null until it has something worth showing.
+
+const isAbort = (err: unknown): boolean => {
+  const e = err as { name?: string; message?: string }
+  return e?.name === 'AbortError' || !!e?.message?.startsWith('AbortError')
+}
+
+// Runs `load` once with an abort signal; failures leave the section hidden.
+const useLiveSection = <T>(label: string, load: (signal: AbortSignal) => Promise<T | null>) => {
+  const [value, setValue] = useState<T | null>(null)
+  useEffect(() => {
+    const controller = new AbortController()
+    const run = async () => {
+      try {
+        const next = await load(controller.signal)
+        if (!controller.signal.aborted) setValue(next)
+      } catch (err) {
+        if (controller.signal.aborted || isAbort(err)) return
+        console.error(`Error fetching ${label}:`, err)
+      }
+    }
+    run()
+    return () => controller.abort()
+    // `load` is a module-level function, so it never changes between renders.
+  }, [label, load])
+  return value
+}
+
+export interface HomeStats {
+  universities: number
+  reviews: number
+}
+
+const loadStats = async (signal: AbortSignal): Promise<HomeStats | null> => {
+  const [uniRes, reviewRes] = await Promise.all([
+    supabase.from('universities').select('id', { count: 'exact', head: true }).abortSignal(signal),
+    supabase.from('reviews').select('id', { count: 'exact', head: true }).abortSignal(signal),
+  ])
+  if (uniRes.error) throw uniRes.error
+  if (reviewRes.error) throw reviewRes.error
+  return { universities: uniRes.count ?? 0, reviews: reviewRes.count ?? 0 }
+}
+
+// Public reviews are already filtered to non-deleted rows by row-level security.
+export const useHomeStats = (): HomeStats | null => useLiveSection('home stats', loadStats)
+
+export interface LandingReview extends HomeReviewPick {
+  universityName: string
+  universitySlug: string
+}
+
+const REVIEW_CANDIDATES = 40
+
+const loadReviews = async (signal: AbortSignal): Promise<LandingReview[] | null> => {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select(
+      'id, university_id, rating, text, pros, cons, tags, upvote_count, created_at, degree_level, start_year, end_year'
+    )
+    .not('text', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(REVIEW_CANDIDATES)
+    .abortSignal(signal)
+  if (error) throw error
+  const picks = pickLandingReviews(data ?? [])
+  if (picks.length === 0) return null
+  const ids = [...new Set(picks.map((p) => p.row.university_id))]
+  const { data: unis, error: uniError } = await supabase
+    .from('universities')
+    .select('id, name, slug')
+    .in('id', ids)
+    .abortSignal(signal)
+  if (uniError) throw uniError
+  const byId = new Map((unis ?? []).map((u) => [u.id, u]))
+  const out: LandingReview[] = []
+  for (const p of picks) {
+    const uni = byId.get(p.row.university_id)
+    if (uni) out.push({ ...p, universityName: uni.name, universitySlug: uni.slug })
+  }
+  return out.length > 0 ? out : null
+}
+
+export const useLandingReviews = (): LandingReview[] | null =>
+  useLiveSection('landing reviews', loadReviews)
+
+const QUESTION_CANDIDATES = 30
+
+const loadQuestions = async (signal: AbortSignal): Promise<HomeQuestionRow[] | null> => {
+  const { data, error } = await supabase
+    .from('qa_questions_public')
+    .select(
+      'id, slug, title, city, university_name, university_slug, answer_count, upvote_count, created_at'
+    )
+    .eq('answer_count', 0)
+    .order('upvote_count', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(QUESTION_CANDIDATES)
+    .abortSignal(signal)
+  if (error) throw error
+  const picks = pickOpenQuestions((data ?? []) as HomeQuestionRow[], HOME_QUESTION_COUNT)
+  return picks.length > 0 ? picks : null
+}
+
+export const useOpenQuestions = (): HomeQuestionRow[] | null =>
+  useLiveSection('open questions', loadQuestions)
+
+const loadFlights = async (signal: AbortSignal): Promise<PublicFlightRow[] | null> => {
+  const { data, error } = await supabase
+    .from('flight_listings_public')
+    .select(PUBLIC_FLIGHT_COLUMNS)
+    .gte('departure_date', todayLocal())
+    .order('departure_date', { ascending: true })
+    .order('created_at', { ascending: false })
+    .limit(HOME_FLIGHT_COUNT)
+    .abortSignal(signal)
+  if (error) throw error
+  const rows = (data ?? []) as PublicFlightRow[]
+  return rows.length > 0 ? rows : null
+}
+
+export const useUpcomingFlights = (): PublicFlightRow[] | null =>
+  useLiveSection('upcoming flights', loadFlights)
