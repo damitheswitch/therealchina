@@ -26,10 +26,10 @@ const HomeIcon = () => (
     <path d="M5 10v10h14V10" />
   </Svg>
 )
-const UniIcon = () => (
+const PlaneIcon = () => (
   <Svg>
-    <path d="M2 9l10-5 10 5-10 5z" />
-    <path d="M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5" />
+    <path d="M22 2L11 13" />
+    <path d="M22 2L15 22L11 13L2 9L22 2Z" />
   </Svg>
 )
 const ChatIcon = () => (
@@ -63,13 +63,9 @@ export const MobileTabBar = () => {
           <HomeIcon />
           <span>Home</span>
         </Link>
-        <Link
-          to="/universities"
-          className={item('universities')}
-          aria-current={current('universities')}
-        >
-          <UniIcon />
-          <span>Universities</span>
+        <Link to="/flights" className={item('flights')} aria-current={current('flights')}>
+          <PlaneIcon />
+          <span>Flights</span>
         </Link>
         <Link to={reviewHref(pathname)} className="tab-bar-item tab-bar-review">
           <span className="tab-bar-review-btn" aria-hidden="true">
@@ -79,7 +75,7 @@ export const MobileTabBar = () => {
         </Link>
         <Link to="/community" className={item('community')} aria-current={current('community')}>
           <ChatIcon />
-          <span>Q&amp;A</span>
+          <span>Community</span>
         </Link>
         {user ? (
           <Link to="/profile" className={item('me')} aria-current={current('me')}>

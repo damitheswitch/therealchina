@@ -19,10 +19,15 @@ describe('MobileTabBar helpers', () => {
 
   it('maps routes to the active tab', () => {
     expect(activeTab('/')).toBe('home')
-    expect(activeTab('/universities')).toBe('universities')
-    expect(activeTab('/university/x')).toBe('universities')
+    expect(activeTab('/flights')).toBe('flights')
+    expect(activeTab('/flights/')).toBe('flights')
+    expect(activeTab('/flights/123')).toBe('flights')
+    expect(activeTab('/community')).toBe('community')
+    expect(activeTab('/community/')).toBe('community')
     expect(activeTab('/community/q/abc')).toBe('community')
     expect(activeTab('/profile')).toBe('me')
+    expect(activeTab('/universities')).toBeNull()
+    expect(activeTab('/university/x')).toBeNull()
     expect(activeTab('/guides')).toBeNull()
   })
 })
