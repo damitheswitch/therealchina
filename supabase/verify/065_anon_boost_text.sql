@@ -17,10 +17,13 @@ INSERT INTO public.reviewer_context (review_id, boost_secret_hash)
 VALUES ('00000000-0000-4000-8000-0000000065c1', repeat('a', 64));
 
 -- 1. A valid text patch applies, is trimmed, and uses one save.
+-- Call first, check after: Postgres may evaluate uncorrelated subqueries in the
+-- same CASE before the function runs.
+CREATE TEMP TABLE call_1 AS SELECT public.apply_anonymous_boost('00000000-0000-4000-8000-0000000065c1', repeat('a', 64),
+              '{"text": "  Teachers were kind, dorms felt small, canteen prices stayed cheap.  "}'::jsonb) AS res;
 INSERT INTO probe_results
 SELECT 'text patch applies',
-  CASE WHEN public.apply_anonymous_boost('00000000-0000-4000-8000-0000000065c1', repeat('a', 64),
-              '{"text": "  Teachers were kind, dorms felt small, canteen prices stayed cheap.  "}'::jsonb) = 'ok'
+  CASE WHEN (SELECT res FROM call_1) = 'ok'
         AND (SELECT text FROM public.reviews WHERE id = '00000000-0000-4000-8000-0000000065c1')
             = 'Teachers were kind, dorms felt small, canteen prices stayed cheap.'
         AND (SELECT boost_save_count FROM public.reviewer_context
@@ -28,10 +31,13 @@ SELECT 'text patch applies',
        THEN 'PASS' ELSE 'FAIL' END;
 
 -- 2. A text patch beside another allowed field applies both; other columns keep their values.
+-- Call first, check after: Postgres may evaluate uncorrelated subqueries in the
+-- same CASE before the function runs.
+CREATE TEMP TABLE call_2 AS SELECT public.apply_anonymous_boost('00000000-0000-4000-8000-0000000065c1', repeat('a', 64),
+              '{"text": "Second version of the words, a bit longer now.", "program": "Computer Science"}'::jsonb) AS res;
 INSERT INTO probe_results
 SELECT 'text with program applies and leaves rating, tags, media alone',
-  CASE WHEN public.apply_anonymous_boost('00000000-0000-4000-8000-0000000065c1', repeat('a', 64),
-              '{"text": "Second version of the words, a bit longer now.", "program": "Computer Science"}'::jsonb) = 'ok'
+  CASE WHEN (SELECT res FROM call_2) = 'ok'
         AND (SELECT text FROM public.reviews WHERE id = '00000000-0000-4000-8000-0000000065c1')
             = 'Second version of the words, a bit longer now.'
         AND (SELECT program FROM public.reviews WHERE id = '00000000-0000-4000-8000-0000000065c1') = 'Computer Science'
@@ -58,10 +64,13 @@ SELECT 'bad text rejected as bad_fields',
        THEN 'PASS' ELSE 'FAIL' END;
 
 -- 4. The longest allowed text (5000 characters) applies.
+-- Call first, check after: Postgres may evaluate uncorrelated subqueries in the
+-- same CASE before the function runs.
+CREATE TEMP TABLE call_4 AS SELECT public.apply_anonymous_boost('00000000-0000-4000-8000-0000000065c1', repeat('a', 64),
+              jsonb_build_object('text', repeat('x', 5000))) AS res;
 INSERT INTO probe_results
 SELECT 'text at the 5000 character cap applies',
-  CASE WHEN public.apply_anonymous_boost('00000000-0000-4000-8000-0000000065c1', repeat('a', 64),
-              jsonb_build_object('text', repeat('x', 5000))) = 'ok'
+  CASE WHEN (SELECT res FROM call_4) = 'ok'
         AND (SELECT char_length(text) FROM public.reviews WHERE id = '00000000-0000-4000-8000-0000000065c1') = 5000
        THEN 'PASS' ELSE 'FAIL' END;
 
