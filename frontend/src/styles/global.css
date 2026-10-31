@@ -7856,6 +7856,14 @@ a.ask-student-q-stretch::after {
   }
 }
 
+/* Routes without the tab bar (see lib/tabBar.ts) have no bar to clear, and
+   their own sticky actions sit right above the footer: drop the footer gap. */
+@media (max-width: 767px) {
+  main[data-tab-bar='hidden'] + .site-footer {
+    margin-top: 0;
+  }
+}
+
 /* ===== Fine print + gift dialog (RewardEmailNotice) ===== */
 
 /* Small muted text block. Links inside it use .fine-print-link. */
