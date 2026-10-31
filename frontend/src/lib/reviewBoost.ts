@@ -9,6 +9,8 @@ import type { RewardResult } from './reviewReward'
 // the fields and applies the update atomically via apply_anonymous_boost.
 // Only the fields listed here are ever sendable — anything else is rejected.
 export interface BoostFields {
+  // Own words only (065): lets a guest finish the gift after publishing.
+  text?: string
   program?: string | null
   degreeLevel?: string | null
   subscores?: SubScores

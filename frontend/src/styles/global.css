@@ -7878,3 +7878,281 @@ a.ask-student-q-stretch::after {
     background: var(--ink);
   }
 }
+
+/* ===== Fine print + gift dialog (RewardEmailNotice) ===== */
+
+/* Small muted text block. Links inside it use .fine-print-link. */
+.fine-print {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* Always-underlined small link with a trailing arrow so it reads as a link. */
+.fine-print-link {
+  color: var(--ink-soft);
+  font-size: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.fine-print-link::after {
+  content: ' ›';
+  text-decoration: none;
+  display: inline-block;
+}
+.fine-print-link:hover,
+.fine-print-link:focus-visible {
+  color: var(--seal-red-dark);
+  text-decoration-thickness: 2px;
+}
+.fine-print-link:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.gift-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(26, 22, 19, 0.55);
+  animation: gift-dialog-fade 200ms ease-out;
+}
+
+.gift-dialog {
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--rice);
+  color: var(--ink);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 32px rgba(26, 22, 19, 0.25);
+  animation: gift-dialog-rise 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gift-dialog-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  text-align: center;
+  margin-bottom: var(--sp-2);
+}
+
+.gift-dialog-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.gift-dialog-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.gift-dialog-lead {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.gift-dialog-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--sp-2) 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.gift-dialog-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  width: 100%;
+  min-height: 48px;
+  padding: 0.5rem var(--sp-2);
+  background: var(--rice-deep);
+  color: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--t-fast),
+    border-color var(--t-fast);
+}
+.gift-dialog-row:hover {
+  background: var(--seal-red-tint);
+  border-color: var(--seal-red-light);
+}
+.gift-dialog-row:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 2px;
+}
+.gift-dialog-row-chevron {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--seal-red);
+}
+
+.gift-dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: var(--sp-3);
+}
+
+.gift-dialog-btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.5rem var(--sp-2);
+  border-radius: var(--r-md);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--t-fast),
+    border-color var(--t-fast);
+}
+.gift-dialog-btn:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 3px;
+}
+.gift-dialog-btn-primary {
+  background: var(--seal-red);
+  color: #fff;
+  border: 2px solid var(--seal-red);
+  box-shadow: var(--shadow-seal);
+}
+.gift-dialog-btn-primary:hover {
+  background: var(--seal-red-dark);
+  border-color: var(--seal-red-dark);
+}
+.gift-dialog-btn-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--ink-soft);
+}
+.gift-dialog-btn-secondary:hover {
+  background: var(--rice-deep);
+}
+
+.gift-dialog-fine {
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--ink-line);
+  text-align: center;
+}
+.gift-dialog-fine p + p {
+  margin-top: 0.25rem;
+}
+
+@keyframes gift-dialog-rise {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes gift-dialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 720px) {
+  .gift-dialog-backdrop {
+    align-items: center;
+    padding: var(--sp-3);
+  }
+  .gift-dialog {
+    max-width: 440px;
+    border-radius: var(--r-lg);
+    padding: var(--sp-4);
+    box-shadow: var(--shadow-hover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gift-dialog-backdrop,
+  .gift-dialog {
+    animation: none;
+  }
+  .gift-dialog-row,
+  .gift-dialog-btn {
+    transition: none;
+  }
+}
+
+/* Gift streak: bonus box on the photo screen, fix-it rows on Post it, and the
+   bonus line on the success handoff. */
+.gift-bonus {
+  margin: 0 0 var(--sp-2);
+  padding: 0.75rem 0.9rem;
+  border: 1px dashed rgba(196, 160, 60, 0.8);
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.1);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.gift-fix-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.gift-fix-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  background: #fff;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.gift-fix-row span:last-child {
+  color: var(--seal-red);
+  font-size: 1.2rem;
+}
+.gift-fix-row:hover,
+.gift-fix-row:focus-visible {
+  border-color: var(--seal-red);
+}
+.gift-handoff-bonus {
+  margin: var(--sp-1) 0 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: var(--r-md);
+  background: rgba(196, 160, 60, 0.14);
+  font-size: 0.88rem;
+}

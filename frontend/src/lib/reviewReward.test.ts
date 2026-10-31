@@ -42,7 +42,10 @@ describe('describeMissing', () => {
   it('joins the missing parts in plain words', () => {
     expect(describeMissing(['taps'])).toBe('2 taps on What stood out')
     expect(describeMissing(['words', 'taps'])).toBe(
-      'more of your own words and 2 taps on What stood out'
+      'a few words of your own and 2 taps on What stood out'
+    )
+    expect(describeMissing(['ratings', 'money', 'program'])).toBe(
+      'the quick ratings, the cost and your major'
     )
   })
 })

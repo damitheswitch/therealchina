@@ -1,4 +1,4 @@
-import { POLARITY_TOPICS, type ReviewFieldValues } from './reviewFlow'
+import { LANGUAGE_COURSE_DEGREE, POLARITY_TOPICS, type ReviewFieldValues } from './reviewFlow'
 import type { MediaItem } from './reviewSubmit'
 
 // Client mirror of supabase/functions/_shared/reward.ts: the "full review"
@@ -10,12 +10,15 @@ import type { MediaItem } from './reviewSubmit'
 // turns it on (the server has its own REWARD_ENABLED switch).
 export const REWARD_UI_ENABLED = import.meta.env.VITE_REVIEW_REWARD === 'on'
 
-export const MIN_OWN_UNITS = 40
+export const MIN_OWN_UNITS = 10
 export const MIN_POLARITY_TAGS = 2
-export const MIN_DETAIL_AREAS = 2
 const RATINGS_AREA_MIN = 4
 
-export type RewardMissing = 'words' | 'taps' | 'details'
+// The three areas every gift needs: the quick ratings, the cost and the major.
+// Timing and media are welcome but never count toward the gift.
+export const REQUIRED_GIFT_AREAS = ['ratings', 'money', 'program'] as const
+
+export type RewardMissing = 'words' | 'taps' | 'ratings' | 'money' | 'program'
 
 export type RewardState =
   'off' | 'waiting' | 'sent' | 'email_used' | 'email_blocked' | 'failed' | 'paused' | 'declined'
@@ -131,24 +134,19 @@ const SUBSCORE_KEYS = [
   'rating_career',
 ] as const
 
+// Which of the required gift areas the review covers, in REQUIRED_GIFT_AREAS
+// order. A language-course year has no major, so the degree level stands in.
 export const rewardDetailAreas = (row: RewardReviewRow): string[] => {
   const areas: string[] = []
-  if (has(row.program) || has(row.degree_level)) areas.push('program')
   if (SUBSCORE_KEYS.filter((k) => typeof row[k] === 'number').length >= RATINGS_AREA_MIN) {
     areas.push('ratings')
   }
   if (has(row.tuition_range) || has(row.living_cost_range) || has(row.funding_type)) {
     areas.push('money')
   }
-  if (
-    has(row.enrollment_status) ||
-    typeof row.start_year === 'number' ||
-    typeof row.end_year === 'number' ||
-    has(row.language_of_instruction)
-  ) {
-    areas.push('timing')
+  if (has(row.program) || row.degree_level?.trim() === LANGUAGE_COURSE_DEGREE) {
+    areas.push('program')
   }
-  if (Array.isArray(row.media) && row.media.length > 0) areas.push('media')
   return areas
 }
 
@@ -167,7 +165,9 @@ export const evaluateReward = (row: RewardReviewRow): RewardEvaluation => {
   if (ownUnits < MIN_OWN_UNITS || looksLikeFiller(ownText)) missing.push('words')
   const tapCount = (row.tags ?? []).filter((t) => POLARITY_TAGS.has(t)).length
   if (tapCount < MIN_POLARITY_TAGS) missing.push('taps')
-  if (areas.length < MIN_DETAIL_AREAS) missing.push('details')
+  for (const area of REQUIRED_GIFT_AREAS) {
+    if (!areas.includes(area)) missing.push(area)
+  }
   return { full: row.deleted_at === null && missing.length === 0, missing, ownUnits, areas }
 }
 
@@ -207,12 +207,14 @@ export const evaluateRewardFields = (
 ): RewardEvaluation => evaluateReward(rewardRowFromFields(values, media))
 
 const MISSING_LABEL: Record<RewardMissing, string> = {
-  words: 'more of your own words',
+  words: 'a few words of your own',
   taps: '2 taps on What stood out',
-  details: 'a few more details (major, ratings, costs, dates or a photo)',
+  ratings: 'the quick ratings',
+  money: 'the cost',
+  program: 'your major',
 }
 
-// "more of your own words and 2 taps on What stood out"
+// "a few words of your own and 2 taps on What stood out"
 export const describeMissing = (missing: RewardMissing[]): string => {
   const parts = missing.map((m) => MISSING_LABEL[m])
   if (parts.length <= 1) return parts[0] ?? ''
@@ -284,7 +286,7 @@ export const rewardConfirmation = (
       return `Gift email sent. Check your inbox and spam folder. Your gift code is ${reward.code}.`
     case 'waiting':
       return reward.missing?.length
-        ? `Your email is saved. Add ${describeMissing(reward.missing)} and we will send your free VPN steps.`
+        ? `Your email is saved. Still needed: ${describeMissing(reward.missing)}. Then we will send your free VPN steps.`
         : 'Your email is saved. We will send your free VPN steps as soon as your review is full.'
     case 'email_used':
       return 'This email already got a gift. It is one gift per person.'

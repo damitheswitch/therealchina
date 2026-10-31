@@ -18,6 +18,7 @@ import {
   MediaField,
   MoneyFields,
   ProgramField,
+  ReviewTextField,
   type MediaState,
 } from './fields'
 import type { MediaItem } from '../../lib/reviewSubmit'
@@ -29,6 +30,7 @@ import type { MediaItem } from '../../lib/reviewSubmit'
 // Language Course pick fills program and language, for example) show done
 // and get skipped by the cascade, but stay tappable for corrections.
 const CARD_FIELDS: Record<BoostCard, (keyof ReviewFieldValues)[]> = {
+  words: ['reviewText'],
   ratings: ['subscores'],
   money: ['tuitionRange', 'livingCostRange', 'fundingType', 'fundingCoverage'],
   program: ['program', 'degreeLevel', 'languageOfInstruction', 'enrollmentStatus', 'endYear'],
@@ -57,6 +59,8 @@ export const BoostCards = ({
   onCardCompleted,
   onExit,
   onFinish,
+  wordsDone = false,
+  wordsHint,
 }: {
   form: ReviewForm
   mediaState: MediaState
@@ -69,6 +73,10 @@ export const BoostCards = ({
   onCardCompleted: (card: BoostCard) => void
   onExit: (afterCard: BoostAfterCard, nextIndex: number) => void
   onFinish: () => void
+  // The words card's done state comes from the gift rule's own-words count,
+  // which the deck cannot compute without the reward module.
+  wordsDone?: boolean
+  wordsHint?: string
 }) => {
   const [index, setIndex] = useState(initialIndex)
   const [saving, setSaving] = useState(false)
@@ -101,6 +109,9 @@ export const BoostCards = ({
     },
     []
   )
+
+  const cardDone = (c: BoostCard) =>
+    c === 'words' ? wordsDone : isBoostCardDone(c, form.values, mediaCount)
 
   const card = cards[index]
   const total = cards.length
@@ -237,8 +248,7 @@ export const BoostCards = ({
   // required picks saves and moves on, no extra button press in between.
   // Ratings cascades on its own walk-finished event; media stays manual
   // because uploads are multi-file and should not cut off after the first.
-  const completeNow =
-    (card === 'money' || card === 'program') && isBoostCardDone(card, form.values, mediaCount)
+  const completeNow = (card === 'money' || card === 'program') && cardDone(card)
   useEffect(() => {
     if (!completeNow || entryCompleteRef.current || saving || advancingRef.current) return
     runCascade(card)
@@ -301,7 +311,7 @@ export const BoostCards = ({
 
       <div className="boost-tabs" role="group" aria-label="Review detail cards">
         {cards.map((c, i) => {
-          const done = isBoostCardDone(c, form.values, mediaCount)
+          const done = cardDone(c)
           return (
             <button
               key={c}
@@ -332,6 +342,16 @@ export const BoostCards = ({
         <h3 className="boost-card-title">{BOOST_CARD_META[card].title}</h3>
         <p className="boost-card-sub">{BOOST_CARD_META[card].sub}</p>
 
+        {card === 'words' && (
+          <>
+            <ReviewTextField form={form} story />
+            {wordsHint && (
+              <p className="reward-hint" aria-live="polite">
+                {wordsHint}
+              </p>
+            )}
+          </>
+        )}
         {card === 'ratings' && <RatingsCard form={form} onDone={() => runCascade('ratings')} />}
         {card === 'money' && <MoneyFields form={form} />}
         {card === 'program' && (
@@ -395,7 +415,7 @@ const TAP_LABELS = ['Poor', 'Fair', 'Okay', 'Good', 'Great']
 // 1–5 tap bar: tap a score to move on, "Not sure" passes, dots jump back.
 // Reaching the last aspect fires onDone, which cascades into the next card —
 // the fix for the old dead end where nothing happened after the final rating.
-const RatingsCard = ({ form, onDone }: { form: ReviewForm; onDone: () => void }) => {
+export const RatingsCard = ({ form, onDone }: { form: ReviewForm; onDone: () => void }) => {
   const scores = form.values.subscores
   const total = SUBSCORE_INPUT_FIELDS.length
 

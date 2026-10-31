@@ -89,7 +89,14 @@ export const GiftProgress = ({
                 steps after you publish. Good or bad review, the gift is the same.
               </p>
               <p>
-                One gift per person. <Link to="/editorial-policy#gifts">How gifts work</Link>
+                <strong>Bonus:</strong> add a photo or write 40+ words of your own and you also get
+                student discounts on services we trust.
+              </p>
+              <p className="fine-print">
+                One gift per person.{' '}
+                <Link to="/editorial-policy#gifts" className="fine-print-link">
+                  How gifts work
+                </Link>
               </p>
             </>
           ) : (

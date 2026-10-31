@@ -14,6 +14,7 @@ import {
   type ReviewEntry,
   type ReviewEventName,
   type ReviewStage,
+  type ReviewStep,
 } from '../lib/analytics'
 import {
   getOrCreateClaimToken,
@@ -68,16 +69,23 @@ import { SealBadge } from './SealBadge'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
-import { BoostCards } from './review/BoostCards'
+import { BoostCards, RatingsCard } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
-import { AnonEmailField, type MediaState } from './review/fields'
+import {
+  AnonEmailField,
+  LanguageField,
+  MediaField,
+  MoneyFields,
+  ProgramField,
+  type MediaState,
+} from './review/fields'
 import { GiftProgress } from './review/GiftProgress'
-import { RewardEmailNotice } from './review/RewardEmailNotice'
+import { RewardEmailNotice, type RewardMissing } from './review/RewardEmailNotice'
 import {
   REWARD_UI_ENABLED,
+  MIN_OWN_UNITS,
   readReferral,
   rememberReferral,
-  describeMissing,
   evaluateRewardFields,
   type RewardResult,
 } from '../lib/reviewReward'
@@ -87,7 +95,7 @@ import {
 // The tap-first flow's analytics tag. Event names and meanings are unchanged —
 // only `flow` distinguishes which layout produced them, so the v2 funnel can
 // be compared against fast_2 directly.
-const FLOW = 'tap_3' as const
+const FLOW = 'tap_6' as const
 
 // Screen index -> the step-viewed event + stage enum it emits. Step numbers
 // stay positional ("Nth screen shown") and stages stay semantic, so the
@@ -96,15 +104,49 @@ const SCREEN_EVENTS: Record<number, ReviewEventName> = {
   1: 'review_step_1_viewed',
   2: 'review_step_2_viewed',
   3: 'review_step_3_viewed',
+  4: 'review_step_4_viewed',
+  5: 'review_step_5_viewed',
+  6: 'review_step_6_viewed',
 }
 const SCREEN_STAGES: Record<number, ReviewStage> = {
   1: 'basics',
   2: 'story',
-  3: 'post',
+  3: 'ratings',
+  4: 'details',
+  5: 'details',
+  6: 'post',
 }
 // Minimum taps on "What stood out" so every review carries some structured signal.
 const MIN_POLARITY_PICKS = 2
-const SCREEN_LABELS = ['The essentials', 'What stood out', 'Post it']
+// Ratings, cost and major, and photos sit before Post it so the thank-you
+// gift can be finished before publishing (a guest cannot edit most fields
+// afterwards). Each is optional to publish: Continue works with nothing filled.
+const SCREEN_LABELS = [
+  'The essentials',
+  'What stood out',
+  'Quick ratings',
+  'Cost and major',
+  'Photos',
+  'Post it',
+]
+const POST_STEP = SCREEN_LABELS.length
+const FIX_LABELS: Record<RewardMissing, string> = {
+  words: 'Write a few words of your own',
+  taps: 'Tap 2 rows in What stood out',
+  ratings: 'Give the quick ratings',
+  money: 'Add the cost',
+  program: 'Add your major',
+}
+// Own words that earn the bonus (discounts) on top of the gift.
+const BONUS_OWN_UNITS = 40
+// The screen that fixes each missing piece of the gift rule.
+const FIX_STEP: Record<RewardMissing, number> = {
+  words: 2,
+  taps: 2,
+  ratings: 3,
+  money: 4,
+  program: 4,
+}
 
 type Phase = 'form' | 'success' | 'boost'
 
@@ -218,6 +260,9 @@ export const ReviewWizard = ({
   const [error, setError] = useState<string | null>(null)
   const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
   const [boostIndex, setBoostIndex] = useState(0)
+  // The deck opened from the success screen: whatever the gift still needs
+  // comes first (own words included), the rest after, photo last.
+  const [boostDeck, setBoostDeck] = useState<BoostCard[]>(BOOST_CARD_ORDER)
 
   // Set once publish succeeds: the row id (Boost writes against it), the
   // canonical slug for links, and the timestamp shown on the preview card.
@@ -529,7 +574,7 @@ export const ReviewWizard = ({
           flow: FLOW,
           entry: reviewEntry,
           auth: reviewAuth,
-          step: step as 1 | 2 | 3,
+          step: step as ReviewStep,
           stage: SCREEN_STAGES[step],
         },
       })
@@ -779,7 +824,7 @@ export const ReviewWizard = ({
         data: {
           flow: FLOW,
           auth: reviewAuth,
-          step: screen as 1 | 2 | 3,
+          step: screen as ReviewStep,
           stage: SCREEN_STAGES[screen],
         },
       })
@@ -829,7 +874,13 @@ export const ReviewWizard = ({
       return
     }
     clearError()
-    setStep((s) => Math.min(s + 1, 3))
+    setStep((s) => Math.min(s + 1, POST_STEP))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const jumpToFix = (item: RewardMissing) => {
+    clearError()
+    setStep(FIX_STEP[item])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -1143,7 +1194,21 @@ export const ReviewWizard = ({
             reward={reward}
             postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
-            onBoost={() => setPhase('boost')}
+            onBoost={() => {
+              const base = user ? BOOST_CARD_ORDER : ANON_BOOST_CARDS
+              const missing = (reward?.missing ?? rewardEval.missing) as RewardMissing[]
+              const front: BoostCard[] = rewardOn
+                ? [
+                    ...(missing.includes('words') ? (['words'] as BoostCard[]) : []),
+                    ...(['ratings', 'money', 'program'] as BoostCard[]).filter((c) =>
+                      missing.includes(c as RewardMissing)
+                    ),
+                  ]
+                : []
+              setBoostDeck([...front, ...base.filter((c) => !front.includes(c))])
+              setBoostIndex(0)
+              setPhase('boost')
+            }}
             onDone={finishFlow}
           />
         </div>
@@ -1175,8 +1240,14 @@ export const ReviewWizard = ({
             form={form}
             mediaState={mediaState}
             onMediaStateChange={setMediaState}
-            cards={user ? BOOST_CARD_ORDER : ANON_BOOST_CARDS}
+            cards={boostDeck}
             initialIndex={boostIndex}
+            wordsDone={!rewardEval.missing.includes('words' as never)}
+            wordsHint={
+              rewardOn
+                ? `${Math.min(rewardEval.ownUnits, MIN_OWN_UNITS)} of ${MIN_OWN_UNITS} words of your own. The tapped sentence does not count.`
+                : undefined
+            }
             onSave={saveBoost}
             onCardCompleted={trackBoostCompleted}
             onExit={handleBoostExit}
@@ -1212,11 +1283,9 @@ export const ReviewWizard = ({
           ))}
         </div>
         <div className="step-labels">
-          {SCREEN_LABELS.map((label, i) => (
-            <span key={label} className={`step-label ${i + 1 === step ? 'current' : ''}`}>
-              {label}
-            </span>
-          ))}
+          <span className="step-label current">
+            Step {step} of {POST_STEP}: {SCREEN_LABELS[step - 1]}
+          </span>
         </div>
 
         <GiftProgress
@@ -1270,6 +1339,52 @@ export const ReviewWizard = ({
 
         {step === 3 && (
           <div className="wizard-step active">
+            <h2 className="step-title">Quick ratings</h2>
+            <p className="step-sub">One tap each. Skip anything you are not sure about.</p>
+            <RatingsCard form={form} onDone={goNext} />
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">Cost and major</h2>
+            <p className="step-sub">
+              What it really costs, and what you studied. Students search by both.
+            </p>
+            <MoneyFields form={form} />
+            <ProgramField form={form} />
+            <LanguageField form={form} />
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">Add a photo</h2>
+            <p className="step-sub">
+              Dorm, campus, canteen. Real photos help the next student more than any rating.
+            </p>
+            {rewardOn && (
+              <div className="gift-bonus">
+                <strong>
+                  <span aria-hidden="true">✨</span> Bonus
+                </strong>{' '}
+                Add a photo, or write {BONUS_OWN_UNITS}+ words of your own, and you also get student
+                discounts on services we trust. Message us on WeChat after you post for the details.
+                Your review also counts toward the gold highlight, so more students see it.
+              </div>
+            )}
+            <MediaField
+              mediaState={mediaState}
+              onStateChange={setMediaState}
+              disabled={loading}
+              uploaderKey="wizard-media"
+              hint="Show the real life"
+            />
+          </div>
+        )}
+
+        {step === POST_STEP && (
+          <div className="wizard-step active">
             <h2 className="step-title">How it will appear</h2>
             <span className="preview-eyebrow">Preview</span>
             <div className="post-preview">
@@ -1287,7 +1402,7 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {user && step === 3 && qSlugParam && !answerParam && (
+        {user && step === POST_STEP && qSlugParam && !answerParam && (
           <label
             className="form-checkbox-label"
             htmlFor="cross-post-qa"
@@ -1308,7 +1423,7 @@ export const ReviewWizard = ({
             publishing. Guests post anonymously or sign in for the seal (modal,
             so the draft in state + localStorage survives); signed-in reviewers
             can hide their name while keeping the review privately owned. */}
-        {step === 3 && (
+        {step === POST_STEP && (
           <div className="attribution-card" role="radiogroup" aria-label="How your review appears">
             <span className="form-label">How your review appears</span>
             {!user ? (
@@ -1399,40 +1514,36 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {!user && step === 3 && rewardOn && (
+        {!user && step === POST_STEP && rewardOn && (
           <AnonEmailField
             form={form}
             reward={{ full: rewardEval.full, missing: rewardEval.missing }}
           />
         )}
-        {!user && step === 3 && !rewardOn && (
+        {!user && step === POST_STEP && !rewardOn && (
           <details className="email-disclosure">
             <summary>Add a private backup email</summary>
             <AnonEmailField form={form} />
           </details>
         )}
 
-        {/* Last chance to add words or taps before publishing; the rest (ratings, costs)
-            comes from the detail cards right after publishing. */}
-        {rewardOn && step === 3 && !rewardEval.full && (
+        {/* Last chance before publishing: each missing piece of the gift jumps
+            straight to the screen that fixes it. */}
+        {rewardOn && step === POST_STEP && !rewardEval.full && (
           <div className="reward-nudge" role="status">
-            {rewardEval.missing.some((m) => m === 'words' || m === 'taps') ? (
-              <>
-                <p>
-                  Your review is not full yet. Add{' '}
-                  {describeMissing(rewardEval.missing.filter((m) => m !== 'details'))} to get the
-                  free VPN.
-                </p>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => setStep(2)}>
-                  Add them now
-                </button>
-              </>
-            ) : (
-              <p>
-                Almost there. After you publish, the extra detail cards (ratings and costs) finish
-                your free VPN gift.
-              </p>
-            )}
+            <p>
+              <strong>Almost there.</strong> Finish these and your free VPN is yours:
+            </p>
+            <ul className="gift-fix-list">
+              {(rewardEval.missing as RewardMissing[]).map((m) => (
+                <li key={m}>
+                  <button type="button" className="gift-fix-row" onClick={() => jumpToFix(m)}>
+                    <span>{FIX_LABELS[m]}</span>
+                    <span aria-hidden="true">›</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -1459,7 +1570,7 @@ export const ReviewWizard = ({
         )}
 
         <div className="wizard-nav wizard-nav-sticky">
-          {step === 3 && (
+          {step === POST_STEP && (
             <p className="wizard-nav-hint">
               {user
                 ? postAnon
@@ -1479,12 +1590,12 @@ export const ReviewWizard = ({
               ← Back
             </button>
           )}
-          {step < 3 && (
+          {step < POST_STEP && (
             <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
               Continue →
             </button>
           )}
-          {step === 3 && (
+          {step === POST_STEP && (
             <button
               type="button"
               className="btn btn-primary btn-lg"
@@ -1507,7 +1618,11 @@ export const ReviewWizard = ({
         <RewardEmailNotice
           email={user.email ?? 'your account email'}
           full={rewardEval.full}
-          missing={rewardEval.missing}
+          missing={rewardEval.missing as RewardMissing[]}
+          onFix={(item) => {
+            setShowRewardNotice(false)
+            jumpToFix(item)
+          }}
           onClose={() => setShowRewardNotice(false)}
           onChoose={(wantsGift) => {
             setShowRewardNotice(false)

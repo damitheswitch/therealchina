@@ -177,6 +177,7 @@ export const ANON_BOOST_CARDS: BoostCard[] = BOOST_CARD_ORDER.filter((c) => c !=
 // Short tab labels for the deck switcher. Keys cover the whole BoostCard union
 // so the map stays total even where a card is not in the current order.
 export const BOOST_CARD_SHORT: Record<BoostCard, { emoji: string; label: string }> = {
+  words: { emoji: '✍️', label: 'Words' },
   ratings: { emoji: '⭐', label: 'Ratings' },
   money: { emoji: '💰', label: 'Cost' },
   program: { emoji: '🎓', label: 'Major' },
@@ -207,6 +208,8 @@ export const isBoostCardDone = (
       return Boolean(v.program.trim() && v.languageOfInstruction)
     case 'media':
       return mediaCount > 0
+    // 'words' depends on the gift rule's word count, which lives in
+    // reviewReward; BoostCards takes it as a prop instead.
     default:
       return false
   }
@@ -231,6 +234,8 @@ export const nextBoostCard = (
 // later card owns.
 export const buildBoostPatch = (values: ReviewFieldValues, card: BoostCard): BoostFields => {
   switch (card) {
+    case 'words':
+      return { text: values.reviewText.trim() }
     case 'program':
       return {
         program: values.program.trim() || null,
@@ -266,6 +271,10 @@ export const buildBoostPatch = (values: ReviewFieldValues, card: BoostCard): Boo
 }
 
 export const BOOST_CARD_META: Record<BoostCard, { title: string; sub: string }> = {
+  words: {
+    title: 'In your own words',
+    sub: 'A sentence or two is enough. What would you tell a friend thinking of coming here?',
+  },
   ratings: {
     title: 'Rate the details',
     sub: 'One tap each. Takes about 15 seconds.',

@@ -12,7 +12,14 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useProfileContext } from '../../contexts/ProfileContext'
 import { useAuthModal } from '../../contexts/AuthModalContext'
 import { SITE } from '../../lib/seo/site'
-import { REWARD_UI_ENABLED, rewardConfirmation, type RewardResult } from '../../lib/reviewReward'
+import {
+  REWARD_UI_ENABLED,
+  countUnits,
+  ownWordsText,
+  rewardConfirmation,
+  rewardRowFromFields,
+  type RewardResult,
+} from '../../lib/reviewReward'
 import { GiftHandoff, ShareReview } from './GiftShare'
 
 // Renders the just-published review the way it appears on the university
@@ -154,7 +161,13 @@ export const ReviewSuccess = ({
       <ReviewStrengthMeter review={preview} />
 
       {reward?.wechatId ? (
-        <GiftHandoff reward={reward} />
+        <GiftHandoff
+          reward={reward}
+          bonus={
+            media.length > 0 ||
+            countUnits(ownWordsText(rewardRowFromFields(form.values, media))) >= 40
+          }
+        />
       ) : (
         rewardLine && (
           <p className="reward-confirm" role="status">

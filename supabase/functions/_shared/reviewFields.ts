@@ -271,10 +271,12 @@ export function validateReviewFields(
 
 // ---- Anonymous Boost -------------------------------------------------------------
 // The optional fields a post-publish Boost may set, keyed by request name to the
-// reviews column it writes. Everything else — rating, text, university, owner,
+// reviews column it writes. Everything else — rating, university, owner,
 // recommend, tags, media, deleted_at — is absent on purpose: this map is the
-// allowlist the RPC also enforces.
+// allowlist the RPC also enforces. `text` is allowed so a guest can finish the
+// words that earn the thank-you gift; it keeps review-submit's bounds.
 export const BOOST_FIELD_COLUMNS = {
+  text: 'text',
   program: 'program',
   degreeLevel: 'degree_level',
   enrollmentStatus: 'enrollment_status',
@@ -316,6 +318,16 @@ export function validateBoostPatch(body: Record<string, unknown>): Record<string
 
     const value = body[key]
     switch (key) {
+      case 'text': {
+        // Never empty: a Boost can add words, not erase the review. Same
+        // bounds as review-submit.
+        const v = asTrimmedString(value, LIMITS.text.max)
+        if (!v || v.length < LIMITS.text.min) {
+          throw new Error(`Review text must be at least ${LIMITS.text.min} characters`)
+        }
+        patch[column] = v
+        break
+      }
       case 'program':
         patch[column] = asTrimmedString(value, LIMITS.program.max)
         break

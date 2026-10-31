@@ -8,10 +8,10 @@ const DEFAULT_SCRIPT_URL = 'https://cloud.umami.is/script.js'
 const DEFAULT_ALLOWED_HOSTNAMES = new URL(PROD_ORIGIN).hostname
 const BEFORE_SEND_HANDLER = 'trcAnalyticsBeforeSend'
 
-export type ReviewFlow = 'legacy_5' | 'fast_2' | 'tap_2' | 'tap_3'
+export type ReviewFlow = 'legacy_5' | 'fast_2' | 'tap_2' | 'tap_3' | 'tap_6'
 export type ReviewEntry = 'new' | 'resumed' | 'unknown'
 export type ReviewAuth = 'anonymous' | 'signed_in'
-export type ReviewStep = 1 | 2 | 3 | 4 | 5
+export type ReviewStep = 1 | 2 | 3 | 4 | 5 | 6
 export type ReviewStage = 'basics' | 'ratings' | 'details' | 'story' | 'about_you' | 'post'
 export type ReviewFailureReason =
   | 'turnstile_client'
@@ -24,7 +24,8 @@ export type ReviewFailureReason =
 export type PublishDurationBand = 'under_1m' | '1_to_2m' | '2_to_5m' | 'over_5m' | 'unknown'
 // Post-publish Boost cards (Phase 2): one logical card per unit of optional
 // detail. The ratings card is the 8-aspect sub-score stack saved as a whole.
-export type BoostCard = 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
+export type BoostCard =
+  'words' | 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
 // For boost_exited, `after_card` is the last card completed before leaving;
 // 'none' means Boost was exited before any card saved.
 export type BoostAfterCard = BoostCard | 'none'
@@ -54,6 +55,7 @@ export type ReviewEventName =
   | 'review_step_3_viewed'
   | 'review_step_4_viewed'
   | 'review_step_5_viewed'
+  | 'review_step_6_viewed'
   | 'review_story_viewed'
   | 'review_validation_failed'
   | 'review_submit_attempted'
@@ -98,6 +100,7 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_step_3_viewed',
   'review_step_4_viewed',
   'review_step_5_viewed',
+  'review_step_6_viewed',
   'review_story_viewed',
   'review_validation_failed',
   'review_submit_attempted',
@@ -117,6 +120,7 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
   review_step_3_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_4_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_5_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
+  review_step_6_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_story_viewed: ['flow', 'entry', 'auth'],
   review_validation_failed: ['flow', 'auth', 'step', 'stage'],
   review_submit_attempted: ['flow', 'entry', 'auth'],
