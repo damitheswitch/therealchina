@@ -1,7 +1,13 @@
 import { Link } from 'react-router-dom'
 import { UniversityDirectory } from '../components/UniversityDirectory'
 import { HeroSearch } from '../components/HeroSearch'
-import { HeroReviewQuote } from '../components/HeroReviewQuote'
+import {
+  HomeStatLine,
+  HomeStudentsSay,
+  HomeStudentsAsking,
+  HomeContributorBand,
+  HomeFlights,
+} from '../components/HomeSections'
 import { Seo } from '../components/Seo'
 import { stringify, websiteSchema, orgSchema } from '../lib/seo/jsonld'
 import { REWARD_UI_ENABLED } from '../lib/reviewReward'
@@ -23,7 +29,7 @@ export const LandingPage = () => {
             Costs, dorms, visas and teaching, told by international students who live it.
           </p>
           <HeroSearch />
-          <HeroReviewQuote />
+          <HomeStatLine />
           <div className="hero-buttons">
             <Link to="/review" className="btn btn-primary btn-lg">
               <Icons.Pen /> Leave a Review
@@ -36,6 +42,11 @@ export const LandingPage = () => {
           )}
         </div>
       </section>
+
+      <HomeStudentsSay />
+      <HomeStudentsAsking />
+      <HomeContributorBand />
+      <HomeFlights />
 
       <UniversityDirectory featured hideSearch />
     </>

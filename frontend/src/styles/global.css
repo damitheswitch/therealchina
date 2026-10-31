@@ -1870,29 +1870,6 @@ h3 {
   background-position: 1rem center;
   box-shadow: 0 2px 10px rgba(26, 22, 19, 0.08);
 }
-.hero-quote {
-  margin: 0 auto var(--sp-3);
-  max-width: 520px;
-  padding: var(--sp-2) var(--sp-3);
-  background: #fff;
-  border: 1px solid var(--ink-line);
-  border-radius: var(--r-lg, 12px);
-  text-align: left;
-}
-.hero-quote blockquote {
-  margin: 0.35rem 0;
-  font-size: 0.98rem;
-  line-height: 1.5;
-  color: var(--ink);
-}
-.hero-quote figcaption {
-  font-size: 0.85rem;
-  color: var(--ink-soft);
-}
-.hero-quote figcaption a {
-  color: var(--seal-red);
-  font-weight: 600;
-}
 .hero-reward-chip {
   display: inline-block;
   margin-top: var(--sp-2);
@@ -8155,4 +8132,320 @@ a.ask-student-q-stretch::after {
   border-radius: var(--r-md);
   background: rgba(196, 160, 60, 0.14);
   font-size: 0.88rem;
+}
+
+/* ===== Home sections (landing page) =====
+   Live sections under the hero: reviews, open questions, contributor band,
+   flights. Brand tokens only; spacing on the 8px scale; 44px tap targets. */
+.home-stat-line {
+  margin: 0 auto var(--sp-3);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.home-section {
+  padding: var(--sp-4) 0 0;
+}
+.home-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.home-section-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.home-section-sub {
+  margin: calc(var(--sp-1) * -1) 0 var(--sp-2);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.home-section-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--seal-red-dark);
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.home-section-link:hover {
+  text-decoration: underline;
+}
+.home-section a:focus-visible,
+.home-band a:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 2px;
+}
+
+/* Review row: swipes inside itself on phones, grid from tablet up */
+.home-review-row {
+  list-style: none;
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  padding-bottom: var(--sp-1);
+  margin: 0 calc(var(--sp-2) * -1);
+  padding-left: var(--sp-2);
+  padding-right: var(--sp-2);
+  scroll-padding-left: var(--sp-2);
+}
+.home-review-card {
+  flex: 0 0 82%;
+  max-width: 340px;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+}
+.home-review-text {
+  color: var(--ink);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+.home-review-meta {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.home-review-uni {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--seal-red-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+.home-review-uni:hover {
+  text-decoration: underline;
+}
+.home-review-context,
+.home-flight-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px var(--sp-2);
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+@media (min-width: 768px) {
+  .home-review-row {
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+    scroll-padding-left: 0;
+  }
+  .home-review-card {
+    flex-basis: calc(50% - var(--sp-1));
+    max-width: none;
+  }
+}
+@media (min-width: 1100px) {
+  .home-review-card {
+    flex-basis: calc(25% - var(--sp-2) * 3 / 4);
+  }
+}
+
+/* Carousel controls, empty and loading states */
+.home-carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+.home-carousel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  cursor: pointer;
+}
+.home-carousel-btn:hover {
+  border-color: var(--seal-red);
+}
+.home-carousel-dots {
+  display: flex;
+  align-items: center;
+}
+.home-carousel-dot {
+  position: relative;
+  width: 24px;
+  height: 44px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.home-carousel-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ink-line);
+}
+.home-carousel-dot[aria-current='true']::after {
+  background: var(--seal-red);
+}
+.home-carousel-btn:focus-visible,
+.home-carousel-dot:focus-visible {
+  outline: 2px solid var(--seal-red);
+  outline-offset: 2px;
+}
+.home-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  color: var(--ink-soft);
+}
+.home-skeleton {
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+}
+.home-skeleton-cards {
+  height: 168px;
+}
+.home-skeleton-rows {
+  height: 76px;
+}
+
+/* Open questions */
+.home-ask-list,
+.home-flight-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.home-ask-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+}
+.home-ask-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.home-ask-title {
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.home-ask-title:hover {
+  color: var(--seal-red-dark);
+}
+.home-ask-where {
+  font-size: 0.85rem;
+  color: var(--ink-faint);
+}
+.home-ask-action {
+  flex: none;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 88px;
+}
+
+/* Contributor band */
+.home-band {
+  margin-top: var(--sp-4);
+  padding: var(--sp-4) 0;
+  background: var(--rice-warm);
+  border-top: 1px solid var(--ink-line);
+  border-bottom: 1px solid var(--ink-line);
+}
+.home-band-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.home-band-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: var(--sp-1);
+}
+.home-band-text {
+  max-width: 52ch;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+@media (min-width: 768px) {
+  .home-band-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+  }
+}
+
+/* Flights */
+.home-flight-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 44px;
+  padding: var(--sp-2);
+  background: #fff;
+  border: 1px solid var(--ink-line);
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: border-color var(--t-fast);
+}
+.home-flight-card:hover {
+  border-color: var(--seal-red);
+}
+.home-flight-route {
+  color: var(--ink);
+  font-weight: 600;
+}
+@media (min-width: 768px) {
+  .home-flight-list {
+    flex-direction: row;
+  }
+  .home-flight-list > li {
+    flex: 1 1 0;
+  }
+  .home-flight-card {
+    height: 100%;
+  }
 }
