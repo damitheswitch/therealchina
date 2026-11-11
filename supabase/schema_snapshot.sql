@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 040_function_grants_lockdown.sql
+-- as of migration 065_anon_boost_text.sql
 -- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
@@ -1369,6 +1369,8 @@ CREATE POLICY "Public read access to university_stats"
   TO public USING (true);
 
 ALTER TABLE public.flight_listings ENABLE ROW LEVEL SECURITY;
+-- No direct guest access (064): the table holds user_id and free-text notes.
+REVOKE ALL ON public.flight_listings FROM PUBLIC, anon;
 
 -- Migration 064: members only. Guests read flight_listings_public instead.
 DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.flight_listings;
