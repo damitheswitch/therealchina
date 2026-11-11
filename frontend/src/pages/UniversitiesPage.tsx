@@ -21,8 +21,8 @@ export const UniversitiesPage = () => {
         title="All Chinese Universities"
         description={
           totalCount
-            ? `Browse ${totalCount} universities across China with honest reviews by international students — rankings, costs, programs and campus life.`
-            : 'Browse universities across China with honest reviews by international students — rankings, costs, programs and campus life.'
+            ? `Browse ${totalCount} universities across China with honest reviews by international students: rankings, costs, programs and campus life.`
+            : 'Browse universities across China with honest reviews by international students: rankings, costs, programs and campus life.'
         }
         jsonLd={[
           stringify(
@@ -43,7 +43,7 @@ export const UniversitiesPage = () => {
         <div className="container">
           <h1>Universities in China</h1>
           <p className="muted" style={{ maxWidth: '46rem' }}>
-            Every university international students have reviewed or can review — ranked, searchable
+            Every university international students have reviewed or can review. Ranked, searchable
             and filterable by city and category.
           </p>
         </div>

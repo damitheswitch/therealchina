@@ -27,14 +27,37 @@ export const useReviewForm = (initial?: Partial<ReviewFieldValues>): ReviewForm 
   }))
 
   const set = useCallback<ReviewFormSet>((key, value) => {
-    setValues((v) => ({ ...v, [key]: value }))
+    setValues((v) => {
+      // A direct write is deliberate: drop inference ownership so smart
+      // defaults can never roll the value back.
+      let inferred = v.inferred
+      if (inferred.has(key)) {
+        const next = new Set(inferred)
+        next.delete(key)
+        inferred = next
+      }
+      return { ...v, [key]: value, inferred }
+    })
   }, [])
 
   const applyValues = useCallback(
     (
       partial: Partial<ReviewFieldValues> | ((v: ReviewFieldValues) => Partial<ReviewFieldValues>)
     ) => {
-      setValues((v) => ({ ...v, ...(typeof partial === 'function' ? partial(v) : partial) }))
+      setValues((v) => {
+        const patch = typeof partial === 'function' ? partial(v) : partial
+        // Helper patches carry their own provenance set; a plain partial is
+        // deliberate input, so any flags on the keys it writes are dropped.
+        let inferred = v.inferred
+        if ('inferred' in patch) {
+          inferred = patch.inferred ?? v.inferred
+        } else if (Object.keys(patch).some((k) => v.inferred.has(k))) {
+          const next = new Set(v.inferred)
+          for (const k of Object.keys(patch)) next.delete(k)
+          inferred = next
+        }
+        return { ...v, ...patch, inferred }
+      })
     },
     []
   )

@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { REWARD_UI_ENABLED } from '../lib/reviewReward'
 import { useUniversityReviews } from '../hooks/useUniversityReviews'
 import { ReviewCard } from './ReviewCard'
 import { ReviewSortSelect } from './ReviewSortSelect'
+import { AskStudentBox } from './AskStudentBox'
 import { Icons } from './Icons'
 import { type ReviewSort, type ReviewSortChoice } from '../lib/reviewSort'
 import type { Tables } from '../types/database.types'
 
-type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'>
+type UniversityRef = Pick<Tables<'universities'>, 'id' | 'name' | 'slug'> & {
+  city?: string | null
+}
 
 // One university's review section, paginated server-side. The page mounts
 // this with key={university.id} so switching universities remounts the whole
@@ -29,6 +33,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
     commentCounts,
     upvotes,
     resolvedSort,
+    firstReviewId,
   } = useUniversityReviews(university.id, page, sort)
   const sectionRef = useRef<HTMLDivElement>(null)
 
@@ -54,11 +59,22 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
   }
 
   return (
-    <div className="section uni-reviews" style={{ paddingTop: 'var(--sp-2)' }} ref={sectionRef}>
+    <div
+      id="reviews"
+      className="section uni-reviews"
+      style={{ paddingTop: 'var(--sp-2)' }}
+      ref={sectionRef}
+    >
       <div className="reviews-head">
         <h2 className="section-title">Student Reviews{totalCount > 0 ? ` (${totalCount})` : ''}</h2>
         {totalCount > 1 && <ReviewSortSelect value={resolvedSort} onChange={handleSortChange} />}
       </div>
+      {REWARD_UI_ENABLED && (
+        <p className="reward-hint">
+          Some reviewers get a small thank-you gift for a full review. The gift is the same for any
+          rating. <Link to="/editorial-policy#gifts">How gifts work</Link>
+        </p>
+      )}
 
       {loading ? (
         <div className="empty-state">
@@ -88,6 +104,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
                   author={review.user_id ? (authors[review.user_id] ?? null) : null}
                   upvote={upvotes[review.id]}
                   commentCount={commentCounts[review.id]}
+                  isFirst={review.id === firstReviewId}
                 />
               ))}
             </div>
@@ -117,13 +134,7 @@ export const UniversityReviews = ({ university }: { university: UniversityRef })
           )}
         </>
       ) : (
-        <div className="empty-state">
-          <h3>No reviews yet</h3>
-          <p>Be the first to share your experience at {university.name}.</p>
-          <Link to={`/review?uni=${university.slug}`} className="btn btn-primary mt-2">
-            <Icons.Pen /> Leave a Review
-          </Link>
-        </div>
+        <AskStudentBox university={university} />
       )}
     </div>
   )

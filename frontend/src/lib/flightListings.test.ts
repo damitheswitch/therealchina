@@ -4,6 +4,8 @@ import {
   contactPlatformSelection,
   filterByTab,
   flightCounts,
+  guestListingFromRow,
+  PUBLIC_FLIGHT_COLUMNS,
   hasDeparted,
   isOwn,
   sortListings,
@@ -201,5 +203,47 @@ describe('contactPlatformsToStore', () => {
 
   it('passes NULL through untouched (failed picker load never rewrites)', () => {
     expect(contactPlatformsToStore(null, all)).toBeNull()
+  })
+})
+
+describe('guestListingFromRow', () => {
+  const row = {
+    id: 'g1',
+    departure_country: 'China',
+    arrival_country: 'France',
+    departure_city: 'Shanghai',
+    arrival_city: null,
+    departure_date: '2026-11-01',
+    arrival_date: '2026-11-02',
+    available_kgs: 12,
+    price_per_kg: 40,
+    currency: 'CNY',
+    created_at: '2026-10-20T00:00:00Z',
+    poster_label: 'Mei',
+  }
+
+  it('empties every private field and keeps the poster label', () => {
+    const listing = guestListingFromRow(row)
+    expect(listing.user_id).toBeNull()
+    expect(listing.notes).toBeNull()
+    expect(listing.social_handles).toEqual([])
+    expect(listing.show_social_handle).toBe(false)
+    expect(listing.contact_platforms).toBeNull()
+    expect(listing.avatar_url).toBeNull()
+    expect(listing.display_name).toBe('Mei')
+    expect(listing.is_active).toBe(true)
+  })
+
+  it('is never owned and lands in Upcoming for guests', () => {
+    const listing = guestListingFromRow(row)
+    expect(isOwn(listing, undefined)).toBe(false)
+    expect(filterByTab([listing], 'upcoming', '2026-10-30', undefined)).toHaveLength(1)
+    expect(filterByTab([listing], 'my_flights', '2026-10-30', undefined)).toHaveLength(0)
+  })
+
+  it('selects no owner or contact column from the public view', () => {
+    for (const col of ['user_id', 'notes', 'contact_platforms', 'social_handles', 'avatar_url']) {
+      expect(PUBLIC_FLIGHT_COLUMNS.split(', ')).not.toContain(col)
+    }
   })
 })

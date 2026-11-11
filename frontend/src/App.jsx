@@ -1,7 +1,15 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useNavigationType,
+} from 'react-router-dom'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
+import { MobileTabBar } from './components/MobileTabBar'
 import { LoginDraftBanner } from './components/LoginDraftBanner'
 // LandingPage stays in the entry chunk: it is what most visits load first.
 import { LandingPage } from './pages/LandingPage'
@@ -11,6 +19,7 @@ import { ReviewClaimPrompt } from './components/ReviewClaimPrompt'
 import { useAuthModal } from './contexts/AuthModalContext'
 import { useAuth } from './contexts/AuthContext'
 import { TRUST_REDIRECTS } from './lib/trustContent'
+import { isTabBarHidden } from './lib/tabBar'
 
 // Route-level code splitting: each page becomes its own chunk, fetched on
 // first navigation. Pages use named exports, hence the default-mapping.
@@ -73,7 +82,14 @@ function App() {
   const { user, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const navType = useNavigationType()
   const isOnboarding = location.pathname === '/onboarding'
+
+  // New page, new scroll position. Back/forward (POP) and #anchors keep the browser's own behaviour.
+  useEffect(() => {
+    if (navType === 'POP' || location.hash) return
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname, location.hash, navType])
 
   // Redirect an anonymous reviewer to their review after they sign in/up
   useEffect(() => {
@@ -95,7 +111,7 @@ function App() {
     <>
       {!isOnboarding && <Header />}
       {!isOnboarding && <LoginDraftBanner />}
-      <main>
+      <main data-tab-bar={isTabBarHidden(location.pathname) ? 'hidden' : undefined}>
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/onboarding" element={<OnboardingPage />} />
@@ -137,6 +153,7 @@ function App() {
         </Suspense>
       </main>
       {!isOnboarding && <Footer />}
+      <MobileTabBar />
       <AuthModal
         isOpen={isOpen}
         onClose={closeAuthModal}

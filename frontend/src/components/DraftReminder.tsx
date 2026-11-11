@@ -32,7 +32,7 @@ export const DraftReminder = ({ university }: DraftReminderProps) => {
     setDeleteBusy(true)
     try {
       if (isLocal) {
-        clearLocalDraft()
+        clearLocalDraft(university.slug)
       } else {
         await deleteReviewDraftForUniversity(user!.id, university.id)
       }

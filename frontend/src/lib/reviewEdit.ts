@@ -55,7 +55,7 @@ export const reviewToWizardState = (review: EditableReview): WizardEditState => 
   }
 
   const uni = review.universities
-  const universityLabel = uni ? [uni.name, uni.city].filter(Boolean).join(' — ') : ''
+  const universityLabel = uni ? [uni.name, uni.city].filter(Boolean).join(', ') : ''
 
   return {
     rating: review.rating,
@@ -74,7 +74,7 @@ export const reviewToWizardState = (review: EditableReview): WizardEditState => 
     tags: review.tags ?? [],
     pros: review.pros ?? '',
     cons: review.cons ?? '',
-    reviewText: review.text,
+    reviewText: review.text ?? '',
     media: Array.isArray(review.media) ? (review.media as unknown as MediaItem[]) : [],
     universityLabel,
   }

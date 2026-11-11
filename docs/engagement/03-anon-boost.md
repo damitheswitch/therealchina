@@ -2,11 +2,11 @@
 
 **Depends on:** Phase 2. **Security-sensitive:** yes.
 **Overview:** [00-overview.md](00-overview.md) §7 C.
-**Status:** implemented on `feat/phase3-anon-boost` (migration 044 +
-`review-boost` Edge Function, PR #58). Locally verified; staging migration,
-functions, and the anonymous happy path verified live. Not released to
-production — gated behind the Phase 1 baseline and the Phase 2 production
-release.
+**Status as of 2026-10-13:** released to production per owner confirmation;
+not independently production-verified by this coordinating agent. Earlier
+implementation evidence: `feat/phase3-anon-boost`, migrations 044-046,
+`review-boost`, PR #58, and local/live-staging checks below. The pre-change
+Phase 1 baseline wait is waived, not a remaining release gate.
 
 ## Goal
 
@@ -22,6 +22,7 @@ reviewers already have a claim token: a random secret kept in their browser
 ## Owner decisions (answered)
 
 **D3.1 How anonymous users Boost**
+
 - **Decided:** dedicated `review-boost` Edge Function plus an atomic
   authorization/update boundary. `apply_anonymous_boost` (migration 044)
   locks the review and its context row `FOR UPDATE`, checks token hash,
@@ -34,6 +35,7 @@ reviewers already have a claim token: a random secret kept in their browser
   `localStorage` under `trc_boost_tokens` keyed by review id.
 
 **D3.2 How long the Boost window stays open**
+
 - **Decided:** 24 hours from `reviews.created_at`, only while the review is
   live (`deleted_at IS NULL`) and unclaimed (`reviews.user_id IS NULL`,
   `owner_id IS NULL`, not `claim_dismissed`). Claiming clears
@@ -43,6 +45,7 @@ reviewers already have a claim token: a random secret kept in their browser
   without a boost hash simply require sign-in to edit.
 
 **D3.3 Which fields anonymous Boost may change**
+
 - **Decided:** only the fields the program, ratings, money, details, and
   pros/cons Boost cards represent: `program`, `degree_level`, the eight
   `rating_*` sub-scores, `enrollment_status`, `start_year`, `end_year`,
@@ -59,6 +62,7 @@ reviewers already have a claim token: a random secret kept in their browser
   values inside the transaction.
 
 **D3.4 Rate limit**
+
 - **Decided:** counters on `reviewer_context`, enforced inside the same
   transaction so they can't be raced:
   - `boost_save_count` — 30 successful saves per review per window.
@@ -75,7 +79,16 @@ reviewers already have a claim token: a random secret kept in their browser
   decisions; every check runs on columns inside the locked rows. A failed
   or unreachable RPC rejects the request (fail closed).
 
-## Tasks (agent) — status
+## Phase 5 email integration (owner direction, 2026-10-13)
+
+Send the anonymous reminder before this existing 24-hour window expires.
+Exact scheduling is proposed in Phase 5, session 5A. Do not extend the edit
+window, widen the allowlist, or expose a raw editing capability in email URLs
+just to make the link work. The capability lives in the original browser;
+email can open elsewhere. Session 5A must resolve same/different-browser,
+expired, and claimed-review routing without weakening authorization.
+
+## Tasks (agent) — earlier implementation record
 
 1. ✅ `review-boost` Edge Function + `apply_anonymous_boost` RPC.
 2. ✅ Atomic counters per D3.4.
@@ -110,9 +123,10 @@ reviewers already have a claim token: a random secret kept in their browser
    046 verified live on a staging fixture: wrong token → 403 `bad_token`,
    immediate wrong retry → 429 `locked`, correct token during active
    backoff → 200 save, then claimed → 409 `claimed`.
-   ⏳ Signed-in Boost and `?draft=` resume on staging still unverified
-   (Phase 2 carry-over — no signed-in session existed on the staging build
-   before this account was created; retest pending).
+   Signed-in Boost and `?draft=` resume were subsequently recorded as tested
+   against staging services through the Phase 3 preview in Phase 2's doc.
+   That preview evidence does not establish the merged staging site's deploy
+   identity or constitute independent production verification.
 8. ✅ `docs/security-audit.md` updated.
 
 ## Done when
@@ -139,5 +153,7 @@ URL — not `--linked`): prod has 0 boost
 functions/columns/constraints/indexes, no `044`/`045` migration row, 6
 reviews, 4 `reviewer_context` rows; staging has all 044-046 objects
 present. (Agent-verified, not independently re-verified by the reviewer.)
-`AGENTS.md` documents the env-var pitfall; prod remains gated on the
-Phase 1 baseline and Phase 2's release.
+`AGENTS.md` documents the env-var pitfall. The state above is the historical
+incident/revert record, not a current claim that production has no Boost
+objects: owner reports Phase 3 released as of 2026-10-13. The baseline gate
+was waived; no fresh remote schema verification is claimed here.

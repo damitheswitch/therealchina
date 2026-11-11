@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import {
-  countByReviewId,
+  upvoteCountsFromRows,
   sortReviews,
+  helpfulTopIsSettled,
   DEFAULT_REVIEW_SORT,
   REVIEW_SERVER_ORDER,
   type ReviewSort,
@@ -25,13 +26,15 @@ export interface ReviewsPageData {
 }
 
 const PAGE_SIZE = 50
+// Page size for the 'helpful' candidate scan (PostgREST's default max-rows).
+const HELPFUL_CANDIDATE_PAGE = 1000
 
 // The /reviews feed. `sort` follows the shared ReviewSort model: the prerender
 // payload only matches the default 'newest' order, so any other sort bypasses
 // hydration and fetches. Column sorts ORDER BY server-side before the page
-// cap; 'helpful' ranks the whole corpus client-side (PostgREST can't ORDER BY
-// an upvote count) so the result is a true global top-N, not "best of the
-// latest 50".
+// cap; 'helpful' ranks client-side (votes plus detail score), scanning the
+// most upvoted reviews until no unscanned review could still make the top
+// N, so the result is a global top-N, not "best of the latest 50".
 export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'newest') => {
   const pd = usePrerenderData<ReviewsPageData>('reviewsPage')
   const seeded = sort === DEFAULT_REVIEW_SORT ? pd : null
@@ -86,20 +89,30 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
         let helpfulCounts: Record<string, number> | null = null
 
         if (sort === 'helpful') {
-          const [headsRes, votesRes] = await Promise.all([
-            supabase.from('reviews').select(REVIEW_DETAIL_COLUMNS).abortSignal(controller.signal),
-            supabase.from('upvotes').select('review_id').abortSignal(controller.signal),
-          ])
-          if (headsRes.error) throw headsRes.error
-          if (votesRes.error) throw votesRes.error
-          helpfulCounts = countByReviewId(votesRes.data as { review_id: string }[] | null)
-          const topIds = sortReviews(
-            (headsRes.data as ReviewSortable[] | null) || [],
-            'helpful',
-            helpfulCounts
-          )
-            .slice(0, PAGE_SIZE)
-            .map((h) => h.id)
+          // Page through heads by upvote_count. Detail areas add up to
+          // DETAIL_AREA_COUNT points, so stop only once the current top-N
+          // can't be beaten by a review with fewer votes than the last page.
+          const headsById = new Map<string, ReviewSortable & { upvote_count: number }>()
+          let ranked: ReviewSortable[] = []
+          for (let from = 0; ; from += HELPFUL_CANDIDATE_PAGE) {
+            const headsRes = await supabase
+              .from('reviews')
+              .select(REVIEW_DETAIL_COLUMNS)
+              .order('upvote_count', { ascending: false })
+              .order('created_at', { ascending: false })
+              .order('id', { ascending: false })
+              .range(from, from + HELPFUL_CANDIDATE_PAGE - 1)
+              .abortSignal(controller.signal)
+            if (headsRes.error) throw headsRes.error
+            const page = (headsRes.data as (ReviewSortable & { upvote_count: number })[]) || []
+            for (const h of page) headsById.set(h.id, h)
+            helpfulCounts = upvoteCountsFromRows([...headsById.values()])
+            ranked = sortReviews([...headsById.values()], 'helpful', helpfulCounts)
+            if (page.length < HELPFUL_CANDIDATE_PAGE) break
+            const minFetched = page[page.length - 1].upvote_count ?? 0
+            if (helpfulTopIsSettled(ranked, PAGE_SIZE, helpfulCounts, minFetched)) break
+          }
+          const topIds = ranked.slice(0, PAGE_SIZE).map((h) => h.id)
           const { data, error: rowsError } = topIds.length
             ? await supabase
                 .from('reviews')
@@ -127,7 +140,7 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
         const uniIds = [...new Set(rows.map((r) => r.university_id))]
         const authorIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))] as string[]
         const reviewIds = rows.map((r) => r.id)
-        const [uniRes, authorRes, upRes, mineRes] = await Promise.all([
+        const [uniRes, authorRes, mineRes] = await Promise.all([
           supabase
             .from('universities')
             .select('id, name, slug')
@@ -138,13 +151,6 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
                 .from('profile_public')
                 .select('id, display_name, avatar_url')
                 .in('id', authorIds)
-                .abortSignal(controller.signal)
-            : Promise.resolve({ data: [], error: null }),
-          !helpfulCounts && reviewIds.length
-            ? supabase
-                .from('upvotes')
-                .select('review_id')
-                .in('review_id', reviewIds)
                 .abortSignal(controller.signal)
             : Promise.resolve({ data: [], error: null }),
           userId && reviewIds.length
@@ -158,9 +164,7 @@ export const useRecentReviews = (userId?: string | null, sort: ReviewSort = 'new
         ])
         if (uniRes.error) throw uniRes.error
         if (authorRes.error) throw authorRes.error
-        setUpvoteCounts(
-          helpfulCounts ?? countByReviewId(upRes.data as { review_id: string }[] | null)
-        )
+        setUpvoteCounts(helpfulCounts ?? upvoteCountsFromRows(rows))
         setUpvotedMine(
           new Set(((mineRes.data as { review_id: string }[] | null) || []).map((r) => r.review_id))
         )

@@ -1,5 +1,5 @@
 // URL-safe slug for hubs built from free-text values (city names, program
-// names). Mirrors the displayName regex and supabase/functions/review-submit
+// names). Mirrors the displayName regex and supabase/functions/_shared/slug.ts
 // slugify() — keep all three in sync.
 export const slugify = (s: string): string =>
   s

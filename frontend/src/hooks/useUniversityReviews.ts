@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  countByReviewId,
+  upvoteCountsFromRows,
   resolveAutoSort,
   sortReviews,
   REVIEW_SERVER_ORDER,
@@ -12,6 +12,7 @@ import {
   type ReviewSortable,
 } from '../lib/reviewSort'
 import { REVIEW_COLUMNS, REVIEW_DETAIL_COLUMNS } from '../lib/queryColumns'
+import { earliestReviewId } from '../lib/firstReview'
 import type { UniversityPageData } from './useUniversity'
 import type { Tables } from '../types/database.types'
 
@@ -134,19 +135,8 @@ export const useUniversityReviews = (
           const resolved = resolveAutoSort(sort, heads.length)
           setAutoResolved(resolved)
 
-          let counts: Record<string, number> = {}
-          if (resolved === 'helpful' && heads.length) {
-            const { data: voteRows, error: voteError } = await supabase
-              .from('upvotes')
-              .select('review_id')
-              .in(
-                'review_id',
-                heads.map((h) => h.id)
-              )
-              .abortSignal(controller.signal)
-            if (voteError) throw voteError
-            counts = countByReviewId(voteRows)
-          }
+          // Heads carry upvote_count, so ranking needs no votes query.
+          const counts = resolved === 'helpful' ? upvoteCountsFromRows(heads) : {}
 
           const ordered = sortReviews(heads, resolved, counts)
           const pageIds = ordered.slice(start, start + REVIEW_PAGE_SIZE).map((h) => h.id)
@@ -213,6 +203,40 @@ export const useUniversityReviews = (
     return () => controller.abort()
   }, [universityId, page, sort, seeded, all, reloadTick])
 
+  // Earliest review of the university, for the "First review" label. Seeded
+  // pages already hold every review; otherwise one single-row query (the
+  // list is paginated, so the first review may not be on the visible page).
+  const [fetchedFirstId, setFetchedFirstId] = useState<{ uid: string; id: string | null } | null>(
+    null
+  )
+  const seededFirstId = useMemo(() => (seeded ? earliestReviewId(all) : null), [seeded, all])
+  useEffect(() => {
+    if (!universityId || seeded) return
+    const controller = new AbortController()
+    const run = async () => {
+      const { data, error: firstError } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('university_id', universityId)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(1)
+        .abortSignal(controller.signal)
+      if (controller.signal.aborted || firstError) return
+      setFetchedFirstId({
+        uid: universityId,
+        id: (data as { id: string }[] | null)?.[0]?.id ?? null,
+      })
+    }
+    run()
+    return () => controller.abort()
+  }, [universityId, seeded, reloadTick])
+  const firstReviewId = seeded
+    ? seededFirstId
+    : fetchedFirstId && universityId && fetchedFirstId.uid === universityId
+      ? fetchedFirstId.id
+      : null
+
   // Engagement counts for the visible page — batched `.in()` queries so the
   // cards show "Comments (n)" / "Upvote (n)" without each fetching per-row
   // (same convention as useRecentReviews; cards must not query per-row).
@@ -225,6 +249,7 @@ export const useUniversityReviews = (
     }
     const controller = new AbortController()
     const run = async () => {
+      // Live counts: seeded rows carry build-time upvote_count values.
       const [commentsRes, votesRes, mineRes] = await Promise.all([
         supabase
           .from('comments')
@@ -232,9 +257,9 @@ export const useUniversityReviews = (
           .in('review_id', ids)
           .abortSignal(controller.signal),
         supabase
-          .from('upvotes')
-          .select('review_id')
-          .in('review_id', ids)
+          .from('reviews')
+          .select('id, upvote_count')
+          .in('id', ids)
           .abortSignal(controller.signal),
         userId
           ? supabase
@@ -259,10 +284,9 @@ export const useUniversityReviews = (
       }
       setCommentCounts(commentCountMap)
 
-      const voteCountMap: Record<string, number> = {}
-      for (const row of (votesRes.data as { review_id: string }[] | null) ?? []) {
-        voteCountMap[row.review_id] = (voteCountMap[row.review_id] ?? 0) + 1
-      }
+      const voteCountMap = upvoteCountsFromRows(
+        votesRes.data as { id: string; upvote_count: number }[] | null
+      )
       const mine = new Set(
         ((mineRes.data as { review_id: string }[] | null) ?? []).map((r) => r.review_id)
       )
@@ -286,6 +310,7 @@ export const useUniversityReviews = (
     commentCounts,
     upvotes,
     resolvedSort,
+    firstReviewId,
     refetch: () => setReloadTick((tick) => tick + 1),
   }
 }

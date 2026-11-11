@@ -2,18 +2,20 @@
 
 **Depends on:** Phase 2. **Feeds:** Phase 7 (points and levels build on this).
 **Overview:** [00-overview.md](00-overview.md) §6 "Making Boost worth doing".
-**Status:** see the ladder below. Branch `feat/phase4-review-display`
-(worktree `.tmp/phase4-review-display`), PR #60 into `staging`.
+**Status as of 2026-10-13:** released to production per owner confirmation;
+not independently production-verified by this coordinating agent. Historical
+branch/worktree: `feat/phase4-review-display`, `.tmp/phase4-review-display`,
+PR #60 into staging.
 
-| Stage | State |
-|---|---|
-| Implemented (isolated branch) | Done — commit `014afe9`, PR #60 open |
-| Verified on combined staging preview | Done on the integrated branch — rebased onto staging after PR #58 merged (2026-10-11), success-screen meter added per the recipe below; lint/format/typecheck/tests/build/validate:seo all pass locally |
-| Merged to staging | Pending — PR #60 |
-| Released to production | Pending — the dated Phase 1 baseline requirement was waived by the owner on 2026-10-11 (recorded in `01-measurement.md`); ships with the coordinated production release |
+| Stage                  | Evidence                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Implemented            | Earlier record: commit `014afe9`, PR #60; integrated success-screen meter added 2026-10-11.                                                       |
+| Local verification     | Earlier agent report: integrated branch lint/format/typecheck/tests/build/SEO validation passed.                                                  |
+| Verified on staging    | No new independent live-deploy evidence collected here. A rebase and local checks alone do not establish a combined staging-preview verification. |
+| Released to production | Owner confirmation 2026-10-13; exact deploy identity not independently checked here. No baseline waiting gate.                                    |
 
-Phase 5 (re-engagement) and Phase 7 (incentives) remain undecided and out
-of scope here.
+Phase 5 email direction and Phase 7 recognition direction are now recorded
+in their own docs; their new work is planned, not completed by this phase.
 
 ## Goal
 
@@ -23,6 +25,7 @@ ranks higher. Readers find the most useful reviews first.
 ## Owner decisions (answered 2026-10-09)
 
 **D4.1 What counts as a "detailed" review?**
+
 - **Decided:** the areas rule at threshold 3 — a review is detailed when it
   fills **at least 3 of 7 detail areas**. Each area maps to a Boost card or
   the story-screen tag chips, so the rule explains itself as "this review
@@ -39,6 +42,7 @@ ranks higher. Readers find the most useful reviews first.
   `missingDetailAreas`, `DETAILED_THRESHOLD`).
 
 **D4.2 Name and look of the mark**
+
 - **Decided:** glow only, no badge. Detailed reviews get a gold border +
   halo on the whole `.review-card` plus the existing gold expand-pill halo
   (`.review-expand-btn.rich`), all driven by `isDetailedReview` — replacing
@@ -47,8 +51,9 @@ ranks higher. Readers find the most useful reviews first.
   Verified seal; the seal stays the only "identity" signal.
 
 **D4.3 Default sort on university pages**
+
 - **Decided:** (b). 'Most helpful' now ranks `upvotes + filled detail
-  areas` (each area counts like one vote), recency tiebreak — and it is the
+areas` (each area counts like one vote), recency tiebreak — and it is the
   default once a university page has ≥5 reviews (`HELPFUL_DEFAULT_MIN_REVIEWS`
   in `lib/reviewSort.ts`). Below 5 the default stays `newest`. The picker
   keeps the same four options; the hook reports `resolvedSort` so the UI
@@ -63,12 +68,12 @@ ranks higher. Readers find the most useful reviews first.
   'helpful' rank needs zero extra requests.
 
 **D4.4 Who sees the strength meter?**
+
 - **Decided:** author only. `ReviewStrengthMeter` (in `ReviewExtras.tsx`)
-  renders on each card in My reviews today; the post-publish success screen
-  picks it up when staging is integrated after PR #58 merges — see
-  "Integration after PR #58" for the exact recipe. Anonymous authors see
-  it on the success screen when it lands —
-  they never reach My reviews. Nothing meter-like renders on public cards.
+  renders on My reviews and the post-publish success screen according to
+  the integrated implementation record below. Anonymous authors see it on
+  success; they never reach My reviews. Nothing meter-like renders on public
+  cards. The historical integration recipe is not a new rewrite task.
 
 ## Tasks (agent)
 
@@ -100,14 +105,16 @@ ranks higher. Readers find the most useful reviews first.
 - Sorting is covered by a test.
 - `validate_build.mjs` passes.
 
-## Release gate (owner)
+## Release status and shared threshold
 
-Phase 2 is on staging but not production — this branch builds on it. The
-pre-change Phase 1 baseline requirement was explicitly waived by the owner on
-2026-10-11 (recorded in `01-measurement.md`); this phase ships with the
-coordinated staging-to-master production release, not before it.
+Owner confirmed Phases 1-4 on production on 2026-10-13 and reaffirmed the
+missing-baseline waiver. No pre-change observation week is required now.
+The owner chose this phase's existing detailed threshold for Phase 5's
+completion thank-you: do not create a separate "full review" score. Phase 7
+must distinguish contributor recognition from this content-detail glow and
+from the Verified identity seal.
 
-## Integration after PR #58
+## Historical integration after PR #58
 
 PR #58 (`feat/phase3-anon-boost`, still open at time of writing) and this
 branch touch **zero shared files** — the merge is expected clean.
@@ -116,7 +123,7 @@ branch touch **zero shared files** — the merge is expected clean.
 2. In `ReviewSuccess.tsx` (the post-merge version, which adds `canBoost`):
    - Hoist the `PreviewReview` mapping out of `PublishedReviewPreview`'s
      `useMemo` into a shared builder (e.g. `previewReviewFromFields(values,
-     media)`) — `ReviewSuccess` needs the same mapped object for the meter.
+media)`) — `ReviewSuccess` needs the same mapped object for the meter.
    - Render `<ReviewStrengthMeter review={preview} />` **unconditionally**
      between `<PublishedReviewPreview>` and the `{canBoost && ...}` offer.
      The success screen is only ever the publisher's view, so

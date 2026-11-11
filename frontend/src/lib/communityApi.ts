@@ -5,7 +5,7 @@ import type { CommunityAnswer, CommunityAuthor, CommunityQuestion } from './comm
 // Live Community Q&A data. All reads hit the qa_*_public views — the base
 // tables are not client-readable, so anonymous authorship is masked in the
 // database. All writes go through community-submit (authenticated +
-// onboarded + rate limited) or the vote/accept/notify RPCs.
+// onboarded + rate limited; answers also from guests behind Turnstile) or the vote/accept/notify RPCs.
 
 interface QuestionRow {
   id: string
@@ -139,6 +139,26 @@ export const fetchCommunityQuestions = async (): Promise<CommunityQuestion[]> =>
   return rows.map((r) => mapQuestion(r, authors))
 }
 
+export const fetchUniversityQuestions = async (
+  universityId: string,
+  signal?: AbortSignal
+): Promise<CommunityQuestion[]> => {
+  let query = supabase
+    .from('qa_questions_public')
+    .select(QUESTION_COLS)
+    .eq('university_id', universityId)
+    .order('created_at', { ascending: false })
+    .limit(10)
+  if (signal) query = query.abortSignal(signal)
+  const { data, error } = await query
+  if (error) throw error
+  const rows = (data ?? []) as QuestionRow[]
+  const authors = await fetchAuthors([
+    ...new Set(rows.map((r) => r.author_id).filter((id): id is string => !!id)),
+  ])
+  return rows.map((r) => mapQuestion(r, authors))
+}
+
 export const fetchCommunityQuestion = async (
   slug: string
 ): Promise<{ question: CommunityQuestion; answers: CommunityAnswer[] } | null> => {
@@ -193,10 +213,13 @@ export const submitQuestion = async (input: {
   return { slug: data.slug as string }
 }
 
+// Guests (not signed in) pass the Turnstile token instead of an account; the
+// server stores their answer as Anonymous with no owner.
 export const submitAnswer = async (input: {
   questionSlug: string
   body: string
   anonymous: boolean
+  cfToken?: string
 }): Promise<{ id: string }> => {
   const data = await invokeSubmit({ action: 'answer', ...input })
   return { id: data.id as string }
@@ -251,4 +274,20 @@ export const setQuestionNotify = async (questionId: string, enabled: boolean): P
     p_enabled: enabled,
   })
   if (error) throw error
+}
+
+// Confirm button behind the "Stop these emails" link in reviewer pings. The
+// link itself only opens the page, so a mail scanner cannot unsubscribe anyone.
+export const unsubscribeFromPings = async (token: string): Promise<boolean> => {
+  const base = import.meta.env.VITE_SUPABASE_URL
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+  try {
+    const res = await fetch(`${base}/functions/v1/qa-ping?t=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
 }

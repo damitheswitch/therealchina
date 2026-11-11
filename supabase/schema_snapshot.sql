@@ -1,7 +1,7 @@
 -- =========================================================
 -- TRC Schema Snapshot
 -- Consolidated, idempotent view of the current database schema
--- as of migration 040_function_grants_lockdown.sql
+-- as of migration 066_preserve_flight_privacy_on_upgrade.sql
 -- (026 is demo seed data only — no schema change).
 --
 -- This is a READ-ONLY REFERENCE for agents/developers.
@@ -82,7 +82,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   university_id UUID NOT NULL REFERENCES public.universities(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  text TEXT NOT NULL,
+  text TEXT,
+  -- 'quick' = rating/tags only (no written text), 'full' = has text.
+  -- Derived, so a review that gains text later flips kind automatically.
+  review_kind TEXT GENERATED ALWAYS AS (
+    CASE WHEN text IS NULL OR btrim(text) = '' THEN 'quick' ELSE 'full' END
+  ) STORED,
   program TEXT,
   degree_level TEXT,
   media JSONB DEFAULT '[]'::jsonb,
@@ -112,17 +117,20 @@ CREATE TABLE IF NOT EXISTS public.reviews (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   -- Soft delete: set by review-manage; row hidden by RLS, kept for audit.
   deleted_at TIMESTAMPTZ,
+  -- Maintained by sync_review_upvote_count on upvotes (migration 050).
+  upvote_count INT NOT NULL DEFAULT 0,
   CONSTRAINT chk_reviews_end_after_start
     CHECK (end_year IS NULL OR start_year IS NULL OR end_year >= start_year)
 );
 
--- Length caps mirroring _shared/reviewFields.ts (migration 041): the direct
--- authenticated INSERT path bypasses edge validation, so the table enforces
--- the same bounds. NOT VALID keeps existing rows out of the check.
+-- Length caps mirroring _shared/reviewFields.ts (migration 041): defense in
+-- depth behind edge validation (the direct authenticated INSERT path these
+-- were added for was closed in migration 049). NOT VALID keeps existing rows
+-- out of the check.
 ALTER TABLE public.reviews
 DROP CONSTRAINT IF EXISTS chk_reviews_text_length,
 ADD CONSTRAINT chk_reviews_text_length
-  CHECK (char_length(text) BETWEEN 10 AND 5000)
+  CHECK (text IS NULL OR char_length(btrim(text)) BETWEEN 10 AND 5000)
   NOT VALID,
 DROP CONSTRAINT IF EXISTS chk_reviews_pros_length,
 ADD CONSTRAINT chk_reviews_pros_length
@@ -233,6 +241,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   monthly_budget TEXT,
   languages_spoken TEXT[] DEFAULT '{}',
   email_consent BOOLEAN DEFAULT FALSE,
+  -- Comment notification emails opt-out (migration 050).
+  notify_on_comments BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   CONSTRAINT profiles_display_name_ci_unique UNIQUE (display_name_lower)
@@ -321,10 +331,15 @@ CREATE INDEX IF NOT EXISTS idx_reviews_university_active
 
 -- Owner lookups: my-reviews and member-profile queries (migration 041).
 CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON public.reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_upvote_count
+  ON public.reviews (upvote_count DESC, created_at DESC)
+  WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_comments_review_id ON public.comments(review_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON public.comments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_comments_user_id ON public.comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_created
+  ON public.comments (user_id, created_at DESC);
 
 -- Claim lookups always filter to a present token / owner.
 CREATE INDEX IF NOT EXISTS idx_reviewer_context_claim_token
@@ -350,6 +365,8 @@ CREATE INDEX IF NOT EXISTS idx_flight_listings_arrival_date ON public.flight_lis
 CREATE INDEX IF NOT EXISTS idx_flight_listings_user_id ON public.flight_listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_flight_listings_is_active ON public.flight_listings(is_active);
 CREATE INDEX IF NOT EXISTS idx_flight_listings_created_at ON public.flight_listings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_flight_listings_user_created
+  ON public.flight_listings (user_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_universities_search_trgm
   ON public.universities USING gin (search_text gin_trgm_ops);
@@ -382,6 +399,11 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION public.update_reviews_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Vote-count bookkeeping is not an edit of the review.
+  IF (to_jsonb(NEW) - 'upvote_count' - 'updated_at' - 'review_kind')
+     = (to_jsonb(OLD) - 'upvote_count' - 'updated_at' - 'review_kind') THEN
+    RETURN NEW;
+  END IF;
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
@@ -510,9 +532,78 @@ BEGIN
     IF parent_comment.parent_id IS NOT NULL THEN
       RAISE EXCEPTION 'Replies to replies are not allowed. Maximum nesting depth is 1.';
     END IF;
+
+    -- A reply must live on the same review as the comment it answers
+    -- (migration 049).
+    IF parent_comment.review_id IS DISTINCT FROM NEW.review_id THEN
+      RAISE EXCEPTION 'A reply must belong to the same review as its parent comment.';
+    END IF;
   END IF;
 
   RETURN NEW;
+END;
+$$;
+
+-- Resolves a "not listed" university by name when its slug can't identify it
+-- (non-Latin or generic-only name). Case/whitespace-insensitive match on name
+-- or name_zh within the same city, serialized per name so concurrent
+-- submissions share one row (migrations 049, 051). A same-name school in
+-- another city gets its own row. Called only by the review-submit Edge Function.
+CREATE OR REPLACE FUNCTION public.find_or_create_university_by_name(
+  p_name TEXT,
+  p_city TEXT,
+  p_slug TEXT,
+  p_province TEXT DEFAULT NULL
+)
+RETURNS TABLE(id UUID, slug TEXT, created BOOLEAN)
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+#variable_conflict use_column
+DECLARE
+  v_key TEXT := lower(regexp_replace(btrim(coalesce(p_name, '')), '\s+', ' ', 'g'));
+  v_city TEXT := lower(regexp_replace(btrim(coalesce(p_city, '')), '\s+', ' ', 'g'));
+  v_province TEXT := lower(regexp_replace(btrim(coalesce(p_province, '')), '\s+', ' ', 'g'));
+BEGIN
+  IF v_key = '' THEN
+    RAISE EXCEPTION 'University name is required.';
+  END IF;
+
+  -- Serialize concurrent submissions of the same name; the lock is released
+  -- at the end of the calling transaction.
+  PERFORM pg_advisory_xact_lock(hashtextextended('universities.name:' || v_key, 0));
+
+  -- Same name, and then either the same city, or a row with no recorded city
+  -- (province-only) in the same province. Known cities or provinces that
+  -- differ never match: a generic name can belong to different universities,
+  -- and a review attached to the wrong one can't be moved back automatically.
+  -- An exact city match wins.
+  RETURN QUERY
+  SELECT u.id, u.slug, false
+  FROM public.universities u
+  WHERE (lower(regexp_replace(btrim(u.name), '\s+', ' ', 'g')) = v_key
+         OR lower(regexp_replace(btrim(u.name_zh), '\s+', ' ', 'g')) = v_key)
+    AND (
+      (v_city <> ''
+       AND lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city)
+      OR (coalesce(btrim(u.city), '') = ''
+          AND v_province <> ''
+          AND lower(regexp_replace(btrim(coalesce(u.province, '')), '\s+', ' ', 'g')) = v_province)
+    )
+    AND (coalesce(btrim(u.province), '') = ''
+         OR v_province = ''
+         OR lower(regexp_replace(btrim(u.province), '\s+', ' ', 'g')) = v_province)
+  ORDER BY (lower(regexp_replace(btrim(coalesce(u.city, '')), '\s+', ' ', 'g')) = v_city) DESC,
+           u.created_at
+  LIMIT 1;
+  IF FOUND THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  INSERT INTO public.universities AS u (name, city, province, slug)
+  VALUES (btrim(p_name), p_city, nullif(btrim(coalesce(p_province, '')), ''), p_slug)
+  RETURNING u.id, u.slug, true;
 END;
 $$;
 
@@ -605,8 +696,7 @@ SET search_path = ''
 AS $$
 DECLARE
   v_user_id UUID;
-  v_existing_upvote public.upvotes;
-  v_count BIGINT;
+  v_deleted BOOLEAN;
 BEGIN
   v_user_id := auth.uid();
 
@@ -614,30 +704,132 @@ BEGIN
     RAISE EXCEPTION 'User must be authenticated to upvote';
   END IF;
 
-  SELECT * INTO v_existing_upvote
-  FROM public.upvotes
+  IF NOT EXISTS (
+    SELECT 1 FROM public.reviews
+    WHERE id = p_review_id AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Review not found';
+  END IF;
+
+  DELETE FROM public.upvotes
   WHERE user_id = v_user_id AND review_id = p_review_id;
+  v_deleted := FOUND;
 
-  IF v_existing_upvote IS NOT NULL THEN
-    DELETE FROM public.upvotes
-    WHERE id = v_existing_upvote.id;
-
-    SELECT COUNT(*) INTO v_count
-    FROM public.upvotes
-    WHERE review_id = p_review_id;
-
-    RETURN QUERY SELECT FALSE::BOOLEAN AS upvoted, v_count AS upvote_count;
-  ELSE
+  IF NOT v_deleted THEN
     INSERT INTO public.upvotes (user_id, review_id)
     VALUES (v_user_id, p_review_id)
     ON CONFLICT (user_id, review_id) DO NOTHING;
-
-    SELECT COUNT(*) INTO v_count
-    FROM public.upvotes
-    WHERE review_id = p_review_id;
-
-    RETURN QUERY SELECT TRUE::BOOLEAN AS upvoted, v_count AS upvote_count;
   END IF;
+
+  RETURN QUERY
+    SELECT NOT v_deleted, r.upvote_count::BIGINT
+    FROM public.reviews AS r
+    WHERE r.id = p_review_id;
+END;
+$$;
+
+-- Migration 050: reviews.upvote_count bookkeeping.
+CREATE OR REPLACE FUNCTION public.sync_review_upvote_count()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.reviews
+      SET upvote_count = upvote_count + 1
+      WHERE id = NEW.review_id;
+    RETURN NEW;
+  END IF;
+
+  UPDATE public.reviews
+    SET upvote_count = GREATEST(upvote_count - 1, 0)
+    WHERE id = OLD.review_id;
+  RETURN OLD;
+END;
+$$;
+
+-- Migration 054: quota history is private and survives content deletion.
+CREATE TABLE public.posting_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK (kind IN ('comment', 'flight')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX posting_events_user_kind_created
+  ON public.posting_events (user_id, kind, created_at);
+ALTER TABLE public.posting_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.posting_events FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.posting_events TO service_role;
+
+CREATE OR REPLACE FUNCTION public.consume_posting_quota(p_user_id UUID, p_kind TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_limit INT;
+  v_window INTERVAL;
+BEGIN
+  IF p_kind = 'comment' THEN
+    v_limit := 20;
+    v_window := INTERVAL '1 hour';
+  ELSIF p_kind = 'flight' THEN
+    v_limit := 10;
+    v_window := INTERVAL '24 hours';
+  ELSE
+    RAISE EXCEPTION 'Unknown posting quota';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended('posting:' || p_kind || ':' || p_user_id::TEXT, 0));
+  DELETE FROM public.posting_events
+  WHERE user_id = p_user_id AND kind = p_kind
+    AND created_at <= NOW() - v_window;
+  IF (SELECT COUNT(*) FROM public.posting_events
+      WHERE user_id = p_user_id AND kind = p_kind
+        AND created_at > NOW() - v_window) >= v_limit THEN
+    RAISE EXCEPTION 'Posting limit reached. Please try again later.' USING ERRCODE = 'P0001';
+  END IF;
+  INSERT INTO public.posting_events (user_id, kind) VALUES (p_user_id, p_kind);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.consume_posting_quota(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.consume_posting_quota(UUID, TEXT) TO service_role;
+
+-- API timestamps are server-set; seeds/admin SQL without a JWT bypass quotas.
+CREATE OR REPLACE FUNCTION public.enforce_comment_rate_limit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    NEW.created_at := NOW();
+    PERFORM public.consume_posting_quota(NEW.user_id, 'comment');
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.enforce_flight_listing_rate_limit()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  IF auth.uid() IS NOT NULL THEN
+    IF TG_OP = 'UPDATE' THEN
+      NEW.created_at := OLD.created_at;
+    ELSE
+      NEW.created_at := NOW();
+      PERFORM public.consume_posting_quota(NEW.user_id, 'flight');
+    END IF;
+  END IF;
+  RETURN NEW;
 END;
 $$;
 
@@ -724,7 +916,7 @@ BEGIN
     RETURN jsonb_build_object(
       'error', jsonb_build_object(
         'http_code', 403,
-        'message', 'Please use a permanent email address — disposable email domains are not allowed.'
+        'message', 'Please use a permanent email address. Disposable email domains are not allowed.'
       )
     );
   END IF;
@@ -748,7 +940,7 @@ BEGIN
      AND NEW.email IS NOT NULL
      AND NEW.email <> ''
      AND NOT public.is_email_allowed(NEW.email) THEN
-    RAISE EXCEPTION 'Please use a permanent email address — disposable email domains are not allowed.';
+    RAISE EXCEPTION 'Please use a permanent email address. Disposable email domains are not allowed.';
   END IF;
   RETURN NEW;
 END;
@@ -794,6 +986,7 @@ $$;
 -- serialize against these locks), enforces the 24h window, the 30-save budget,
 -- the 20 wrong-token lockout, and the column allowlist; returns a status code
 -- the review-boost Edge Function maps to HTTP. Service-role only.
+-- Migration 065 adds `text` to the allowlist (10 to 5000 chars after trim).
 CREATE OR REPLACE FUNCTION public.apply_anonymous_boost(
   p_review_id UUID,
   p_boost_hash TEXT,
@@ -821,7 +1014,7 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM jsonb_object_keys(p_patch) AS k
     WHERE k NOT IN (
-      'program', 'degree_level',
+      'text', 'program', 'degree_level',
       'rating_academics', 'rating_campus', 'rating_accommodation',
       'rating_cost', 'rating_intl_office', 'rating_social',
       'rating_extracurricular', 'rating_career',
@@ -830,6 +1023,16 @@ BEGIN
       'funding_type', 'funding_coverage', 'pros', 'cons'
     )
   ) THEN
+    RETURN 'bad_fields';
+  END IF;
+
+  -- Migration 065: text must be a string with the same bounds as review-submit
+  -- (chk_reviews_text_length: 10 to 5000 characters after trim). A Boost can
+  -- add words, never blank the review.
+  IF p_patch ? 'text' AND (
+       jsonb_typeof(p_patch->'text') <> 'string'
+       OR char_length(btrim(p_patch->>'text')) NOT BETWEEN 10 AND 5000
+     ) THEN
     RETURN 'bad_fields';
   END IF;
 
@@ -888,6 +1091,7 @@ BEGIN
     THEN p_patch->>'funding_type' ELSE v_review.funding_type END;
 
   UPDATE public.reviews SET
+    text                    = CASE WHEN p_patch ? 'text'                    THEN btrim(p_patch->>'text')                      ELSE text END,
     program                 = CASE WHEN p_patch ? 'program'                 THEN p_patch->>'program'                          ELSE program END,
     degree_level            = CASE WHEN p_patch ? 'degree_level'            THEN p_patch->>'degree_level'                     ELSE degree_level END,
     rating_academics        = CASE WHEN p_patch ? 'rating_academics'        THEN (p_patch->>'rating_academics')::int          ELSE rating_academics END,
@@ -966,7 +1170,7 @@ CREATE TRIGGER trigger_update_stats_on_delete
 
 DROP TRIGGER IF EXISTS trigger_update_stats_on_update ON public.reviews;
 CREATE TRIGGER trigger_update_stats_on_update
-  AFTER UPDATE ON public.reviews
+  AFTER UPDATE OF rating, recommend, deleted_at, university_id, user_id ON public.reviews
   FOR EACH ROW
   EXECUTE FUNCTION public.update_university_stats_on_update();
 
@@ -996,9 +1200,27 @@ CREATE TRIGGER validate_display_name_trigger
 
 DROP TRIGGER IF EXISTS enforce_comment_nesting_trigger ON public.comments;
 CREATE TRIGGER enforce_comment_nesting_trigger
-  BEFORE INSERT ON public.comments
+  BEFORE INSERT OR UPDATE OF parent_id, review_id ON public.comments
   FOR EACH ROW
   EXECUTE FUNCTION public.enforce_comment_nesting();
+
+DROP TRIGGER IF EXISTS enforce_comment_rate_limit_trigger ON public.comments;
+CREATE TRIGGER enforce_comment_rate_limit_trigger
+  BEFORE INSERT ON public.comments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_comment_rate_limit();
+
+DROP TRIGGER IF EXISTS enforce_flight_listing_rate_limit_trigger ON public.flight_listings;
+CREATE TRIGGER enforce_flight_listing_rate_limit_trigger
+  BEFORE INSERT OR UPDATE OF created_at ON public.flight_listings
+  FOR EACH ROW
+  EXECUTE FUNCTION public.enforce_flight_listing_rate_limit();
+
+DROP TRIGGER IF EXISTS sync_review_upvote_count_trigger ON public.upvotes;
+CREATE TRIGGER sync_review_upvote_count_trigger
+  AFTER INSERT OR DELETE ON public.upvotes
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_review_upvote_count();
 
 DROP TRIGGER IF EXISTS update_flight_listings_updated_at_trigger ON public.flight_listings;
 CREATE TRIGGER update_flight_listings_updated_at_trigger
@@ -1036,19 +1258,13 @@ CREATE POLICY "Public read access to reviews"
   ON public.reviews FOR SELECT
   TO public USING (deleted_at IS NULL);
 
+-- No INSERT policy for any client role (migration 049): every review, signed
+-- in or anonymous, is submitted through the review-submit Edge Function
+-- (Turnstile for anonymous callers, rate limits, media URL allowlist,
+-- service-role write). Write privileges are revoked per role as well.
 DROP POLICY IF EXISTS "Public insert access to reviews" ON public.reviews;
 DROP POLICY IF EXISTS "Authenticated users can insert reviews after onboarding" ON public.reviews;
-CREATE POLICY "Authenticated users can insert reviews after onboarding"
-  ON public.reviews FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    auth.uid() = user_id
-    AND (SELECT onboarding_completed FROM public.profiles WHERE id = auth.uid()) = true
-  );
-
--- No anonymous INSERT policy: anonymous reviews are submitted through the
--- review-submit Edge Function (Turnstile + per-IP rate limit, service-role
--- write) instead of direct table inserts.
+REVOKE INSERT, UPDATE, DELETE ON public.reviews FROM PUBLIC, anon, authenticated;
 
 -- reviewer_context: no policies at all — anonymous reviewer context is
 -- written and read only by the review-submit Edge Function (service role).
@@ -1099,12 +1315,10 @@ CREATE POLICY "Authenticated users can insert comments after onboarding"
     AND (SELECT onboarding_completed FROM public.profiles WHERE id = auth.uid()) = true
   );
 
+-- No UPDATE policy (migration 049): there is no comment edit feature, and
+-- the old policy let authors rewrite review_id/parent_id/created_at.
 DROP POLICY IF EXISTS "Authenticated update access to own comments" ON public.comments;
-CREATE POLICY "Authenticated update access to own comments"
-  ON public.comments FOR UPDATE
-  TO authenticated
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+REVOKE UPDATE ON public.comments FROM PUBLIC, anon, authenticated;
 
 DROP POLICY IF EXISTS "Authenticated delete access to own comments" ON public.comments;
 CREATE POLICY "Authenticated delete access to own comments"
@@ -1158,7 +1372,8 @@ ALTER TABLE public.flight_listings ENABLE ROW LEVEL SECURITY;
 -- No direct guest access (064): the table holds user_id and free-text notes.
 REVOKE ALL ON public.flight_listings FROM PUBLIC, anon;
 
--- Signed-in only (064). Guests read flight_listings_public instead.
+-- Migration 064: members only. Guests read flight_listings_public instead.
+DROP POLICY IF EXISTS "Public read access to active flight listings" ON public.flight_listings;
 DROP POLICY IF EXISTS "Authenticated read access to active flight listings" ON public.flight_listings;
 CREATE POLICY "Authenticated read access to active flight listings"
   ON public.flight_listings FOR SELECT
@@ -1289,12 +1504,12 @@ LEFT JOIN public.profiles p
   )
 WHERE fl.is_active = true OR auth.uid() = fl.user_id;
 
--- Members only (064): it carries user_id and notes.
+-- Migration 064: members only (anon could read user_id and notes here).
 REVOKE ALL ON public.flight_listings_with_profile FROM PUBLIC, anon;
 GRANT SELECT ON public.flight_listings_with_profile TO authenticated;
 
--- Guest flight board (064): route, dates, space, price and a first-name label.
--- No user_id, notes or contact fields.
+-- Migration 064: guest-safe board. No user_id, notes or contact data; the
+-- poster label is the first word of a discoverable profile's display name.
 CREATE OR REPLACE VIEW public.flight_listings_public AS
 SELECT
   fl.id,
@@ -1320,6 +1535,9 @@ WHERE fl.is_active = true;
 REVOKE ALL ON public.flight_listings_public FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.flight_listings_public TO anon, authenticated;
 
+-- Migration 064: anon has no direct access to the listings table.
+REVOKE ALL ON public.flight_listings FROM PUBLIC, anon;
+
 -- ---------------------------------------------------------
 -- 8. Function grants
 -- ---------------------------------------------------------
@@ -1332,6 +1550,11 @@ GRANT EXECUTE ON FUNCTION public.profile_has_social_handle(UUID) TO authenticate
 
 REVOKE ALL ON FUNCTION public.toggle_upvote(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.toggle_upvote(uuid) TO authenticated, service_role;
+
+-- Trigger functions (migration 050): not client-callable.
+REVOKE ALL ON FUNCTION public.sync_review_upvote_count() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.enforce_comment_rate_limit() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.enforce_flight_listing_rate_limit() FROM PUBLIC, anon, authenticated;
 
 -- refresh_university_stats runs inside trigger functions (security-definer
 -- owner privileges); it is not a client-callable surface.
@@ -1350,6 +1573,11 @@ GRANT EXECUTE ON FUNCTION public.is_email_allowed(TEXT) TO anon, authenticated;
 -- (migration 044) — callable only through the review-boost Edge Function.
 REVOKE ALL ON FUNCTION public.apply_anonymous_boost(UUID, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.apply_anonymous_boost(UUID, TEXT, JSONB) TO service_role;
+
+-- find_or_create_university_by_name is called only by review-submit
+-- (migration 049).
+REVOKE ALL ON FUNCTION public.find_or_create_university_by_name(TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.find_or_create_university_by_name(TEXT, TEXT, TEXT, TEXT) TO service_role;
 
 -- Auth calls the before-user-created hook as supabase_auth_admin.
 REVOKE ALL ON FUNCTION public.hook_reject_disposable_email(JSONB) FROM PUBLIC, anon, authenticated;
@@ -1547,6 +1775,9 @@ SELECT cron.schedule(
 
 ALTER TABLE public.upload_rate_limits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.upload_sessions ENABLE ROW LEVEL SECURITY;
+-- Service role only (migration 050 removed the default client grants).
+REVOKE ALL ON public.upload_rate_limits FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.upload_sessions FROM PUBLIC, anon, authenticated;
 
 GRANT ALL ON public.upload_rate_limits TO service_role;
 GRANT ALL ON public.upload_sessions TO service_role;
@@ -1675,13 +1906,16 @@ CREATE INDEX IF NOT EXISTS idx_qa_questions_active ON public.qa_questions(delete
 CREATE TABLE IF NOT EXISTS public.qa_answers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
-  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- NULL author_id = guest answer (migration 063): always is_anonymous, no owner.
+  author_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   is_anonymous BOOLEAN NOT NULL DEFAULT FALSE,
   body TEXT NOT NULL,
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT qa_answers_body_length
-    CHECK (char_length(btrim(body)) BETWEEN 10 AND 5000)
+    CHECK (char_length(btrim(body)) BETWEEN 10 AND 5000),
+  CONSTRAINT qa_answers_guest_anonymous
+    CHECK (author_id IS NOT NULL OR is_anonymous)
 );
 
 CREATE INDEX IF NOT EXISTS idx_qa_answers_question ON public.qa_answers(question_id);
@@ -1784,7 +2018,7 @@ SELECT
   a.question_id,
   a.body,
   CASE WHEN a.is_anonymous THEN NULL ELSE a.author_id END AS author_id,
-  (auth.uid() IS NOT NULL AND auth.uid() = a.author_id) AS is_author,
+  COALESCE(auth.uid() IS NOT NULL AND auth.uid() = a.author_id, FALSE) AS is_author,
   a.created_at,
   (SELECT count(*) FROM public.qa_answer_votes v
     WHERE v.answer_id = a.id) AS upvote_count,
@@ -1797,7 +2031,12 @@ SELECT
     WHERE q.accepted_answer_id = a.id AND q.deleted_at IS NULL
   ) AS accepted
 FROM public.qa_answers a
-WHERE a.deleted_at IS NULL;
+WHERE a.deleted_at IS NULL
+  -- Hidden with their soft-deleted question (migration 050).
+  AND EXISTS (
+    SELECT 1 FROM public.qa_questions pq
+    WHERE pq.id = a.question_id AND pq.deleted_at IS NULL
+  );
 
 GRANT SELECT ON public.qa_answers_public TO anon;
 GRANT SELECT ON public.qa_answers_public TO authenticated;
@@ -1990,8 +2229,352 @@ ALTER TABLE public.qa_email_log ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.qa_email_log FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.qa_email_log TO service_role;
 
+-- Reviewer pings (migration 063): one row per "a question about your
+-- university" email sent to a past reviewer. Drives the 7 day per-recipient
+-- throttle. recipient_email is lowercased. Service role only.
+CREATE TABLE IF NOT EXISTS public.qa_ping_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id UUID NOT NULL REFERENCES public.qa_questions(id) ON DELETE CASCADE,
+  recipient_email TEXT NOT NULL,
+  recipient_kind TEXT NOT NULL CHECK (recipient_kind IN ('member', 'anonymous')),
+  status TEXT NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending', 'sent', 'failed')),
+  detail TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT qa_ping_log_question_recipient UNIQUE (question_id, recipient_email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_qa_ping_log_recipient
+  ON public.qa_ping_log (recipient_email, created_at);
+
+ALTER TABLE public.qa_ping_log ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.qa_ping_log FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.qa_ping_log TO service_role;
+
 -- ---------------------------------------------------------
--- 14. PostgREST schema reload
+-- 14. Content reports and orphan media cleanup (migration 050)
+-- ---------------------------------------------------------
+
+-- Reports on reviews and comments, written only by the content-report Edge
+-- Function. Q&A reports live in qa_reports.
+CREATE TABLE IF NOT EXISTS public.content_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  review_id UUID REFERENCES public.reviews(id) ON DELETE CASCADE,
+  comment_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT content_reports_one_target
+    CHECK (num_nonnulls(review_id, comment_id) = 1),
+  CONSTRAINT content_reports_reason_length
+    CHECK (reason IS NULL OR char_length(reason) <= 500)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS content_reports_unique_review
+  ON public.content_reports (reporter_id, review_id) WHERE review_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS content_reports_unique_comment
+  ON public.content_reports (reporter_id, comment_id) WHERE comment_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_content_reports_created_at
+  ON public.content_reports (created_at DESC);
+
+ALTER TABLE public.content_reports ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.content_reports FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.content_reports TO service_role;
+
+-- Objects in review-media older than p_min_age that no review (live or
+-- soft-deleted) and no draft references (migration 055). The referenced set
+-- is built once from every string in reviews.media / review_drafts.payload
+-- and anti-joined; names outside [A-Za-z0-9/._-] are never listed, since
+-- exact equality can't see a percent-encoded URL.
+CREATE OR REPLACE FUNCTION public.list_orphan_media(p_min_age INTERVAL, p_limit INT)
+RETURNS TABLE(name TEXT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  WITH strings AS (
+    SELECT s #>> '{}' AS s
+    FROM public.reviews AS r,
+         jsonb_path_query(coalesce(r.media, '[]'::jsonb), 'strict $.** ? (@.type() == "string")') AS s
+    UNION ALL
+    SELECT s #>> '{}'
+    FROM public.review_drafts AS d,
+         jsonb_path_query(d.payload, 'strict $.** ? (@.type() == "string")') AS s
+  ),
+  referenced AS (
+    SELECT DISTINCT coalesce(substring(s FROM '/review-media/([^?#]+)'), s) AS name
+    FROM strings
+  )
+  SELECT o.name
+  FROM storage.objects AS o
+  WHERE o.bucket_id = 'review-media'
+    AND o.created_at < NOW() - p_min_age
+    AND o.name ~ '^[A-Za-z0-9/._-]+$'
+    AND NOT EXISTS (SELECT 1 FROM referenced AS x WHERE x.name = o.name)
+  ORDER BY o.created_at
+  LIMIT LEAST(GREATEST(p_limit, 1), 1000);
+$$;
+
+REVOKE ALL ON FUNCTION public.list_orphan_media(INTERVAL, INT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_orphan_media(INTERVAL, INT) TO service_role;
+
+-- Submitted object names that are not in the review-media bucket (migration
+-- 055). review-submit rejects those instead of publishing broken images.
+CREATE OR REPLACE FUNCTION public.missing_review_media(p_names TEXT[])
+RETURNS TABLE(name TEXT)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT DISTINCT n
+  FROM unnest(coalesce(p_names, ARRAY[]::TEXT[])) AS n
+  WHERE NOT EXISTS (
+    SELECT 1 FROM storage.objects AS o
+    WHERE o.bucket_id = 'review-media' AND o.name = n
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.missing_review_media(TEXT[]) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.missing_review_media(TEXT[]) TO service_role;
+
+-- Called by pg_cron. Reads the function URL + shared secret from Vault
+-- (media_cleanup_url / media_cleanup_secret) and does nothing until both
+-- exist, same pattern as enqueue_comment_notification.
+CREATE OR REPLACE FUNCTION public.trigger_media_cleanup()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_url TEXT;
+  v_secret TEXT;
+BEGIN
+  SELECT s.decrypted_secret INTO v_url
+    FROM vault.decrypted_secrets AS s
+    WHERE s.name = 'media_cleanup_url'
+    LIMIT 1;
+  SELECT s.decrypted_secret INTO v_secret
+    FROM vault.decrypted_secrets AS s
+    WHERE s.name = 'media_cleanup_secret'
+    LIMIT 1;
+
+  IF v_url IS NULL OR v_secret IS NULL THEN
+    RETURN;
+  END IF;
+
+  PERFORM net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'x-cleanup-secret', v_secret
+    ),
+    body := '{}'::jsonb
+  );
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'media cleanup trigger failed: %', SQLERRM;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.trigger_media_cleanup() FROM PUBLIC, anon, authenticated;
+
+SELECT cron.schedule(
+  'cleanup-orphan-media',
+  '41 3 * * *',
+  $$SELECT public.trigger_media_cleanup();$$
+);
+
+-- ---------------------------------------------------------
+-- 15. Review thank-you gifts (migration 061)
+-- ---------------------------------------------------------
+
+-- Thank-you gift for full reviews (migration 061). One row per review that
+-- asked for the gift. Holds NO email: the guest's address stays on the private
+-- reviewer_context row and a member's address comes from auth.users at send
+-- time. email_key is an HMAC of the normalized address, used only to give one
+-- gift per person. Service role only: RLS on, no policies, client grants
+-- revoked (new public tables are auto-granted to anon/authenticated).
+CREATE TABLE IF NOT EXISTS public.review_rewards (
+  review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
+  auth_kind TEXT NOT NULL CHECK (auth_kind IN ('anonymous', 'signed_in')),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'waiting'
+    CHECK (status IN (
+      'waiting', 'sending', 'sent', 'failed', 'email_used', 'email_blocked',
+      'contacted', 'fulfilled', 'declined', 'expired'
+    )),
+  reward_code TEXT NOT NULL UNIQUE CHECK (reward_code ~ '^TRC-[0-9A-HJKMNP-TV-Z]{6}
+-- ---------------------------------------------------------
+
+NOTIFY pgrst, 'reload schema';
+),
+  email_key TEXT UNIQUE CHECK (email_key IS NULL OR email_key ~ '^[0-9a-f]{64}
+-- ---------------------------------------------------------
+
+NOTIFY pgrst, 'reload schema';
+),
+  own_word_count INT NOT NULL DEFAULT 0,
+  detail_areas TEXT[] NOT NULL DEFAULT '{}',
+  similarity_max REAL,
+  flags TEXT[] NOT NULL DEFAULT '{}',
+  send_attempts INT NOT NULL DEFAULT 0,
+  resend_id TEXT,
+  owner_note TEXT CHECK (owner_note IS NULL OR char_length(owner_note) <= 500),
+  requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_attempt_at TIMESTAMPTZ,
+  sent_at TIMESTAMPTZ,
+  handled_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_rewards_status ON public.review_rewards(status);
+
+ALTER TABLE public.review_rewards ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.review_rewards FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.review_rewards TO service_role;
+
+-- Share-link referrals (062). Written only by review-submit after checking the
+-- ref code belongs to an existing gift. No client access.
+CREATE TABLE IF NOT EXISTS public.review_referrals (
+  review_id UUID PRIMARY KEY REFERENCES public.reviews(id) ON DELETE CASCADE,
+  ref_code TEXT NOT NULL CHECK (ref_code ~ '^TRC-[0-9A-HJKMNP-TV-Z]{6}$'),
+  referrer_review_id UUID NOT NULL REFERENCES public.reviews(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (review_id <> referrer_review_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_referrals_ref_code ON public.review_referrals(ref_code);
+
+ALTER TABLE public.review_referrals ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.review_referrals FROM PUBLIC, anon, authenticated;
+GRANT ALL ON public.review_referrals TO service_role;
+
+-- Called by the Edge Functions right before sending. Locks the row, enforces
+-- one gift per email key and a copy-paste check on the reviewer's own words,
+-- and returns 'send', 'email_used', 'duplicate_text' or 'skip'.
+CREATE OR REPLACE FUNCTION public.dispatch_review_reward(
+  p_review_id UUID,
+  p_email_key TEXT,
+  p_own_text TEXT,
+  p_own_words INT,
+  p_areas TEXT[]
+)
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $
+DECLARE
+  v_row public.review_rewards%ROWTYPE;
+  v_sim REAL := 0;
+BEGIN
+  SELECT * INTO v_row
+  FROM public.review_rewards
+  WHERE review_id = p_review_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN 'skip';
+  END IF;
+  -- 'sending' older than 5 minutes means the sender died mid-send; allow a retry.
+  IF v_row.send_attempts >= 3 OR NOT (
+    v_row.status IN ('waiting', 'failed')
+    OR (v_row.status = 'sending' AND v_row.last_attempt_at < NOW() - INTERVAL '5 minutes')
+  ) THEN
+    RETURN 'skip';
+  END IF;
+
+  IF p_email_key IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.review_rewards o
+    WHERE o.email_key = p_email_key AND o.review_id <> p_review_id
+  ) THEN
+    UPDATE public.review_rewards SET status = 'email_used' WHERE review_id = p_review_id;
+    RETURN 'email_used';
+  END IF;
+
+  SELECT COALESCE(max(public.similarity(p_own_text, o.text)), 0) INTO v_sim
+  FROM public.reviews o
+  WHERE o.id <> p_review_id
+    AND o.deleted_at IS NULL
+    AND o.text IS NOT NULL
+    AND o.created_at > NOW() - INTERVAL '180 days';
+
+  IF v_sim >= 0.85 THEN
+    UPDATE public.review_rewards
+    SET status = 'declined',
+        similarity_max = v_sim,
+        flags = array_append(flags, 'near_duplicate'),
+        owner_note = 'auto: near-duplicate text'
+    WHERE review_id = p_review_id;
+    RETURN 'duplicate_text';
+  END IF;
+
+  UPDATE public.review_rewards
+  SET email_key = p_email_key,
+      own_word_count = p_own_words,
+      detail_areas = p_areas,
+      similarity_max = v_sim,
+      flags = CASE
+        WHEN v_sim >= 0.6 AND NOT ('near_duplicate' = ANY (flags))
+          THEN array_append(flags, 'near_duplicate')
+        ELSE flags
+      END,
+      send_attempts = send_attempts + 1,
+      status = 'sending',
+      last_attempt_at = NOW()
+  WHERE review_id = p_review_id;
+
+  RETURN 'send';
+EXCEPTION WHEN unique_violation THEN
+  UPDATE public.review_rewards SET status = 'email_used' WHERE review_id = p_review_id;
+  RETURN 'email_used';
+END;
+$;
+
+REVOKE ALL ON FUNCTION public.dispatch_review_reward(UUID, TEXT, TEXT, INT, TEXT[])
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.dispatch_review_reward(UUID, TEXT, TEXT, INT, TEXT[])
+  TO service_role;
+
+-- Daily retention: drop the guest's private email 90 days after the gift email
+-- unless they opted in to student-question emails (reviewer_context.email_consent, 062)
+-- (or 90 days after the request if the review never became full), mark stale
+-- requests expired, and delete the bookkeeping rows after a year.
+CREATE OR REPLACE FUNCTION public.cleanup_review_rewards()
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $
+BEGIN
+  UPDATE public.reviewer_context rc
+  SET email = NULL
+  FROM public.review_rewards rr
+  WHERE rr.review_id = rc.review_id
+    AND rc.email IS NOT NULL
+    AND rc.email_consent = FALSE
+    AND COALESCE(rr.sent_at, rr.requested_at) < NOW() - INTERVAL '90 days';
+
+  UPDATE public.review_rewards
+  SET status = 'expired'
+  WHERE status = 'waiting' AND requested_at < NOW() - INTERVAL '90 days';
+
+  DELETE FROM public.review_rewards WHERE requested_at < NOW() - INTERVAL '1 year';
+END;
+$;
+
+REVOKE ALL ON FUNCTION public.cleanup_review_rewards() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cleanup_review_rewards() TO service_role;
+
+SELECT cron.schedule(
+  'cleanup-review-rewards',
+  '29 3 * * *',
+  $SELECT public.cleanup_review_rewards();$
+);
+
+-- ---------------------------------------------------------
+-- 16. PostgREST schema reload
 -- ---------------------------------------------------------
 
 NOTIFY pgrst, 'reload schema';

@@ -2,11 +2,13 @@ import { describe, it, expect } from 'vitest'
 import {
   compareReviews,
   countByReviewId,
+  upvoteCountsFromRows,
   HELPFUL_DEFAULT_MIN_REVIEWS,
   isReviewSort,
   isServerSortable,
   resolveAutoSort,
   sortReviews,
+  helpfulTopIsSettled,
 } from './reviewSort'
 
 const r = (id: string, rating: number, created_at: string | null) => ({ id, rating, created_at })
@@ -114,5 +116,43 @@ describe('countByReviewId', () => {
       countByReviewId([{ review_id: 'r1' }, { review_id: 'r2' }, { review_id: 'r1' }])
     ).toEqual({ r1: 2, r2: 1 })
     expect(countByReviewId(null)).toEqual({})
+  })
+})
+
+describe('upvoteCountsFromRows', () => {
+  it('maps review ids to their upvote_count, defaulting to zero', () => {
+    expect(
+      upvoteCountsFromRows([
+        { id: 'r1', upvote_count: 3 },
+        { id: 'r2', upvote_count: 0 },
+        { id: 'r3' },
+        { id: 'r4', upvote_count: null },
+      ])
+    ).toEqual({ r1: 3, r2: 0, r3: 0, r4: 0 })
+  })
+
+  it('handles empty input', () => {
+    expect(upvoteCountsFromRows(null)).toEqual({})
+    expect(upvoteCountsFromRows([])).toEqual({})
+  })
+})
+
+describe('helpfulTopIsSettled', () => {
+  const thin = (id: string) => r(id, 4, '2025-01-01T00:00:00Z')
+
+  it('is not settled while fewer than limit candidates are ranked', () => {
+    expect(helpfulTopIsSettled([thin('a')], 2, { a: 100 }, 0)).toBe(false)
+  })
+
+  it('settles once the cutoff beats any unfetched score', () => {
+    // Unfetched reviews have at most 3 votes, so at most 3 + 7 = 10 points.
+    const ranked = [thin('a'), thin('b')]
+    expect(helpfulTopIsSettled(ranked, 2, { a: 20, b: 11 }, 3)).toBe(true)
+  })
+
+  it('keeps scanning when a detailed review with fewer votes could still win or tie', () => {
+    const ranked = [thin('a'), thin('b')]
+    expect(helpfulTopIsSettled(ranked, 2, { a: 20, b: 10 }, 3)).toBe(false)
+    expect(helpfulTopIsSettled(ranked, 2, { a: 1, b: 1 }, 1)).toBe(false)
   })
 })

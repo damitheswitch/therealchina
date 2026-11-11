@@ -1,5 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { fetchCommunityQuestion, fetchCommunityQuestions } from '../lib/communityApi'
+import {
+  fetchCommunityQuestion,
+  fetchCommunityQuestions,
+  fetchUniversityQuestions,
+} from '../lib/communityApi'
 import type { CommunityAnswer, CommunityQuestion } from '../lib/community'
 
 // /community feed: every live question, newest first. Category + view
@@ -81,4 +85,50 @@ export const useCommunityQuestion = (slug: string | undefined) => {
   }, [refetch])
 
   return { question, answers, loading, notFound, error, refetch, setAnswers }
+}
+
+// University page: live questions asked about a specific university.
+export const useUniversityQuestions = (universityId: string | undefined) => {
+  const [questions, setQuestions] = useState<CommunityQuestion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+  const mounted = useRef(true)
+
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
+
+  const refetch = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!universityId) {
+        setQuestions([])
+        setLoading(false)
+        return
+      }
+      setLoading(true)
+      setError(null)
+      try {
+        const data = await fetchUniversityQuestions(universityId, signal)
+        if (!signal?.aborted && mounted.current) setQuestions(data)
+      } catch (err) {
+        if (signal?.aborted) return
+        console.error('Error fetching university questions:', err)
+        if (mounted.current) setError(err as Error)
+      } finally {
+        if (!signal?.aborted && mounted.current) setLoading(false)
+      }
+    },
+    [universityId]
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void refetch(controller.signal)
+    return () => controller.abort()
+  }, [refetch])
+
+  return { questions, loading, error, refetch: () => refetch() }
 }

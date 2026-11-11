@@ -7,6 +7,7 @@ const baseReview: EditableReview = {
   user_id: 'me',
   rating: 4,
   text: 'Solid program, brutal winters.',
+  review_kind: 'full',
   program: 'Computer Science',
   degree_level: 'Bachelor',
   media: [
@@ -15,6 +16,7 @@ const baseReview: EditableReview = {
   created_at: '2025-01-01T00:00:00Z',
   updated_at: '2025-01-01T00:00:00Z',
   deleted_at: null,
+  upvote_count: 0,
   enrollment_status: 'current',
   start_year: 2022,
   end_year: null,
@@ -48,7 +50,7 @@ describe('reviewToWizardState', () => {
     expect(s.startYear).toBe(2022)
     expect(s.tags).toEqual(['Strong CS'])
     expect(s.media).toHaveLength(1)
-    expect(s.universityLabel).toBe('Tsinghua University — Beijing')
+    expect(s.universityLabel).toBe('Tsinghua University, Beijing')
   })
 
   it('keeps only set subscores', () => {

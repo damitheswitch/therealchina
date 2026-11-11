@@ -23,6 +23,7 @@ import {
 } from '../_shared/guard.ts'
 import { validateBoostPatch } from '../_shared/reviewFields.ts'
 import { asBoostToken, hashBoostToken } from '../_shared/boostToken.ts'
+import { maybeDispatchReward } from '../_shared/rewardDispatch.ts'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -115,6 +116,11 @@ async function handleBoost(req: Request): Promise<Response> {
   }
 
   const result = RESULTS[data]
+  // A saved Boost may be what makes the review full: send the gift email now.
+  if (data === 'ok') {
+    const reward = await maybeDispatchReward(reviewId)
+    return jsonResponse(req, { ...result.body, reward }, result.status)
+  }
   return jsonResponse(req, result.body, result.status)
 }
 

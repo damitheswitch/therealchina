@@ -27,6 +27,37 @@ export const hasDeparted = (
   today: string
 ): boolean => Boolean(listing.departure_date && listing.departure_date < today)
 
+// Guest board rows come from flight_listings_public: no owner id, notes or
+// contact data. Map them onto the member row shape so the same card and
+// helpers work, with every private field emptied.
+export type PublicFlightRow = Tables<'flight_listings_public'>
+
+export const PUBLIC_FLIGHT_COLUMNS =
+  'id, departure_country, arrival_country, departure_city, arrival_city, departure_date, arrival_date, available_kgs, price_per_kg, currency, created_at, poster_label'
+
+export const guestListingFromRow = (row: PublicFlightRow): FlightListing => ({
+  id: row.id,
+  user_id: null,
+  departure_country: row.departure_country,
+  arrival_country: row.arrival_country,
+  departure_city: row.departure_city,
+  arrival_city: row.arrival_city,
+  departure_date: row.departure_date,
+  arrival_date: row.arrival_date,
+  available_kgs: row.available_kgs,
+  price_per_kg: row.price_per_kg,
+  currency: row.currency,
+  notes: null,
+  is_active: true,
+  created_at: row.created_at,
+  updated_at: row.created_at,
+  display_name: row.poster_label,
+  avatar_url: null,
+  social_handles: [],
+  show_social_handle: false,
+  contact_platforms: null,
+})
+
 export const isOwn = (
   listing: Pick<FlightListing, 'user_id'>,
   userId: string | null | undefined

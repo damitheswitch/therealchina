@@ -48,6 +48,7 @@ export const FlightListingCard = ({
   onToggleActive,
   canDelete = false,
   showOwnerControls = false,
+  onRequireAuth,
 }) => {
   const { user } = useAuth()
   const { showToast } = useToast()
@@ -231,6 +232,14 @@ export const FlightListingCard = ({
 
         {isClosed && !canManage ? (
           <span className="closed-status-text">Flight Full</span>
+        ) : !user && onRequireAuth ? (
+          <button
+            type="button"
+            onClick={() => onRequireAuth(listing)}
+            className="btn btn-outline btn-sm contact-btn"
+          >
+            Sign up to contact
+          </button>
         ) : (
           !isClosed &&
           user &&

@@ -9,10 +9,12 @@ import type { Tables } from '../types/database.types'
 // Slim aggregate row — the union of everything buildReviewSummary and
 // buildUniversityExtras read. `text` and `user_id` stay out, so the verdict
 // and sidebar aggregates stay cheap even as review counts grow.
+// `review_kind` rides along: it is the generated text-presence flag the
+// indexable rule reads in place of the heavy text column.
 export type ReviewAggregateRow = ReviewSummaryInput & UniversityExtrasInput
 
 const AGGREGATE_COLUMNS =
-  'rating, recommend, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, tags, enrollment_status, tuition_range, living_cost_range, program, degree_level, funding_type, funding_coverage, language_of_instruction, media'
+  'rating, review_kind, recommend, rating_academics, rating_campus, rating_accommodation, rating_cost, rating_intl_office, rating_social, rating_extracurricular, rating_career, tags, enrollment_status, tuition_range, living_cost_range, program, degree_level, funding_type, funding_coverage, language_of_instruction, media'
 
 // PostgREST caps responses at max-rows (default 1000). The aggregates are
 // computed client-side over ALL reviews, so we page through in chunks

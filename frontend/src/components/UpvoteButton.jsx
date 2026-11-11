@@ -27,12 +27,13 @@ export const UpvoteButton = ({ reviewId, initialCount, initialUpvoted }) => {
     const controller = new AbortController()
     const fetchUpvotes = async () => {
       if (!seeded) {
-        const { count: upvoteCount } = await supabase
-          .from('upvotes')
-          .select('id', { count: 'exact', head: true })
-          .eq('review_id', reviewId)
+        const { data: row } = await supabase
+          .from('reviews')
+          .select('upvote_count')
+          .eq('id', reviewId)
+          .maybeSingle()
           .abortSignal(controller.signal)
-        if (!controller.signal.aborted) setCount(upvoteCount || 0)
+        if (!controller.signal.aborted) setCount(row?.upvote_count || 0)
       }
 
       if (user && initialUpvoted === undefined) {

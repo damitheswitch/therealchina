@@ -161,7 +161,11 @@ export const ReviewClaimPrompt = () => {
                   ) : (
                     <div className="claim-review-uni">{item.universityName}</div>
                   ))}
-                <p className="claim-review-text">{item.text}</p>
+                {item.text?.trim() ? (
+                  <p className="claim-review-text">{item.text}</p>
+                ) : (
+                  <span className="quick-rating-badge">Quick rating</span>
+                )}
                 {item.matchedBy === 'email' && (
                   <p className="form-hint" style={{ marginTop: 0 }}>
                     Matched by the email you left on the review.

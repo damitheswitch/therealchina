@@ -5,14 +5,18 @@
 // Postgres Vault, not a caller JWT. Missing/mismatched secret: fail closed.
 //
 // Notification rules:
-//   - anonymous reviews (user_id IS NULL): no email. reviewer_context emails
-//     are promised "only used if you want early access", so they stay untouched.
+//   - anonymous reviews (user_id IS NULL): notify the private owner when the
+//     reviewer_context row links one (claimed anonymously, or posted as
+//     Anonymous by a signed-in user); with no owner there is nobody to email.
+//     reviewer_context emails stay untouched either way — they are promised
+//     "only used if you want early access".
 //   - self-comments never notify.
 //   - comments on soft-deleted reviews never notify.
 //   - one email per review per owner per 30 minutes, 20 per owner per day.
 //   - every outcome lands in comment_email_log (service-role only table).
 
 import { supabaseAdmin, jsonResponse } from '../_shared/guard.ts'
+import { safeEqual } from '../_shared/safeEqual.ts'
 
 const COMMENT_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -75,7 +79,7 @@ async function sendEmail(to: string, subject: string, text: string, html: string
 
 async function handleNotify(req: Request): Promise<Response> {
   const secret = Deno.env.get('COMMENT_NOTIFY_SECRET')
-  if (!secret || req.headers.get('x-notify-secret') !== secret) {
+  if (!secret || !safeEqual(req.headers.get('x-notify-secret') ?? '', secret)) {
     return jsonResponse(req, { error: 'Unauthorized' }, 401)
   }
 
@@ -116,14 +120,49 @@ async function handleNotify(req: Request): Promise<Response> {
     .maybeSingle()
   if (!claimed) return jsonResponse(req, { ok: true, skipped: 'already_processed' }, 200)
 
+  // The review's public owner is reviews.user_id; a review owned privately
+  // keeps user_id NULL and stores the owner on reviewer_context.owner_id.
+  // Resolved once below; the log row names whoever was considered.
+  let ownerUserId: string | null = null
   const skip = async (reason: string) => {
-    await logResult(commentId, comment.review_id, review?.user_id ?? null, null, 'skipped', reason)
+    await logResult(
+      commentId,
+      comment.review_id,
+      ownerUserId ?? review?.user_id ?? null,
+      null,
+      'skipped',
+      reason
+    )
     return jsonResponse(req, { ok: true, skipped: reason }, 200)
   }
 
   if (!review || review.deleted_at) return skip('review_deleted')
-  if (!review.user_id) return skip('anonymous_review')
-  if (review.user_id === comment.user_id) return skip('self_comment')
+
+  ownerUserId = review.user_id
+  if (!ownerUserId) {
+    const { data: ctx } = await supabaseAdmin
+      .from('reviewer_context')
+      .select('owner_id')
+      .eq('review_id', review.id)
+      .maybeSingle()
+    ownerUserId = ctx?.owner_id ?? null
+  }
+  if (!ownerUserId) return skip('anonymous_review')
+  if (ownerUserId === comment.user_id) return skip('self_comment')
+
+  // Opt-out lives on the owner's profile (migration 050).
+  // Fail closed: if the preference can't be read, don't email.
+  const { data: ownerProfile, error: ownerProfileError } = await supabaseAdmin
+    .from('profiles')
+    .select('notify_on_comments')
+    .eq('id', ownerUserId)
+    .maybeSingle()
+  if (ownerProfileError) {
+    console.error('Owner profile lookup failed:', ownerProfileError)
+    return skip('profile_lookup_failed')
+  }
+  if (!ownerProfile) return skip('no_owner_profile')
+  if (ownerProfile.notify_on_comments === false) return skip('opted_out')
 
   // Throttle: at most one email per review+owner per window, plus a daily cap.
   const windowStart = new Date(Date.now() - THROTTLE_MINUTES * 60_000).toISOString()
@@ -131,7 +170,7 @@ async function handleNotify(req: Request): Promise<Response> {
     .from('comment_email_log')
     .select('comment_id', { count: 'exact', head: true })
     .eq('review_id', review.id)
-    .eq('recipient_user_id', review.user_id)
+    .eq('recipient_user_id', ownerUserId)
     .eq('status', 'sent')
     .gte('created_at', windowStart)
   if ((recentForReview ?? 0) > 0) return skip('throttled')
@@ -140,7 +179,7 @@ async function handleNotify(req: Request): Promise<Response> {
   const { count: todayForOwner } = await supabaseAdmin
     .from('comment_email_log')
     .select('comment_id', { count: 'exact', head: true })
-    .eq('recipient_user_id', review.user_id)
+    .eq('recipient_user_id', ownerUserId)
     .eq('status', 'sent')
     .gte('created_at', dayStart)
   if ((todayForOwner ?? 0) >= DAILY_CAP) return skip('daily_cap')
@@ -148,7 +187,7 @@ async function handleNotify(req: Request): Promise<Response> {
   const {
     data: { user: owner },
     error: ownerError,
-  } = await supabaseAdmin.auth.admin.getUserById(review.user_id)
+  } = await supabaseAdmin.auth.admin.getUserById(ownerUserId)
   if (ownerError || !owner?.email) return skip('no_owner_email')
 
   const [{ data: commenter }, { data: university }] = await Promise.all([
@@ -172,6 +211,8 @@ async function handleNotify(req: Request): Promise<Response> {
     ``,
     `Read the thread and reply: ${link}`,
     ``,
+    `No more of these? Turn off comment emails in your profile: ${SITE_URL}/profile`,
+    ``,
     `The Real China`,
   ].join('\n')
   const html = `<p>Hi,</p>
@@ -182,6 +223,7 @@ async function handleNotify(req: Request): Promise<Response> {
     excerpt
   )}</blockquote>
 <p><a href="${link}">Read the thread and reply</a></p>
+<p style="color:#888;font-size:12px;">No more of these? <a href="${SITE_URL}/profile">Turn off comment emails in your profile</a>.</p>
 <p style="color:#888;font-size:12px;">The Real China</p>`
 
   try {
@@ -190,7 +232,7 @@ async function handleNotify(req: Request): Promise<Response> {
     await logResult(
       commentId,
       review.id,
-      review.user_id,
+      ownerUserId,
       owner.email,
       'failed',
       err instanceof Error ? err.message : 'send failed'
@@ -198,7 +240,7 @@ async function handleNotify(req: Request): Promise<Response> {
     return jsonResponse(req, { error: 'Email send failed' }, 502)
   }
 
-  await logResult(commentId, review.id, review.user_id, owner.email, 'sent')
+  await logResult(commentId, review.id, ownerUserId, owner.email, 'sent')
   return jsonResponse(req, { ok: true, sent: true }, 200)
 }
 

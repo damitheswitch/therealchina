@@ -1,5 +1,10 @@
 import { assertEquals, assertThrows } from 'jsr:@std/assert'
-import { validateReviewFields, validateBoostPatch, validateMedia } from './reviewFields.ts'
+import {
+  mediaObjectNames,
+  validateReviewFields,
+  validateBoostPatch,
+  validateMedia,
+} from './reviewFields.ts'
 
 const PREFIX = 'https://example.supabase.co/storage/v1/object/public/review-media/'
 
@@ -19,6 +24,28 @@ Deno.test('accepts a minimal valid payload', () => {
 Deno.test('rejects non-integer rating and short text', () => {
   assertThrows(() => validateReviewFields({ ...baseBody, rating: 4.5 }, PREFIX))
   assertThrows(() => validateReviewFields({ ...baseBody, text: 'too short' }, PREFIX))
+})
+
+Deno.test('accepts a rating-only review with no text (quick rating)', () => {
+  const fields = validateReviewFields({ rating: 5 }, PREFIX)
+  assertEquals(fields.rating, 5)
+  assertEquals(fields.text, null)
+})
+
+Deno.test('accepts a tag-only review and normalizes empty text to null', () => {
+  const fields = validateReviewFields(
+    { rating: 4, text: '   ', tags: ['Safe', 'Good dorms'] },
+    PREFIX
+  )
+  assertEquals(fields.text, null)
+  assertEquals(fields.tags, ['Safe', 'Good dorms'])
+})
+
+Deno.test('still enforces the text bounds when text is present', () => {
+  assertThrows(() => validateReviewFields({ ...baseBody, text: 'short' }, PREFIX))
+  assertThrows(() =>
+    validateReviewFields({ ...baseBody, text: 'x'.repeat(5001) }, PREFIX)
+  )
 })
 
 Deno.test('rejects media URLs outside our bucket', () => {
@@ -92,10 +119,29 @@ Deno.test('boost patch supports partial subscores and null clears', () => {
   assertEquals(patch, { rating_cost: 4, rating_social: null })
 })
 
+Deno.test('boost patch accepts text with the review-submit bounds', () => {
+  assertEquals(validateBoostPatch({ text: '  Teachers   were kind and dorms felt small.  ' }), {
+    text: 'Teachers were kind and dorms felt small.',
+  })
+  assertEquals(validateBoostPatch({ text: 'x'.repeat(5000) }), { text: 'x'.repeat(5000) })
+  assertEquals(validateBoostPatch({ text: 'Great food', pros: 'Cheap' }), {
+    text: 'Great food',
+    pros: 'Cheap',
+  })
+})
+
+Deno.test('boost patch rejects empty, too short and too long text', () => {
+  assertThrows(() => validateBoostPatch({ text: '' }))
+  assertThrows(() => validateBoostPatch({ text: '    ' }))
+  assertThrows(() => validateBoostPatch({ text: null }))
+  assertThrows(() => validateBoostPatch({ text: 'too short' }))
+  assertThrows(() => validateBoostPatch({ text: 'x'.repeat(5001) }))
+  assertThrows(() => validateBoostPatch({ text: 42 }))
+})
+
 Deno.test('boost patch rejects every protected field', () => {
   for (const key of [
     'rating',
-    'text',
     'universityId',
     'universitySlug',
     'userId',
@@ -137,4 +183,18 @@ Deno.test('boost patch rejects invalid values with the same rules as full valida
   assertThrows(() => validateBoostPatch({ startYear: 1800 }))
   assertThrows(() => validateBoostPatch({ subscores: { rating_cost: 9 } }))
   assertThrows(() => validateBoostPatch({ program: 'x'.repeat(121) }))
+})
+
+Deno.test('mediaObjectNames maps public URLs to bucket paths', () => {
+  const media = validateMedia(
+    [
+      { url: `${PREFIX}reviews/abc/1-photo.jpg`, type: 'image' },
+      { url: `${PREFIX}reviews/def/2-clip.mp4?t=1#x`, type: 'video' },
+    ],
+    PREFIX
+  )
+  assertEquals(mediaObjectNames(media, PREFIX), [
+    'reviews/abc/1-photo.jpg',
+    'reviews/def/2-clip.mp4',
+  ])
 })

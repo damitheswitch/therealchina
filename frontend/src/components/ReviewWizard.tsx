@@ -14,6 +14,7 @@ import {
   type ReviewEntry,
   type ReviewEventName,
   type ReviewStage,
+  type ReviewStep,
 } from '../lib/analytics'
 import {
   getOrCreateClaimToken,
@@ -23,6 +24,7 @@ import {
 } from '../lib/reviewClaim'
 import { updateReview } from '../lib/reviewManage'
 import { boostReview } from '../lib/reviewBoost'
+import { submitAnswer } from '../lib/communityApi'
 import { reviewToWizardState, type EditableReview } from '../lib/reviewEdit'
 import { supabase } from '../lib/supabaseClient'
 import {
@@ -30,11 +32,17 @@ import {
   getReviewDraft,
   deleteReviewDraft,
   deleteReviewDraftForUniversity,
-  loadLocalDraft,
+  loadLocalDraftWithAlias,
   saveLocalDraft,
   clearLocalDraft,
+  listLocalDrafts,
+  hasDraftSubstance,
   isDraftWorthSaving,
   mapDraftStepToScreen,
+  withLiveMedia,
+  EXPIRED_DRAFT_MEDIA_MESSAGE,
+  LOCAL_DRAFT_NO_UNI_SLUG,
+  type LocalDraftEntry,
   type ReviewDraftPayload,
 } from '../lib/reviewDrafts'
 import {
@@ -44,6 +52,11 @@ import {
   buildReviewFields,
   draftPayloadFromState,
   fieldValuesFromDraft,
+  normalizeUniSlugParam,
+  parseRatingParam,
+  parseRecommendParam,
+  UNI_SLUG_RE,
+  type ReviewFieldValues,
 } from '../lib/reviewFlow'
 import { useReviewForm } from '../hooks/useReviewForm'
 import { useUniversity } from '../hooks/useUniversity'
@@ -51,21 +64,38 @@ import { useProfileContext } from '../contexts/ProfileContext'
 import { Icons } from './Icons'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
-import { useAuthModal } from '../contexts/AuthModalContext'
-import { RegistrationNudge } from './RegistrationNudge'
 import { SealStampOverlay } from './SealStampOverlay'
+import { SealBadge } from './SealBadge'
 import { ReviewEssentials } from './review/ReviewEssentials'
 import { ReviewStory } from './review/ReviewStory'
 import { PublishedReviewPreview, ReviewSuccess } from './review/ReviewSuccess'
-import { BoostCards } from './review/BoostCards'
+import { BoostCards, RatingsCard } from './review/BoostCards'
 import { ReviewEditForm } from './review/ReviewEditForm'
-import type { MediaState } from './review/fields'
+import {
+  AnonEmailField,
+  LanguageField,
+  MediaField,
+  MoneyFields,
+  ProgramField,
+  type MediaState,
+} from './review/fields'
+import { GiftProgress } from './review/GiftProgress'
+import { RewardEmailNotice, type RewardMissing } from './review/RewardEmailNotice'
+import {
+  REWARD_UI_ENABLED,
+  MIN_OWN_UNITS,
+  readReferral,
+  rememberReferral,
+  evaluateRewardFields,
+  type RewardResult,
+} from '../lib/reviewReward'
 
 // ---- Constants ----------------------------------------------------------------
 
-// The fast flow's analytics tag. Phase 1 event names and meanings are
-// unchanged — only `flow` distinguishes which layout produced them.
-const FLOW = 'fast_2' as const
+// The tap-first flow's analytics tag. Event names and meanings are unchanged —
+// only `flow` distinguishes which layout produced them, so the v2 funnel can
+// be compared against fast_2 directly.
+const FLOW = 'tap_6' as const
 
 // Screen index -> the step-viewed event + stage enum it emits. Step numbers
 // stay positional ("Nth screen shown") and stages stay semantic, so the
@@ -73,12 +103,50 @@ const FLOW = 'fast_2' as const
 const SCREEN_EVENTS: Record<number, ReviewEventName> = {
   1: 'review_step_1_viewed',
   2: 'review_step_2_viewed',
+  3: 'review_step_3_viewed',
+  4: 'review_step_4_viewed',
+  5: 'review_step_5_viewed',
+  6: 'review_step_6_viewed',
 }
 const SCREEN_STAGES: Record<number, ReviewStage> = {
   1: 'basics',
   2: 'story',
+  3: 'ratings',
+  4: 'details',
+  5: 'details',
+  6: 'post',
 }
-const SCREEN_LABELS = ['The essentials', 'Your story']
+// Minimum taps on "What stood out" so every review carries some structured signal.
+const MIN_POLARITY_PICKS = 2
+// Ratings, cost and major, and photos sit before Post it so the thank-you
+// gift can be finished before publishing (a guest cannot edit most fields
+// afterwards). Each is optional to publish: Continue works with nothing filled.
+const SCREEN_LABELS = [
+  'The essentials',
+  'What stood out',
+  'Quick ratings',
+  'Cost and major',
+  'Photos',
+  'Post it',
+]
+const POST_STEP = SCREEN_LABELS.length
+const FIX_LABELS: Record<RewardMissing, string> = {
+  words: 'Write a few words of your own',
+  taps: 'Tap 2 rows in What stood out',
+  ratings: 'Give the quick ratings',
+  money: 'Add the cost',
+  program: 'Add your major',
+}
+// Own words that earn the bonus (discounts) on top of the gift.
+const BONUS_OWN_UNITS = 40
+// The screen that fixes each missing piece of the gift rule.
+const FIX_STEP: Record<RewardMissing, number> = {
+  words: 2,
+  taps: 2,
+  ratings: 3,
+  money: 4,
+  program: 4,
+}
 
 type Phase = 'form' | 'success' | 'boost'
 
@@ -95,7 +163,6 @@ export const ReviewWizard = ({
 }) => {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
-  const { openAuthModal } = useAuthModal()
   const { profile } = useProfileContext()
   const { showToast } = useToast()
 
@@ -103,6 +170,20 @@ export const ReviewWizard = ({
   // Stored values mapped once at mount — the editor is only opened with the
   // row already in hand, so lazy initializers are safe.
   const [initial] = useState(() => (editReview ? reviewToWizardState(editReview) : null))
+
+  // Resume a saved draft: ?draft=<id> for signed-in users, or the anonymous
+  // localStorage fallback for everyone else.
+  const draftParam = searchParams.get('draft')
+  // Normalized like the server does (review-submit trims + lowercases, then
+  // format-checks): anything that can't be a slug is treated as no param at
+  // all — an empty field beats a broken lookup and a dead-end publish.
+  const uniParam = normalizeUniSlugParam(searchParams.get('uni'))
+  // Picks carried over from the inline rate widget on the university page:
+  // the star and verdict the visitor already tapped, plus any words they
+  // typed. Same normalize-or-empty rule as the slug — a bogus param is no param.
+  const ratingParam = parseRatingParam(searchParams.get('rating'))
+  const recommendParam = parseRecommendParam(searchParams.get('recommend'))
+  const textParam = searchParams.get('answer') || searchParams.get('text') || ''
 
   const form = useReviewForm(
     editMode && initial
@@ -125,27 +206,63 @@ export const ReviewWizard = ({
           cons: initial.cons,
           reviewText: initial.reviewText,
         }
-      : { selectedUni: searchParams.get('uni') || '' }
+      : {
+          selectedUni: draftParam ? '' : uniParam,
+          rating: draftParam ? 0 : ratingParam,
+          recommend: draftParam ? '' : recommendParam,
+          reviewText: textParam,
+        }
   )
   // `form` is a new object whenever values change; `applyValues`/`set` are
   // stable. Effects and callbacks that apply drafts must depend on the stable
   // setter only, or the draft-load effect would re-run on every keystroke.
   const { values, applyValues } = form
 
-  // Resume a saved draft: ?draft=<id> for signed-in users, or the anonymous
-  // localStorage fallback for everyone else.
-  const draftParam = searchParams.get('draft')
-  const uniParam = searchParams.get('uni')
+  const promptParam = searchParams.get('prompt')
+  const answerParam = searchParams.get('answer')
+  const qSlugParam = searchParams.get('qSlug')
   const [draftId, setDraftId] = useState<string | null>(draftParam)
   const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
+  const [alsoPostAnswer, setAlsoPostAnswer] = useState(true)
+  // Signed-in only: publish under "Anonymous" — the public row keeps
+  // user_id NULL and ownership is linked privately on reviewer_context.
+  // Named + Verified seal stays the default while logged in.
+  const [postAnon, setPostAnon] = useState(false)
+  // Guest who picked "Post with nickname": publishes now as Anonymous, then gets
+  // the account step on the success screen (the claim flow attaches the name).
+  const [wantsNickname, setWantsNickname] = useState(false)
+  // Thank-you gift: the last result the server reported, whether the signed-in
+  // reviewer has answered the "send my gift?" notice, and the notice itself.
+  const [reward, setReward] = useState<RewardResult | undefined>(undefined)
+  const [showRewardNotice, setShowRewardNotice] = useState(false)
+  const rewardOn = REWARD_UI_ENABLED
+  const rewardOfferViewedRef = useRef(false)
+  const rewardFullReachedRef = useRef(false)
+  // Set when a requested draft lookup failed — lets a valid ?uni still
+  // prefill after a bad ?draft= link instead of leaving an empty field.
+  const [draftLookupFailed, setDraftLookupFailed] = useState(false)
+  // A saved anonymous draft for a different university than the one open now.
+  // Surfaced as a non-blocking banner so the draft is not silently buried.
+  const [otherDraft, setOtherDraft] = useState<{
+    slug: string
+    to: string
+    name: string
+  } | null>(null)
 
   // Flow state
   const [phase, setPhase] = useState<Phase>('form')
-  const [step, setStep] = useState(1)
+  // A ?uni + ?rating pair means the visitor already answered screen 1 on the
+  // university page — open straight on the story screen.
+  const [step, setStep] = useState(() =>
+    !editMode && !draftParam && Boolean(uniParam) && ratingParam > 0 ? 2 : 1
+  )
   const [error, setError] = useState<string | null>(null)
   const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
   const [boostIndex, setBoostIndex] = useState(0)
+  // The deck opened from the success screen: whatever the gift still needs
+  // comes first (own words included), the rest after, photo last.
+  const [boostDeck, setBoostDeck] = useState<BoostCard[]>(BOOST_CARD_ORDER)
 
   // Set once publish succeeds: the row id (Boost writes against it), the
   // canonical slug for links, and the timestamp shown on the preview card.
@@ -161,6 +278,23 @@ export const ReviewWizard = ({
     errorCount: 0,
   })
 
+  // Deferred work (the Boost auto-cascade fires its save inside a timer, and
+  // stamped publish runs after the stamp animation) must read flushed state,
+  // not the render closure it was defined in.
+  const valuesRef = useRef(values)
+  const mediaStateRef = useRef(mediaState)
+  // A classmate's share link (?ref=<gift code>): keep it for the publish call.
+  const refParam = searchParams.get('ref')
+  useEffect(() => {
+    rememberReferral(refParam)
+  }, [refParam])
+  useEffect(() => {
+    valuesRef.current = values
+  }, [values])
+  useEffect(() => {
+    mediaStateRef.current = mediaState
+  }, [mediaState])
+
   // Submit state
   const [loading, setLoading] = useState(false)
   const [showStamp, setShowStamp] = useState(false)
@@ -173,7 +307,7 @@ export const ReviewWizard = ({
   // ---- Draft persistence -----------------------------------------------------
 
   const draftPayload = useMemo<ReviewDraftPayload>(
-    () => draftPayloadFromState(values, mediaState.media, step),
+    () => draftPayloadFromState(values, mediaState.media, Math.min(step, 2)),
     [values, mediaState.media, step]
   )
 
@@ -186,6 +320,15 @@ export const ReviewWizard = ({
   const storyViewedRef = useRef(false)
   const reportedValidationScreensRef = useRef(new Set<number>())
   const submitInFlightRef = useRef(false)
+  // The slug/name pair a loaded draft applied — so a later clear can tell
+  // "still the draft's values" apart from "the user typed over them".
+  const draftSeedRef = useRef({ slug: '', name: '' })
+  // The anonymous draft slot this visit consumed ('none' when no university
+  // was picked). Publish clears it even if the pick changed mid-session.
+  const loadedLocalSlotRef = useRef<string | null>(null)
+  // The slot the last local autosave wrote — lets a pick change retire the
+  // slot the draft moved from instead of stacking residue copies.
+  const lastWrittenLocalSlotRef = useRef<string | null>(null)
   // Set the moment submitReview succeeds — a debounced autosave can still fire
   // during the stamp animation (phase is still 'form' until it finishes), and
   // without this it would re-create the draft row publish just deleted.
@@ -204,10 +347,40 @@ export const ReviewWizard = ({
       setStep(mapDraftStepToScreen(p))
       applyValues(fieldValuesFromDraft(p))
       setMediaState({ media: p.media ?? [], uploading: false, errorCount: 0 })
-      lastSavedPayloadRef.current = p
+      // Strip savedAt — draftPayload never carries it, so keeping it here
+      // would dirty-compare for the ~1.5s until the next autosave.
+      const { savedAt: _savedAt, ...comparable } = p
+      lastSavedPayloadRef.current = comparable
+      draftSeedRef.current = { slug: p.selectedUni || '', name: p.selectedUniName || '' }
     },
     [applyValues]
   )
+
+  // Resolve ?uni=<slug> once — the field prefill below and the draft-load
+  // effect's university check share this single lookup (aliases included).
+  const {
+    university: prefilledUni,
+    loading: prefilledUniLoading,
+    error: prefilledUniError,
+  } = useUniversity(uniParam || undefined)
+
+  // The local draft slot for the current pick: canonical once the ?uni
+  // lookup resolves. A still-raw param is an alias while the lookup is
+  // pending, so null then — keying a slot by it would leave the draft
+  // unreachable via the canonical slug. On lookup *error* the raw param is
+  // still the best key: the read path below falls back to it the same way,
+  // and skipping saves would silently disable autosave for the session.
+  const draftSlotSlug =
+    uniParam && values.selectedUni === uniParam
+      ? (prefilledUni?.slug ?? (prefilledUniError ? uniParam : null))
+      : values.selectedUni
+
+  // A mounted ?uni=A→B navigation starts a new visit: the slot refs below
+  // belong to the university that loaded them, not the new one.
+  useEffect(() => {
+    loadedLocalSlotRef.current = null
+    lastWrittenLocalSlotRef.current = null
+  }, [uniParam])
 
   // Load the draft once auth is ready. Signed-in users pull by ?draft=<id>, or
   // by ?uni=<slug> when a draft already exists for that university (so the
@@ -215,11 +388,36 @@ export const ReviewWizard = ({
   // visitors fall back to the localStorage draft when the slug matches.
   useEffect(() => {
     if (editMode || authLoading) return
+    // Both the signed-in draft check and the anonymous slot key come from
+    // the resolved university — wait for the shared lookup rather than
+    // racing it or duplicating its query. A signed-in ?draft=<id> load is
+    // the one path that needs nothing from the lookup, so it skips the wait.
+    if (uniParam && prefilledUniLoading && !(user && draftParam)) return
 
     const controller = new AbortController()
+    // localStorage drafts can outlive their uploads (server cleanup can't see
+    // them), so drop media that no longer exists before showing the draft.
+    const applyLocalDraft = async (entry: LocalDraftEntry): Promise<boolean> => {
+      const live = await withLiveMedia(entry.payload, controller.signal)
+      if (controller.signal.aborted) return false
+      applyDraftPayload(live.payload)
+      // The slot this visit consumed — publish clears it regardless of how
+      // the form's university pick changes afterward.
+      loadedLocalSlotRef.current = entry.slug
+      if (live.dropped) showToast(EXPIRED_DRAFT_MEDIA_MESSAGE, 'error')
+      return true
+    }
     const run = async () => {
       let loaded = false
       let lookupFailed = false
+      // The local draft this visit applied, by storage key — kept out of the
+      // other-drafts notice below.
+      let appliedLocalSlug: string | null = null
+      // Local slots are keyed by canonical slug and server drafts by
+      // university id, while the link may carry an alias — both come from
+      // the shared lookup, falling back to the raw param when it fails.
+      const resolvedSlug = prefilledUni?.slug || uniParam
+      const resolvedUniId = prefilledUni?.id ?? null
       try {
         if (user && draftParam) {
           const d = await getReviewDraft(draftParam, user.id)
@@ -234,21 +432,16 @@ export const ReviewWizard = ({
             showToast('That draft could not be found.', 'error')
           }
         } else if (user && uniParam) {
-          // A draft for this slug may already exist — resume it so autosave
-          // updates the saved row instead of clobbering it with a fresh one.
-          const { data: uni, error: uniError } = await supabase
-            .from('universities')
-            .select('id')
-            .eq('slug', uniParam)
-            .abortSignal(controller.signal)
-            .maybeSingle()
-          if (uniError) throw uniError
-          if (uni?.id) {
+          // A draft for this university may already exist — resume it so
+          // autosave updates the saved row instead of clobbering it. The row
+          // comes from the shared useUniversity lookup, so alias links match
+          // the canonical university id.
+          if (resolvedUniId) {
             const { data: d, error: draftError } = await supabase
               .from('review_drafts')
               .select('id, payload, university_id')
               .eq('user_id', user.id)
-              .eq('university_id', uni.id)
+              .eq('university_id', resolvedUniId)
               .abortSignal(controller.signal)
               .maybeSingle()
             if (draftError) throw draftError
@@ -261,13 +454,16 @@ export const ReviewWizard = ({
             }
           }
         } else if (!user) {
-          const local = loadLocalDraft()
-          if (local && isDraftWorthSaving(local)) {
-            const sameUni = !uniParam || local.selectedUni === uniParam
-            if (sameUni) {
-              applyDraftPayload(local)
-              loaded = true
-            }
+          // Drafts are keyed by university: a ?uni link reads only its own
+          // slot (canonical above, so aliases work), a plain visit picks up
+          // the most recently saved draft. The raw-param slot is checked
+          // too — legacy migrations and saves during a failed lookup can
+          // leave drafts keyed by the alias.
+          const entry = loadLocalDraftWithAlias(resolvedSlug || undefined, uniParam)
+          if (entry && isDraftWorthSaving(entry.payload)) {
+            if (!(await applyLocalDraft(entry))) return
+            appliedLocalSlug = entry.slug
+            loaded = true
           }
         }
 
@@ -275,14 +471,11 @@ export const ReviewWizard = ({
         // no server draft was loaded, pick up the localStorage draft and let
         // autosave promote it to their account.
         if (user && !draftParam && !loaded && !controller.signal.aborted) {
-          const local = loadLocalDraft()
-          if (local && isDraftWorthSaving(local)) {
-            const sameUni = !uniParam || local.selectedUni === uniParam
-            if (sameUni) {
-              applyDraftPayload(local)
-              clearLocalDraft()
-              loaded = true
-            }
+          const entry = loadLocalDraftWithAlias(resolvedSlug || undefined, uniParam)
+          if (entry && isDraftWorthSaving(entry.payload)) {
+            if (!(await applyLocalDraft(entry))) return
+            clearLocalDraft(entry.slug)
+            loaded = true
           }
         }
       } catch (err) {
@@ -291,9 +484,47 @@ export const ReviewWizard = ({
         console.error('Error loading draft:', err)
       } finally {
         if (!controller.signal.aborted) {
+          if (lookupFailed) setDraftLookupFailed(true)
+          // Tell the visitor about drafts for other universities. A group-chat
+          // link for Y must not silently bury a draft they started for X.
+          // Skeletons saved by a bare ?uni prefill do not count as progress.
+          const others = listLocalDrafts().filter(
+            (d) =>
+              d.slug !== (uniParam || LOCAL_DRAFT_NO_UNI_SLUG) &&
+              d.slug !== (resolvedSlug || LOCAL_DRAFT_NO_UNI_SLUG) &&
+              d.slug !== appliedLocalSlug &&
+              hasDraftSubstance(d.payload)
+          )
+          const first = others[0]
+          setOtherDraft(
+            first
+              ? {
+                  slug: first.slug,
+                  to:
+                    first.slug !== LOCAL_DRAFT_NO_UNI_SLUG && first.slug !== '__not_listed'
+                      ? `/review?uni=${first.slug}`
+                      : '/review',
+                  name:
+                    first.payload.selectedUniName.trim() ||
+                    first.payload.newUniName.trim() ||
+                    'another university',
+                }
+              : null
+          )
           setReviewEntry(
             resolveReviewEntry({ loaded, requested: Boolean(draftParam), lookupFailed })
           )
+          // A star or verdict tapped on the university page seconds ago is a
+          // fresher pick than anything a resumed draft carries for those
+          // fields — overlay the URL values and open on the story screen.
+          if (uniParam && ratingParam > 0) {
+            applyValues({
+              rating: ratingParam,
+              ...(recommendParam ? { recommend: recommendParam } : {}),
+              ...(textParam ? { reviewText: textParam } : {}),
+            })
+            setStep(2)
+          }
           setDraftLoading(false)
         }
       }
@@ -301,7 +532,21 @@ export const ReviewWizard = ({
 
     run()
     return () => controller.abort()
-  }, [editMode, authLoading, user, draftParam, uniParam, applyDraftPayload, showToast])
+  }, [
+    editMode,
+    authLoading,
+    user,
+    draftParam,
+    uniParam,
+    ratingParam,
+    recommendParam,
+    textParam,
+    prefilledUni,
+    prefilledUniLoading,
+    applyDraftPayload,
+    applyValues,
+    showToast,
+  ])
 
   const reviewAuth: ReviewAuth = user ? 'signed_in' : 'anonymous'
 
@@ -329,7 +574,7 @@ export const ReviewWizard = ({
           flow: FLOW,
           entry: reviewEntry,
           auth: reviewAuth,
-          step: step as 1 | 2,
+          step: step as ReviewStep,
           stage: SCREEN_STAGES[step],
         },
       })
@@ -359,19 +604,37 @@ export const ReviewWizard = ({
       setDraftUniversityId(null)
       return
     }
+    // The ?uni lookup already resolved this row — reuse it rather than
+    // re-running the same slug/alias query.
+    if (
+      prefilledUni &&
+      (values.selectedUni === uniParam || values.selectedUni === prefilledUni.slug)
+    ) {
+      setDraftUniversityId(prefilledUni.id)
+      return
+    }
+    // Anything that can't be a slug can't resolve to a row — and a legacy or
+    // tampered draft payload carrying `,`/`}`/`.` would break the .or()
+    // filter below into a 400 that silently nulled the draft link.
+    if (!UNI_SLUG_RE.test(values.selectedUni)) {
+      setDraftUniversityId(null)
+      return
+    }
     const controller = new AbortController()
     const run = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('universities')
         .select('id')
-        .eq('slug', values.selectedUni)
+        .or(`slug.eq.${values.selectedUni},slug_aliases.cs.{${values.selectedUni}}`)
         .abortSignal(controller.signal)
         .maybeSingle()
-      if (!controller.signal.aborted) setDraftUniversityId(data?.id ?? null)
+      if (controller.signal.aborted) return
+      if (error) console.error('Error resolving draft university:', error)
+      setDraftUniversityId(data?.id ?? null)
     }
     run()
     return () => controller.abort()
-  }, [editMode, values.selectedUni])
+  }, [editMode, values.selectedUni, prefilledUni, uniParam])
 
   // Autosave once something worth keeping exists. Debounced so typing doesn't
   // create a write per keystroke. Nothing is saved after publish — the review
@@ -395,8 +658,23 @@ export const ReviewWizard = ({
           setDraftId(savedId)
           lastSavedPayloadRef.current = draftPayload
         } else {
-          saveLocalDraft(draftPayload)
-          lastSavedPayloadRef.current = draftPayload
+          // A null slot means the pick is still an unresolved alias — skip
+          // rather than write a slot reads can't find back. While a ?uni
+          // navigation is still resolving the pick has not settled either —
+          // that slot belongs to the previous visit's checkpoint.
+          if (draftSlotSlug !== null && !prefilledUniLoading) {
+            saveLocalDraft(draftSlotSlug, draftPayload)
+            lastSavedPayloadRef.current = draftPayload
+            // The draft follows the pick within a visit: when it lands
+            // under a different university, the copy it moved from is
+            // residue — clear it so it can't resurface after publish or on
+            // a later visit.
+            const prevLocalSlot = lastWrittenLocalSlotRef.current ?? loadedLocalSlotRef.current
+            if (prevLocalSlot !== null && prevLocalSlot !== draftSlotSlug) {
+              clearLocalDraft(prevLocalSlot)
+            }
+            lastWrittenLocalSlotRef.current = draftSlotSlug
+          }
         }
       } catch (err) {
         console.error('Draft save failed:', err)
@@ -404,7 +682,16 @@ export const ReviewWizard = ({
     }, 1500)
 
     return () => clearTimeout(timer)
-  }, [user, editMode, draftLoading, phase, draftPayload, draftUniversityId])
+  }, [
+    user,
+    editMode,
+    draftLoading,
+    phase,
+    draftPayload,
+    draftUniversityId,
+    draftSlotSlug,
+    prefilledUniLoading,
+  ])
 
   // Warn before closing the tab when there is unsaved progress. The autosave
   // runs every 1.5s, so this only guards the narrow window after a change.
@@ -421,33 +708,108 @@ export const ReviewWizard = ({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [editMode, draftLoading, phase])
 
-  // Pre-fill university from ?uni=<slug>
-  const uniSlug = uniParam
-  const { university: prefilledUni } = useUniversity(uniSlug || undefined)
+  // The last slug/name pair selectedUni+selectedUniName got from the URL —
+  // the raw param seed or the values this effect applied. URL-sourced values
+  // stay overwriteable so an alias (raw param != canonical slug) or a ?uni
+  // change while the wizard is mounted doesn't freeze the field on the wrong
+  // university; typed and draft-loaded values always win.
+  const urlSeededRef = useRef({ slug: uniParam, name: '' })
 
   // Sync resolved university into form state once. Drafts already carry their
   // own university — don't let the ?uni prefill overwrite a loaded draft or a
-  // university the user picked while the lookup was in flight.
+  // university the user picked while the lookup was in flight. A failed
+  // ?draft= lookup lifts the draftParam gate so a valid ?uni still prefills.
   useEffect(() => {
-    if (prefilledUni && !editMode && !draftParam) {
+    if (prefilledUni && !editMode && (!draftParam || draftLookupFailed)) {
       applyValues((v) =>
-        v.selectedUniName || (v.selectedUni && v.selectedUni !== prefilledUni.slug)
+        (v.selectedUniName && v.selectedUniName !== urlSeededRef.current.name) ||
+        (v.selectedUni && v.selectedUni !== uniParam && v.selectedUni !== urlSeededRef.current.slug)
           ? {}
           : { selectedUni: prefilledUni.slug || '', selectedUniName: prefilledUni.name || '' }
       )
+      urlSeededRef.current = { slug: prefilledUni.slug || uniParam, name: prefilledUni.name || '' }
     }
-  }, [prefilledUni, editMode, draftParam, applyValues])
+  }, [prefilledUni, editMode, draftParam, draftLookupFailed, uniParam, applyValues])
+
+  // A ?uni slug that resolves to nothing must not ride along silently: it
+  // passes step-1 validation and then fails at publish. Clearing it once the
+  // lookup settles leaves an empty field that demands a real pick. A lookup
+  // that errored (offline, retried abort) is not "no row" — keep the value.
+  useEffect(() => {
+    if (
+      editMode ||
+      draftParam ||
+      !uniParam ||
+      prefilledUni ||
+      prefilledUniLoading ||
+      prefilledUniError
+    )
+      return
+    applyValues((v) =>
+      v.selectedUni === uniParam
+        ? {
+            selectedUni: '',
+            // A dead slug can carry a name in from a draft — clear the pair
+            // so publish can't send the name as a free-text university. A
+            // name the user typed over it stays.
+            ...(v.selectedUniName === draftSeedRef.current.name ? { selectedUniName: '' } : {}),
+          }
+        : {}
+    )
+  }, [
+    editMode,
+    draftParam,
+    uniParam,
+    prefilledUni,
+    prefilledUniLoading,
+    prefilledUniError,
+    applyValues,
+  ])
+
+  // Alias links resolve inside the draft-load effect above: the anonymous
+  // draft slot uses the canonical slug, so the lookup happens once there.
 
   // Pre-fill program and university name from the user's profile once it
   // loads, filling empty fields only so typed input is never clobbered.
-  // Skipped in edit mode: the review row is the source of truth there.
+  // Skipped in edit mode (the review row is the source of truth) and for the
+  // university when ?uni is present (the link wins — the profile name would
+  // show one university while the link's slug submitted to another).
   useEffect(() => {
     if (!profile || editMode) return
     applyValues((v) => ({
       ...(!v.program && profile.program ? { program: profile.program } : {}),
-      ...(!v.selectedUniName && profile.university ? { selectedUniName: profile.university } : {}),
+      ...(!v.selectedUniName && !uniParam && profile.university
+        ? { selectedUniName: profile.university }
+        : {}),
     }))
-  }, [profile, editMode, applyValues])
+  }, [profile, editMode, uniParam, applyValues])
+
+  // ---- Thank-you gift ---------------------------------------------------------
+
+  const rewardEval = useMemo(
+    () => evaluateRewardFields(values, mediaState.media),
+    [values, mediaState.media]
+  )
+  const guestGiftEmail = values.anonEmail.trim()
+  const guestGiftEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestGiftEmail)
+
+  useEffect(() => {
+    if (!rewardOn || phase !== 'form' || rewardOfferViewedRef.current) return
+    rewardOfferViewedRef.current = true
+    void trackReviewEvent({
+      name: 'reward_offer_viewed',
+      data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
+    })
+  }, [rewardOn, phase, reviewAuth])
+
+  useEffect(() => {
+    if (!rewardOn || !rewardEval.full || rewardFullReachedRef.current) return
+    rewardFullReachedRef.current = true
+    void trackReviewEvent({
+      name: 'reward_full_reached',
+      data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
+    })
+  }, [rewardOn, rewardEval.full, reviewAuth])
 
   // ---- Validation --------------------------------------------------------------
 
@@ -462,7 +824,7 @@ export const ReviewWizard = ({
         data: {
           flow: FLOW,
           auth: reviewAuth,
-          step: screen as 1 | 2,
+          step: screen as ReviewStep,
           stage: SCREEN_STAGES[screen],
         },
       })
@@ -471,8 +833,9 @@ export const ReviewWizard = ({
   )
 
   // The publish minimum is exactly what the server requires: a university and
-  // a rating on screen 1, one real sentence on screen 2. Everything else is
-  // optional input, never a gate.
+  // a rating on screen 1. Screen 2 asks nothing mandatory — empty text lands
+  // as a quick rating; only a half-finished sentence (1-9 chars, which the
+  // server would reject) gets nudged.
   const validateScreen = (s: number): string | null => {
     if (s === 1) {
       if (!values.selectedUni && !values.selectedUniName.trim()) {
@@ -487,8 +850,15 @@ export const ReviewWizard = ({
       return null
     }
     if (s === 2) {
-      if (values.reviewText.trim().length < 10) {
-        return 'One honest sentence is enough — but other students do need that much.'
+      const t = values.reviewText.trim()
+      if (t.length > 0 && t.length < 10) {
+        return 'A few more words, or clear the box.'
+      }
+      // Applicants need a balanced view: at least 2 taps, ideally one good and one bad.
+      // Answering a peer question may use a written answer instead.
+      const picked = Object.values(values.polarity).filter(Boolean).length
+      if (picked < MIN_POLARITY_PICKS && !(promptParam && t.length >= 10)) {
+        return 'Tap at least 2 rows, ideally one good and one bad. It tells applicants what is really there.'
       }
       return null
     }
@@ -504,7 +874,13 @@ export const ReviewWizard = ({
       return
     }
     clearError()
-    setStep((s) => Math.min(s + 1, 2))
+    setStep((s) => Math.min(s + 1, POST_STEP))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const jumpToFix = (item: RewardMissing) => {
+    clearError()
+    setStep(FIX_STEP[item])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -524,7 +900,7 @@ export const ReviewWizard = ({
     }
   }
 
-  const handlePublish = async () => {
+  const handlePublish = async (giftChoice?: boolean) => {
     if (submitInFlightRef.current) return
     beginReviewAttempt()
 
@@ -540,6 +916,7 @@ export const ReviewWizard = ({
     }
     const storyErr = validateScreen(2)
     if (storyErr) {
+      setStep(2)
       setError(storyErr)
       reportValidationFailure(2)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -581,6 +958,9 @@ export const ReviewWizard = ({
 
       const result = await submitReview({
         cfToken,
+        postAnonymously: Boolean(user && postAnon),
+        rewardRequested: rewardOn && (user ? giftChoice === true : guestGiftEmailValid),
+        ref: readReferral(),
         claimToken: !user ? (getOrCreateClaimToken() ?? undefined) : undefined,
         boostToken: boostToken ?? undefined,
         universitySlug: !isNotListed && values.selectedUni ? values.selectedUni : undefined,
@@ -617,10 +997,16 @@ export const ReviewWizard = ({
           entry: reviewEntry,
           auth: reviewAuth,
           duration_band: publishDurationBand(attemptStartedAtRef.current),
+          ...(rewardOn ? { reward_eligible: rewardEval.full } : {}),
         },
       })
-
-      showToast('Review submitted! Thank you.', 'success')
+      if (result.reward && result.reward.state !== 'off') {
+        setReward(result.reward)
+        void trackReviewEvent({
+          name: 'reward_requested',
+          data: { flow: FLOW, auth: reviewAuth, reward_state: result.reward.state },
+        })
+      }
 
       // The review is live — the draft it came from is done. Server drafts are
       // deleted by id (or by university when the row was created earlier);
@@ -635,8 +1021,28 @@ export const ReviewWizard = ({
         } catch (err) {
           console.error('Could not delete draft after submit:', err)
         }
+        if (qSlugParam && alsoPostAnswer && !answerParam) {
+          try {
+            await submitAnswer({
+              questionSlug: qSlugParam,
+              body: values.reviewText.trim(),
+              anonymous: postAnon,
+            })
+          } catch (err) {
+            console.error('Could not cross-post answer to Q&A thread:', err)
+          }
+        }
       } else {
-        clearLocalDraft()
+        // Every slot this visit touched goes — its content is now published:
+        // the loaded slot, the last slot autosave wrote (the pick may have
+        // moved inside the debounce window), and the current pick's slot.
+        for (const slot of new Set([
+          loadedLocalSlotRef.current,
+          lastWrittenLocalSlotRef.current,
+          draftSlotSlug,
+        ])) {
+          if (slot !== null) clearLocalDraft(slot)
+        }
       }
 
       const slug = result.universityCreated ? null : result.universitySlug
@@ -657,7 +1063,15 @@ export const ReviewWizard = ({
         sessionStorage.removeItem('trc_claim_checked')
       }
 
-      setPendingSuccess(() => () => setPhase('success'))
+      // Land straight on the Power-Up deck when this reviewer can still write
+      // (signed-in JWT or a stored anonymous boost capability) — one less
+      // click between "published" and "keep going". Without the capability,
+      // the plain success screen is all that exists.
+      setPendingSuccess(() => () => {
+        const canBoost = Boolean(user) || getBoostToken(result.reviewId) !== null
+        // Nickname guests see the account step first; the Boost offer follows it.
+        setPhase(canBoost && !(!user && wantsNickname) ? 'boost' : 'success')
+      })
       setShowStamp(true)
     } catch (error) {
       const status = error instanceof ReviewSubmitError ? error.status : undefined
@@ -692,9 +1106,14 @@ export const ReviewWizard = ({
     if (!published) return false
     try {
       if (user) {
-        await updateReview(published.reviewId, buildReviewFields(values, mediaState.media))
+        const next = await updateReview(
+          published.reviewId,
+          buildReviewFields(valuesRef.current, mediaStateRef.current.media)
+        )
+        if (next && next.state !== 'off') setReward(next)
       } else {
-        await boostReview(published.reviewId, buildBoostPatch(values, card))
+        const next = await boostReview(published.reviewId, buildBoostPatch(valuesRef.current, card))
+        if (next && next.state !== 'off') setReward(next)
       }
       return true
     } catch (err) {
@@ -731,6 +1150,18 @@ export const ReviewWizard = ({
     showToast('All saved. Thanks for the detail.', 'success')
   }, [showToast])
 
+  // Back goes to the page that sent the reviewer here (a university page, a question
+  // thread). With no history to return to, fall back to the reviewed university or home.
+  const leaveHref =
+    values.selectedUni && values.selectedUni !== '__not_listed'
+      ? `/university/${values.selectedUni}`
+      : '/'
+  const leaveWizard = (e?: { preventDefault: () => void }) => {
+    e?.preventDefault()
+    if ((window.history.state?.idx ?? 0) > 0) navigate(-1)
+    else navigate(leaveHref)
+  }
+
   const finishFlow = () => {
     navigate(published?.universitySlug ? `/university/${published.universitySlug}` : '/')
   }
@@ -759,8 +1190,25 @@ export const ReviewWizard = ({
             publishedAt={published.publishedAt}
             universitySlug={published.universitySlug}
             isAnonymous={!user}
+            wantsNickname={wantsNickname}
+            reward={reward}
+            postedAnonymously={Boolean(user && postAnon)}
             canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
-            onBoost={() => setPhase('boost')}
+            onBoost={() => {
+              const base = user ? BOOST_CARD_ORDER : ANON_BOOST_CARDS
+              const missing = (reward?.missing ?? rewardEval.missing) as RewardMissing[]
+              const front: BoostCard[] = rewardOn
+                ? [
+                    ...(missing.includes('words') ? (['words'] as BoostCard[]) : []),
+                    ...(['ratings', 'money', 'program'] as BoostCard[]).filter((c) =>
+                      missing.includes(c as RewardMissing)
+                    ),
+                  ]
+                : []
+              setBoostDeck([...front, ...base.filter((c) => !front.includes(c))])
+              setBoostIndex(0)
+              setPhase('boost')
+            }}
             onDone={finishFlow}
           />
         </div>
@@ -775,6 +1223,7 @@ export const ReviewWizard = ({
           <PublishedReviewPreview
             values={values}
             media={mediaState.media}
+            anonymous={Boolean(user && postAnon)}
             date={new Date(published.publishedAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
@@ -782,12 +1231,23 @@ export const ReviewWizard = ({
               timeZone: 'UTC',
             })}
           />
+          <GiftProgress
+            values={values}
+            media={mediaState.media}
+            evaluation={rewardOn ? rewardEval : undefined}
+          />
           <BoostCards
             form={form}
             mediaState={mediaState}
             onMediaStateChange={setMediaState}
-            cards={user ? BOOST_CARD_ORDER : ANON_BOOST_CARDS}
+            cards={boostDeck}
             initialIndex={boostIndex}
+            wordsDone={!rewardEval.missing.includes('words' as never)}
+            wordsHint={
+              rewardOn
+                ? `${Math.min(rewardEval.ownUnits, MIN_OWN_UNITS)} of ${MIN_OWN_UNITS} words of your own. The tapped sentence does not count.`
+                : undefined
+            }
             onSave={saveBoost}
             onCardCompleted={trackBoostCompleted}
             onExit={handleBoostExit}
@@ -801,10 +1261,17 @@ export const ReviewWizard = ({
   return (
     <div className="container" style={{ maxWidth: '700px' }}>
       <div className="section">
-        <Link to="/" className="btn btn-outline" style={{ marginBottom: 'var(--sp-2)' }}>
+        <Link
+          to={leaveHref}
+          onClick={leaveWizard}
+          className="btn btn-outline"
+          style={{ marginBottom: 'var(--sp-2)' }}
+        >
           <Icons.ArrowLeft /> Back
         </Link>
-        <h1 className="section-title">Leave a Review</h1>
+        <h1 className="section-title">
+          {promptParam ? 'Answer a Student Question' : 'Leave a Review'}
+        </h1>
 
         {/* Progress bar */}
         <div className="wizard-progress">
@@ -816,12 +1283,41 @@ export const ReviewWizard = ({
           ))}
         </div>
         <div className="step-labels">
-          {SCREEN_LABELS.map((label, i) => (
-            <span key={label} className={`step-label ${i + 1 === step ? 'current' : ''}`}>
-              {label}
-            </span>
-          ))}
+          <span className="step-label current">
+            Step {step} of {POST_STEP}: {SCREEN_LABELS[step - 1]}
+          </span>
         </div>
+
+        <GiftProgress
+          values={values}
+          media={mediaState.media}
+          evaluation={rewardOn ? rewardEval : undefined}
+        />
+
+        {/* A saved draft for a different university — surfaced so a ?uni
+            link never silently buries work in progress. */}
+        {otherDraft && (
+          <div className="draft-reminder fade-in">
+            <div className="draft-reminder-copy">
+              <Icons.Pen />
+              <span>
+                You also have an unfinished review for <strong>{otherDraft.name}</strong>.
+              </span>
+            </div>
+            <div className="draft-reminder-actions">
+              <Link to={otherDraft.to} className="btn btn-outline btn-sm">
+                Continue it
+              </Link>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setOtherDraft(null)}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Error banner */}
         {error && (
@@ -831,24 +1327,228 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        {step === 1 && <ReviewEssentials form={form} />}
+        {step === 1 && <ReviewEssentials form={form} promptQuestion={promptParam} />}
 
-        {step === 2 && <ReviewStory form={form} isAnonymous={!user} />}
-
-        {/* Guest identity notice — anonymous stays one click; signing in is a
-            modal, so the draft in state + localStorage survives either way. */}
-        {!user && step === 2 && (
-          <p className="form-hint" style={{ textAlign: 'center' }}>
-            You&apos;re posting as Anonymous.{' '}
-            <button type="button" className="link-inline" onClick={() => openAuthModal('login')}>
-              Sign in first
-            </button>{' '}
-            if you want your name and the Verified seal on it. Your draft stays saved.
-          </p>
+        {step === 2 && (
+          <ReviewStory
+            form={form}
+            promptQuestion={promptParam}
+            rewardUnits={rewardOn ? rewardEval.ownUnits : undefined}
+          />
         )}
 
-        {/* Anonymous Turnstile — lives on the publish screen now */}
-        {!user && step === 2 && (
+        {step === 3 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">Quick ratings</h2>
+            <p className="step-sub">One tap each. Skip anything you are not sure about.</p>
+            <RatingsCard form={form} onDone={goNext} />
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">Cost and major</h2>
+            <p className="step-sub">
+              What it really costs, and what you studied. Students search by both.
+            </p>
+            <MoneyFields form={form} />
+            <ProgramField form={form} />
+            <LanguageField form={form} />
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="wizard-step active">
+            <h2 className="step-title">Add a photo</h2>
+            <p className="step-sub">
+              Dorm, campus, canteen. Real photos help the next student more than any rating.
+            </p>
+            {rewardOn && (
+              <div className="gift-bonus">
+                <strong>
+                  <span aria-hidden="true">✨</span> Bonus
+                </strong>{' '}
+                Add a photo, or write {BONUS_OWN_UNITS}+ words of your own, and you also get student
+                discounts on services we trust. Message us on WeChat after you post for the details.
+                Your review also counts toward the gold highlight, so more students see it.
+              </div>
+            )}
+            <MediaField
+              mediaState={mediaState}
+              onStateChange={setMediaState}
+              disabled={loading}
+              uploaderKey="wizard-media"
+              hint="Show the real life"
+            />
+          </div>
+        )}
+
+        {step === POST_STEP && (
+          <div className="wizard-step active">
+            <h2 className="step-title">How it will appear</h2>
+            <span className="preview-eyebrow">Preview</span>
+            <div className="post-preview">
+              <PublishedReviewPreview
+                values={values}
+                media={mediaState.media}
+                date={new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+                anonymous={Boolean(user && postAnon) || !user}
+              />
+            </div>
+          </div>
+        )}
+
+        {user && step === POST_STEP && qSlugParam && !answerParam && (
+          <label
+            className="form-checkbox-label"
+            htmlFor="cross-post-qa"
+            style={{ marginBottom: 'var(--sp-2)' }}
+          >
+            <input
+              id="cross-post-qa"
+              type="checkbox"
+              className="form-checkbox"
+              checked={alsoPostAnswer}
+              onChange={(e) => setAlsoPostAnswer(e.target.checked)}
+            />
+            Also post my response directly on the community question thread
+          </label>
+        )}
+
+        {/* Attribution choice — everyone picks how the review appears before
+            publishing. Guests post anonymously or sign in for the seal (modal,
+            so the draft in state + localStorage survives); signed-in reviewers
+            can hide their name while keeping the review privately owned. */}
+        {step === POST_STEP && (
+          <div className="attribution-card" role="radiogroup" aria-label="How your review appears">
+            <span className="form-label">How your review appears</span>
+            {!user ? (
+              <>
+                <label className={`attribution-option${wantsNickname ? '' : ' selected'}`}>
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={!wantsNickname}
+                    disabled={loading}
+                    onChange={() => setWantsNickname(false)}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post as Anonymous
+                      <span className="attribution-badge">🔒 100% Anonymous</span>
+                    </span>
+                    <span className="attribution-option-copy">
+                      Publicly shows &quot;Anonymous&quot;. We never share your identity, IP, or
+                      email with any university or third party.
+                    </span>
+                  </span>
+                </label>
+                <label className={`attribution-option${wantsNickname ? ' selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={wantsNickname}
+                    disabled={loading}
+                    onChange={() => setWantsNickname(true)}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post with nickname <SealBadge />
+                    </span>
+                    <span className="attribution-option-copy">
+                      Publish now, then make a free account in about 20 seconds to add your nickname
+                      and the red Verified seal. Nothing blocks you before you post.
+                    </span>
+                  </span>
+                </label>
+              </>
+            ) : (
+              <>
+                <label className={`attribution-option${postAnon ? '' : ' selected'}`}>
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={!postAnon}
+                    disabled={loading}
+                    onChange={() => setPostAnon(false)}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post as {profile?.display_name || 'yourself'} <SealBadge />
+                    </span>
+                    <span className="attribution-option-copy">
+                      Earns the red Verified seal. Future students trust verified reviews most.
+                    </span>
+                  </span>
+                </label>
+                <label className={`attribution-option${postAnon ? ' selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="review-attribution"
+                    className="attribution-radio"
+                    checked={postAnon}
+                    disabled={loading}
+                    onChange={() => setPostAnon(true)}
+                  />
+                  <span className="attribution-option-body">
+                    <span className="attribution-option-title">
+                      Post as Anonymous
+                      <span className="attribution-badge">linked privately to your account</span>
+                    </span>
+                    <span className="attribution-option-copy">
+                      Publicly shows &quot;Anonymous&quot; with no link to your profile. You can
+                      still edit, delete, get reply alerts, or put your name on it later from My
+                      Reviews.
+                    </span>
+                  </span>
+                </label>
+              </>
+            )}
+          </div>
+        )}
+
+        {!user && step === POST_STEP && rewardOn && (
+          <AnonEmailField
+            form={form}
+            reward={{ full: rewardEval.full, missing: rewardEval.missing }}
+          />
+        )}
+        {!user && step === POST_STEP && !rewardOn && (
+          <details className="email-disclosure">
+            <summary>Add a private backup email</summary>
+            <AnonEmailField form={form} />
+          </details>
+        )}
+
+        {/* Last chance before publishing: each missing piece of the gift jumps
+            straight to the screen that fixes it. */}
+        {rewardOn && step === POST_STEP && !rewardEval.full && (
+          <div className="reward-nudge" role="status">
+            <p>
+              <strong>Almost there.</strong> Finish these and your free VPN is yours:
+            </p>
+            <ul className="gift-fix-list">
+              {(rewardEval.missing as RewardMissing[]).map((m) => (
+                <li key={m}>
+                  <button type="button" className="gift-fix-row" onClick={() => jumpToFix(m)}>
+                    <span>{FIX_LABELS[m]}</span>
+                    <span aria-hidden="true">›</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Anonymous Turnstile — warms up on the story screen, finishes on Post it */}
+        {!user && step >= 2 && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <Turnstile
               ref={reviewTurnstileRef}
@@ -869,9 +1569,20 @@ export const ReviewWizard = ({
           </div>
         )}
 
-        <div className="wizard-nav">
+        <div className="wizard-nav wizard-nav-sticky">
+          {step === POST_STEP && (
+            <p className="wizard-nav-hint">
+              {user
+                ? postAnon
+                  ? 'Shows as Anonymous.'
+                  : `Shows as ${profile?.display_name || 'you'} with the Verified seal.`
+                : wantsNickname
+                  ? 'Shows as Anonymous until you add your nickname.'
+                  : 'Shows as Anonymous.'}
+            </p>
+          )}
           {step === 1 ? (
-            <button type="button" className="btn btn-ghost" onClick={() => navigate('/')}>
+            <button type="button" className="btn btn-ghost" onClick={() => leaveWizard()}>
               ← Back
             </button>
           ) : (
@@ -879,29 +1590,46 @@ export const ReviewWizard = ({
               ← Back
             </button>
           )}
-          {step === 1 && (
+          {step < POST_STEP && (
             <button type="button" className="btn btn-primary btn-lg" onClick={goNext}>
               Continue →
             </button>
           )}
-          {step === 2 && (
+          {step === POST_STEP && (
             <button
               type="button"
               className="btn btn-primary btn-lg"
               disabled={loading || (!user && !reviewTurnstileReady)}
-              onClick={handlePublish}
+              onClick={() => (rewardOn && user ? setShowRewardNotice(true) : handlePublish())}
             >
               {loading
                 ? 'Publishing...'
                 : !user && !reviewTurnstileReady
-                  ? 'Verifying you are human...'
-                  : 'Publish review 📜'}
+                  ? 'Checking your connection...'
+                  : values.reviewText.trim()
+                    ? 'Publish review'
+                    : 'Publish rating'}
             </button>
           )}
         </div>
       </div>
 
-      <RegistrationNudge />
+      {showRewardNotice && user && (
+        <RewardEmailNotice
+          email={user.email ?? 'your account email'}
+          full={rewardEval.full}
+          missing={rewardEval.missing as RewardMissing[]}
+          onFix={(item) => {
+            setShowRewardNotice(false)
+            jumpToFix(item)
+          }}
+          onClose={() => setShowRewardNotice(false)}
+          onChoose={(wantsGift) => {
+            setShowRewardNotice(false)
+            void handlePublish(wantsGift)
+          }}
+        />
+      )}
 
       {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>

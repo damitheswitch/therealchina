@@ -65,12 +65,23 @@ export function validateMedia(value: unknown, mediaUrlPrefix: string): MediaItem
   })
 }
 
+// Storage object names (review-media bucket paths) behind validated media
+// items. validateMedia has already checked every URL starts with the prefix.
+export function mediaObjectNames(media: MediaItem[], mediaUrlPrefix: string): string[] {
+  return media.map((m) => m.url.slice(mediaUrlPrefix.length).split(/[?#]/)[0])
+}
+
+export const MEDIA_EXPIRED_MESSAGE =
+  'Some photos or videos in this draft have expired. Remove them, add them again, and resubmit.'
+
 // All writable review fields after validation, in DB column shape. Insert and
 // update write this object verbatim — id/user_id/university_id/created_at are
 // never part of it.
 export interface ValidatedReviewFields {
   rating: number
-  text: string
+  // Null = quick rating (rating/tags only). The reviews.review_kind generated
+  // column derives the public label from this.
+  text: string | null
   program: string | null
   degree_level: string | null
   media: MediaItem[]
@@ -170,8 +181,10 @@ export function validateReviewFields(
   }
   const rating = body.rating
 
+  // Text is optional (quick ratings are rating/tags only) — but when present
+  // it keeps the same length bounds as before.
   const text = asTrimmedString(body.text, LIMITS.text.max)
-  if (!text || text.length < LIMITS.text.min) {
+  if (text && text.length < LIMITS.text.min) {
     throw new Error(`Review text must be at least ${LIMITS.text.min} characters`)
   }
 
@@ -258,10 +271,12 @@ export function validateReviewFields(
 
 // ---- Anonymous Boost -------------------------------------------------------------
 // The optional fields a post-publish Boost may set, keyed by request name to the
-// reviews column it writes. Everything else — rating, text, university, owner,
+// reviews column it writes. Everything else — rating, university, owner,
 // recommend, tags, media, deleted_at — is absent on purpose: this map is the
-// allowlist the RPC also enforces.
+// allowlist the RPC also enforces. `text` is allowed so a guest can finish the
+// words that earn the thank-you gift; it keeps review-submit's bounds.
 export const BOOST_FIELD_COLUMNS = {
+  text: 'text',
   program: 'program',
   degreeLevel: 'degree_level',
   enrollmentStatus: 'enrollment_status',
@@ -303,6 +318,16 @@ export function validateBoostPatch(body: Record<string, unknown>): Record<string
 
     const value = body[key]
     switch (key) {
+      case 'text': {
+        // Never empty: a Boost can add words, not erase the review. Same
+        // bounds as review-submit.
+        const v = asTrimmedString(value, LIMITS.text.max)
+        if (!v || v.length < LIMITS.text.min) {
+          throw new Error(`Review text must be at least ${LIMITS.text.min} characters`)
+        }
+        patch[column] = v
+        break
+      }
       case 'program':
         patch[column] = asTrimmedString(value, LIMITS.program.max)
         break

@@ -13,6 +13,8 @@ export const RegistrationNudge = () => {
   useEffect(() => {
     // Wait for the session to load and never nudge signed-in users
     if (loading || user) return
+    // On phones the card sits over the review button, so only nudge on wider screens
+    if (!window.matchMedia('(min-width: 768px)').matches) return
     // Check if nudge has been shown this session
     const nudgeShown = sessionStorage.getItem('trc_nudge_shown')
     if (!nudgeShown) {

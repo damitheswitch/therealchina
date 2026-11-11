@@ -1,11 +1,22 @@
 [build]
   base = "frontend"
-  command = "npm run build"
+  # The SEO validator gates every deploy. It detects the production context
+  # itself (CONTEXT + URL) and validates indexable output there.
+  command = "npm run build && node scripts/validate_build.mjs"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
   SECRETS_SCAN_OMIT_KEYS = "VITE_SUPABASE_ANON_KEY,VITE_SUPABASE_URL,VITE_TURNSTILE_SITE_KEY"
+
+# Review thank-you gift: visible on deploy previews and the staging branch site,
+# which both use the trc-staging backend where the gift functions run.
+# Production keeps it off until the owner turns it on there.
+[context.deploy-preview.environment]
+  VITE_REVIEW_REWARD = "on"
+
+[context.staging.environment]
+  VITE_REVIEW_REWARD = "on"
 
 # SPA fallback + all routing lives in the generated frontend/dist/_redirects
 # (single source: scripts/generate_static.ts) — no [[redirects]] here, it

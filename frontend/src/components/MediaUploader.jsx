@@ -345,7 +345,7 @@ export const MediaUploader = ({ disabled, onStateChange, initialMedia = [] }) =>
           <p className="dropzone-text">
             {atMax ? (
               <>
-                <strong>Maximum attachments reached</strong> — remove one to add more
+                <strong>Maximum attachments reached.</strong> Remove one to add more.
               </>
             ) : items.length > 0 ? (
               <>
@@ -355,7 +355,7 @@ export const MediaUploader = ({ disabled, onStateChange, initialMedia = [] }) =>
               <>
                 <strong>Add photos or videos</strong>
                 <span className="dropzone-sub">
-                  Dorms, campus, food — help other students see it for themselves
+                  Dorms, campus, food: help other students see it for themselves
                 </span>
               </>
             )}
@@ -376,7 +376,7 @@ export const MediaUploader = ({ disabled, onStateChange, initialMedia = [] }) =>
             <div
               key={item.id}
               className={`media-tile status-${item.status}`}
-              title={item.error ? `${itemLabel(item)} — ${item.error}` : itemLabel(item)}
+              title={item.error ? `${itemLabel(item)}: ${item.error}` : itemLabel(item)}
               onClick={() => item.status === 'error' && handleRetry(item)}
             >
               {item.type === 'video' ? (
@@ -411,7 +411,7 @@ export const MediaUploader = ({ disabled, onStateChange, initialMedia = [] }) =>
                   <span className="tile-error-icon">
                     <Icons.AlertCircle />
                   </span>
-                  <span className="tile-status-label">Failed — click to retry</span>
+                  <span className="tile-status-label">Failed. Click to retry</span>
                 </div>
               )}
 

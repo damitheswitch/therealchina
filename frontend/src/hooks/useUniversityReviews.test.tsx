@@ -73,6 +73,15 @@ const seededPayload = (reviewCount: number, upvoteCounts: Record<string, number>
   upvoteCounts,
 })
 
+// Review queries that load or rank the page. Every such query starts with a
+// select; the engagement effect's live-count lookup (select
+// 'id, upvote_count') runs for seeded pages too and is excluded.
+const LIVE_COUNT_SELECT = 'id, upvote_count'
+const pageReviewQueries = () =>
+  calls.filter(
+    (c) => c.table === 'reviews' && c.method === 'select' && c.args[0] !== LIVE_COUNT_SELECT
+  )
+
 describe('useUniversityReviews', () => {
   it('slices the hydrated payload client-side for the requested page — no fetch', async () => {
     pdMock.payload = seededPayload(7)
@@ -84,8 +93,9 @@ describe('useUniversityReviews', () => {
     expect(result.current.reviews[0].id).toBe('r2')
     expect(result.current.totalCount).toBe(7)
     expect(result.current.pageCount).toBe(2)
-    // The whole point of the seeded path: zero review queries fire.
-    expect(calls.filter((c) => c.table === 'reviews')).toHaveLength(0)
+    // The whole point of the seeded path: no review page query fires (only
+    // the live upvote-count lookup for the visible ids).
+    expect(pageReviewQueries()).toHaveLength(0)
   })
 
   it('fetches non-hydrated pages with range + exact count + id tiebreak', async () => {
@@ -127,9 +137,11 @@ describe('useUniversityReviews', () => {
     expect(inCalls).toContainEqual(
       expect.objectContaining({ table: 'comments', args: ['review_id', ['r1', 'r2']] })
     )
+    // Live counts come from reviews.upvote_count, not the upvotes table.
     expect(inCalls).toContainEqual(
-      expect.objectContaining({ table: 'upvotes', args: ['review_id', ['r1', 'r2']] })
+      expect.objectContaining({ table: 'reviews', args: ['id', ['r1', 'r2']] })
     )
+    expect(calls.filter((c) => c.table === 'upvotes')).toHaveLength(0)
   })
 
   it('orders by rating desc with recency + id tiebreaks for the highest sort', async () => {
@@ -153,24 +165,19 @@ describe('useUniversityReviews', () => {
     )
   })
 
-  it('ranks by upvotes + detail via heads → votes → page-rows fetch for helpful', async () => {
+  it('ranks by upvote_count + detail via heads → page-rows fetch for helpful', async () => {
     pdMock.payload = null
     calls.length = 0
     clearTableResults()
-    const heads = [makeReview(1), makeReview(2), makeReview(3)]
+    const heads = [makeReview(1), { ...makeReview(2), upvote_count: 2 }, makeReview(3)]
     setTableResult('reviews', { data: heads, error: null, count: 3 })
-    setTableResult('upvotes', {
-      data: [{ review_id: 'r2' }, { review_id: 'r2' }],
-      error: null,
-      count: null,
-    })
 
     const { result } = renderHook(() => useUniversityReviews('uni-1', 1, 'helpful'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
-    // Detail-bearing heads query (the helpful rank reads detail areas), an
-    // upvotes batch for the full set, then full rows for the page ids — no
-    // range/count pagination on the ranking path.
+    // Detail-bearing heads query (heads carry upvote_count, so no votes
+    // query), then full rows for the page ids. No range/count pagination on
+    // the ranking path.
     expect(calls).toContainEqual(
       expect.objectContaining({
         table: 'reviews',
@@ -178,13 +185,7 @@ describe('useUniversityReviews', () => {
         args: [REVIEW_DETAIL_COLUMNS],
       })
     )
-    expect(calls).toContainEqual(
-      expect.objectContaining({
-        table: 'upvotes',
-        method: 'in',
-        args: ['review_id', ['r1', 'r2', 'r3']],
-      })
-    )
+    expect(calls.filter((c) => c.table === 'upvotes')).toHaveLength(0)
     // r2 has two upvotes; r3 (newest) beats r1 among the zero-vote tail.
     expect(result.current.reviews.map((r) => r.id)).toEqual(['r2', 'r3', 'r1'])
     expect(result.current.totalCount).toBe(3)
@@ -200,7 +201,7 @@ describe('useUniversityReviews', () => {
 
     // The payload's exported counts drive the rank — no reviews or votes
     // query is needed for ordering at all.
-    expect(calls.filter((c) => c.table === 'reviews' && c.method === 'select')).toHaveLength(0)
+    expect(pageReviewQueries()).toHaveLength(0)
     expect(result.current.reviews.map((r) => r.id)).toEqual(['r3', 'r2', 'r1'])
   })
 
@@ -215,7 +216,7 @@ describe('useUniversityReviews', () => {
 
     expect(result.current.resolvedSort).toBe('helpful')
     expect(result.current.reviews[0].id).toBe('r1')
-    expect(calls.filter((c) => c.table === 'reviews' && c.method === 'select')).toHaveLength(0)
+    expect(pageReviewQueries()).toHaveLength(0)
   })
 
   it('auto default stays newest below 5 seeded reviews', async () => {
@@ -228,10 +229,10 @@ describe('useUniversityReviews', () => {
 
     expect(result.current.resolvedSort).toBe('newest')
     expect(result.current.reviews.map((r) => r.id)).toEqual(['r3', 'r2', 'r1'])
-    expect(calls.filter((c) => c.table === 'reviews' && c.method === 'select')).toHaveLength(0)
+    expect(pageReviewQueries()).toHaveLength(0)
   })
 
-  it('unseeded auto probes heads, resolves helpful at >=5 and batches votes', async () => {
+  it('unseeded auto probes heads and resolves helpful at >=5 without a votes query', async () => {
     pdMock.payload = null
     calls.length = 0
     clearTableResults()
@@ -242,10 +243,9 @@ describe('useUniversityReviews', () => {
     await waitFor(() => expect(result.current.resolvedSort).toBe('helpful'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
-    // Heads select for the corpus + the rank's votes batch + the visible
-    // page's engagement votes batch = two upvotes .in calls.
-    const upvoteBatches = calls.filter((c) => c.table === 'upvotes' && c.method === 'in')
-    expect(upvoteBatches).toHaveLength(2)
+    // Ranking reads upvote_count from the heads; the engagement effect reads
+    // live counts from reviews. The upvotes table is never queried.
+    expect(calls.filter((c) => c.table === 'upvotes')).toHaveLength(0)
     expect(calls).toContainEqual(
       expect.objectContaining({
         table: 'reviews',
@@ -266,10 +266,11 @@ describe('useUniversityReviews', () => {
     await waitFor(() => expect(result.current.resolvedSort).toBe('newest'))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
-    // No ranking votes batch — only the engagement-counts batch for the
-    // hydrated page rows fires.
-    const upvoteBatches = calls.filter((c) => c.table === 'upvotes' && c.method === 'in')
-    expect(upvoteBatches).toHaveLength(1)
+    // Only the engagement effect's live-count batch on reviews fires.
+    expect(calls.filter((c) => c.table === 'upvotes')).toHaveLength(0)
+    expect(calls).toContainEqual(
+      expect.objectContaining({ table: 'reviews', method: 'in', args: ['id', ['r3', 'r2', 'r1']] })
+    )
     expect(result.current.totalCount).toBe(3)
   })
 })

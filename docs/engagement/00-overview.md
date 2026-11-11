@@ -1,16 +1,36 @@
 # Engagement Plan: Review Flow First, Incentives Next
 
 **Status:** Living master plan. Started 2026-10-05.
-**Owner decision so far:** fix the review flow before building incentives (see §2).
+**Latest owner decisions:** recorded 2026-10-13. Flow first remains the
+foundation; the pre-change baseline wait is waived. Next work is contact
+emails, a small contributor-recognition proposal, and community growth on TRC.
 **Audience:** the project owner and any coding agent picking up a piece of this.
+
+## Current coordination status (2026-10-13)
+
+| Phase                    | Current state and evidence                                                                                                                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 Measurement            | Released per owner confirmation; prior instrumentation/deploy evidence is recorded in Phase 1. No pre-change baseline was captured or will be invented. Continue measuring.                           |
+| 2 Fast review flow       | Released per owner confirmation. Earlier local/preview checks remain in the phase doc; this coordinating agent has not independently checked the production deployment.                               |
+| 3 Anonymous Boost        | Released per owner confirmation. Existing 24-hour limited edit window remains; no authorization change is approved for email convenience.                                                             |
+| 4 Review display         | Released per owner confirmation. Gold glow, not an extra badge; detailed means at least 3 of 7 areas.                                                                                                 |
+| 5 Contact emails         | Planned. Owner wants reminders before anonymous expiry and a thank-you at the existing detailed threshold, under one visible non-commercial contact policy.                                           |
+| 6 Q&A                    | Released per owner confirmation; owner reports no user posts yet. Community growth/format work is planned, not implemented.                                                                           |
+| 7 Recognition/incentives | Planning direction: Google-style recognition plus playful progress, rewarding contribution and helpfulness. Exact mechanics remain open. Dragon is an idea only; points/referrals/cash are undecided. |
+
+Owner confirmation is recorded as its own evidence source, not relabeled as
+independent staging or production verification. Agents must distinguish
+planned, implemented, verified on staging, and released. A report or merge
+alone does not prove a deployed feature works.
 
 ## How to use this doc
 
 - This is the **root plan**. It is deliberately too big to build as one PR.
 - Each workstream in §7 is a **phase** with its own file in this folder
-  (`01-measurement.md`, `02-review-flow.md`, ...). Do them in order, one per
-  coding session. Each phase file lists the **owner decisions** that must be
-  made before coding starts; an agent should not guess those.
+  (`01-measurement.md`, `02-review-flow.md`, ...). Use the session briefs and
+  integration order below, not a blind restart of released phases. Each file
+  separates **owner decisions**, proposed defaults, and unresolved choices;
+  an agent should not guess approvals.
 - When a decision changes, update this file in the same PR. Don't let it rot.
 - Agents: read `AGENTS.md` first. Its rules (environments, grants, copy rules,
   verification gate, SEO guardrails) override anything written here.
@@ -19,12 +39,13 @@
 
 ## 1. The problem
 
-- Students prefer **WeChat groups** over the site. The site has to feel more
-  useful than the group chat, not compete with it on speed.
-- The **community Q&A** (Reddit / Stack Overflow style) is a staging prototype
-  backed by `frontend/src/lib/communityMock.ts`, with no real tables. It has
-  the classic empty-room problem: nobody asks because nobody answers, and the
-  reverse.
+- Students prefer **WeChat groups** over the site. The owner explicitly wants
+  users to move their participation onto TRC, not merely use it as WeChat's
+  searchable archive. WeChat may still be an acquisition channel.
+- The **community Q&A** is reported live on production by the owner, with no
+  user posts yet. Its mock implementation was replaced by real tables/write
+  paths (see Phase 6). Empty content is a community activation issue, not a
+  reason to invent posts or claim the deployment failed.
 - **Friends asked to leave reviews didn't.** 3 to 4 people asked, near zero
   results.
 - **The review form is too long.** Observed directly: a friend on a Discord call
@@ -41,7 +62,10 @@
 
 Incentives are not dropped. They are workstream F, built on top of the fixed flow.
 
-## 3. Diagnosis of the current wizard
+## 3. Historical diagnosis of the legacy wizard
+
+This is the original 2026-10-05 diagnosis, not the released two-screen flow.
+File lengths, step numbers, and findings below describe that old layout.
 
 File: `frontend/src/components/ReviewWizard.tsx` (1643 lines, 5 steps,
 `TOTAL_STEPS = 5` at line 48). Background on why it was built this way:
@@ -72,10 +96,9 @@ Findings:
 - **Dropdowns everywhere** (`<select>` for years, language, degree, tuition,
   living cost, country, status, languages). Slow on phones, which is where this
   audience is (WeChat in-app browser).
-- **No active product analytics yet.** Phase 1 instrumentation is merged to
-  `staging` and `master`, but production tracking is waiting on the Netlify
-  deploy that applies the Umami CSP fix. Until that deploy and a baseline are
-  complete, the only durable signal is the drafts table (§5).
+- **Analytics were missing at diagnosis.** Phase 1 now records production
+  activation after the CSP fix. The owner reconfirmed release and waived the
+  baseline wait; use continuing Umami events plus read-only outcomes (§5).
 
 ## 4. What the leaders do (research summary)
 
@@ -174,8 +197,10 @@ order by progress;
 ```
 
 The same measurement file has an optional-field fill-rate query for the same
-review cohort. Capture the production browser baseline only after Phase 1
-events are released, then observe at least one complete pre-Phase-2 week.
+review cohort. The owner waived the pre-change baseline on 2026-10-11 and
+reaffirmed that decision on 2026-10-13. Measure continuously and record dated
+windows/raw counts when reviewing outcomes; no observation-week release wait.
+No missing pre-change baseline or before/after uplift may be invented.
 
 ### Tools that won't answer this
 
@@ -197,10 +222,18 @@ review, ban user) with an audit trail.
 
 ## 6. Target review flow
 
-Principle: **publish after the required fields, then collect the rest as an
-optional "Boost".** Same 6 required fields as today. Nothing optional is
-removed; it moves to after publishing, where each answer visibly improves a
-review that is already live.
+Principle: **publish a small real experience, then collect optional detail
+through Boost.** The Phase 2 publish minimum is university (including the
+not-listed proposal path), stars, and review text of at least 10 characters.
+Program, recommendation, and start year are not required. See Phase 2 for
+implemented fields, validation, and draft compatibility; do not restore the
+old six-field minimum.
+
+The following original screen/card sketch is historical where it differs from
+Phases 2 to 4. Those phase files describe the implemented direction. Anonymous
+email is currently optional on the story screen; anonymous reply notification
+is not established merely by collecting it. Phase 5 owns the new disclosure
+and routing changes.
 
 ### Screen 1: the essentials (all taps)
 
@@ -245,48 +278,54 @@ review that is already live.
 
 - Live preview card fills in as each card is answered, plus a **review
   strength** meter.
-- Reviews above a completeness threshold get a **"Detailed review"** mark and
-  rank higher under a helpfulness sort (`ReviewSortSelect.tsx`).
-- Later (workstream E): follow-up email for missing fields.
+- Detailed reviews use the existing **gold glow, no extra badge**. Phase 4
+  defines the score and helpfulness sort; the owner also chose its existing
+  3-of-7 threshold for Phase 5's completion thank-you.
+- Next (workstream E): reminder below that threshold and a thank-you when it
+  is reached. One non-commercial contact policy is the owner direction;
+  timing/permission/routing contracts need refinement before sending.
 
 ### The data trade-off, stated honestly
 
 Some people will publish and skip Boost, so the **average optional-field fill
 rate per review may drop**. The bet is that total useful data goes up because
 far more reviews get finished (today's observed outcome is a bored friend and
-zero data). Judge it with the §5 baseline queries: finished reviews × fill rate,
-before vs after.
+zero data). Judge continuing outcomes with dated published counts and
+optional-field fill rates. With no captured pre-change baseline, do not claim
+a measured before/after improvement.
 
 ## 7. Workstreams (each becomes its own sub-plan)
 
-| Phase  | Workstream                                                        | Depends on                | Plan                                         |
-| ------ | ----------------------------------------------------------------- | ------------------------- | -------------------------------------------- |
-| 1 (A)  | Measurement baseline + step events                                | none                      | [01-measurement.md](01-measurement.md)       |
-| 2 (B)  | Two-screen flow, success screen, Boost for signed-in users        | Phase 1 baseline captured | [02-review-flow.md](02-review-flow.md)       |
-| 3 (C)  | Anonymous Boost (claim-token edge function)                       | Phase 2                   | [03-anon-boost.md](03-anon-boost.md)         |
-| 4 (D)  | Display: "Detailed review" mark, strength meter, helpfulness sort | Phase 2                   | [04-review-display.md](04-review-display.md) |
-| 5 (E)  | Re-engagement email for missing fields                            | Phases 2, 3               | [05-reengagement.md](05-reengagement.md)     |
-| 6 (F1) | Q&A launch and cold start                                         | Phase 2 shipped           | [06-qa-cold-start.md](06-qa-cold-start.md)   |
-| 7 (F2) | Incentives (points, give-to-get, draw)                            | Phases 2, 4               | [07-incentives.md](07-incentives.md)         |
+| Phase  | Workstream                                                  | Depends on                                                           | Plan                                         |
+| ------ | ----------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------- |
+| 1 (A)  | Continuing Umami events + read-only outcome queries         | No baseline waiting gate                                             | [01-measurement.md](01-measurement.md)       |
+| 2 (B)  | Small publish minimum, success screen, signed-in Boost      | Measurement instrumentation                                          | [02-review-flow.md](02-review-flow.md)       |
+| 3 (C)  | Anonymous Boost with per-review capability                  | Phase 2                                                              | [03-anon-boost.md](03-anon-boost.md)         |
+| 4 (D)  | Gold glow, author strength meter, helpfulness sort          | Phase 2                                                              | [04-review-display.md](04-review-display.md) |
+| 5 (E)  | Contact policy, pre-expiry reminder, detailed-review thanks | Phases 2, 3, 4 + resolved delivery contract                          | [05-reengagement.md](05-reengagement.md)     |
+| 6 (F1) | Live Q&A + community growth/format proposal                 | Existing review/community paths; email invitations depend on Phase 5 | [06-qa-cold-start.md](06-qa-cold-start.md)   |
+| 7 (F2) | Contributor recognition proposal; other incentives parked   | Phases 2, 4; shared interfaces with Phases 5, 6                      | [07-incentives.md](07-incentives.md)         |
 
 The section letters (A to F) below are kept for reference; the phase files are
 the source of truth once they exist.
 
 ### A. Measurement
 
-- Run the §5 queries on prod, paste results into `A-measurement.md` with the date.
-- Add step-level events that also cover anonymous users. Options:
-  - Cookieless hosted analytics (Plausible / Umami style). Cheapest. **Open
-    question:** reachability from mainland China without VPN; test before
-    relying on it. Must not break prerender (no browser APIs during render,
-    `AGENTS.md` SEO rule 10).
-  - Own events table. Any anonymous write is abuse-sensitive per `AGENTS.md`,
-    so it must go through a gated Edge Function, not a direct table insert.
-    More work; only if hosted analytics is unreachable.
-- Events needed: `review_step_viewed {step}`, `review_published`,
-  `boost_card_completed {card}`, `boost_exited {after_card}`.
+- Selected: Umami Cloud plus read-only Supabase outcomes. Keep dated windows,
+  raw sample sizes, and fill-rate results in `01-measurement.md` when reviewed.
+- Its exact event contract/payload boundary is authoritative; the earlier
+  generic step-event sketch is not a second event schema.
+- Check mainland/WeChat reachability before treating observed events as
+  representative. Local/preview tracking stays off by default; only one
+  production Umami website currently exists.
+- No new analytics vendor, events table, user identification, or baseline
+  waiting period is approved by the latest planning sessions.
 
-### B. Review flow (frontend-heavy)
+### B. Review flow (historical implementation checklist)
+
+Phase 2 records the completed split, versioned drafts, and one-page edit
+layout. The checklist below explains original risks, not permission to
+rewrite the released flow independently in each new branch.
 
 Files: `ReviewWizard.tsx`, `StarInput.jsx`, `lib/reviewDrafts.ts`,
 `lib/reviewSubmit.ts`, `lib/reviewEdit.ts`, `global.css`.
@@ -308,7 +347,12 @@ Watch out for:
 - Consider splitting `ReviewWizard.tsx` (1643 lines) into
   `ReviewEssentials`, `ReviewStory`, `ReviewSuccess`, `BoostCards` as `.tsx`.
 
-### C. Anonymous Boost (security-sensitive)
+### C. Anonymous Boost (security-sensitive, original sketch)
+
+The sketch below is superseded by Phase 3's implemented per-review hashed
+capability, strict allowlist, atomic checks, and 24-hour window. In particular,
+its old tags/media suggestion is not the current allowlist. Phase 5 must
+preserve the implemented authorization model when adding email links.
 
 Problem: `review-manage` requires a signed-in JWT, so anonymous reviewers can't
 edit after publishing. The browser already holds a claim token
@@ -331,28 +375,39 @@ Tested locally → `trc-staging` → prod, per `AGENTS.md` environments.
 
 ### D. Display
 
-- "Detailed review" mark + completeness score. Compute in SQL (view or
-  generated column) or in `lib/`; add Vitest tests either way.
+- Gold glow only, no extra badge. The implemented Phase 4 helper in `lib/`
+  defines detail areas and the 3-of-7 rule; do not add a competing formula.
 - Helpfulness sort weighting completeness and upvotes.
 - SEO: review markup rules in `AGENTS.md` still apply (no aggregateRating for
   numbers not on the page; `universitySchema` count >= 2 stays).
 
 ### E. Re-engagement
 
-- Email: "Your review of X is live. Add your dorm rating, it takes 10 seconds."
-  Deep link to the missing Boost cards.
-- Reuse the `comment-notify` patterns (send log table, consent checks). Only
-  email people who consented.
+- Owner wants a reminder before anonymous Boost expiry and a thank-you when
+  the existing detailed threshold is reached. Exact hours/frequency and safe
+  recipient eligibility remain proposals in session 5A, not deployed rules.
+- One visible non-commercial contact policy, no thank-you-specific checkbox.
+  Do not silently repurpose legacy newsletter preferences or unverified
+  anonymous addresses. This is not a legal conclusion about sending rights.
+- Session 5A resolves policy, suppression, schedule, and same/different-browser
+  edit-link behavior; session 5B implements and verifies the approved loop.
 
-### F. Incentives and Q&A cold start (ideas, not committed)
+### F. Community growth and recognition
 
-- **Be WeChat's memory, not its rival.** Groups win on speed and presence; they
-  lose on search and memory (same question weekly, answers buried, invite-only
-  joining). Make every answer a clean, shareable link people paste back into
-  the group. Every paste is free distribution.
-- **Seed the Q&A as the founder.** Collect the 30-50 most repeated questions
-  from your groups, post them under your own account, answer them. Launch
-  `/community` with real content, not empty.
+- **Owner goal: move participation from WeChat onto TRC.** Shareable links can
+  bring people in, but repeat questions, answers, and review interactions
+  should happen on TRC. Chat and image/experience posts are options to assess,
+  not already approved features. Phase 6 sessions 6A/6B own that decision.
+- **Recognize contributions and helpfulness.** Google-style recognition plus
+  playful progress is the selected direction; exact badges/levels remain
+  open in Phase 7 sessions 7A/7B. The dragon is a parked completion-meter idea,
+  not an implementation task.
+- **Participate as the founder.** Collect genuine recurring questions with
+  appropriate permission, post under your own account, and answer them. The
+  earlier 30-50 question suggestion is an aspirational owner task, not a
+  release gate or completed dataset; the owner reports Q&A already live.
+- The following legacy incentive ideas remain unapproved options, not tasks
+  to code by implication:
 - **Soft give-to-get.** Review text stays public; cost and dorm breakdowns
   unlock after any contribution (a quick review or one answer). **SEO risk:**
   crawlers and users must see the same content or it is cloaking. Needs an SEO
@@ -367,7 +422,11 @@ Tested locally → `trc-staging` → prod, per `AGENTS.md` environments.
 - **Invite to answer** (Zhihu): route a question to reviewers of that
   university or city.
 
-## 8. Test plan for the new flow
+## 8. Test plan for the review flow
+
+These are validation goals, not claims that all tests were completed. Consult
+the phase evidence records; owner-reported release does not establish every
+human timing/device test below.
 
 - Five friends on a call, timed, the same way the problem was found.
   **Target: published in under 90 seconds.**
@@ -383,7 +442,52 @@ Moved: every open question now lives in the "Owner decisions" section of the
 phase it blocks (files 01-07). Record the answer there, with the date, before
 handing the phase to a coding agent.
 
-## 10. Changelog
+## 10. Separate session handoffs and integration order
+
+1. **5A: contact policy/delivery contract** in `05-reengagement.md`, then
+   **5B: email implementation** after the unresolved contract is approved.
+2. **7A: small contributor recognition proposal** in `07-incentives.md`, then
+   **7B: implement the selected minimum** after names/earning rules/benefits
+   are approved. No dragon, cash, points ledger, or gating by implication.
+3. **6A: community growth/format decision** in `06-qa-cold-start.md`, then
+   **6B: the selected community pilot** after scope approval. No blanket chat,
+   DM, media-upload, or social-feed implementation permission.
+
+Planning sessions 5A, 7A, and 6A may run concurrently. Each should read this
+master doc and its related phase interfaces, and end with decisions/open
+questions rather than a "shipped" claim. No specialized agents were launched
+by this coordinating session.
+
+Implementation uses separate feature branches/worktrees from current staging,
+not stale historical Phase 2/3/4 branches. Recommended integration: contact
+policy/email contract first, then approved recognition, then the community
+pilot. An on-site-only community pilot need not wait for email delivery, but
+must integrate the agreed recognition interface if it uses it.
+
+- Phase 5 owns disclosure, email preferences/suppression, sender, and link
+  landing changes. Phase 7 owns contributor eligibility/display. Phase 6
+  owns question discovery and any selected new posting/chat surfaces.
+- Shared review success/form/profile/notification components need one owner
+  at a time. Other branches should wait for the shared change, then merge
+  current staging into their feature branch and rerun the full integrated
+  gate. Do not independently rewrite the small publish flow or meter.
+- Inspect staging migration history before numbering/pushing migrations;
+  push from a clean worktree to avoid unrelated pending migration files.
+- Local tests, staging migrations/functions/deploy verification, then master
+  release. Record deploy identity and evidence for the combined build. No
+  production test data or test emails to real users; preserve SEO/privacy
+  protections and the analytics payload boundary.
+- Continue measurement without a baseline waiting gate. New notification or
+  incentive mechanisms are not proven effective until real data exists.
+
+## 11. Changelog
+
+- 2026-10-13: Recorded owner-reported releases for Phases 1-4 and 6, reaffirmed
+  the missing-baseline waiver, and synchronized stale release gates. Recorded
+  the TRC community migration goal, unified non-commercial contact direction,
+  pre-expiry anonymous reminder, existing detailed threshold for thanks, and
+  contribution/helpfulness recognition direction. Added separate session
+  briefs to Phases 5-7; exact mechanisms remain proposals where undecided.
 
 - 2026-10-05: Created. Decision: flow before incentives. Workstreams A-F defined.
 - 2026-10-05: Renamed to `00-overview.md`. Split into phase files 01-07, each

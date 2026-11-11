@@ -220,6 +220,108 @@ JOIN public.universities u ON u.slug = v.uni_slug OR v.uni_slug = ANY(u.slug_ali
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
+-- 3b. DEMO USERS, QUESTIONS AND FLIGHTS
+-- ============================================
+-- Local/staging only, never prod. Keep in sync with supabase/seed_demo.sql.
+-- ---- 5a. Demo users + profiles (flight owners and question authors) ----
+-- Fixed ids, no password (cannot sign in). Reserved .invalid email domain.
+INSERT INTO auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+)
+VALUES
+  ('00000000-0000-0000-0000-000000000000', 'd0e0c0de-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'demo-amina@demo.invalid', '', NOW(), '{"provider":"email","providers":["email"]}', '{"display_name":"Amina"}', NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000000', 'd0e0c0de-0000-4000-8000-000000000002', 'authenticated', 'authenticated', 'demo-chidi@demo.invalid', '', NOW(), '{"provider":"email","providers":["email"]}', '{"display_name":"Chidi"}', NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000000', 'd0e0c0de-0000-4000-8000-000000000003', 'authenticated', 'authenticated', 'demo-daniyar@demo.invalid', '', NOW(), '{"provider":"email","providers":["email"]}', '{"display_name":"Daniyar"}', NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000000', 'd0e0c0de-0000-4000-8000-000000000004', 'authenticated', 'authenticated', 'demo-rizky@demo.invalid', '', NOW(), '{"provider":"email","providers":["email"]}', '{"display_name":"Rizky"}', NOW(), NOW()),
+  ('00000000-0000-0000-0000-000000000000', 'd0e0c0de-0000-4000-8000-000000000005', 'authenticated', 'authenticated', 'demo-bilal@demo.invalid', '', NOW(), '{"provider":"email","providers":["email"]}', '{"display_name":"Bilal"}', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
+
+-- handle_new_user() creates a bare profile; fill in the demo details.
+INSERT INTO public.profiles (
+  id, display_name, home_country, current_status, social_handles,
+  is_discoverable, onboarding_completed
+)
+VALUES
+  ('d0e0c0de-0000-4000-8000-000000000001', 'Amina', 'Morocco', 'studying', '[{"platform":"instagram","handle":"demo_amina"}]'::jsonb, true, true),
+  ('d0e0c0de-0000-4000-8000-000000000002', 'Chidi', 'Nigeria', 'studying', '[{"platform":"instagram","handle":"demo_chidi"}]'::jsonb, true, true),
+  ('d0e0c0de-0000-4000-8000-000000000003', 'Daniyar', 'Kazakhstan', 'studying', '[{"platform":"telegram","handle":"demo_daniyar"}]'::jsonb, true, true),
+  ('d0e0c0de-0000-4000-8000-000000000004', 'Rizky', 'Indonesia', 'studying', '[{"platform":"instagram","handle":"demo_rizky"}]'::jsonb, true, true),
+  ('d0e0c0de-0000-4000-8000-000000000005', 'Bilal', 'Pakistan', 'studying', '[{"platform":"instagram","handle":"demo_bilal"}]'::jsonb, true, true)
+ON CONFLICT (id) DO UPDATE SET
+  display_name = EXCLUDED.display_name,
+  home_country = EXCLUDED.home_country,
+  current_status = EXCLUDED.current_status,
+  social_handles = EXCLUDED.social_handles,
+  is_discoverable = true,
+  onboarding_completed = true;
+
+-- ---- 5b. Demo community questions (all unanswered) ----
+-- University is looked up by slug; a missing slug just leaves it NULL.
+INSERT INTO public.qa_questions (
+  id, slug, title, body, category, city, university_id, author_id, created_at
+)
+VALUES
+  ('d0e0c0de-1000-4000-8000-000000000001', 'demo-dorm-curfew-international-students',
+   'Is there a dorm curfew for international students at Tsinghua?',
+   'I got my admission letter and I am trying to plan my first weeks. Someone told me the international dorms lock the gate at night. Is that true, and what happens if you come back late? I will be doing evening lab sessions so it matters to me.',
+   'housing', 'Beijing', (SELECT id FROM public.universities WHERE slug = 'tsinghua-university'),
+   'd0e0c0de-0000-4000-8000-000000000001', NOW() - INTERVAL '2 days'),
+  ('d0e0c0de-1000-4000-8000-000000000002', 'demo-csc-scholarship-timeline-first-payment',
+   'When does the first CSC scholarship payment actually arrive?',
+   'I start at Fudan in September on a CSC scholarship. My seniors say the stipend can take two months to start. How much cash should I bring so I can cover rent and food until then?',
+   'money', 'Shanghai', (SELECT id FROM public.universities WHERE slug = 'fudan-university'),
+   'd0e0c0de-0000-4000-8000-000000000002', NOW() - INTERVAL '4 days'),
+  ('d0e0c0de-1000-4000-8000-000000000003', 'demo-bank-card-without-chinese-phone-number',
+   'Can I open a Chinese bank card without a local phone number?',
+   'I land next week and have not bought a SIM yet. The bank near my dorm asked for a Chinese number last time I asked. Is there a bank that lets you open an account first and add the number later?',
+   'money', 'Hangzhou', (SELECT id FROM public.universities WHERE slug = 'zhejiang-university'),
+   'd0e0c0de-0000-4000-8000-000000000003', NOW() - INTERVAL '6 days'),
+  ('d0e0c0de-1000-4000-8000-000000000004', 'demo-part-time-work-rules-student-visa',
+   'What are the real rules for part-time work on a student visa?',
+   'I would like to tutor English a few hours a week. The school says students need written permission, but a friend says nobody asks. What is the actual process and what are the risks if you skip it?',
+   'work', 'Beijing', (SELECT id FROM public.universities WHERE slug = 'peking-university'),
+   'd0e0c0de-0000-4000-8000-000000000004', NOW() - INTERVAL '9 days'),
+  ('d0e0c0de-1000-4000-8000-000000000005', 'demo-student-health-insurance-claims',
+   'How do claims work with the compulsory student health insurance?',
+   'I paid for the insurance at registration, but I am not sure what it covers. If I go to a hospital outside campus, do I pay first and get the money back later? Does anyone have a receipt example?',
+   'health', 'Hangzhou', (SELECT id FROM public.universities WHERE slug = 'zhejiang-university'),
+   'd0e0c0de-0000-4000-8000-000000000005', NOW() - INTERVAL '12 days'),
+  ('d0e0c0de-1000-4000-8000-000000000006', 'demo-alipay-setup-foreign-passport',
+   'Alipay keeps rejecting my passport, what am I doing wrong?',
+   'I verified my name and passport number but the app says my identity cannot be confirmed. I do have a Chinese number now. Do I need a bank card linked first, or is there another step for foreigners?',
+   'tech', 'Shanghai', (SELECT id FROM public.universities WHERE slug = 'fudan-university'),
+   'd0e0c0de-0000-4000-8000-000000000001', NOW() - INTERVAL '15 days')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.qa_question_votes (user_id, question_id)
+VALUES
+  ('d0e0c0de-0000-4000-8000-000000000002', 'd0e0c0de-1000-4000-8000-000000000001'),
+  ('d0e0c0de-0000-4000-8000-000000000003', 'd0e0c0de-1000-4000-8000-000000000001'),
+  ('d0e0c0de-0000-4000-8000-000000000004', 'd0e0c0de-1000-4000-8000-000000000001'),
+  ('d0e0c0de-0000-4000-8000-000000000001', 'd0e0c0de-1000-4000-8000-000000000003'),
+  ('d0e0c0de-0000-4000-8000-000000000004', 'd0e0c0de-1000-4000-8000-000000000003'),
+  ('d0e0c0de-0000-4000-8000-000000000005', 'd0e0c0de-1000-4000-8000-000000000004'),
+  ('d0e0c0de-0000-4000-8000-000000000002', 'd0e0c0de-1000-4000-8000-000000000006')
+ON CONFLICT DO NOTHING;
+
+-- ---- 5c. Demo upcoming flights (dates relative to today) ----
+INSERT INTO public.flight_listings (
+  id, user_id, departure_country, arrival_country, departure_city, arrival_city,
+  departure_date, arrival_date, available_kgs, price_per_kg, currency, notes, is_active
+)
+VALUES
+  ('d0e0c0de-2000-4000-8000-000000000001', 'd0e0c0de-0000-4000-8000-000000000001', 'Morocco', 'China', 'Casablanca', 'Beijing',
+   CURRENT_DATE + 5, CURRENT_DATE + 6, 18, 60, 'CNY', 'Documents and small parcels only. Meet at the airport.', true),
+  ('d0e0c0de-2000-4000-8000-000000000002', 'd0e0c0de-0000-4000-8000-000000000002', 'Nigeria', 'China', 'Lagos', 'Guangzhou',
+   CURRENT_DATE + 14, CURRENT_DATE + 15, 25, 75, 'CNY', NULL, true),
+  ('d0e0c0de-2000-4000-8000-000000000003', 'd0e0c0de-0000-4000-8000-000000000003', 'Kazakhstan', 'China', 'Almaty', 'Shanghai',
+   CURRENT_DATE + 26, CURRENT_DATE + 26, 12, 50, 'CNY', 'Direct flight, one carry-on bag of space.', true),
+  ('d0e0c0de-2000-4000-8000-000000000004', 'd0e0c0de-0000-4000-8000-000000000004', 'China', 'Indonesia', 'Shanghai', 'Jakarta',
+   CURRENT_DATE + 40, CURRENT_DATE + 40, 20, 45, 'CNY', NULL, true)
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
 -- 4. NOTES
 -- ============================================
 -- university_stats is maintained by database triggers on reviews.

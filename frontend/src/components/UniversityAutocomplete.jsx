@@ -1,30 +1,34 @@
-import { supabase } from '../lib/supabaseClient'
+import {
+  loadUniversityIndex,
+  searchUniversityIndex,
+  useUniversityIndex,
+} from '../hooks/useUniversityIndex'
 import { Autocomplete } from './Autocomplete'
 
+// Searches the cached full university list in memory (see useUniversityIndex),
+// so suggestions appear without a network round trip per keystroke.
 const loadUniversities = async (query) => {
-  const words = query.trim().split(/\s+/).filter(Boolean)
-  if (words.length === 0) return []
-
-  // AND across words: every typed word must appear in the combined name/city text.
-  let dbQuery = supabase.from('universities').select('name, city, province, slug')
-  words.forEach((w) => {
-    dbQuery = dbQuery.ilike('search_text', `%${w}%`)
-  })
-
-  const { data, error } = await dbQuery.order('name').limit(50)
-
-  if (error) throw error
-
-  return (data || [])
+  const index = await loadUniversityIndex()
+  return searchUniversityIndex(index, query)
     .filter((u) => u.name && u.slug)
     .map((u) => ({
       key: u.slug,
       value: u.name,
-      label: `${u.name} — ${u.city || u.province || ''}`,
+      label: [u.name, u.city || u.province].filter(Boolean).join(', '),
       data: u,
     }))
 }
 
-export const UniversityAutocomplete = (props) => (
-  <Autocomplete {...props} loadOptions={loadUniversities} renderOption={(option) => option.label} />
-)
+export const UniversityAutocomplete = (props) => {
+  // Start fetching the list as soon as the field mounts.
+  useUniversityIndex()
+  return (
+    <Autocomplete
+      debounceMs={0}
+      notListedText="I can't find my university"
+      {...props}
+      loadOptions={loadUniversities}
+      renderOption={(option) => option.label}
+    />
+  )
+}

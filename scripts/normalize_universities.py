@@ -3,8 +3,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / 'import_universities.csv'
-OUT_CSV = ROOT / 'universities_seed_clean.csv'
+SRC = ROOT / 'data' / 'import_universities.csv'
+OUT_CSV = ROOT / 'data' / 'universities_seed_clean.csv'
 OUT_SQL = ROOT / 'supabase' / 'seed_universities.sql'
 
 # Preferred short slugs for the app's route style

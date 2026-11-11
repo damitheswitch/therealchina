@@ -1,14 +1,17 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useUniversity } from '../hooks/useUniversity'
 import { useUniversityReviewSummary } from '../hooks/useUniversityReviewSummary'
 import { REVIEW_PAGE_SIZE } from '../hooks/useUniversityReviews'
 import { useUniversityStats } from '../hooks/useUniversityStats'
+import { useTopReviewQuote } from '../hooks/useTopReviewQuote'
+import { truncateQuote } from '../lib/reviewQuote'
 import { buildReviewSummary } from '../lib/reviewSummary'
 import { buildUniversityExtras } from '../lib/universityExtras'
 import { StarRating } from '../components/StarRating'
 import { SealBadge } from '../components/SealBadge'
 import { ReviewSummary } from '../components/ReviewSummary'
+import { InlineRatePrompt } from '../components/InlineRatePrompt'
 import { UniversityReviews } from '../components/UniversityReviews'
 import {
   UniversityPrograms,
@@ -40,6 +43,8 @@ export const UniversityPage = () => {
   const summary = useMemo(() => buildReviewSummary(summaryRows), [summaryRows])
   const extras = useMemo(() => buildUniversityExtras(summaryRows), [summaryRows])
   const [rankingDetailsOpen, setRankingDetailsOpen] = useState(false)
+  const topQuote = useTopReviewQuote(universityId, hydratedReviews)
+  const factsRef = useRef(null)
 
   useEffect(() => {
     setRankingDetailsOpen(false)
@@ -52,6 +57,13 @@ export const UniversityPage = () => {
   // page change can never blank the whole page.
   const summaryReady = loadedUniversityId === universityId
   const loading = uniLoading || (university ? statsLoading || !summaryReady : false)
+
+  // Phones keep "Rankings and facts" collapsed so the student voice leads;
+  // desktop opens it. Done after mount so the server HTML stays identical.
+  useEffect(() => {
+    const el = factsRef.current
+    if (el && window.matchMedia('(min-width: 768px)').matches) el.open = true
+  }, [slug, loading])
 
   if (loading) {
     return (
@@ -111,6 +123,25 @@ export const UniversityPage = () => {
       ? rankings.shanghai_url
       : 'https://www.shanghairanking.cn/rankings/bcur'
 
+  const hasFacts =
+    rankNational !== null || rankWorld !== null || shanghaiScore !== null || prestigeTags.length > 0
+
+  const recommendPct = summary.recommend.answered > 0 ? summary.recommend.yesPct : null
+
+  const ratingEmpty = (
+    <div className="uni-profile-rating-block uni-profile-rating-empty">
+      <div className="rating-info">
+        <span className="empty-stars">
+          <span className="empty-dash" aria-hidden="true">
+            —
+          </span>
+          <StarRating rating={0} sizeClass="stars-lg" />
+        </span>
+        <span className="count">No reviews yet. Ask a current student below.</span>
+      </div>
+    </div>
+  )
+
   const ratingBlock =
     reviewCount > 0 ? (
       <div className="uni-profile-rating-block">
@@ -121,6 +152,11 @@ export const UniversityPage = () => {
             Based on {reviewCount} review{reviewCount !== 1 ? 's' : ''}
           </span>
         </div>
+        {recommendPct !== null && (
+          <span className="rating-programs rating-recommend">
+            <strong>{recommendPct}%</strong> recommend
+          </span>
+        )}
         {extras.programCount > 0 && (
           <span className="rating-programs">
             {extras.programCount} program{extras.programCount === 1 ? '' : 's'} represented
@@ -128,21 +164,37 @@ export const UniversityPage = () => {
         )}
         {hasVerified && <SealBadge large={true} />}
       </div>
+    ) : null
+
+  const scrollToAsk = (e) => {
+    e.preventDefault()
+    document.getElementById('ask-student')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => {
+      document.getElementById('ask-uni-question')?.focus({ preventScroll: true })
+    }, 450)
+  }
+
+  const heroCta =
+    reviewCount > 0 ? (
+      <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
+        <Icons.Pen /> Leave a Review
+      </Link>
     ) : (
-      <div className="uni-profile-rating-block">
-        <span className="rating-number">—</span>
-        <div className="rating-info">
-          <StarRating rating={0} sizeClass="stars-lg" />
-          <span className="count">No reviews yet — be the first!</span>
-        </div>
-      </div>
+      <>
+        <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
+          <Icons.Pen /> Be the first to review
+        </Link>
+        <a href="#ask-student" onClick={scrollToAsk} className="btn btn-outline btn-lg">
+          <Icons.Chat /> Ask a Student
+        </a>
+      </>
     )
 
   const seoTitle = `${university.name} Reviews`
   const seoDescription =
     reviewCount > 0
       ? `${university.name} in ${location}: rated ${avgRating.toFixed(1)}/5 by ${reviewCount} international student${reviewCount !== 1 ? 's' : ''}. Honest reviews on academics, costs, campus life and support.`
-      : `${university.name} in ${location}. Honest reviews by international students — academics, costs, campus life and support.`
+      : `${university.name} in ${location}. Honest reviews by international students: academics, costs, campus life and support.`
 
   // SEO sources: hydrated pages carry every review (with text) in the
   // prerender payload, so schema markup + the indexable rule stay exact there.
@@ -221,134 +273,143 @@ export const UniversityPage = () => {
               </div>
               <h1>{university.name}</h1>
               <div className="uni-profile-name-zh">{university.name_zh}</div>
-
-              {(rankNational !== null ||
-                rankWorld !== null ||
-                shanghaiScore !== null ||
-                prestigeTags.length > 0) && (
-                <div className="uni-profile-facts">
-                  {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
-                    <div className="uni-profile-fact">
-                      <span className="uni-profile-fact-label">National ranking</span>
-                      <div className="uni-profile-ranks">
-                        {rankNational !== null && (
-                          <span className="uni-profile-rank">
-                            <strong>#{rankNational}</strong> in China
-                          </span>
-                        )}
-                        {rankWorld !== null && (
-                          <span className="uni-profile-rank">
-                            <strong>#{rankWorld}</strong> worldwide
-                          </span>
-                        )}
-                      </div>
-                      {shanghaiScore !== null &&
-                        (hasRankingDetails ? (
-                          <button
-                            type="button"
-                            className="uni-profile-score-toggle"
-                            onClick={() => setRankingDetailsOpen((open) => !open)}
-                            aria-expanded={rankingDetailsOpen}
-                            aria-controls="uni-ranking-details"
-                          >
-                            <span>Ranking score</span>
-                            <strong>{shanghaiScore}</strong>
-                            <span className="uni-profile-score-hint">
-                              {rankingDetailsOpen ? 'Hide breakdown' : 'View breakdown'}
-                            </span>
-                            <span className="uni-profile-score-icon" aria-hidden="true">
-                              <Icons.Chevron />
-                            </span>
-                          </button>
-                        ) : (
-                          <span className="uni-profile-score-static">
-                            <span>Ranking score</span>
-                            <strong>{shanghaiScore}</strong>
-                          </span>
-                        ))}
-                    </div>
-                  )}
-                  {prestigeTags.length > 0 && (
-                    <div className="uni-profile-fact">
-                      <span className="uni-profile-fact-label">National distinctions</span>
-                      <div className="uni-profile-distinctions">
-                        {prestigeTags.map((tag, index) => (
-                          <Fragment key={tag}>
-                            {index > 0 && (
-                              <span className="uni-profile-distinction-sep" aria-hidden="true">
-                                ·
-                              </span>
-                            )}
-                            <span
-                              className="uni-profile-distinction"
-                              title={
-                                tag === '双一流'
-                                  ? 'Double First-Class initiative'
-                                  : `Project ${tag}`
-                              }
-                            >
-                              {tag === '双一流' ? 'Double First-Class' : tag}
-                            </span>
-                          </Fragment>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {hasRankingDetails && (
-                    <div
-                      className="uni-profile-rank-details"
-                      id="uni-ranking-details"
-                      hidden={!rankingDetailsOpen}
-                    >
-                      <div className="uni-profile-rank-details-head">
-                        <span>ShanghaiRanking breakdown</span>
-                      </div>
-                      <RankingIndicatorList indicators={indicators} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {(university.website ||
-                rankNational !== null ||
-                rankWorld !== null ||
-                shanghaiScore !== null) && (
-                <div className="uni-profile-links">
-                  {university.website && (
-                    <a
-                      href={university.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="uni-profile-link"
-                    >
-                      Official website <span aria-hidden="true">↗</span>
-                    </a>
-                  )}
-                  {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
-                    <a
-                      href={rankUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="uni-profile-link"
-                    >
-                      ShanghaiRanking profile <span aria-hidden="true">↗</span>
-                    </a>
-                  )}
-                </div>
-              )}
             </div>
           </div>
-          <Link to={`/review?uni=${university.slug}`} className="btn btn-primary btn-lg">
-            <Icons.Pen /> Leave a Review
-          </Link>
+          {reviewCount === 0 ? (
+            <div className="uni-profile-cta-col">
+              {heroCta}
+              {ratingEmpty}
+            </div>
+          ) : (
+            heroCta
+          )}
         </div>
         {ratingBlock}
-        <Link
-          to={`/review?uni=${university.slug}`}
-          className="btn btn-primary btn-lg uni-profile-mobile-cta"
-        >
-          <Icons.Pen /> Leave a Review
-        </Link>
+        {reviewCount === 0 && ratingEmpty}
+        {topQuote && (
+          <figure className="uni-top-quote">
+            <StarRating rating={topQuote.rating} />
+            <blockquote>&ldquo;{truncateQuote(topQuote.text, 220)}&rdquo;</blockquote>
+            <figcaption>
+              <a href="#reviews">Read all reviews</a>
+            </figcaption>
+          </figure>
+        )}
+        <div className="uni-profile-mobile-cta">{heroCta}</div>
+        {(hasFacts || university.website) && (
+          <details className="uni-facts-details" ref={factsRef}>
+            <summary>Rankings and facts</summary>
+            {hasFacts && (
+              <div className="uni-profile-facts">
+                {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
+                  <div className="uni-profile-fact">
+                    <span className="uni-profile-fact-label">National ranking</span>
+                    <div className="uni-profile-ranks">
+                      {rankNational !== null && (
+                        <span className="uni-profile-rank">
+                          <strong>#{rankNational}</strong> in China
+                        </span>
+                      )}
+                      {rankWorld !== null && (
+                        <span className="uni-profile-rank">
+                          <strong>#{rankWorld}</strong> worldwide
+                        </span>
+                      )}
+                    </div>
+                    {shanghaiScore !== null &&
+                      (hasRankingDetails ? (
+                        <button
+                          type="button"
+                          className="uni-profile-score-toggle"
+                          onClick={() => setRankingDetailsOpen((open) => !open)}
+                          aria-expanded={rankingDetailsOpen}
+                          aria-controls="uni-ranking-details"
+                        >
+                          <span>Ranking score</span>
+                          <strong>{shanghaiScore}</strong>
+                          <span className="uni-profile-score-hint">
+                            {rankingDetailsOpen ? 'Hide breakdown' : 'View breakdown'}
+                          </span>
+                          <span className="uni-profile-score-icon" aria-hidden="true">
+                            <Icons.Chevron />
+                          </span>
+                        </button>
+                      ) : (
+                        <span className="uni-profile-score-static">
+                          <span>Ranking score</span>
+                          <strong>{shanghaiScore}</strong>
+                        </span>
+                      ))}
+                  </div>
+                )}
+                {prestigeTags.length > 0 && (
+                  <div className="uni-profile-fact">
+                    <span className="uni-profile-fact-label">National distinctions</span>
+                    <div className="uni-profile-distinctions">
+                      {prestigeTags.map((tag, index) => (
+                        <Fragment key={tag}>
+                          {index > 0 && (
+                            <span className="uni-profile-distinction-sep" aria-hidden="true">
+                              ·
+                            </span>
+                          )}
+                          <span
+                            className="uni-profile-distinction"
+                            title={
+                              tag === '双一流' ? 'Double First-Class initiative' : `Project ${tag}`
+                            }
+                          >
+                            {tag === '双一流' ? 'Double First-Class' : tag}
+                          </span>
+                        </Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {hasRankingDetails && (
+                  <div
+                    className="uni-profile-rank-details"
+                    id="uni-ranking-details"
+                    hidden={!rankingDetailsOpen}
+                  >
+                    <div className="uni-profile-rank-details-head">
+                      <span>ShanghaiRanking breakdown</span>
+                    </div>
+                    <RankingIndicatorList indicators={indicators} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {(university.website ||
+              rankNational !== null ||
+              rankWorld !== null ||
+              shanghaiScore !== null) && (
+              <div className="uni-profile-links">
+                {university.website && (
+                  <a
+                    href={university.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="uni-profile-link"
+                  >
+                    Official website <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+                {(rankNational !== null || rankWorld !== null || shanghaiScore !== null) && (
+                  <a
+                    href={rankUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="uni-profile-link"
+                  >
+                    ShanghaiRanking profile <span aria-hidden="true">↗</span>
+                  </a>
+                )}
+              </div>
+            )}
+          </details>
+        )}
       </div>
 
       <DraftReminder university={university} />
@@ -366,6 +427,7 @@ export const UniversityPage = () => {
           <UniversityGuides />
         </aside>
         <div className="uni-reviews-cell">
+          <InlineRatePrompt key={`rate-${university.id}`} university={university} />
           <UniversityReviews key={university.id} university={university} />
         </div>
       </div>

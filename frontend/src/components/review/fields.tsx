@@ -1,18 +1,31 @@
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { MediaItem, SubScores } from '../../lib/reviewSubmit'
 import { TUITION_RANGES, LIVING_COSTS } from '../../lib/constants'
 import { ENROLLMENT_OPTIONS, FUNDING_OPTIONS } from '../../lib/reviewDisplay'
 import { formatLocation } from '../../lib/chinaDivisions'
+import { SITE } from '../../lib/seo/site'
+import { describeMissing, suggestEmailFix, type RewardMissing } from '../../lib/reviewReward'
 import {
   DEGREE_LEVELS,
   INSTRUCTION_LANGS,
   MORE_TAGS,
+  POLARITY_TOPICS,
+  POPULAR_PROGRAMS,
   POPULAR_TAGS,
+  RATING_VIBE,
   RECOMMEND_OPTIONS,
-  STORY_STARTERS,
   SUBSCORE_INPUT_FIELDS,
   allYearOptions,
   recentYearChips,
+  derivePolarityText,
+  applyDegreeLevel,
+  applyEndYear,
+  applyPolarityPick,
+  applyProgram,
+  applyStartYear,
+  type PolarityDir,
+  type PolarityPicks,
+  type PolarityTopicKey,
 } from '../../lib/reviewFlow'
 import type { ReviewForm } from '../../hooks/useReviewForm'
 import { UniversityAutocomplete } from '../UniversityAutocomplete'
@@ -37,12 +50,13 @@ const ChipSelect = ({
   onSelect: (value: string) => void
   allowDeselect?: boolean
 }) => (
-  <div className="chip-row">
+  <div className="chip-row" role="group">
     {options.map((opt) => (
       <button
         key={opt}
         type="button"
         className={`chip ${value === opt ? 'selected' : ''}`}
+        aria-pressed={value === opt}
         onClick={() => onSelect(allowDeselect && value === opt ? '' : opt)}
       >
         {opt}
@@ -139,14 +153,31 @@ export const UniversityField = ({
   )
 }
 
-export const RatingField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label">
-      Your overall rating <span className="req-dot">*</span>
-    </label>
-    <StarInput value={form.values.rating} onChange={(v: number) => form.set('rating', v)} />
-  </div>
-)
+export const RatingField = ({ form }: { form: ReviewForm }) => {
+  const vibe = RATING_VIBE[form.values.rating]
+  return (
+    <div className="form-group">
+      <label className="form-label">
+        Your overall rating <span className="req-dot">*</span>
+      </label>
+      <div className={`vibe-card${vibe ? ' rated' : ''}`}>
+        <StarInput value={form.values.rating} onChange={(v: number) => form.set('rating', v)} />
+        <div className="vibe-line" aria-live="polite">
+          {vibe ? (
+            <>
+              <span className="vibe-emoji" key={form.values.rating}>
+                {vibe.emoji}
+              </span>
+              <span>{vibe.text}</span>
+            </>
+          ) : (
+            <span className="vibe-idle">Tap a star to rate your experience</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export const RecommendField = ({
   form,
@@ -184,28 +215,54 @@ export const RecommendField = ({
 
 // ---- Studies & timing ------------------------------------------------------------
 
-export const ProgramField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label" htmlFor="program">
-      Program
-    </label>
-    <ProgramAutocomplete
-      id="program"
-      placeholder="e.g. Computer Science"
-      value={form.values.program}
-      onChange={(v: string) => form.set('program', v)}
-    />
-    <span className="form-hint">Your major / program name.</span>
-  </div>
-)
+// Hybrid program picker: the tracks most international students take are
+// one-tap chips; the full list stays reachable through the autocomplete.
+// applyProgram keeps the Chinese Language inference in one place.
+// The search input is a filter, not the field: keystrokes narrow the list and
+// only a pick (or committing typed text on blur/Enter) writes `program`.
+export const ProgramField = ({ form }: { form: ReviewForm }) => {
+  const [query, setQuery] = useState(form.values.program)
+  useEffect(() => setQuery(form.values.program), [form.values.program])
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor="program">
+        Major / program
+      </label>
+      <div className="chip-row" role="group" style={{ marginBottom: '0.5rem' }}>
+        {POPULAR_PROGRAMS.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            className={`chip ${form.values.program === p.value ? 'selected' : ''}`}
+            aria-pressed={form.values.program === p.value}
+            onClick={() => form.applyValues((cur) => applyProgram(cur, p.value))}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <ProgramAutocomplete
+        id="program"
+        placeholder="Or search any program, e.g. Architecture, Law, Finance"
+        value={query}
+        onChange={setQuery}
+        onSelect={(opt: { value?: string }) =>
+          form.applyValues((cur) => applyProgram(cur, opt.value ?? ''))
+        }
+        onCommitText={(text: string) => form.applyValues((cur) => applyProgram(cur, text.trim()))}
+      />
+      <span className="form-hint">Tap a popular track or search the full list.</span>
+    </div>
+  )
+}
 
 export const DegreeField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
-    <label className="form-label">Degree level</label>
+    <label className="form-label">Degree / track</label>
     <ChipSelect
       options={DEGREE_LEVELS}
       value={form.values.degreeLevel}
-      onSelect={(v) => form.set('degreeLevel', v)}
+      onSelect={(v) => form.applyValues((cur) => applyDegreeLevel(cur, v))}
     />
   </div>
 )
@@ -213,12 +270,13 @@ export const DegreeField = ({ form }: { form: ReviewForm }) => (
 export const EnrollmentField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group" style={{ marginBottom: 0 }}>
     <label className="form-label">Enrollment status</label>
-    <div className="segmented">
+    <div className="segmented" role="group" aria-label="Enrollment status">
       {ENROLLMENT_OPTIONS.map((opt) => (
         <button
           key={opt.value}
           type="button"
           className={`seg ${form.values.enrollmentStatus === opt.value ? 'selected' : ''}`}
+          aria-pressed={form.values.enrollmentStatus === opt.value}
           onClick={() =>
             form.set(
               'enrollmentStatus',
@@ -263,14 +321,18 @@ const YearChips = ({
             key={y}
             type="button"
             className={`chip ${value === y ? 'selected' : ''}`}
-            onClick={() => onChange(y)}
+            onClick={() => {
+              setShowAll(false)
+              onChange(y)
+            }}
           >
             {y}
           </button>
         ))}
         <button
           type="button"
-          className={`chip ${showAll || (value !== '' && !isRecent) ? 'selected' : ''}`}
+          className={`chip ${value !== '' && !isRecent ? 'selected' : ''}`}
+          aria-expanded={showAll || (value !== '' && !isRecent)}
           onClick={() => setShowAll((s) => !s)}
         >
           Earlier…
@@ -297,12 +359,15 @@ const YearChips = ({
 }
 
 export const YearsField = ({ form }: { form: ReviewForm }) => {
-  const { values, set } = form
+  const { values } = form
   return (
     <div style={{ display: 'flex', gap: 'var(--sp-1)', flexWrap: 'wrap' }}>
       <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
         <label className="form-label">Start year</label>
-        <YearChips value={values.startYear} onChange={(v) => set('startYear', v)} />
+        <YearChips
+          value={values.startYear}
+          onChange={(v) => form.applyValues((cur) => applyStartYear(cur, v))}
+        />
       </div>
       <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
         <label className="form-label">
@@ -310,13 +375,94 @@ export const YearsField = ({ form }: { form: ReviewForm }) => {
         </label>
         <YearChips
           value={values.endYear}
-          onChange={(v) => set('endYear', v)}
+          onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
           emptyLabel="Still studying"
         />
       </div>
     </div>
   )
 }
+
+// Standalone year pickers for screens that ask one question at a time.
+export const StartYearField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">
+      Start year <span className="form-hint-inline">optional</span>
+    </label>
+    <YearChips
+      value={form.values.startYear}
+      onChange={(v) => form.applyValues((cur) => applyStartYear(cur, v))}
+    />
+  </div>
+)
+
+// Shown once a start year is picked: one tap says whether the reviewer is still
+// there. "I finished" reveals the finish-year chips. Without this the context
+// line has no honest end to show. Exchange students answer through their own
+// enrollment status, so the row steps aside for them.
+export const StudyStatusField = ({ form }: { form: ReviewForm }) => {
+  const { startYear, enrollmentStatus, endYear } = form.values
+  if (startYear === '' || enrollmentStatus === 'exchange') return null
+  const finished = enrollmentStatus === 'alumni' || endYear !== ''
+  const stillThere = enrollmentStatus === 'current' && !finished
+  return (
+    <div className="form-group">
+      <span className="form-label" id="study-status-label">
+        Still studying here? <span className="form-hint-inline">optional</span>
+      </span>
+      <div className="chip-row" role="group" aria-labelledby="study-status-label">
+        <button
+          type="button"
+          className={`chip ${stillThere ? 'selected' : ''}`}
+          aria-pressed={stillThere}
+          onClick={() => {
+            form.set('enrollmentStatus', stillThere ? '' : 'current')
+            form.set('endYear', '')
+          }}
+        >
+          Yes, still here
+        </button>
+        <button
+          type="button"
+          className={`chip ${finished ? 'selected' : ''}`}
+          aria-pressed={finished}
+          onClick={() => {
+            if (finished) {
+              form.set('enrollmentStatus', '')
+              form.set('endYear', '')
+            } else {
+              form.set('enrollmentStatus', 'alumni')
+            }
+          }}
+        >
+          I finished
+        </button>
+      </div>
+      {finished && (
+        <div style={{ marginTop: '0.75rem' }}>
+          <span className="form-label">Finish year</span>
+          <YearChips
+            value={endYear}
+            onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+export const EndYearField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <label className="form-label">
+      Finished year <span className="form-hint-inline">if done</span>
+    </label>
+    <YearChips
+      value={form.values.endYear}
+      onChange={(v) => form.applyValues((cur) => applyEndYear(cur, v))}
+      emptyLabel="Still studying"
+    />
+  </div>
+)
 
 export const LanguageField = ({ form }: { form: ReviewForm }) => (
   <div className="form-group">
@@ -333,32 +479,23 @@ export const LanguageField = ({ form }: { form: ReviewForm }) => (
 
 export const MoneyFields = ({ form }: { form: ReviewForm }) => {
   const { values, set } = form
+  // A full scholarship covers tuition, so the tuition row steps aside instead
+  // of asking a question whose answer is already known.
+  const tuitionCovered =
+    Boolean(values.fundingType) &&
+    values.fundingType !== 'self' &&
+    values.fundingCoverage === 'full'
   return (
     <>
       <div className="form-group">
-        <label className="form-label">Tuition per year</label>
-        <ChipSelect
-          options={TUITION_RANGES}
-          value={values.tuitionRange}
-          onSelect={(v) => set('tuitionRange', v)}
-        />
-      </div>
-      <div className="form-group">
-        <label className="form-label">Monthly living cost</label>
-        <ChipSelect
-          options={LIVING_COSTS}
-          value={values.livingCostRange}
-          onSelect={(v) => set('livingCostRange', v)}
-        />
-      </div>
-      <div className="form-group" style={{ marginBottom: 0 }}>
         <label className="form-label">Funding</label>
-        <div className="segmented">
+        <div className="segmented" role="group" aria-label="Funding">
           {FUNDING_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               className={`seg ${values.fundingType === opt.value ? 'selected' : ''}`}
+              aria-pressed={values.fundingType === opt.value}
               onClick={() => {
                 set('fundingType', values.fundingType === opt.value ? '' : opt.value)
                 if (opt.value === 'self') set('fundingCoverage', '')
@@ -373,10 +510,11 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
             <label className="form-label" style={{ marginBottom: '.3rem' }}>
               Coverage
             </label>
-            <div className="segmented">
+            <div className="segmented" role="group" aria-label="Coverage">
               <button
                 type="button"
                 className={`seg ${values.fundingCoverage === 'partial' ? 'selected' : ''}`}
+                aria-pressed={values.fundingCoverage === 'partial'}
                 onClick={() => set('fundingCoverage', 'partial')}
               >
                 Partial
@@ -384,6 +522,7 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
               <button
                 type="button"
                 className={`seg ${values.fundingCoverage === 'full' ? 'selected' : ''}`}
+                aria-pressed={values.fundingCoverage === 'full'}
                 onClick={() => set('fundingCoverage', 'full')}
               >
                 Full
@@ -392,61 +531,154 @@ export const MoneyFields = ({ form }: { form: ReviewForm }) => {
           </div>
         )}
       </div>
+      <div className="form-group">
+        <label className="form-label">Monthly living cost</label>
+        <ChipSelect
+          options={LIVING_COSTS}
+          value={values.livingCostRange}
+          onSelect={(v) => set('livingCostRange', v)}
+        />
+      </div>
+      <div className="form-group" style={{ marginBottom: 0 }}>
+        <label className="form-label">Tuition per year</label>
+        {tuitionCovered ? (
+          <p className="form-hint" style={{ marginTop: 0 }}>
+            Covered by your scholarship.
+          </p>
+        ) : (
+          <ChipSelect
+            options={TUITION_RANGES}
+            value={values.tuitionRange}
+            onSelect={(v) => set('tuitionRange', v)}
+          />
+        )}
+      </div>
     </>
   )
 }
 
 // ---- Story ---------------------------------------------------------------------
 
+// Separate small bar for the six picks. It fills on its own and also feeds the
+// bigger detail bar above, because each pick fills tags, pros and cons.
+const PickMeter = ({ picks }: { picks: PolarityPicks }) => {
+  const n = Object.values(picks).filter(Boolean).length
+  const total = POLARITY_TOPICS.length
+  return (
+    <div className="pick-meter">
+      <div
+        className="pick-bar"
+        role="progressbar"
+        aria-label="Rows picked"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={n}
+      >
+        <div className="pick-bar-fill" style={{ width: `${(n / total) * 100}%` }} />
+      </div>
+      <span className="pick-count" aria-live="polite">
+        {n}/{total} picked{n < 2 && ', tap at least 2'}
+      </span>
+    </div>
+  )
+}
+
+// Six 👍 / 👎 rows covering the things students actually compare. Each tap
+// fans out into tags, pros/cons, and the auto-written review below it, so the
+// reader gets structured signal even when the reviewer never types a word.
+export const PolarityMatrixField = ({ form }: { form: ReviewForm }) => (
+  <div className="form-group">
+    <span className="sr-only">What stood out. Tap a side per row.</span>
+    <PickMeter picks={form.values.polarity} />
+    <div className="polarity-grid">
+      {POLARITY_TOPICS.map((topic) => {
+        const pick = form.values.polarity[topic.key as PolarityTopicKey]
+        return (
+          <div className="polarity-row" key={topic.key}>
+            <span className="pol-topic">
+              {topic.emoji} {topic.label}
+            </span>
+            <div className="pol-options" role="group" aria-label={topic.label}>
+              {(['pos', 'neg'] as PolarityDir[]).map((dir) => {
+                const side = topic[dir]
+                return (
+                  <button
+                    key={dir}
+                    type="button"
+                    className={`pol-btn ${dir}${pick === dir ? ' selected' : ''}`}
+                    aria-pressed={pick === dir}
+                    onClick={() =>
+                      form.applyValues((cur) =>
+                        applyPolarityPick(cur, topic.key as PolarityTopicKey, dir)
+                      )
+                    }
+                  >
+                    {dir === 'pos' ? '👍' : '👎'} {side.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  </div>
+)
+
 export const ReviewTextField = ({
   form,
-  starters = false,
+  story = false,
+  placeholder,
 }: {
   form: ReviewForm
-  starters?: boolean
+  // Story screen variant: reads as a small optional extra, not a rating-only warning.
+  story?: boolean
+  placeholder?: string
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { values, set } = form
-
-  const insertStarter = (starter: string) => {
-    const current = values.reviewText
-    const joiner = current && !current.endsWith(' ') && !current.endsWith('\n') ? ' ' : ''
-    const next = current + joiner + starter
-    set('reviewText', next)
-    // Caret lands after the inserted starter once React commits the new value.
-    requestAnimationFrame(() => {
-      const el = textareaRef.current
-      if (el) {
-        el.focus()
-        el.setSelectionRange(next.length, next.length)
-      }
-    })
-  }
-
+  // "Written from your picks" only while the text still is what the matrix
+  // produced — an edited or replaced box is the reviewer's own words.
+  const autoBuilt =
+    values.reviewText.length > 0 && values.reviewText === derivePolarityText(values.polarity)
+  // Brief highlight each time the taps rewrite the text, so it is clear the box just changed.
+  const [flash, setFlash] = useState(false)
+  useEffect(() => {
+    if (!story || !autoBuilt) return
+    setFlash(true)
+    const timer = setTimeout(() => setFlash(false), 900)
+    return () => clearTimeout(timer)
+  }, [story, autoBuilt, values.reviewText])
   return (
     <div className="form-group">
       <label className="form-label" htmlFor="review-text">
-        Your experience <span className="req-dot">*</span>
+        {story
+          ? autoBuilt
+            ? 'Your review so far'
+            : 'Add one thing in your own words'
+          : 'Your review in your own words'}{' '}
+        <span className="form-hint-inline">
+          {story && autoBuilt ? 'edit anything' : 'optional'}
+        </span>
       </label>
-      {starters && (
-        <div className="chip-row" style={{ marginBottom: '0.5rem' }}>
-          {STORY_STARTERS.map((s) => (
-            <button key={s} type="button" className="chip" onClick={() => insertStarter(s)}>
-              {s.trim()}…
-            </button>
-          ))}
-        </div>
-      )}
       <textarea
         id="review-text"
-        ref={textareaRef}
-        className="form-textarea"
-        placeholder="Tell other students about your experience. Academics, campus life, dormitories, the city, anything that matters..."
+        className={`form-textarea${story && autoBuilt ? ' auto-built' : ''}${flash ? ' flash' : ''}`}
+        rows={story && autoBuilt ? 5 : undefined}
+        placeholder={
+          placeholder ??
+          'Picks above write this for you. Edit it, replace it, or leave it empty for a quick rating.'
+        }
         value={values.reviewText}
         onChange={(e) => set('reviewText', e.target.value)}
       />
-      <span className="form-hint">
-        Min 10 characters. Tip: your phone keyboard&apos;s microphone works here.
+      <span className={`form-hint${story ? ' story-hint' : ''}`}>
+        {autoBuilt
+          ? story
+            ? 'Written from your taps. Tap the box to edit it, add details or rewrite it.'
+            : 'Written from your picks. Edit it freely, or clear it for a quick rating.'
+          : story
+            ? 'At least 10 characters if you write something.'
+            : 'Leave empty for a quick rating, or write at least 10 characters.'}
       </span>
     </div>
   )
@@ -468,12 +700,13 @@ export const TagsField = ({ form }: { form: ReviewForm }) => {
       <label className="form-label">
         Tags <span className="form-hint-inline">tap anything that fits</span>
       </label>
-      <div className="chip-row">
+      <div className="chip-row" role="group">
         {POPULAR_TAGS.map((tag) => (
           <button
             key={tag}
             type="button"
             className={`chip ${values.selectedTags.includes(tag) ? 'selected' : ''}`}
+            aria-pressed={values.selectedTags.includes(tag)}
             onClick={() => toggle(tag)}
           >
             {tag}
@@ -481,12 +714,13 @@ export const TagsField = ({ form }: { form: ReviewForm }) => {
         ))}
       </div>
       {showMore && (
-        <div className="chip-row" style={{ marginTop: '.5rem' }}>
+        <div className="chip-row" role="group" style={{ marginTop: '.5rem' }}>
           {MORE_TAGS.map((tag) => (
             <button
               key={tag}
               type="button"
               className={`chip ${values.selectedTags.includes(tag) ? 'selected' : ''}`}
+              aria-pressed={values.selectedTags.includes(tag)}
               onClick={() => toggle(tag)}
             >
               {tag}
@@ -597,24 +831,81 @@ export const MediaField = ({
 
 // ---- About you (anonymous only) ---------------------------------------------------
 
-export const AnonEmailField = ({ form }: { form: ReviewForm }) => (
-  <div className="form-group">
-    <label className="form-label" htmlFor="anon-email">
-      Email <span className="form-hint-inline">optional, never shown publicly</span>
-    </label>
-    <input
-      type="email"
-      id="anon-email"
-      className="form-input"
-      placeholder="you@example.com"
-      value={form.values.anonEmail}
-      onChange={(e) => form.set('anonEmail', e.target.value)}
-    />
-    <span className="form-hint">
-      If you sign up with this email later, we can match the review to your account.
-    </span>
-  </div>
-)
+export const AnonEmailField = ({
+  form,
+  reward,
+}: {
+  form: ReviewForm
+  // Gift mode: the field becomes the gift email, with its own honest copy.
+  reward?: { full: boolean; missing: RewardMissing[] } | null
+}) => {
+  const email = form.values.anonEmail
+  const fix = reward ? suggestEmailFix(email) : null
+  return (
+    <div className="form-group">
+      <label className="form-label" htmlFor="anon-email">
+        {reward ? 'Email for your free VPN gift' : 'Email'}{' '}
+        <span className="form-hint-inline">
+          {reward ? 'private, never shown' : 'optional, private backup'}
+        </span>
+      </label>
+      <input
+        type="email"
+        id="anon-email"
+        className="form-input"
+        placeholder="you@example.com"
+        autoComplete="email"
+        value={email}
+        onChange={(e) => form.set('anonEmail', e.target.value)}
+      />
+      {fix && (
+        <p className="reward-hint" role="status">
+          Did you mean {fix}?{' '}
+          <button type="button" className="link-inline" onClick={() => form.set('anonEmail', fix)}>
+            Yes, fix it
+          </button>
+        </p>
+      )}
+      {reward ? (
+        <p className="reward-hint">
+          {reward.full
+            ? 'Your review is full. Right after you publish, we email you the steps and show you how to claim your gift.'
+            : `Add ${describeMissing(reward.missing)} and we will email your free VPN steps as soon as your review is full.`}
+        </p>
+      ) : (
+        <span className="form-hint">
+          Never shown publicly or shared with any university. Only used to link this review to your
+          account if you sign up later.
+        </span>
+      )}
+      {email.trim() && (
+        <label className="form-checkbox-label" htmlFor="anon-email-consent">
+          <input
+            id="anon-email-consent"
+            type="checkbox"
+            className="form-checkbox"
+            checked={form.values.emailConsent}
+            onChange={(e) => form.set('emailConsent', e.target.checked)}
+          />
+          Email me when a future student asks about my university, and about student discounts from
+          services we trust. Unsubscribe anytime.
+        </label>
+      )}
+      {reward && (
+        <p className="reward-hint">
+          Your email is never public and never shared with any university or the gift provider.
+          {form.values.emailConsent
+            ? ' We keep it until you unsubscribe.'
+            : ' We delete it 90 days after your gift.'}{' '}
+          Questions:{' '}
+          <a href={`mailto:${SITE.contactEmail}`} className="fine-print-link">
+            {SITE.contactEmail}
+          </a>
+        </p>
+      )}
+    </div>
+  )
+}
 
 // Anonymous "about you" fields beyond email are gone from the fast flow: they
 // never reached review columns (they live on the private reviewer_context

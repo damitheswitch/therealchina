@@ -8,11 +8,11 @@ const DEFAULT_SCRIPT_URL = 'https://cloud.umami.is/script.js'
 const DEFAULT_ALLOWED_HOSTNAMES = new URL(PROD_ORIGIN).hostname
 const BEFORE_SEND_HANDLER = 'trcAnalyticsBeforeSend'
 
-export type ReviewFlow = 'legacy_5' | 'fast_2'
+export type ReviewFlow = 'legacy_5' | 'fast_2' | 'tap_2' | 'tap_3' | 'tap_6'
 export type ReviewEntry = 'new' | 'resumed' | 'unknown'
 export type ReviewAuth = 'anonymous' | 'signed_in'
-export type ReviewStep = 1 | 2 | 3 | 4 | 5
-export type ReviewStage = 'basics' | 'ratings' | 'details' | 'story' | 'about_you'
+export type ReviewStep = 1 | 2 | 3 | 4 | 5 | 6
+export type ReviewStage = 'basics' | 'ratings' | 'details' | 'story' | 'about_you' | 'post'
 export type ReviewFailureReason =
   | 'turnstile_client'
   | 'turnstile_server'
@@ -24,7 +24,8 @@ export type ReviewFailureReason =
 export type PublishDurationBand = 'under_1m' | '1_to_2m' | '2_to_5m' | 'over_5m' | 'unknown'
 // Post-publish Boost cards (Phase 2): one logical card per unit of optional
 // detail. The ratings card is the 8-aspect sub-score stack saved as a whole.
-export type BoostCard = 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
+export type BoostCard =
+  'words' | 'program' | 'ratings' | 'money' | 'details' | 'pros_cons' | 'media'
 // For boost_exited, `after_card` is the last card completed before leaving;
 // 'none' means Boost was exited before any card saved.
 export type BoostAfterCard = BoostCard | 'none'
@@ -41,6 +42,10 @@ export interface ReviewEventData {
   duration_band?: PublishDurationBand
   card?: BoostCard
   after_card?: BoostAfterCard
+  // Thank-you gift funnel (fixed values only, no review content).
+  reward_stage?: 'form' | 'success'
+  reward_state?: string
+  reward_eligible?: boolean
 }
 
 export type ReviewEventName =
@@ -50,6 +55,7 @@ export type ReviewEventName =
   | 'review_step_3_viewed'
   | 'review_step_4_viewed'
   | 'review_step_5_viewed'
+  | 'review_step_6_viewed'
   | 'review_story_viewed'
   | 'review_validation_failed'
   | 'review_submit_attempted'
@@ -57,6 +63,9 @@ export type ReviewEventName =
   | 'review_published'
   | 'boost_card_completed'
   | 'boost_exited'
+  | 'reward_offer_viewed'
+  | 'reward_full_reached'
+  | 'reward_requested'
 
 export interface ReviewAnalyticsEvent {
   name: ReviewEventName
@@ -91,6 +100,7 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_step_3_viewed',
   'review_step_4_viewed',
   'review_step_5_viewed',
+  'review_step_6_viewed',
   'review_story_viewed',
   'review_validation_failed',
   'review_submit_attempted',
@@ -98,6 +108,9 @@ const EVENT_NAMES = new Set<ReviewEventName>([
   'review_published',
   'boost_card_completed',
   'boost_exited',
+  'reward_offer_viewed',
+  'reward_full_reached',
+  'reward_requested',
 ])
 
 const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[]> = {
@@ -107,17 +120,22 @@ const EVENT_DATA_KEYS: Record<ReviewEventName, readonly (keyof ReviewEventData)[
   review_step_3_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_4_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_step_5_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
+  review_step_6_viewed: ['flow', 'entry', 'auth', 'step', 'stage'],
   review_story_viewed: ['flow', 'entry', 'auth'],
   review_validation_failed: ['flow', 'auth', 'step', 'stage'],
   review_submit_attempted: ['flow', 'entry', 'auth'],
   review_submit_failed: ['flow', 'entry', 'auth', 'reason'],
-  review_published: ['flow', 'entry', 'auth', 'duration_band'],
+  review_published: ['flow', 'entry', 'auth', 'duration_band', 'reward_eligible'],
   boost_card_completed: ['flow', 'auth', 'card'],
   boost_exited: ['flow', 'auth', 'after_card'],
+  reward_offer_viewed: ['flow', 'auth', 'reward_stage'],
+  reward_full_reached: ['flow', 'auth', 'reward_stage'],
+  reward_requested: ['flow', 'auth', 'reward_state'],
 }
 
 const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive) => boolean> = {
-  flow: (value) => value === 'legacy_5' || value === 'fast_2',
+  flow: (value) =>
+    value === 'legacy_5' || value === 'fast_2' || value === 'tap_2' || value === 'tap_3',
   entry: (value) => value === 'new' || value === 'resumed' || value === 'unknown',
   auth: (value) => value === 'anonymous' || value === 'signed_in',
   step: (value) => Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 5,
@@ -126,7 +144,8 @@ const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive)
     value === 'ratings' ||
     value === 'details' ||
     value === 'story' ||
-    value === 'about_you',
+    value === 'about_you' ||
+    value === 'post',
   reason: (value) =>
     value === 'turnstile_client' ||
     value === 'turnstile_server' ||
@@ -148,6 +167,17 @@ const DATA_VALIDATORS: Record<keyof ReviewEventData, (value: AnalyticsPrimitive)
     value === 'details' ||
     value === 'pros_cons' ||
     value === 'media',
+  reward_stage: (value) => value === 'form' || value === 'success',
+  reward_state: (value) =>
+    value === 'sent' ||
+    value === 'waiting' ||
+    value === 'email_used' ||
+    value === 'email_blocked' ||
+    value === 'failed' ||
+    value === 'paused' ||
+    value === 'declined' ||
+    value === 'off',
+  reward_eligible: (value) => typeof value === 'boolean',
   after_card: (value) =>
     value === 'program' ||
     value === 'ratings' ||

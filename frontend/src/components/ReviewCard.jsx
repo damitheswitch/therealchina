@@ -4,6 +4,7 @@ import { StarRating } from './StarRating'
 import { SealBadge } from './SealBadge'
 import { UpvoteButton } from './UpvoteButton'
 import { CommentSection } from './CommentSection'
+import { ReportButton } from './ReportButton'
 import { MediaGallery } from './MediaGallery'
 import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
@@ -32,9 +33,14 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  * @param {object | null} [props.author]
  * @param {{ count: number, upvoted?: boolean }} [props.upvote]
  * @param {number | null} [props.commentCount]
+ * @param {boolean} [props.isFirst] earliest published review of its university
  */
-export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
+export const ReviewCard = ({ review, author, upvote, commentCount = null, isFirst = false }) => {
   const { id, rating, text, media, created_at, user_id, recommend } = review
+  // Quick rating = no written text (same definition the reviews.review_kind
+  // generated column uses). Rating/tags still render; the empty text block
+  // collapses into a small label instead.
+  const isQuick = !text?.trim()
   const [expanded, setExpanded] = useState(false)
   // Optimistically clamped: prerendered HTML ships every card clamped (a
   // no-op visually on short text), so hydration never un-collapses a card —
@@ -114,6 +120,8 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
         <StarRating rating={rating} />
         <div className="review-meta">
           <RecommendPill value={recommend} />
+          {isFirst && <span className="first-review-badge">First review</span>}
+          {isQuick && <span className="quick-rating-badge">Quick rating</span>}
           {user_id && <SealBadge />}
           <span>{date}</span>
         </div>
@@ -127,7 +135,9 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
               <span className="review-author-name">{author.display_name}</span>
             </Link>
           ) : (
-            <span className="review-author-name muted">Former member</span>
+            // user_id set but no public profile: the author left, or opted
+            // out of the directory (is_discoverable filters profile_public).
+            <span className="review-author-name muted">Verified student</span>
           )
         ) : (
           // user_id NULL = anonymous (never claimed, or claimed anonymously —
@@ -138,12 +148,14 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
 
       <ReviewContext review={review} />
 
-      <div className="review-text-wrap">
-        <p ref={textRef} className={`review-text${showClamped ? ' clamped' : ''}`}>
-          {text}
-        </p>
-        {showClamped && textOverflows && <div className="review-text-fade" aria-hidden="true" />}
-      </div>
+      {text && (
+        <div className="review-text-wrap">
+          <p ref={textRef} className={`review-text${showClamped ? ' clamped' : ''}`}>
+            {text}
+          </p>
+          {showClamped && textOverflows && <div className="review-text-fade" aria-hidden="true" />}
+        </div>
+      )}
 
       {isCollapsible && (
         <div className="review-disclosure-row">
@@ -194,6 +206,7 @@ export const ReviewCard = ({ review, author, upvote, commentCount = null }) => {
       <div className="review-actions">
         <UpvoteButton reviewId={id} initialCount={upvote?.count} initialUpvoted={upvote?.upvoted} />
         <CommentSection reviewId={id} initialCount={commentCount} />
+        <ReportButton targetType="review" targetId={id} />
       </div>
     </div>
   )

@@ -3,6 +3,8 @@ import { useDebounce } from '../hooks/useDebounce'
 import { useUniversities, type SortBy } from '../hooks/useUniversities'
 import { useCities } from '../hooks/useCities'
 import { UniversityCard } from './UniversityCard'
+import { FirstReviewBoard } from './FirstReviewBoard'
+import { reviewedOnly } from '../lib/homeFeed'
 
 const VALID_SORTS: SortBy[] = ['name', 'rating', 'reviews', 'rank', 'rank_desc']
 
@@ -10,7 +12,20 @@ const VALID_SORTS: SortBy[] = ['name', 'rating', 'reviews', 'rank', 'rank_desc']
 // canonical /universities index page. Filters and page live in the URL
 // (?q=&city=&sort=&page=) so filtered views are linkable and crawlers can
 // reach beyond page 1.
-export const UniversityDirectory = () => {
+//
+// `featured` (homepage only): the untouched default view leads with reviewed
+// universities and a "waiting for a first review" board instead of 30 pages of
+// empty cards. Searching, filtering, sorting or paging switches to the full
+// directory, and /universities always shows everything.
+// `hideSearch` (homepage): the hero search box already drives ?q, so the grid
+// does not repeat it.
+export const UniversityDirectory = ({
+  featured = false,
+  hideSearch = false,
+}: {
+  featured?: boolean
+  hideSearch?: boolean
+}) => {
   const [params, setParams] = useSearchParams()
   const searchQuery = params.get('q') ?? ''
   const cityFilter = params.get('city') ?? ''
@@ -26,6 +41,10 @@ export const UniversityDirectory = () => {
     sortBy,
     page,
   })
+
+  const isFeaturedView =
+    featured && !searchQuery && !cityFilter && !params.has('sort') && page === 1
+  const shown = isFeaturedView ? reviewedOnly(universities) : universities
 
   const update = (patch: Record<string, string | null>) => {
     const next = new URLSearchParams(params)
@@ -53,15 +72,17 @@ export const UniversityDirectory = () => {
     <section className="section" id="grid">
       <div className="container">
         <div className="filter-bar">
-          <input
-            type="text"
-            id="uni-search"
-            className="search-input"
-            placeholder="Search by university name or city..."
-            aria-label="Search universities by name or city"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
+          {!hideSearch && (
+            <input
+              type="text"
+              id="uni-search"
+              className="search-input"
+              placeholder="Search by university name or city..."
+              aria-label="Search universities by name or city"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          )}
           <select
             id="uni-city-filter"
             className="filter-select"
@@ -116,7 +137,7 @@ export const UniversityDirectory = () => {
         ) : (
           <>
             <div className="uni-grid">
-              {universities.map((university) => (
+              {shown.map((university) => (
                 <UniversityCard
                   key={university.id}
                   university={university}
@@ -125,42 +146,51 @@ export const UniversityDirectory = () => {
               ))}
             </div>
 
-            {pageCount > 1 && (
-              <div
-                className="pagination-row"
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 'var(--sp-2)',
-                  marginTop: 'var(--sp-4)',
-                }}
-              >
-                {page > 1 ? (
-                  <Link to={pageLink(page - 1)} className="btn btn-outline" rel="prev">
-                    Previous
-                  </Link>
-                ) : (
-                  <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.5 }}>
-                    Previous
-                  </span>
-                )}
-                <span className="muted">
-                  Page {page} of {pageCount} · {totalCount} results
-                </span>
-                {page < pageCount ? (
-                  <Link to={pageLink(page + 1)} className="btn btn-outline" rel="next">
-                    Next
-                  </Link>
-                ) : (
-                  <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.5 }}>
-                    Next
-                  </span>
-                )}
+            {isFeaturedView ? (
+              <div style={{ textAlign: 'center', marginTop: 'var(--sp-4)' }}>
+                <Link to="/universities" className="btn btn-outline">
+                  Browse all {totalCount} universities
+                </Link>
               </div>
+            ) : (
+              pageCount > 1 && (
+                <div
+                  className="pagination-row"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 'var(--sp-2)',
+                    marginTop: 'var(--sp-4)',
+                  }}
+                >
+                  {page > 1 ? (
+                    <Link to={pageLink(page - 1)} className="btn btn-outline" rel="prev">
+                      Previous
+                    </Link>
+                  ) : (
+                    <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.5 }}>
+                      Previous
+                    </span>
+                  )}
+                  <span className="muted">
+                    Page {page} of {pageCount} · {totalCount} results
+                  </span>
+                  {page < pageCount ? (
+                    <Link to={pageLink(page + 1)} className="btn btn-outline" rel="next">
+                      Next
+                    </Link>
+                  ) : (
+                    <span className="btn btn-outline" aria-disabled="true" style={{ opacity: 0.5 }}>
+                      Next
+                    </span>
+                  )}
+                </div>
+              )
             )}
           </>
         )}
+        {isFeaturedView && !loading && <FirstReviewBoard />}
       </div>
     </section>
   )

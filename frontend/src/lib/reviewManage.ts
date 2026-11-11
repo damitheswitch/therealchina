@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 import { parseFunctionError } from './mediaUpload'
 import type { ReviewPayload } from './reviewSubmit'
+import type { RewardResult } from './reviewReward'
 
 // Editable subset of the submission payload: everything except the fields an
 // edit can never change (which university the review is for) and the
@@ -27,14 +28,18 @@ export type ReviewEditPayload = Pick<
   | 'tags'
 >
 
-export const updateReview = async (reviewId: string, fields: ReviewEditPayload): Promise<void> => {
-  const { error } = await supabase.functions.invoke('review-manage', {
+export const updateReview = async (
+  reviewId: string,
+  fields: ReviewEditPayload
+): Promise<RewardResult | undefined> => {
+  const { data, error } = await supabase.functions.invoke('review-manage', {
     body: { action: 'update', reviewId, ...fields },
   })
   if (error) {
     const msg = await parseFunctionError(error)
     throw new Error(msg)
   }
+  return (data as { reward?: RewardResult } | null)?.reward
 }
 
 export const deleteReview = async (reviewId: string): Promise<void> => {

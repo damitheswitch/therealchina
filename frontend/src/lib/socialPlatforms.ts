@@ -188,7 +188,7 @@ export const socialPlatforms: Record<string, SocialPlatform> = {
     icon: 'wechat',
     placeholder: 'WeChat ID',
     isCopyOnly: true,
-    copyHint: 'WeChat ID copied — search in WeChat to add',
+    copyHint: 'WeChat ID copied. Search for it in WeChat to add.',
     getUrl: (h) => getSocialUrl('wechat', h),
   },
   instagram: {

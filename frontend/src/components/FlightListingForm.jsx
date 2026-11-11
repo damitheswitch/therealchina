@@ -9,6 +9,7 @@ import { getSocialHandles, hasSocialHandles } from '../lib/socialHandles'
 import { socialPlatforms, cleanHandle } from '../lib/socialPlatforms'
 import { contactPlatformsToStore, contactPlatformSelection } from '../lib/flightListings'
 import { PlatformIcon } from './SocialChip'
+import { FlightSafetyNotice } from './FlightSafetyNotice'
 
 export const FlightListingForm = ({
   listing = null,
@@ -290,6 +291,7 @@ export const FlightListingForm = ({
             ? 'Update your flight details below'
             : 'Help others send packages by sharing your flight information'}
         </p>
+        <FlightSafetyNotice />
       </div>
 
       <form onSubmit={handleSubmit} className="flight-listing-form">
