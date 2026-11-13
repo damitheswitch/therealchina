@@ -117,6 +117,7 @@ Do not claim a task is complete until the relevant checks above pass.
 - Never fetch per-row inside a loop. Batch with `.in('column', ids)` (or equivalent) in the parent.
 - Never use `key={index}` on lists that can reorder, filter, or grow. Use stable IDs.
 - Extract data-fetching into custom hooks (`useX`) instead of repeating `useState` + `useEffect` boilerplate.
+- A flow with 3+ interacting flags (`loading`/`step`/`phase`/`sent`/`error`...) is a state machine: model it as a pure reducer in `src/lib/` with a `status` union and tests (see `src/lib/reviewWizardMachine.ts`). Known candidates are listed in `docs/state-machines.md`.
 - Accessibility is required:
   - Form inputs need an associated `<label htmlFor=...>` or `aria-label`.
   - Dialogs need `role="dialog"`, `aria-modal="true"`, initial focus, and focus trapping.
