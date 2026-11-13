@@ -14,6 +14,7 @@ import { ANON_BOOST_CARDS, BOOST_CARD_ORDER } from './reviewFlow'
 //        └──────────PUBLISH──────────┐
 //                                    ▼
 //   editing ◀──PUBLISH_FAILED── publishing ──PUBLISHED──▶ celebrating
+//   (or back to loadingDraft if the draft lookup has not finished yet)
 //                                                            │ STAMP_DONE
 //                                         ┌──────────────────┴─────────┐
 //                                         ▼                            ▼
@@ -38,8 +39,9 @@ export type ReviewWizardState =
   // Draft lookup still running. The form is already interactive.
   | { status: 'loadingDraft'; step: number; error: string | null }
   | { status: 'editing'; step: number; error: string | null }
-  // Submit in flight: every publish control is disabled.
-  | { status: 'publishing'; step: number }
+  // Submit in flight: every publish control is disabled. `draftReady` keeps
+  // a failed submit from re-arming autosave before the draft lookup is done.
+  | { status: 'publishing'; step: number; draftReady: boolean }
   // Review is live, stamp overlay playing. Still nothing to click.
   | {
       status: 'celebrating'
@@ -85,7 +87,9 @@ export const reviewWizardReducer = (
 ): ReviewWizardState => {
   switch (event.type) {
     case 'DRAFT_READY':
-      return state.status === 'loadingDraft' ? { ...state, status: 'editing' } : state
+      if (state.status === 'loadingDraft') return { ...state, status: 'editing' }
+      if (state.status === 'publishing' && !state.draftReady) return { ...state, draftReady: true }
+      return state
 
     case 'RESTORE_STEP':
       return isFillingIn(state) ? { ...state, step: event.step } : state
@@ -97,11 +101,13 @@ export const reviewWizardReducer = (
       return isFillingIn(state) ? { ...state, step: event.step, error: event.error } : state
 
     case 'PUBLISH':
-      return isFillingIn(state) ? { status: 'publishing', step: state.step } : state
+      return isFillingIn(state)
+        ? { status: 'publishing', step: state.step, draftReady: state.status === 'editing' }
+        : state
 
     case 'PUBLISH_FAILED':
       return state.status === 'publishing'
-        ? { status: 'editing', step: state.step, error: null }
+        ? { status: state.draftReady ? 'editing' : 'loadingDraft', step: state.step, error: null }
         : state
 
     case 'PUBLISHED':

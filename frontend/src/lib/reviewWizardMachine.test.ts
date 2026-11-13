@@ -70,7 +70,7 @@ describe('filling in the form', () => {
 describe('publishing', () => {
   it('locks the form while the submit is in flight', () => {
     const s = run(editing(6), { type: 'PUBLISH' })
-    expect(s).toEqual({ status: 'publishing', step: 6 })
+    expect(s).toEqual({ status: 'publishing', step: 6, draftReady: true })
     expect(isPublishLocked(s)).toBe(true)
     expect(isFillingIn(s)).toBe(false)
   })
@@ -78,6 +78,19 @@ describe('publishing', () => {
   it('a failed submit returns to editing on the same screen', () => {
     const s = run(editing(6), { type: 'PUBLISH' }, { type: 'PUBLISH_FAILED' })
     expect(s).toEqual(editing(6))
+  })
+
+  it('a failed submit before the draft loaded waits for the draft again', () => {
+    const loading: ReviewWizardState = { status: 'loadingDraft', step: 6, error: null }
+    const failed = run(loading, { type: 'PUBLISH' }, { type: 'PUBLISH_FAILED' })
+    expect(failed).toEqual(loading)
+    const loadedMidSubmit = run(
+      loading,
+      { type: 'PUBLISH' },
+      { type: 'DRAFT_READY' },
+      { type: 'PUBLISH_FAILED' }
+    )
+    expect(loadedMidSubmit).toEqual(editing(6))
   })
 
   it('ignores a second PUBLISH while one is in flight or already landed', () => {
