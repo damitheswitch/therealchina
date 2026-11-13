@@ -8,17 +8,20 @@ import { useCallback, useMemo, useReducer, useRef } from 'react'
 //
 //            ┌──────────────── START (refetch keeps data) ───────────────┐
 //            ▼                                                           │
-//   idle ─START─▶ loading ─SUCCEEDED─▶ ready ──UPDATED (ready only)      │
+//   idle ─START─▶ loading ─SUCCEEDED─▶ ready ──UPDATED (any state w/ data)│
 //                    │ ─NOT_FOUND─▶ notFound                             │
 //                    └─FAILED─────▶ error (keeps data from before) ──────┘
 //
 //   SEEDED (any state) ─▶ ready   prerender payload or data known synchronously
 //   RESET  (any state) ─▶ idle
+//   CANCELLED (loading) ─▶ ready with the previous data, or idle without it
 //
-// SUCCEEDED / NOT_FOUND / FAILED only apply while loading; anything else is
-// ignored (the same state object is returned, so React skips the render).
-// `useAsyncState().run` also drops results from superseded runs, so the newest
-// request wins even when an older one resolves later.
+// SUCCEEDED / NOT_FOUND / FAILED / CANCELLED only apply while loading; anything
+// else is ignored (the same state object is returned, so React skips the
+// render). `useAsyncState().run` also drops results from superseded runs, so
+// the newest request wins even when an older one resolves later. A run whose
+// signal aborts with no newer run behind it dispatches CANCELLED, so a hook
+// can never be left in `loading` with nothing in flight.
 
 export type AsyncState<T> =
   // Nothing requested yet (lazy hooks, missing route param).
@@ -39,6 +42,7 @@ export type AsyncEvent<T> =
   | { type: 'FAILED'; error: Error }
   | { type: 'SEEDED'; data: T }
   | { type: 'UPDATED'; update: (data: T) => T }
+  | { type: 'CANCELLED' }
   | { type: 'RESET' }
 
 /**
@@ -78,7 +82,15 @@ export const asyncReducer = <T>(state: AsyncState<T>, event: AsyncEvent<T>): Asy
       if (state.status === 'ready' && state.data === event.data) return state
       return { status: 'ready', data: event.data }
     case 'UPDATED':
-      return state.status === 'ready' ? { status: 'ready', data: event.update(state.data) } : state
+      // Local edits (optimistic answers etc.) apply wherever data is held; a
+      // refetch in flight still replaces it with the server result.
+      if (state.status === 'ready') return { status: 'ready', data: event.update(state.data) }
+      if ((state.status === 'loading' || state.status === 'error') && state.data !== undefined)
+        return { ...state, data: event.update(state.data) }
+      return state
+    case 'CANCELLED':
+      if (state.status !== 'loading') return state
+      return state.data !== undefined ? { status: 'ready', data: state.data } : { status: 'idle' }
     case 'RESET':
       return state.status === 'idle' ? state : { status: 'idle' }
   }
@@ -100,7 +112,8 @@ export const asyncFlags = <T>(state: AsyncState<T>) => ({
 export const NOT_FOUND: unique symbol = Symbol('asyncState.notFound')
 
 export interface RunOptions {
-  // Aborting drops the result (no state change). Pass the effect's controller.
+  // Aborting drops the result: back to the previous data, or idle. Pass the
+  // effect's controller.
   signal?: AbortSignal
   // Logged with console.error on a genuine failure.
   errorLabel?: string
@@ -134,12 +147,17 @@ export const useAsyncState = <T>(initial: () => AsyncState<T>): AsyncStateApi<T>
       const id = ++latestRun.current
       dispatch({ type: 'START' })
       const current = () => !signal?.aborted && id === latestRun.current
+      // Aborted with no newer run behind it: leave loading. A superseded run
+      // stays silent, since the newer run owns the state.
+      const cancel = () => {
+        if (signal?.aborted && id === latestRun.current) dispatch({ type: 'CANCELLED' })
+      }
       try {
         const result = await task()
-        if (!current()) return
+        if (!current()) return cancel()
         dispatch(result === NOT_FOUND ? { type: 'NOT_FOUND' } : { type: 'SUCCEEDED', data: result })
       } catch (err) {
-        if (!current()) return
+        if (!current()) return cancel()
         if (errorLabel) console.error(errorLabel, err)
         dispatch({ type: 'FAILED', error: err as Error })
       }

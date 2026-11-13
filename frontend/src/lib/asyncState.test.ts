@@ -90,12 +90,27 @@ describe('asyncReducer', () => {
     expect(asyncReducer(ready, { type: 'SEEDED', data: 1 })).toBe(ready)
   })
 
-  it('UPDATED only edits ready data', () => {
-    expect(asyncReducer(ready, { type: 'UPDATED', update: (n) => n + 1 })).toEqual({
-      status: 'ready',
+  it('UPDATED edits whatever data is held and skips states without data', () => {
+    const inc = { type: 'UPDATED', update: (n: number) => n + 1 } as const
+    expect(asyncReducer(ready, inc)).toEqual({ status: 'ready', data: 2 })
+    expect(asyncReducer<number>({ status: 'loading', data: 1 }, inc)).toEqual({
+      status: 'loading',
       data: 2,
     })
-    expect(asyncReducer(loading, { type: 'UPDATED', update: (n) => n + 1 })).toBe(loading)
+    expect(asyncReducer<number>({ status: 'error', error: failure, data: 1 }, inc)).toEqual({
+      status: 'error',
+      error: failure,
+      data: 2,
+    })
+    expect(asyncReducer(loading, inc)).toBe(loading)
+  })
+
+  it('CANCELLED leaves loading for the previous data, or idle', () => {
+    expect(asyncReducer(loading, { type: 'CANCELLED' })).toEqual({ status: 'idle' })
+    expect(asyncReducer<number>({ status: 'loading', data: 1 }, { type: 'CANCELLED' })).toEqual(
+      ready
+    )
+    expect(asyncReducer(ready, { type: 'CANCELLED' })).toBe(ready)
   })
 
   it('RESET goes back to idle', () => {
@@ -193,7 +208,7 @@ describe('useAsyncState', () => {
     expect(error).toHaveBeenCalledWith('Error fetching thing:', failure)
   })
 
-  it('ignores results after the signal aborts, without logging', async () => {
+  it('drops results after the signal aborts and leaves loading, without logging', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const { result } = renderHook(() =>
       useAsyncState<string>(() => initialAsyncState<string>(undefined))
@@ -209,8 +224,25 @@ describe('useAsyncState', () => {
       d.reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
       await done
     })
-    expect(result.current.state.status).toBe('loading')
+    // Nothing else is in flight, so the hook must not stay loading.
+    expect(result.current.state).toEqual({ status: 'idle' })
     expect(error).not.toHaveBeenCalled()
+  })
+
+  it('an aborted refetch falls back to the data it had', async () => {
+    const { result } = renderHook(() => useAsyncState(() => initialAsyncState(7)))
+    const controller = new AbortController()
+    const d = deferred<number>()
+    let done!: Promise<void>
+    act(() => {
+      done = result.current.run(() => d.promise, { signal: controller.signal })
+    })
+    controller.abort()
+    await act(async () => {
+      d.resolve(8)
+      await done
+    })
+    expect(result.current.state).toEqual({ status: 'ready', data: 7 })
   })
 
   it('lets the newest run win when an older one resolves later', async () => {
