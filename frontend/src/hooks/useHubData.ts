@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
+import { asyncFlags, initialAsyncState, useAsyncState } from '../lib/asyncState'
 import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
 import { REVIEW_COLUMNS, UNI_COLUMNS } from '../lib/queryColumns'
 import { upvoteCountsFromRows } from '../lib/reviewSort'
@@ -20,10 +21,25 @@ export interface HubPageData {
   upvoteCounts?: Record<string, number>
 }
 
+// What the hook holds: the prerender payload shape plus the viewer's own
+// upvotes, which the public payload can never know.
+type HubData = HubPageData & { upvotedMine?: Set<string> }
+
+const NO_UNIS: UniDisplayRow[] = []
+const NO_REVIEWS: ReviewRow[] = []
+const NO_AUTHORS: NonNullable<HubPageData['authors']> = {}
+const NO_COUNTS: Record<string, number> = {}
+const NO_UPVOTES: Set<string> = new Set()
+const UNKNOWN_HUB = asyncFlags<HubData>({ status: 'notFound' })
+
 /**
  * Shared fetcher for /program/:slug and /degree/:slug hubs. `resolve` maps a
  * review row to its hub slug (normalizeProgram / normalizeDegree) and
  * `lookup` returns the HubDef for the URL param.
+ *
+ * State lives in one AsyncState (lib/asyncState.ts). A matching prerender
+ * payload starts in `ready` with no fetch. An unknown slug is known
+ * synchronously from `lookup`, so it reads as notFound without a request.
  */
 export const useHubData = (
   kind: 'program' | 'degree',
@@ -33,40 +49,19 @@ export const useHubData = (
   userId?: string | null
 ) => {
   const pd = usePrerenderData<HubPageData>('hubPage')
-  const seeded = pd?.kind === kind && pd.hub?.slug === slug ? pd : null
-  const [hub, setHub] = useState<HubDef | null>(seeded?.hub ?? (slug ? lookup(slug) : null))
-  const [universities, setUniversities] = useState<UniDisplayRow[]>(seeded?.universities ?? [])
-  const [reviews, setReviews] = useState<ReviewRow[]>(seeded?.reviews ?? [])
-  const [authors, setAuthors] = useState<HubPageData['authors']>(seeded?.authors ?? {})
-  const [upvoteCounts, setUpvoteCounts] = useState<Record<string, number>>(
-    seeded?.upvoteCounts ?? {}
+  const seeded = pd?.kind === kind && pd.hub?.slug === slug ? pd : undefined
+  const hub = seeded?.hub ?? (slug ? lookup(slug) : null)
+  const { state, run, seed, update, reset } = useAsyncState<HubData>(() =>
+    initialAsyncState<HubData>(seeded, { enabled: !!slug && !!lookup(slug) })
   )
-  const [upvotedMine, setUpvotedMine] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState<boolean>(!!slug && !!lookup(slug) && !seeded)
-  const [resolved, setResolved] = useState<boolean>(!!seeded || (!!slug && !lookup(slug)))
 
   useEffect(() => {
-    if (!slug) {
-      setLoading(false)
-      return
-    }
-    const def = lookup(slug)
-    setHub(def)
-    if (!def) {
-      setUniversities([])
-      setReviews([])
-      setAuthors({})
-      setResolved(true)
-      setLoading(false)
+    if (!slug || !lookup(slug)) {
+      reset()
       return
     }
     if (seeded) {
-      setUniversities(seeded.universities ?? [])
-      setReviews(seeded.reviews ?? [])
-      setAuthors(seeded.authors ?? {})
-      setUpvoteCounts(seeded.upvoteCounts ?? {})
-      setResolved(true)
-      setLoading(false)
+      seed(seeded)
       // Payload can't know the viewer — fetch own upvotes in one query.
       const rows = seeded.reviews ?? []
       if (userId && rows.length) {
@@ -82,7 +77,8 @@ export const useHubData = (
           .abortSignal(c.signal)
           .then(({ data }) => {
             if (!c.signal.aborted && data) {
-              setUpvotedMine(new Set(data.map((r) => r.review_id as string)))
+              const mine = new Set(data.map((r) => r.review_id as string))
+              update((d) => ({ ...d, upvotedMine: mine }))
             }
           })
         return () => c.abort()
@@ -90,9 +86,8 @@ export const useHubData = (
       return
     }
     const controller = new AbortController()
-    const run = async () => {
-      setLoading(true)
-      try {
+    void run(
+      async () => {
         const { data, error: fetchError } = await supabase
           .from('reviews')
           .select(REVIEW_COLUMNS)
@@ -129,35 +124,36 @@ export const useHubData = (
         ])
         if (uniRes.error) throw uniRes.error
         if (authorRes.error) throw authorRes.error
-        // Rows carry the trigger-maintained upvote_count (migration 050).
-        setUpvoteCounts(upvoteCountsFromRows(rows))
-        setUpvotedMine(
-          new Set(((mineRes.data as { review_id: string }[] | null) || []).map((r) => r.review_id))
-        )
-        setReviews(rows)
-        setUniversities(
-          (
+        return {
+          reviews: rows,
+          universities: (
             (uniRes.data as
               (UniRow & { university_stats?: StatsEmbed | StatsEmbed[] | null })[] | null) || []
-          ).map(withStats)
-        )
-        setAuthors(
-          Object.fromEntries(
+          ).map(withStats),
+          authors: Object.fromEntries(
             ((authorRes.data as { id: string }[] | null) || []).map((a) => [a.id, a])
-          ) as HubPageData['authors']
-        )
-        setResolved(true)
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return
-        console.error(`Error fetching ${kind} hub data:`, err)
-        setResolved(true)
-      } finally {
-        if (!controller.signal.aborted) setLoading(false)
-      }
-    }
-    run()
+          ) as HubPageData['authors'],
+          // Rows carry the trigger-maintained upvote_count (migration 050).
+          upvoteCounts: upvoteCountsFromRows(rows),
+          upvotedMine: new Set(
+            ((mineRes.data as { review_id: string }[] | null) || []).map((r) => r.review_id)
+          ),
+        }
+      },
+      { signal: controller.signal, errorLabel: `Error fetching ${kind} hub data:` }
+    )
     return () => controller.abort()
-  }, [kind, slug, lookup, resolve, seeded, userId])
+  }, [kind, slug, lookup, resolve, seeded, userId, run, seed, update, reset])
 
-  return { hub, universities, reviews, authors, upvoteCounts, upvotedMine, loading, resolved }
+  const { data, loading, settled } = slug && !hub ? UNKNOWN_HUB : asyncFlags(state)
+  return {
+    hub,
+    universities: data?.universities ?? NO_UNIS,
+    reviews: data?.reviews ?? NO_REVIEWS,
+    authors: data?.authors ?? NO_AUTHORS,
+    upvoteCounts: data?.upvoteCounts ?? NO_COUNTS,
+    upvotedMine: data?.upvotedMine ?? NO_UPVOTES,
+    loading,
+    resolved: settled,
+  }
 }
