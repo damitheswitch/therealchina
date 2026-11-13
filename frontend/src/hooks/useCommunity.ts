@@ -1,134 +1,120 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, type Dispatch, type SetStateAction } from 'react'
 import {
   fetchCommunityQuestion,
   fetchCommunityQuestions,
   fetchUniversityQuestions,
 } from '../lib/communityApi'
+import { NOT_FOUND, asyncFlags, initialAsyncState, useAsyncState } from '../lib/asyncState'
 import type { CommunityAnswer, CommunityQuestion } from '../lib/community'
+
+// Each hook keeps one AsyncState (lib/asyncState.ts). Refetches keep the
+// previous data until the new result lands, and a superseded or aborted
+// request can never overwrite a newer one.
+
+const NO_QUESTIONS: CommunityQuestion[] = []
+const NO_ANSWERS: CommunityAnswer[] = []
 
 // /community feed: every live question, newest first. Category + view
 // filtering stays in the page — the same list drives the rail counts.
 export const useCommunityQuestions = () => {
-  const [questions, setQuestions] = useState<CommunityQuestion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-  const mounted = useRef(true)
+  const { state, run } = useAsyncState<CommunityQuestion[]>(() =>
+    initialAsyncState<CommunityQuestion[]>(undefined)
+  )
 
-  useEffect(() => {
-    mounted.current = true
-    return () => {
-      mounted.current = false
-    }
-  }, [])
-
-  const refetch = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await fetchCommunityQuestions()
-      if (mounted.current) setQuestions(data)
-    } catch (err) {
-      console.error('Error fetching community questions:', err)
-      if (mounted.current) setError(err as Error)
-    } finally {
-      if (mounted.current) setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    refetch()
-  }, [refetch])
-
-  return { questions, loading, error, refetch }
-}
-
-// /community/q/:slug — one question plus its answers.
-export const useCommunityQuestion = (slug: string | undefined) => {
-  const [question, setQuestion] = useState<CommunityQuestion | null>(null)
-  const [answers, setAnswers] = useState<CommunityAnswer[]>([])
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const mounted = useRef(true)
-
-  useEffect(() => {
-    mounted.current = true
-    return () => {
-      mounted.current = false
-    }
-  }, [])
-
-  const refetch = useCallback(async () => {
-    if (!slug) return
-    setLoading(true)
-    setError(null)
-    setNotFound(false)
-    try {
-      const data = await fetchCommunityQuestion(slug)
-      if (!mounted.current) return
-      if (data) {
-        setQuestion(data.question)
-        setAnswers(data.answers)
-      } else {
-        setNotFound(true)
-      }
-    } catch (err) {
-      console.error('Error fetching community question:', err)
-      if (mounted.current) setError(err as Error)
-    } finally {
-      if (mounted.current) setLoading(false)
-    }
-  }, [slug])
-
-  useEffect(() => {
-    refetch()
-  }, [refetch])
-
-  return { question, answers, loading, notFound, error, refetch, setAnswers }
-}
-
-// University page: live questions asked about a specific university.
-export const useUniversityQuestions = (universityId: string | undefined) => {
-  const [questions, setQuestions] = useState<CommunityQuestion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
-  const mounted = useRef(true)
-
-  useEffect(() => {
-    mounted.current = true
-    return () => {
-      mounted.current = false
-    }
-  }, [])
-
-  const refetch = useCallback(
-    async (signal?: AbortSignal) => {
-      if (!universityId) {
-        setQuestions([])
-        setLoading(false)
-        return
-      }
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await fetchUniversityQuestions(universityId, signal)
-        if (!signal?.aborted && mounted.current) setQuestions(data)
-      } catch (err) {
-        if (signal?.aborted) return
-        console.error('Error fetching university questions:', err)
-        if (mounted.current) setError(err as Error)
-      } finally {
-        if (!signal?.aborted && mounted.current) setLoading(false)
-      }
-    },
-    [universityId]
+  const load = useCallback(
+    (signal?: AbortSignal) =>
+      run(fetchCommunityQuestions, { signal, errorLabel: 'Error fetching community questions:' }),
+    [run]
   )
 
   useEffect(() => {
     const controller = new AbortController()
-    void refetch(controller.signal)
+    void load(controller.signal)
     return () => controller.abort()
-  }, [refetch])
+  }, [load])
 
-  return { questions, loading, error, refetch: () => refetch() }
+  const refetch = useCallback(() => load(), [load])
+  const { data, loading, error } = asyncFlags(state)
+  return { questions: data ?? NO_QUESTIONS, loading, error, refetch }
+}
+
+interface QuestionThread {
+  question: CommunityQuestion
+  answers: CommunityAnswer[]
+}
+
+// /community/q/:slug — one question plus its answers.
+export const useCommunityQuestion = (slug: string | undefined) => {
+  const { state, run, update } = useAsyncState<QuestionThread>(() =>
+    initialAsyncState<QuestionThread>(undefined)
+  )
+
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!slug) return
+      await run(async () => (await fetchCommunityQuestion(slug)) ?? NOT_FOUND, {
+        signal,
+        errorLabel: 'Error fetching community question:',
+      })
+    },
+    [slug, run]
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void load(controller.signal)
+    return () => controller.abort()
+  }, [load])
+
+  const refetch = useCallback(() => load(), [load])
+  const setAnswers: Dispatch<SetStateAction<CommunityAnswer[]>> = useCallback(
+    (next) =>
+      update((thread) => ({
+        ...thread,
+        answers: typeof next === 'function' ? next(thread.answers) : next,
+      })),
+    [update]
+  )
+
+  const { data, loading, notFound, error } = asyncFlags(state)
+  return {
+    question: data?.question ?? null,
+    answers: data?.answers ?? NO_ANSWERS,
+    loading,
+    notFound,
+    error,
+    refetch,
+    setAnswers,
+  }
+}
+
+// University page: live questions asked about a specific university.
+export const useUniversityQuestions = (universityId: string | undefined) => {
+  const { state, run, seed } = useAsyncState<CommunityQuestion[]>(() =>
+    initialAsyncState<CommunityQuestion[]>(undefined)
+  )
+
+  const load = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!universityId) {
+        seed(NO_QUESTIONS)
+        return
+      }
+      await run(() => fetchUniversityQuestions(universityId, signal), {
+        signal,
+        errorLabel: 'Error fetching university questions:',
+      })
+    },
+    [universityId, run, seed]
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void load(controller.signal)
+    return () => controller.abort()
+  }, [load])
+
+  const refetch = useCallback(() => load(), [load])
+  const { data, loading, error } = asyncFlags(state)
+  return { questions: data ?? NO_QUESTIONS, loading, error, refetch }
 }

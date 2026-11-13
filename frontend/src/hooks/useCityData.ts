@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { usePrerenderData } from '../lib/prerenderData'
+import { NOT_FOUND, asyncFlags, initialAsyncState, useAsyncState } from '../lib/asyncState'
 import { slugify } from '../lib/seo/slugify'
 import { STATS_EMBED, withStats, type StatsEmbed, type UniStatFields } from '../lib/universityStats'
 import { UNI_COLUMNS } from '../lib/queryColumns'
@@ -15,37 +16,35 @@ export interface CityPageData {
   reviewCount?: number
 }
 
+const NO_UNIS: CityUni[] = []
+
 /**
  * Resolves a /city/:slug URL to a city name + its universities. The slug is
  * matched against slugify(universities.city) — the same normalization the
  * static pipeline uses, so URL and data can never disagree.
+ *
+ * State lives in one AsyncState (lib/asyncState.ts): a matching prerender
+ * payload starts in `ready` with no fetch; an unknown city ends in `notFound`.
  */
 export const useCityData = (citySlug: string | undefined) => {
   const pd = usePrerenderData<CityPageData>('cityPage')
-  const seeded = pd?.city && slugify(pd.city) === citySlug ? pd : null
-  const [city, setCity] = useState<string | null>(seeded?.city ?? null)
-  const [universities, setUniversities] = useState<CityUni[]>(seeded?.universities ?? [])
-  const [reviewCount, setReviewCount] = useState<number>(seeded?.reviewCount ?? 0)
-  const [loading, setLoading] = useState<boolean>(!!citySlug && !seeded)
-  const [resolved, setResolved] = useState<boolean>(!!seeded)
+  const seeded = pd?.city && slugify(pd.city) === citySlug ? pd : undefined
+  const { state, run, seed, reset } = useAsyncState<CityPageData>(() =>
+    initialAsyncState(seeded, { enabled: !!citySlug })
+  )
 
   useEffect(() => {
     if (!citySlug) {
-      setLoading(false)
+      reset()
       return
     }
     if (seeded) {
-      setCity(seeded.city ?? null)
-      setUniversities(seeded.universities ?? [])
-      setReviewCount(seeded.reviewCount ?? 0)
-      setLoading(false)
-      setResolved(true)
+      seed(seeded)
       return
     }
     const controller = new AbortController()
-    const run = async () => {
-      setLoading(true)
-      try {
+    void run(
+      async () => {
         // Find candidate city names first (cheap distinct scan), then match slug
         const { data: cityRows, error: cityErr } = await supabase
           .from('universities')
@@ -59,13 +58,7 @@ export const useCityData = (citySlug: string | undefined) => {
               .filter((c): c is string => Boolean(c))
           ),
         ].find((c) => slugify(c) === citySlug)
-        if (!match) {
-          setCity(null)
-          setUniversities([])
-          setReviewCount(0)
-          setResolved(true)
-          return
-        }
+        if (!match) return NOT_FOUND
         const { data: unis, error: uniErr } = await supabase
           .from('universities')
           .select(`${UNI_COLUMNS}, ${STATS_EMBED}`)
@@ -85,21 +78,19 @@ export const useCityData = (citySlug: string | undefined) => {
             uniList.map((u) => u.id)
           )
           .abortSignal(controller.signal)
-        setCity(match)
-        setUniversities(uniList)
-        setReviewCount(count ?? 0)
-        setResolved(true)
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return
-        console.error('Error fetching city data:', err)
-        setResolved(true)
-      } finally {
-        if (!controller.signal.aborted) setLoading(false)
-      }
-    }
-    run()
+        return { city: match, universities: uniList, reviewCount: count ?? 0 }
+      },
+      { signal: controller.signal, errorLabel: 'Error fetching city data:' }
+    )
     return () => controller.abort()
-  }, [citySlug, seeded])
+  }, [citySlug, seeded, run, seed, reset])
 
-  return { city, universities, reviewCount, loading, resolved }
+  const { data, loading, settled } = asyncFlags(state)
+  return {
+    city: data?.city ?? null,
+    universities: data?.universities ?? NO_UNIS,
+    reviewCount: data?.reviewCount ?? 0,
+    loading,
+    resolved: settled,
+  }
 }
