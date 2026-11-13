@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo, useReducer } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Turnstile } from '@marsidev/react-turnstile'
 import type { TurnstileInstance } from '@marsidev/react-turnstile'
@@ -46,8 +46,6 @@ import {
   type ReviewDraftPayload,
 } from '../lib/reviewDrafts'
 import {
-  ANON_BOOST_CARDS,
-  BOOST_CARD_ORDER,
   buildBoostPatch,
   buildReviewFields,
   draftPayloadFromState,
@@ -89,6 +87,16 @@ import {
   evaluateRewardFields,
   type RewardResult,
 } from '../lib/reviewReward'
+import {
+  buildBoostDeck,
+  initialReviewWizardState,
+  isPublishLocked,
+  publishedReview,
+  reviewWizardReducer,
+  showsForm,
+  type PublishLanding,
+  type PublishedReview,
+} from '../lib/reviewWizardMachine'
 
 // ---- Constants ----------------------------------------------------------------
 
@@ -147,8 +155,6 @@ const FIX_STEP: Record<RewardMissing, number> = {
   money: 4,
   program: 4,
 }
-
-type Phase = 'form' | 'success' | 'boost'
 
 export const ReviewWizard = ({
   searchParams,
@@ -222,7 +228,6 @@ export const ReviewWizard = ({
   const answerParam = searchParams.get('answer')
   const qSlugParam = searchParams.get('qSlug')
   const [draftId, setDraftId] = useState<string | null>(draftParam)
-  const [draftLoading, setDraftLoading] = useState(!editMode)
   const [draftUniversityId, setDraftUniversityId] = useState<string | null>(null)
   const [alsoPostAnswer, setAlsoPostAnswer] = useState(true)
   // Signed-in only: publish under "Anonymous" — the public row keeps
@@ -250,27 +255,26 @@ export const ReviewWizard = ({
     name: string
   } | null>(null)
 
-  // Flow state
-  const [phase, setPhase] = useState<Phase>('form')
+  // Flow state: one explicit machine (lib/reviewWizardMachine.ts) for draft
+  // loading, screens, the validation banner, publish, stamp, success and Boost.
   // A ?uni + ?rating pair means the visitor already answered screen 1 on the
   // university page — open straight on the story screen.
-  const [step, setStep] = useState(() =>
-    !editMode && !draftParam && Boolean(uniParam) && ratingParam > 0 ? 2 : 1
+  const [flow, dispatch] = useReducer(reviewWizardReducer, undefined, () =>
+    initialReviewWizardState({
+      step: !editMode && !draftParam && Boolean(uniParam) && ratingParam > 0 ? 2 : 1,
+      loadDraft: !editMode,
+    })
   )
-  const [error, setError] = useState<string | null>(null)
-  const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
-  const [boostIndex, setBoostIndex] = useState(0)
-  // The deck opened from the success screen: whatever the gift still needs
-  // comes first (own words included), the rest after, photo last.
-  const [boostDeck, setBoostDeck] = useState<BoostCard[]>(BOOST_CARD_ORDER)
-
+  const draftLoading = flow.status === 'loadingDraft'
+  const formVisible = showsForm(flow)
+  const publishLocked = isPublishLocked(flow)
+  // Screen shown while the form is up; success/boost have no screen number.
+  const step = formVisible ? flow.step : POST_STEP
+  const error = flow.status === 'loadingDraft' || flow.status === 'editing' ? flow.error : null
   // Set once publish succeeds: the row id (Boost writes against it), the
   // canonical slug for links, and the timestamp shown on the preview card.
-  const [published, setPublished] = useState<{
-    reviewId: string
-    universitySlug: string | null
-    publishedAt: string
-  } | null>(null)
+  const published = publishedReview(flow)
+  const [reviewEntry, setReviewEntry] = useState<ReviewEntry>('unknown')
 
   const [mediaState, setMediaState] = useState<MediaState>({
     media: initial?.media ?? [],
@@ -295,11 +299,6 @@ export const ReviewWizard = ({
     mediaStateRef.current = mediaState
   }, [mediaState])
 
-  // Submit state
-  const [loading, setLoading] = useState(false)
-  const [showStamp, setShowStamp] = useState(false)
-  const [pendingSuccess, setPendingSuccess] = useState<(() => void) | null>(null)
-
   // Turnstile (anonymous) — rendered on the publish screen.
   const reviewTurnstileRef = useRef<TurnstileInstance | undefined>(undefined)
   const [reviewTurnstileReady, setReviewTurnstileReady] = useState(false)
@@ -319,6 +318,8 @@ export const ReviewWizard = ({
   const viewedScreensRef = useRef(new Set<number>())
   const storyViewedRef = useRef(false)
   const reportedValidationScreensRef = useRef(new Set<number>())
+  // Synchronous double-submit guard: two clicks in one frame both see the
+  // pre-dispatch closure. Released only when a submit fails.
   const submitInFlightRef = useRef(false)
   // The slug/name pair a loaded draft applied — so a later clear can tell
   // "still the draft's values" apart from "the user typed over them".
@@ -329,10 +330,6 @@ export const ReviewWizard = ({
   // The slot the last local autosave wrote — lets a pick change retire the
   // slot the draft moved from instead of stacking residue copies.
   const lastWrittenLocalSlotRef = useRef<string | null>(null)
-  // Set the moment submitReview succeeds — a debounced autosave can still fire
-  // during the stamp animation (phase is still 'form' until it finishes), and
-  // without this it would re-create the draft row publish just deleted.
-  const submittedRef = useRef(false)
 
   useEffect(() => {
     draftIdRef.current = draftId
@@ -344,7 +341,7 @@ export const ReviewWizard = ({
 
   const applyDraftPayload = useCallback(
     (p: ReviewDraftPayload) => {
-      setStep(mapDraftStepToScreen(p))
+      dispatch({ type: 'RESTORE_STEP', step: mapDraftStepToScreen(p) })
       applyValues(fieldValuesFromDraft(p))
       setMediaState({ media: p.media ?? [], uploading: false, errorCount: 0 })
       // Strip savedAt — draftPayload never carries it, so keeping it here
@@ -353,7 +350,7 @@ export const ReviewWizard = ({
       lastSavedPayloadRef.current = comparable
       draftSeedRef.current = { slug: p.selectedUni || '', name: p.selectedUniName || '' }
     },
-    [applyValues]
+    [applyValues, dispatch]
   )
 
   // Resolve ?uni=<slug> once — the field prefill below and the draft-load
@@ -523,9 +520,9 @@ export const ReviewWizard = ({
               ...(recommendParam ? { recommend: recommendParam } : {}),
               ...(textParam ? { reviewText: textParam } : {}),
             })
-            setStep(2)
+            dispatch({ type: 'RESTORE_STEP', step: 2 })
           }
-          setDraftLoading(false)
+          dispatch({ type: 'DRAFT_READY' })
         }
       }
     }
@@ -564,7 +561,7 @@ export const ReviewWizard = ({
   // resumed draft lands on. The writing screen also emits review_story_viewed
   // (the same event the legacy writing screen fired).
   useEffect(() => {
-    if (editMode || authLoading || draftLoading || phase !== 'form') return
+    if (editMode || authLoading || draftLoading || !formVisible) return
     beginReviewAttempt()
     if (!viewedScreensRef.current.has(step)) {
       viewedScreensRef.current.add(step)
@@ -591,7 +588,7 @@ export const ReviewWizard = ({
     beginReviewAttempt,
     draftLoading,
     editMode,
-    phase,
+    formVisible,
     reviewAuth,
     reviewEntry,
     step,
@@ -637,16 +634,17 @@ export const ReviewWizard = ({
   }, [editMode, values.selectedUni, prefilledUni, uniParam])
 
   // Autosave once something worth keeping exists. Debounced so typing doesn't
-  // create a write per keystroke. Nothing is saved after publish — the review
-  // is live and the draft row is already gone.
+  // create a write per keystroke. Only while editing: leaving that state (to
+  // publish) clears the pending timer, so a save can never re-create the draft
+  // row publish just deleted. A failed publish returns here and re-arms it.
+  const autosaveOn = flow.status === 'editing'
   useEffect(() => {
-    if (editMode || draftLoading || phase !== 'form') return
+    if (editMode || !autosaveOn) return
     if (!isDraftWorthSaving(draftPayload)) return
     if (JSON.stringify(draftPayload) === JSON.stringify(lastSavedPayloadRef.current)) return
 
     const timer = setTimeout(async () => {
       try {
-        if (submittedRef.current) return
         if (user) {
           const savedId = await saveReviewDraft({
             userId: user.id,
@@ -685,8 +683,7 @@ export const ReviewWizard = ({
   }, [
     user,
     editMode,
-    draftLoading,
-    phase,
+    autosaveOn,
     draftPayload,
     draftUniversityId,
     draftSlotSlug,
@@ -695,8 +692,10 @@ export const ReviewWizard = ({
 
   // Warn before closing the tab when there is unsaved progress. The autosave
   // runs every 1.5s, so this only guards the narrow window after a change.
+  // Also armed mid-submit; off once the review is live.
+  const unloadGuardOn = flow.status === 'editing' || flow.status === 'publishing'
   useEffect(() => {
-    if (editMode || draftLoading || phase !== 'form') return
+    if (editMode || !unloadGuardOn) return
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       const current = draftPayloadRef.current
       if (!isDraftWorthSaving(current)) return
@@ -706,7 +705,7 @@ export const ReviewWizard = ({
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [editMode, draftLoading, phase])
+  }, [editMode, unloadGuardOn])
 
   // The last slug/name pair selectedUni+selectedUniName got from the URL —
   // the raw param seed or the values this effect applied. URL-sourced values
@@ -794,13 +793,13 @@ export const ReviewWizard = ({
   const guestGiftEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestGiftEmail)
 
   useEffect(() => {
-    if (!rewardOn || phase !== 'form' || rewardOfferViewedRef.current) return
+    if (!rewardOn || !formVisible || rewardOfferViewedRef.current) return
     rewardOfferViewedRef.current = true
     void trackReviewEvent({
       name: 'reward_offer_viewed',
       data: { flow: FLOW, auth: reviewAuth, reward_stage: 'form' },
     })
-  }, [rewardOn, phase, reviewAuth])
+  }, [rewardOn, formVisible, reviewAuth])
 
   useEffect(() => {
     if (!rewardOn || !rewardEval.full || rewardFullReachedRef.current) return
@@ -812,8 +811,6 @@ export const ReviewWizard = ({
   }, [rewardOn, rewardEval.full, reviewAuth])
 
   // ---- Validation --------------------------------------------------------------
-
-  const clearError = useCallback(() => setError(null), [])
 
   const reportValidationFailure = useCallback(
     (screen: number) => {
@@ -868,62 +865,51 @@ export const ReviewWizard = ({
   const goNext = () => {
     const err = validateScreen(step)
     if (err) {
-      setError(err)
+      dispatch({ type: 'INVALID', step, error: err })
       reportValidationFailure(step)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    clearError()
-    setStep((s) => Math.min(s + 1, POST_STEP))
+    dispatch({ type: 'GO_TO', step: Math.min(step + 1, POST_STEP) })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const jumpToFix = (item: RewardMissing) => {
-    clearError()
-    setStep(FIX_STEP[item])
+    dispatch({ type: 'GO_TO', step: FIX_STEP[item] })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const goBack = () => {
-    clearError()
-    setStep((s) => Math.max(s - 1, 1))
+    dispatch({ type: 'GO_TO', step: Math.max(step - 1, 1) })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // ---- Publish -------------------------------------------------------------------
 
-  const handleStampComplete = () => {
-    setShowStamp(false)
-    if (pendingSuccess) {
-      pendingSuccess()
-      setPendingSuccess(null)
-    }
-  }
+  // Stable so the overlay's timers are not restarted by re-renders mid-animation.
+  const handleStampComplete = useCallback(() => dispatch({ type: 'STAMP_DONE' }), [])
 
   const handlePublish = async (giftChoice?: boolean) => {
-    if (submitInFlightRef.current) return
+    if (submitInFlightRef.current || !(flow.status === 'editing' || draftLoading)) return
     beginReviewAttempt()
 
     // A resumed draft can land straight on screen 2 with essentials missing —
     // send the reviewer back to fix them rather than letting the server 400.
     const essentialsErr = validateScreen(1)
     if (essentialsErr) {
-      setStep(1)
-      setError(essentialsErr)
+      dispatch({ type: 'INVALID', step: 1, error: essentialsErr })
       reportValidationFailure(1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
     const storyErr = validateScreen(2)
     if (storyErr) {
-      setStep(2)
-      setError(storyErr)
+      dispatch({ type: 'INVALID', step: 2, error: storyErr })
       reportValidationFailure(2)
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
-    clearError()
-    setLoading(true)
+    dispatch({ type: 'PUBLISH' })
     submitInFlightRef.current = true
     void trackReviewEvent({
       name: 'review_submit_attempted',
@@ -931,7 +917,10 @@ export const ReviewWizard = ({
     })
 
     let turnstileClientFailed = false
-    let submissionSucceeded = false
+    // Set the moment the server accepts the review. From then on the flow must
+    // land (never return to an enabled Publish button), even if a later
+    // best-effort step throws.
+    let landed: PublishedReview | null = null
     try {
       let cfToken: string | undefined
       if (!user) {
@@ -988,8 +977,11 @@ export const ReviewWizard = ({
           : undefined,
       })
 
-      submissionSucceeded = true
-      submittedRef.current = true
+      landed = {
+        reviewId: result.reviewId,
+        universitySlug: result.universityCreated ? null : result.universitySlug,
+        publishedAt: new Date().toISOString(),
+      }
       void trackReviewEvent({
         name: 'review_published',
         data: {
@@ -1045,15 +1037,10 @@ export const ReviewWizard = ({
         }
       }
 
-      const slug = result.universityCreated ? null : result.universitySlug
+      const slug = landed.universitySlug
       // Only keep the capability when the server actually persisted its
       // digest — otherwise anonymous Boost would be offered but always 403.
       if (boostToken && result.boostAvailable) storeBoostToken(result.reviewId, boostToken)
-      setPublished({
-        reviewId: result.reviewId,
-        universitySlug: slug,
-        publishedAt: new Date().toISOString(),
-      })
 
       if (!user) {
         sessionStorage.setItem('trc_anon_review_submitted', 'true')
@@ -1066,33 +1053,45 @@ export const ReviewWizard = ({
       // Land straight on the Power-Up deck when this reviewer can still write
       // (signed-in JWT or a stored anonymous boost capability) — one less
       // click between "published" and "keep going". Without the capability,
-      // the plain success screen is all that exists.
-      setPendingSuccess(() => () => {
-        const canBoost = Boolean(user) || getBoostToken(result.reviewId) !== null
-        // Nickname guests see the account step first; the Boost offer follows it.
-        setPhase(canBoost && !(!user && wantsNickname) ? 'boost' : 'success')
-      })
-      setShowStamp(true)
+      // the plain success screen is all that exists. Nickname guests see the
+      // account step first; the Boost offer follows it.
+      const canBoost = Boolean(user) || getBoostToken(result.reviewId) !== null
+      const landing: PublishLanding =
+        canBoost && !(!user && wantsNickname)
+          ? {
+              to: 'boost',
+              deck: buildBoostDeck({
+                signedIn: Boolean(user),
+                rewardOn,
+                missing: result.reward?.missing ?? rewardEval.missing,
+              }),
+            }
+          : { to: 'success' }
+      dispatch({ type: 'PUBLISHED', published: landed, landing })
     } catch (error) {
-      const status = error instanceof ReviewSubmitError ? error.status : undefined
-      if (!submissionSucceeded) {
-        void trackReviewEvent({
-          name: 'review_submit_failed',
-          data: {
-            flow: FLOW,
-            entry: reviewEntry,
-            auth: reviewAuth,
-            reason: turnstileClientFailed
-              ? 'turnstile_client'
-              : classifyReviewSubmitFailure(status, !user),
-          },
-        })
+      if (landed) {
+        // The review is live; only a follow-up step failed. Celebrate anyway
+        // rather than offering a Publish button that would post it twice.
+        console.error('Post-publish step failed:', error)
+        dispatch({ type: 'PUBLISHED', published: landed, landing: { to: 'success' } })
+        return
       }
+      const status = error instanceof ReviewSubmitError ? error.status : undefined
+      void trackReviewEvent({
+        name: 'review_submit_failed',
+        data: {
+          flow: FLOW,
+          entry: reviewEntry,
+          auth: reviewAuth,
+          reason: turnstileClientFailed
+            ? 'turnstile_client'
+            : classifyReviewSubmitFailure(status, !user),
+        },
+      })
       console.error('Error submitting review:', error)
       showToast(error instanceof Error ? error.message : 'Failed to submit review', 'error')
-    } finally {
       submitInFlightRef.current = false
-      setLoading(false)
+      dispatch({ type: 'PUBLISH_FAILED' })
     }
   }
 
@@ -1134,19 +1133,18 @@ export const ReviewWizard = ({
   )
 
   const handleBoostExit = useCallback(
-    (afterCard: BoostAfterCard, nextIndex: number) => {
+    (afterCard: BoostAfterCard, _nextIndex: number) => {
       void trackReviewEvent({
         name: 'boost_exited',
         data: { flow: FLOW, auth: reviewAuth, after_card: afterCard },
       })
-      setBoostIndex(nextIndex)
-      setPhase('success')
+      dispatch({ type: 'BOOST_EXITED' })
     },
     [reviewAuth]
   )
 
   const handleBoostFinish = useCallback(() => {
-    setPhase('success')
+    dispatch({ type: 'BOOST_FINISHED' })
     showToast('All saved. Thanks for the detail.', 'success')
   }, [showToast])
 
@@ -1180,35 +1178,30 @@ export const ReviewWizard = ({
     )
   }
 
-  if (phase === 'success' && published) {
+  if (flow.status === 'success') {
     return (
       <div className="container" style={{ maxWidth: '700px' }}>
         <div className="section">
           <ReviewSuccess
             form={form}
             media={mediaState.media}
-            publishedAt={published.publishedAt}
-            universitySlug={published.universitySlug}
+            publishedAt={flow.published.publishedAt}
+            universitySlug={flow.published.universitySlug}
             isAnonymous={!user}
             wantsNickname={wantsNickname}
             reward={reward}
             postedAnonymously={Boolean(user && postAnon)}
-            canBoost={Boolean(user) || getBoostToken(published.reviewId) !== null}
-            onBoost={() => {
-              const base = user ? BOOST_CARD_ORDER : ANON_BOOST_CARDS
-              const missing = (reward?.missing ?? rewardEval.missing) as RewardMissing[]
-              const front: BoostCard[] = rewardOn
-                ? [
-                    ...(missing.includes('words') ? (['words'] as BoostCard[]) : []),
-                    ...(['ratings', 'money', 'program'] as BoostCard[]).filter((c) =>
-                      missing.includes(c as RewardMissing)
-                    ),
-                  ]
-                : []
-              setBoostDeck([...front, ...base.filter((c) => !front.includes(c))])
-              setBoostIndex(0)
-              setPhase('boost')
-            }}
+            canBoost={Boolean(user) || getBoostToken(flow.published.reviewId) !== null}
+            onBoost={() =>
+              dispatch({
+                type: 'OPEN_BOOST',
+                deck: buildBoostDeck({
+                  signedIn: Boolean(user),
+                  rewardOn,
+                  missing: (reward?.missing ?? rewardEval.missing) as RewardMissing[],
+                }),
+              })
+            }
             onDone={finishFlow}
           />
         </div>
@@ -1216,7 +1209,7 @@ export const ReviewWizard = ({
     )
   }
 
-  if (phase === 'boost' && published) {
+  if (flow.status === 'boost') {
     return (
       <div className="container" style={{ maxWidth: '700px' }}>
         <div className="section">
@@ -1224,7 +1217,7 @@ export const ReviewWizard = ({
             values={values}
             media={mediaState.media}
             anonymous={Boolean(user && postAnon)}
-            date={new Date(published.publishedAt).toLocaleDateString('en-US', {
+            date={new Date(flow.published.publishedAt).toLocaleDateString('en-US', {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
@@ -1240,8 +1233,7 @@ export const ReviewWizard = ({
             form={form}
             mediaState={mediaState}
             onMediaStateChange={setMediaState}
-            cards={boostDeck}
-            initialIndex={boostIndex}
+            cards={flow.deck}
             wordsDone={!rewardEval.missing.includes('words' as never)}
             wordsHint={
               rewardOn
@@ -1376,7 +1368,7 @@ export const ReviewWizard = ({
             <MediaField
               mediaState={mediaState}
               onStateChange={setMediaState}
-              disabled={loading}
+              disabled={publishLocked}
               uploaderKey="wizard-media"
               hint="Show the real life"
             />
@@ -1434,7 +1426,7 @@ export const ReviewWizard = ({
                     name="review-attribution"
                     className="attribution-radio"
                     checked={!wantsNickname}
-                    disabled={loading}
+                    disabled={publishLocked}
                     onChange={() => setWantsNickname(false)}
                   />
                   <span className="attribution-option-body">
@@ -1454,7 +1446,7 @@ export const ReviewWizard = ({
                     name="review-attribution"
                     className="attribution-radio"
                     checked={wantsNickname}
-                    disabled={loading}
+                    disabled={publishLocked}
                     onChange={() => setWantsNickname(true)}
                   />
                   <span className="attribution-option-body">
@@ -1476,7 +1468,7 @@ export const ReviewWizard = ({
                     name="review-attribution"
                     className="attribution-radio"
                     checked={!postAnon}
-                    disabled={loading}
+                    disabled={publishLocked}
                     onChange={() => setPostAnon(false)}
                   />
                   <span className="attribution-option-body">
@@ -1494,7 +1486,7 @@ export const ReviewWizard = ({
                     name="review-attribution"
                     className="attribution-radio"
                     checked={postAnon}
-                    disabled={loading}
+                    disabled={publishLocked}
                     onChange={() => setPostAnon(true)}
                   />
                   <span className="attribution-option-body">
@@ -1599,16 +1591,18 @@ export const ReviewWizard = ({
             <button
               type="button"
               className="btn btn-primary btn-lg"
-              disabled={loading || (!user && !reviewTurnstileReady)}
+              disabled={publishLocked || (!user && !reviewTurnstileReady)}
               onClick={() => (rewardOn && user ? setShowRewardNotice(true) : handlePublish())}
             >
-              {loading
+              {flow.status === 'publishing'
                 ? 'Publishing...'
-                : !user && !reviewTurnstileReady
-                  ? 'Checking your connection...'
-                  : values.reviewText.trim()
-                    ? 'Publish review'
-                    : 'Publish rating'}
+                : flow.status === 'celebrating'
+                  ? 'Published'
+                  : !user && !reviewTurnstileReady
+                    ? 'Checking your connection...'
+                    : values.reviewText.trim()
+                      ? 'Publish review'
+                      : 'Publish rating'}
             </button>
           )}
         </div>
@@ -1631,7 +1625,7 @@ export const ReviewWizard = ({
         />
       )}
 
-      {showStamp && <SealStampOverlay onComplete={handleStampComplete} />}
+      {flow.status === 'celebrating' && <SealStampOverlay onComplete={handleStampComplete} />}
     </div>
   )
 }
