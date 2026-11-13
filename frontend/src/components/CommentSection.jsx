@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { nextCommentAttempt, postComment } from '../lib/commentSubmit'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useComments } from '../hooks/useComments'
@@ -21,6 +21,11 @@ export const CommentSection = ({ reviewId, initialCount }) => {
   // expanded, so a page of review cards doesn't fire one query per card.
   const [expanded, setExpanded] = useState(false)
   const composerRef = useRef(null)
+  // The id of the comment being posted, reused while the same draft is
+  // resubmitted so a retry after a lost response can't create a duplicate.
+  const attemptRef = useRef(null)
+  // Synchronous guard: `posting` state lags a fast second submit.
+  const inFlightRef = useRef(false)
 
   const {
     comments,
@@ -55,16 +60,19 @@ export const CommentSection = ({ reviewId, initialCount }) => {
       return
     }
 
+    if (inFlightRef.current) return
+    inFlightRef.current = true
     setPosting(true)
     try {
-      const { error } = await supabase.from('comments').insert({
-        review_id: reviewId,
-        user_id: user.id,
-        parent_id: replyTo,
+      const draft = {
+        reviewId,
+        userId: user.id,
+        parentId: replyTo,
         text: newComment.trim(),
-      })
-
-      if (error) throw error
+      }
+      attemptRef.current = nextCommentAttempt(attemptRef.current, draft)
+      await postComment(draft, attemptRef.current.id)
+      attemptRef.current = null
 
       showToast('Comment added!', 'success')
       setNewComment('')
@@ -74,6 +82,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
       console.error('Error adding comment:', error)
       showToast(error.message || 'Failed to add comment', 'error')
     } finally {
+      inFlightRef.current = false
       setPosting(false)
     }
   }

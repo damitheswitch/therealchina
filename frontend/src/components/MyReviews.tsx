@@ -12,6 +12,7 @@ import { RecommendPill, ReviewContext, ReviewExtras, ReviewStrengthMeter } from 
 import { isDetailedReview } from '../lib/reviewDetail'
 import { ConfirmDialog } from './ConfirmDialog'
 import { ReviewWizard } from './ReviewWizard'
+import { ClaimableReviews } from './ClaimableReviews'
 
 // One review card in the "My reviews" list: the same readout as the profile
 // view, plus Edit / Delete controls that only exist here — the owner's page.
@@ -171,6 +172,7 @@ export const MyReviews = () => {
     <div className="profile-section" style={{ marginTop: 'var(--sp-4)' }}>
       <h3 className="profile-section-title">My reviews ({reviews.length})</h3>
       {error && <p className="form-hint">Couldn&apos;t load your reviews. Try refreshing.</p>}
+      <ClaimableReviews onClaimed={refetch} />
       {reviews.length > 0 ? (
         <div className="profile-reviews">
           {reviews.map((review) => (

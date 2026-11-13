@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import {
@@ -9,7 +8,7 @@ import {
   type ClaimableReview,
   type ClaimDecision,
 } from '../lib/reviewClaim'
-import { StarRating } from './StarRating'
+import { ClaimReviewCard } from './ClaimReviewCard'
 
 // ReviewClaimPrompt — after a sign-in, offers reviews the account holder left
 // anonymously (matched by this browser's claim token or by the verified
@@ -137,71 +136,15 @@ export const ReviewClaimPrompt = () => {
         </div>
 
         <div className="claim-list">
-          {items.map((item) => {
-            const date = item.createdAt
-              ? new Date(item.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                  timeZone: 'UTC',
-                })
-              : null
-            const busy = busyId === item.reviewId
-            return (
-              <div key={item.reviewId} className="claim-review">
-                <div className="claim-review-head">
-                  <StarRating rating={item.rating} />
-                  {date && <span className="muted">{date}</span>}
-                </div>
-                {item.universityName &&
-                  (item.universitySlug ? (
-                    <Link to={`/university/${item.universitySlug}/`} className="claim-review-uni">
-                      {item.universityName}
-                    </Link>
-                  ) : (
-                    <div className="claim-review-uni">{item.universityName}</div>
-                  ))}
-                {item.text?.trim() ? (
-                  <p className="claim-review-text">{item.text}</p>
-                ) : (
-                  <span className="quick-rating-badge">Quick rating</span>
-                )}
-                {item.matchedBy === 'email' && (
-                  <p className="form-hint" style={{ marginTop: 0 }}>
-                    Matched by the email you left on the review.
-                  </p>
-                )}
-                <div className="claim-actions">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={busyId !== null}
-                    title="Your display name and the Verified seal show on it"
-                    onClick={() => decide(item, 'named')}
-                  >
-                    {busy ? 'Claiming...' : 'Put my name on it'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    disabled={busyId !== null}
-                    title="Saved to your account. Publicly it stays Anonymous, and you can put your name on it later from My reviews."
-                    onClick={() => decide(item, 'anonymous')}
-                  >
-                    Keep it anonymous
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    disabled={busyId !== null}
-                    onClick={() => decide(item, 'not_mine')}
-                  >
-                    Not mine
-                  </button>
-                </div>
-              </div>
-            )
-          })}
+          {items.map((item) => (
+            <ClaimReviewCard
+              key={item.reviewId}
+              item={item}
+              busy={busyId === item.reviewId}
+              disabled={busyId !== null}
+              onDecide={(decision) => decide(item, decision)}
+            />
+          ))}
         </div>
 
         {error && <div className="auth-modal-error">{error}</div>}
