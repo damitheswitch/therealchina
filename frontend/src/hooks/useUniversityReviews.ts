@@ -254,6 +254,7 @@ export const useUniversityReviews = (
         supabase
           .from('comments')
           .select('review_id')
+          .is('deleted_at', null)
           .in('review_id', ids)
           .abortSignal(controller.signal),
         supabase

@@ -44,16 +44,21 @@ BEGIN
   -- Backdated client inserts are stamped with the server time.
   PERFORM set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000051a1","role":"authenticated"}', true);
   SET LOCAL ROLE authenticated;
-  INSERT INTO public.comments (id, review_id, user_id, text, created_at)
-    VALUES ('00000000-0000-4000-8000-0000000051d1', '00000000-0000-4000-8000-0000000051c1',
-            '00000000-0000-4000-8000-0000000051a1', 'backdated', '2000-01-01T00:00:00Z');
+  BEGIN
+    INSERT INTO public.comments (id, review_id, user_id, text, created_at)
+      VALUES ('00000000-0000-4000-8000-0000000051d1', '00000000-0000-4000-8000-0000000051c1',
+              '00000000-0000-4000-8000-0000000051a1', 'backdated', '2000-01-01T00:00:00Z');
+    RESET ROLE;
+    INSERT INTO probe_results VALUES ('backdated comment insert blocked', 'FAIL');
+  EXCEPTION WHEN insufficient_privilege THEN
+    RESET ROLE;
+    INSERT INTO probe_results VALUES ('backdated comment insert blocked', 'PASS');
+  END;
+  SET LOCAL ROLE authenticated;
   INSERT INTO public.flight_listings (id, user_id, departure_country, arrival_country, departure_date, arrival_date, available_kgs, price_per_kg, created_at)
     VALUES ('00000000-0000-4000-8000-0000000051f2', '00000000-0000-4000-8000-0000000051a1', 'Morocco', 'China',
             CURRENT_DATE + 30, CURRENT_DATE + 31, 5, 10, '2000-01-01T00:00:00Z');
   RESET ROLE;
-  SELECT created_at INTO v_ts FROM public.comments WHERE id = '00000000-0000-4000-8000-0000000051d1';
-  INSERT INTO probe_results VALUES ('backdated comment stamped now',
-    CASE WHEN v_ts > NOW() - INTERVAL '1 minute' THEN 'PASS' ELSE 'FAIL: ' || v_ts END);
   SELECT created_at INTO v_ts FROM public.flight_listings WHERE id = '00000000-0000-4000-8000-0000000051f2';
   INSERT INTO probe_results VALUES ('backdated listing stamped now',
     CASE WHEN v_ts > NOW() - INTERVAL '1 minute' THEN 'PASS' ELSE 'FAIL: ' || v_ts END);
