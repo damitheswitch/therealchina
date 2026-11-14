@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { asyncFlags, initialAsyncState, useAsyncState } from '../lib/asyncState'
 import type { Tables } from '../types/database.types'
@@ -21,9 +21,12 @@ const NO_PROFILES: Record<string, PublicProfile> = {}
  * through refetches and failed refetches, as before.
  */
 export const useComments = (reviewId: string, { enabled = false }: { enabled?: boolean } = {}) => {
-  const { state, run } = useAsyncState<CommentThread>(() =>
+  const { state, run, update } = useAsyncState<CommentThread>(() =>
     initialAsyncState<CommentThread>(undefined, { enabled: false })
   )
+  // A read started before a successful write must not restore old text. Keep
+  // a high-water mark for each edited row until this thread unmounts.
+  const committedRows = useRef(new Map<string, CommentRow>())
 
   const load = useCallback(
     (signal?: AbortSignal) =>
@@ -31,7 +34,7 @@ export const useComments = (reviewId: string, { enabled = false }: { enabled?: b
         async () => {
           let query = supabase
             .from('comments')
-            .select('id, review_id, user_id, parent_id, text, created_at')
+            .select('id, review_id, user_id, parent_id, text, created_at, edited_at, deleted_at')
             .eq('review_id', reviewId)
             .order('created_at', { ascending: true })
           if (signal) query = query.abortSignal(signal)
@@ -39,8 +42,21 @@ export const useComments = (reviewId: string, { enabled = false }: { enabled?: b
           if (error) throw error
 
           const comments = (data || []) as CommentRow[]
-          const userIds = [...new Set(comments.map((c) => c.user_id).filter(Boolean))] as string[]
-          if (userIds.length === 0) return { comments, authorProfiles: NO_PROFILES }
+          const reconcile = () =>
+            comments.map((row) => {
+              const committed = committedRows.current.get(row.id)
+              if (!committed) return row
+              if (
+                row.deleted_at ||
+                (!committed.deleted_at && (row.edited_at ?? '') >= (committed.edited_at ?? ''))
+              ) {
+                committedRows.current.set(row.id, row)
+                return row
+              }
+              return committed
+            })
+          const userIds = [...new Set(comments.filter((c) => !c.deleted_at).map((c) => c.user_id))]
+          if (userIds.length === 0) return { comments: reconcile(), authorProfiles: NO_PROFILES }
 
           let profileQuery = supabase
             .from('profile_public')
@@ -55,7 +71,8 @@ export const useComments = (reviewId: string, { enabled = false }: { enabled?: b
             acc[p.id as string] = p
             return acc
           }, {})
-          return { comments, authorProfiles }
+
+          return { comments: reconcile(), authorProfiles }
         },
         { signal, errorLabel: 'Error fetching comments:' }
       ),
@@ -76,6 +93,17 @@ export const useComments = (reviewId: string, { enabled = false }: { enabled?: b
   }, [shouldLoad, load])
 
   const refetch = useCallback(() => load(), [load])
+  const applyComment = useCallback(
+    (row: CommentRow) => {
+      if (row.review_id !== reviewId) return
+      committedRows.current.set(row.id, row)
+      update((thread) => ({
+        ...thread,
+        comments: thread.comments.map((comment) => (comment.id === row.id ? row : comment)),
+      }))
+    },
+    [reviewId, update]
+  )
 
   return {
     comments: data?.comments ?? NO_COMMENTS,
@@ -83,5 +111,6 @@ export const useComments = (reviewId: string, { enabled = false }: { enabled?: b
     loading,
     loaded,
     refetch,
+    applyComment,
   }
 }

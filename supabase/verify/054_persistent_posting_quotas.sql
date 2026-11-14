@@ -24,7 +24,7 @@ BEGIN
     INSERT INTO public.comments (review_id, user_id, text)
     VALUES ('00000000-0000-4000-8000-0000000054c1', '00000000-0000-4000-8000-0000000054a1', 'comment')
     RETURNING id INTO v_id;
-    DELETE FROM public.comments WHERE id = v_id;
+    PERFORM public.delete_comment(v_id);
   END LOOP;
   RESET ROLE;
   BEGIN

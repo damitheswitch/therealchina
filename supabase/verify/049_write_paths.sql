@@ -92,16 +92,18 @@ BEGIN
     INSERT INTO probe_results VALUES ('valid reply allowed', 'FAIL (' || SQLERRM || ')');
   END;
 
-  -- 6. Author can still delete their own comment.
+  -- 6. Authors now delete through the reply-preserving RPC.
   BEGIN
     SET LOCAL ROLE authenticated;
     PERFORM set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000a1","role":"authenticated"}', true);
-    DELETE FROM public.comments WHERE id = '00000000-0000-4000-8000-0000000000d2';
+    PERFORM public.delete_comment('00000000-0000-4000-8000-0000000000d2');
     RESET ROLE;
-    INSERT INTO probe_results VALUES ('own comment delete allowed', CASE WHEN EXISTS (SELECT 1 FROM public.comments WHERE id = '00000000-0000-4000-8000-0000000000d2') THEN 'FAIL: row still there' ELSE 'PASS' END);
+    INSERT INTO probe_results VALUES ('own comment soft delete allowed',
+      CASE WHEN EXISTS (SELECT 1 FROM public.comments WHERE id = '00000000-0000-4000-8000-0000000000d2' AND deleted_at IS NOT NULL AND text = 'Comment deleted')
+      THEN 'PASS' ELSE 'FAIL: comment not deleted' END);
   EXCEPTION WHEN OTHERS THEN
     RESET ROLE;
-    INSERT INTO probe_results VALUES ('own comment delete allowed', 'FAIL (' || SQLERRM || ')');
+    INSERT INTO probe_results VALUES ('own comment soft delete allowed', 'FAIL (' || SQLERRM || ')');
   END;
 END $$;
 
