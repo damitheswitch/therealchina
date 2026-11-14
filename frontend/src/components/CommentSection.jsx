@@ -1,60 +1,65 @@
-import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { useComments } from '../hooks/useComments'
-import { SealAvatar } from './SealAvatar'
 import { Icons } from './Icons'
-import { ReportButton } from './ReportButton'
+import { CommentItem } from './CommentItem'
 
-// CommentSection component — a segmented pill: "Comments (n)" toggles the
-// thread, "Write" opens the composer. `initialCount` comes from the parent's
-// batched count query so the pill shows the count without lazy-loading.
 export const CommentSection = ({ reviewId, initialCount }) => {
   const { user } = useAuth()
+  return (
+    <ScopedCommentSection
+      key={`${reviewId}:${user?.id ?? 'guest'}`}
+      reviewId={reviewId}
+      initialCount={initialCount}
+      user={user}
+    />
+  )
+}
+
+const ScopedCommentSection = ({ reviewId, initialCount, user }) => {
   const { showToast } = useToast()
   const [newComment, setNewComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [posting, setPosting] = useState(false)
-  // Comments are fetched lazily: nothing is queried until the section is
-  // expanded, so a page of review cards doesn't fire one query per card.
   const [expanded, setExpanded] = useState(false)
   const composerRef = useRef(null)
+  const mountedRef = useRef(false)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const {
     comments,
     authorProfiles,
     loaded: commentsLoaded,
     refetch: refetchComments,
+    applyComment,
   } = useComments(reviewId, { enabled: expanded })
-
-  const commentCount = commentsLoaded ? comments.length : (initialCount ?? 0)
-
-  const toggleExpanded = () => {
-    setExpanded((prev) => !prev)
-  }
+  const commentCount = commentsLoaded
+    ? comments.filter((comment) => !comment.deleted_at).length
+    : (initialCount ?? 0)
 
   const openComposer = () => {
     if (!expanded) setExpanded(true)
-    // Let the composer mount before focusing — focus() also scrolls it into
-    // view on its own, no extra scroll handling needed.
     requestAnimationFrame(() => composerRef.current?.focus())
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
+  const handleSubmit = async (event) => {
+    event.preventDefault()
     if (!user) {
       showToast('Please sign in to comment', 'error')
       return
     }
-
     if (!newComment.trim()) {
       showToast('Comment cannot be empty', 'error')
       return
     }
-
     setPosting(true)
     try {
       const { error } = await supabase.from('comments').insert({
@@ -63,23 +68,23 @@ export const CommentSection = ({ reviewId, initialCount }) => {
         parent_id: replyTo,
         text: newComment.trim(),
       })
-
       if (error) throw error
-
+      if (!mountedRef.current) return
       showToast('Comment added!', 'success')
       setNewComment('')
       setReplyTo(null)
-      refetchComments()
+      void refetchComments()
     } catch (error) {
-      console.error('Error adding comment:', error)
-      showToast(error.message || 'Failed to add comment', 'error')
+      if (mountedRef.current) {
+        console.error('Error adding comment:', error)
+        showToast(error.message || 'Failed to add comment', 'error')
+      }
     } finally {
-      setPosting(false)
+      if (mountedRef.current) setPosting(false)
     }
   }
 
-  // Group comments by parent_id
-  const topLevelComments = comments.filter((c) => !c.parent_id)
+  const topLevelComments = comments.filter((comment) => !comment.parent_id)
   const repliesByParent = comments.reduce((acc, comment) => {
     if (comment.parent_id) {
       if (!acc[comment.parent_id]) acc[comment.parent_id] = []
@@ -87,13 +92,18 @@ export const CommentSection = ({ reviewId, initialCount }) => {
     }
     return acc
   }, {})
+  const handleChanged = (comment) => {
+    if (!mountedRef.current) return
+    applyComment(comment)
+    void refetchComments()
+  }
 
   return (
     <>
       <div className="comment-controls">
         <button
           type="button"
-          onClick={toggleExpanded}
+          onClick={() => setExpanded((prev) => !prev)}
           className={`comment-toggle${expanded ? ' open' : ''}`}
           aria-expanded={expanded}
           aria-controls={expanded ? `comments-${reviewId}` : undefined}
@@ -107,118 +117,33 @@ export const CommentSection = ({ reviewId, initialCount }) => {
           <span>Write</span>
         </button>
       </div>
-
       {!expanded ? null : (
         <div id={`comments-${reviewId}`} className="comment-expanded">
-          {/* Comment list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-2)' }}>
             {topLevelComments.map((comment) => (
               <div key={comment.id} style={{ paddingLeft: 0 }}>
-                <div
-                  style={{
-                    padding: 'var(--sp-2)',
-                    background: 'var(--rice-warm)',
-                    borderRadius: 'var(--r-md)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--sp-1)',
-                      marginBottom: 'var(--sp-1)',
-                    }}
-                  >
-                    {authorProfiles[comment.user_id]?.display_name && (
-                      <Link
-                        to={`/profile/${comment.user_id}`}
-                        style={{
-                          textDecoration: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'var(--sp-1)',
-                        }}
-                      >
-                        <SealAvatar
-                          displayName={authorProfiles[comment.user_id].display_name}
-                          size={20}
-                        />
-                        <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>
-                          {authorProfiles[comment.user_id].display_name}
-                        </strong>
-                      </Link>
-                    )}
-                    {!authorProfiles[comment.user_id]?.display_name && <strong>Anonymous</strong>}
-                  </div>
-                  <p style={{ marginTop: 'var(--sp-1)' }}>{comment.text}</p>
-                  <ReportButton targetType="comment" targetId={comment.id} />
-                  {user && !replyTo && (
-                    <button
-                      onClick={() => setReplyTo(comment.id)}
-                      className="btn btn-outline"
-                      style={{
-                        marginTop: 'var(--sp-1)',
-                        fontSize: '0.85rem',
-                        padding: '0.4rem 0.8rem',
-                      }}
-                    >
-                      Reply
-                    </button>
-                  )}
-                </div>
-
-                {/* Replies */}
+                <CommentItem
+                  comment={comment}
+                  profile={authorProfiles[comment.user_id]}
+                  isOwner={user?.id === comment.user_id}
+                  canReply={Boolean(user) && !replyTo && !comment.deleted_at}
+                  onReply={() => setReplyTo(comment.id)}
+                  onChanged={handleChanged}
+                />
                 {repliesByParent[comment.id] && (
                   <div style={{ paddingLeft: 'var(--sp-3)', marginTop: 'var(--sp-1)' }}>
                     {repliesByParent[comment.id].map((reply) => (
-                      <div
-                        key={reply.id}
-                        style={{
-                          padding: 'var(--sp-2)',
-                          background: '#fff',
-                          borderRadius: 'var(--r-md)',
-                          marginBottom: 'var(--sp-1)',
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 'var(--sp-1)',
-                            marginBottom: 'var(--sp-1)',
-                          }}
-                        >
-                          {authorProfiles[reply.user_id]?.display_name && (
-                            <Link
-                              to={`/profile/${reply.user_id}`}
-                              style={{
-                                textDecoration: 'none',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--sp-1)',
-                              }}
-                            >
-                              <SealAvatar
-                                displayName={authorProfiles[reply.user_id].display_name}
-                                size={20}
-                              />
-                              <strong style={{ color: 'var(--ink)', fontSize: '0.9rem' }}>
-                                {authorProfiles[reply.user_id].display_name}
-                              </strong>
-                            </Link>
-                          )}
-                          {!authorProfiles[reply.user_id]?.display_name && (
-                            <strong>Anonymous</strong>
-                          )}
-                        </div>
-                        <p style={{ marginTop: 'var(--sp-1)' }}>{reply.text}</p>
-                        <ReportButton targetType="comment" targetId={reply.id} />
+                      <div key={reply.id} style={{ marginBottom: 'var(--sp-1)' }}>
+                        <CommentItem
+                          comment={reply}
+                          profile={authorProfiles[reply.user_id]}
+                          isOwner={user?.id === reply.user_id}
+                          onChanged={handleChanged}
+                        />
                       </div>
                     ))}
                   </div>
                 )}
-
-                {/* Reply form */}
                 {replyTo === comment.id && (
                   <form
                     onSubmit={handleSubmit}
@@ -226,7 +151,7 @@ export const CommentSection = ({ reviewId, initialCount }) => {
                   >
                     <textarea
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      onChange={(event) => setNewComment(event.target.value)}
                       placeholder="Write a reply..."
                       aria-label="Write a reply"
                       className="form-textarea"
@@ -250,14 +175,12 @@ export const CommentSection = ({ reviewId, initialCount }) => {
               </div>
             ))}
           </div>
-
-          {/* Add comment form */}
           {!replyTo && (
             <form onSubmit={handleSubmit} style={{ marginTop: 'var(--sp-2)' }}>
               <textarea
                 ref={composerRef}
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                onChange={(event) => setNewComment(event.target.value)}
                 placeholder={user ? 'Write a comment...' : 'Sign in to leave a comment'}
                 aria-label={user ? 'Write a comment' : 'Sign in to leave a comment'}
                 className="form-textarea"

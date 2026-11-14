@@ -202,7 +202,9 @@ CREATE TABLE IF NOT EXISTS public.comments (
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   parent_id UUID REFERENCES public.comments(id) ON DELETE CASCADE,
   text TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  edited_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ
 );
 
 -- Cap matches the comment textareas (migration 041); comments have no edge
@@ -1320,11 +1322,12 @@ CREATE POLICY "Authenticated users can insert comments after onboarding"
 DROP POLICY IF EXISTS "Authenticated update access to own comments" ON public.comments;
 REVOKE UPDATE ON public.comments FROM PUBLIC, anon, authenticated;
 
+-- Client deletions must preserve other authors' replies. Metadata and text
+-- edits are writable only through the owner-checked RPCs below.
 DROP POLICY IF EXISTS "Authenticated delete access to own comments" ON public.comments;
-CREATE POLICY "Authenticated delete access to own comments"
-  ON public.comments FOR DELETE
-  TO authenticated
-  USING (auth.uid() = user_id);
+REVOKE ALL ON public.comments FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.comments TO anon, authenticated;
+GRANT INSERT (review_id, user_id, parent_id, text) ON public.comments TO authenticated;
 
 ALTER TABLE public.upvotes ENABLE ROW LEVEL SECURITY;
 
@@ -2577,4 +2580,68 @@ SELECT cron.schedule(
 -- 16. PostgREST schema reload
 -- ---------------------------------------------------------
 
+NOTIFY pgrst, 'reload schema';
+
+-- Owner-only comment management (reply-preserving deletion).
+CREATE OR REPLACE FUNCTION public.edit_comment(p_comment_id UUID, p_text TEXT)
+RETURNS SETOF public.comments
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+ROWS 1
+AS $$
+DECLARE
+  v_comment public.comments;
+  v_text TEXT;
+BEGIN
+  SELECT * INTO v_comment FROM public.comments
+  WHERE id = p_comment_id AND user_id = (SELECT auth.uid())
+  FOR UPDATE;
+  IF NOT FOUND OR v_comment.deleted_at IS NOT NULL THEN
+    RAISE EXCEPTION 'Comment unavailable' USING ERRCODE = 'P0002';
+  END IF;
+
+  v_text := pg_catalog.regexp_replace(p_text, '^\s+|\s+$', '', 'g');
+  IF v_text IS NULL OR pg_catalog.char_length(v_text) NOT BETWEEN 1 AND 2000 THEN
+    RAISE EXCEPTION 'Comment must be between 1 and 2000 characters' USING ERRCODE = '22023';
+  END IF;
+
+  IF v_comment.text IS DISTINCT FROM v_text THEN
+    UPDATE public.comments SET text = v_text, edited_at = pg_catalog.clock_timestamp()
+    WHERE id = v_comment.id RETURNING * INTO v_comment;
+  END IF;
+  RETURN NEXT v_comment;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.delete_comment(p_comment_id UUID)
+RETURNS SETOF public.comments
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+ROWS 1
+AS $$
+DECLARE
+  v_comment public.comments;
+BEGIN
+  SELECT * INTO v_comment FROM public.comments
+  WHERE id = p_comment_id AND user_id = (SELECT auth.uid())
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Comment unavailable' USING ERRCODE = 'P0002';
+  END IF;
+
+  IF v_comment.deleted_at IS NULL THEN
+    UPDATE public.comments
+    SET text = 'Comment deleted', deleted_at = pg_catalog.clock_timestamp()
+    WHERE id = v_comment.id RETURNING * INTO v_comment;
+  END IF;
+  RETURN NEXT v_comment;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.edit_comment(UUID, TEXT) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.delete_comment(UUID) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.edit_comment(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_comment(UUID) TO authenticated;
 NOTIFY pgrst, 'reload schema';

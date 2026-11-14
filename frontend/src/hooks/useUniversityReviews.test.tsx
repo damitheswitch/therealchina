@@ -83,6 +83,21 @@ const pageReviewQueries = () =>
   )
 
 describe('useUniversityReviews', () => {
+  it('excludes deleted comments from the batched engagement count', async () => {
+    pdMock.payload = null
+    calls.length = 0
+    clearTableResults()
+    setTableResult('reviews', { data: [makeReview(1)], error: null, count: 1 })
+    renderHook(() => useUniversityReviews('uni-1', 1))
+    await waitFor(() =>
+      expect(calls).toContainEqual({
+        table: 'comments',
+        method: 'is',
+        args: ['deleted_at', null],
+      })
+    )
+    clearTableResults()
+  })
   it('slices the hydrated payload client-side for the requested page — no fetch', async () => {
     pdMock.payload = seededPayload(7)
     calls.length = 0

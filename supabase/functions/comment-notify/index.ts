@@ -17,6 +17,7 @@
 
 import { supabaseAdmin, jsonResponse } from '../_shared/guard.ts'
 import { safeEqual } from '../_shared/safeEqual.ts'
+import { loadNotificationComment } from './notificationComment.ts'
 
 const COMMENT_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -94,12 +95,9 @@ async function handleNotify(req: Request): Promise<Response> {
     return jsonResponse(req, { error: 'comment_id must be a uuid' }, 400)
   }
 
-  const { data: comment } = await supabaseAdmin
-    .from('comments')
-    .select('id, review_id, user_id, text')
-    .eq('id', commentId)
-    .maybeSingle()
+  const comment = await loadNotificationComment(supabaseAdmin, commentId)
   if (!comment) return jsonResponse(req, { error: 'Comment not found' }, 404)
+  if (comment.deleted_at) return jsonResponse(req, { ok: true, skipped: 'comment_deleted' }, 200)
 
   const { data: review } = await supabaseAdmin
     .from('reviews')

@@ -104,6 +104,8 @@ export type Database = {
       comments: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
+          edited_at: string | null
           id: string
           parent_id: string | null
           review_id: string
@@ -112,6 +114,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           parent_id?: string | null
           review_id: string
@@ -120,6 +124,8 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           parent_id?: string | null
           review_id?: string
@@ -1239,6 +1245,44 @@ export type Database = {
       apply_anonymous_boost: {
         Args: { p_boost_hash: string; p_patch: Json; p_review_id: string }
         Returns: string
+      }
+      edit_comment: {
+        Args: { p_comment_id: string; p_text: string }
+        Returns: {
+          created_at: string | null
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          parent_id: string | null
+          review_id: string
+          text: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'comments'
+          isOneToOne: true
+          isSetofReturn: true
+        }
+      }
+      delete_comment: {
+        Args: { p_comment_id: string }
+        Returns: {
+          created_at: string | null
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          parent_id: string | null
+          review_id: string
+          text: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'comments'
+          isOneToOne: true
+          isSetofReturn: true
+        }
       }
       cleanup_upload_rate_limits: { Args: Record<PropertyKey, never>; Returns: undefined }
       consume_posting_quota: {
